@@ -187,12 +187,15 @@ Agora há **usuários externos + chaves + dados** — o risco muda de patamar.
   "sem workers"). Partida (configurável por env/plano): ~50 coletas/dia,
   ~200 diagnósticos/dia, ~100 gerações LLM/dia. Monitorar no PostHog e afrouxar
   conforme o uso real.
+- **Nome do produto:** **Orion** (o caçador da mitologia grega / a constelação —
+  "caça" os Leads e "varre o céu" atrás deles). O app fica em **subdomínio Dev em
+  Dobro** (ex.: `orion.devemdobro.com`).
 
 ## Decisões em aberto (precisam da sua definição)
-1. **Domínio — nome:** recomendado **subdomínio de um domínio Dev em Dobro
-   existente** (ex.: `prospeccao.devemdobro.com`), DNS na Vercel, titularidade do
-   registrar com você. Falta confirmar o domínio/subdomínio (ou optar por um
-   domínio dedicado, se quiser marca própria). Define também `src/lib/brand.ts`.
+1. **Domínio/DNS:** confirmar o subdomínio de produção `orion.devemdobro.com`
+   (DNS na Vercel, titularidade do registrar com você). Nome já decidido (Orion);
+   se um dia quiser marca própria, avaliar um domínio dedicado (`.com`/`.app` de
+   "Orion" são disputados → provável precisar de um qualificador).
 
 ## MVP — caminho crítico (o mínimo pra abrir)
 Ordem sugerida (bloqueadores primeiro):

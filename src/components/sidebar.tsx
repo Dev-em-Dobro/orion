@@ -117,7 +117,7 @@ function Brand() {
         <circle cx="12" cy="12" r="6" />
         <circle cx="12" cy="12" r="2" />
       </svg>
-      prospect&nbsp;<span className="text-primary">engine</span>
+      <span className="text-primary">Orion</span>
     </Link>
   );
 }

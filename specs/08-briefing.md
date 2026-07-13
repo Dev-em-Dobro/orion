@@ -1,8 +1,8 @@
 # 08 — Briefing do Produto
 
 ## Status
-Briefing — 2026-07-13. **Nome do produto a definir** (candidatos em análise —
-ex.: *Garimpo*, *Prospecta*, *Sonar*).
+Briefing — 2026-07-13. **Produto: Orion** (nome definido em 2026-07-13 — o
+caçador da mitologia; "caça" os Leads).
 
 ## Lançamento
 **20 de julho de 2026, ao vivo (live) às 20h**, para alunos (Dev em Dobro).
@@ -14,8 +14,9 @@ ex.: *Garimpo*, *Prospecta*, *Sonar*).
 > [roadmap de lançamento](07-lancamento-para-alunos.md).
 
 ## O que é (em uma frase)
-Um motor de prospecção que acha **negócios locais que já precisam de um dev** — e
-entrega o contato com a **Dor diagnosticada** e a **mensagem de abordagem pronta**.
+O **Orion** é um motor de prospecção que acha **negócios locais que já precisam de
+um dev** — e entrega o contato com a **Dor diagnosticada** e a **mensagem de
+abordagem pronta**.
 
 ## Como funciona (o fluxo)
 1. **Coleta** negócios por região/categoria via Google Places — dado público. [F001]

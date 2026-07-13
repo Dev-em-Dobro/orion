@@ -7,10 +7,10 @@ continua nas specs (00, 07, 08 e F014–F017). Atualizar quando o plano mudar.
 ---
 
 ## O que é
-Um **motor de prospecção** que acha **negócios locais que já precisam de um dev**
-e entrega o contato com a **Dor diagnosticada** e a **mensagem de abordagem
-pronta**. Em vez de cuspir uma lista crua de contatos (como os scrapers), ele
-**qualifica** cada Lead.
+O **Orion** é um **motor de prospecção** que acha **negócios locais que já
+precisam de um dev** e entrega o contato com a **Dor diagnosticada** e a
+**mensagem de abordagem pronta**. Em vez de cuspir uma lista crua de contatos
+(como os scrapers), ele **qualifica** cada Lead.
 
 ## Como funciona (o fluxo)
 1. **Coleta** negócios por região/categoria via Google Places — dado público. `[F001]`
@@ -54,7 +54,8 @@ completo. Ver [roadmap](07-lancamento-para-alunos.md).
 ### 0. Antes de qualquer código
 - [ ] Fechar o [ADR-011](04-decisions/ADR-011-multi-provider-llm.md): **interface
       própria vs. Vercel AI SDK** pro multi-provider (afeta só a F017, mas decidir cedo).
-- [ ] (Ricardo) Definir **nome/domínio** e configurar o subdomínio.
+- [ ] (Ricardo) Configurar o subdomínio de produção **`orion.devemdobro.com`**
+      (nome já definido: **Orion**).
 
 ### 1. F015 — Multi-tenant (fundação de dados) — *fazer primeiro*
 - [ ] `user_id` (FK) em Lead, Diagnóstico, Dor, Outreach + índices + migração com backfill.
