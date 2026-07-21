@@ -1,22 +1,27 @@
 import Link from "next/link";
+import { BannerChaves } from "@/components/banner-chaves";
+import { EmptyState } from "@/components/empty-state";
+import { FunilChart } from "@/components/funil-chart";
+import { chavesEssenciaisFaltando } from "@/lib/chaves";
 import { prisma } from "@/lib/db";
+import { requireTenant } from "@/lib/db/scoped";
 import { filaDeFollowUp } from "@/lib/followup";
 import { ESTAGIOS_EM_ABERTO, taxasDeConversao } from "@/lib/funil";
 import type { LeadStatus } from "@prisma/client";
 
-// Dashboard sempre reflete o banco, sem prerender.
+// Dashboard sempre reflete só os dados do aluno (F015).
 export const dynamic = "force-dynamic";
 
 const ESTAGIOS: { status: LeadStatus; label: string; cor: string }[] = [
-  { status: "novo", label: "Novo", cor: "bg-zinc-500" },
-  { status: "enriquecido", label: "Enriquecido", cor: "bg-sky-500" },
-  { status: "priorizado", label: "Priorizado", cor: "bg-violet-500" },
-  { status: "contatado", label: "Contatado", cor: "bg-amber-500" },
-  { status: "respondeu", label: "Respondeu", cor: "bg-cyan-500" },
-  { status: "qualificado", label: "Qualificado", cor: "bg-teal-500" },
-  { status: "proposta", label: "Proposta", cor: "bg-indigo-500" },
-  { status: "ganho", label: "Ganho", cor: "bg-emerald-500" },
-  { status: "perdido", label: "Perdido", cor: "bg-red-500" },
+  { status: "novo", label: "Novo", cor: "#71717a" },
+  { status: "enriquecido", label: "Enriquecido", cor: "#0ea5e9" },
+  { status: "priorizado", label: "Priorizado", cor: "#8b5cf6" },
+  { status: "contatado", label: "Contatado", cor: "#f59e0b" },
+  { status: "respondeu", label: "Respondeu", cor: "#06b6d4" },
+  { status: "qualificado", label: "Qualificado", cor: "#14b8a6" },
+  { status: "proposta", label: "Proposta", cor: "#6366f1" },
+  { status: "ganho", label: "Ganho", cor: "#22c55e" },
+  { status: "perdido", label: "Perdido", cor: "#ef4444" },
 ];
 
 const LABEL: Record<LeadStatus, string> = Object.fromEntries(
@@ -24,16 +29,22 @@ const LABEL: Record<LeadStatus, string> = Object.fromEntries(
 ) as Record<LeadStatus, string>;
 
 export default async function DashboardPage() {
-  const leads = await prisma.lead.findMany({
-    orderBy: { score: "desc" },
-    include: {
-      outreaches: {
-        where: { enviado: true },
-        orderBy: { enviado_em: "desc" },
-        take: 1,
+  const { whereUser, userId } = await requireTenant();
+  const [leads, faltandoChaves] = await Promise.all([
+    prisma.lead.findMany({
+      where: whereUser,
+      orderBy: { score: "desc" },
+      include: {
+        outreaches: {
+          where: { enviado: true },
+          orderBy: { enviado_em: "desc" },
+          take: 1,
+        },
       },
-    },
-  });
+    }),
+    chavesEssenciaisFaltando(userId),
+  ]);
+  const semChaves = faltandoChaves.length > 0;
 
   const porStatus = Object.fromEntries(
     ESTAGIOS.map((e) => [
@@ -44,12 +55,13 @@ export default async function DashboardPage() {
   const maxEstagio = Math.max(1, ...Object.values(porStatus));
 
   // Funil (silhueta): estágios de progressão, sem `perdido` (vazamento lateral).
-  // Largura de cada faixa ∝ contagem; faixa com 0 vira um fio fino centralizado.
-  const funilStages = ESTAGIOS.filter((e) => e.status !== "perdido");
-  const larguras = funilStages.map((e) =>
-    porStatus[e.status] > 0
-      ? Math.max(10, (porStatus[e.status] / maxEstagio) * 100)
-      : 3,
+  const funilStages = ESTAGIOS.filter((e) => e.status !== "perdido").map(
+    (e) => ({
+      id: e.status,
+      label: e.label,
+      value: porStatus[e.status],
+      color: e.cor,
+    }),
   );
 
   const scoreMedio =
@@ -79,6 +91,8 @@ export default async function DashboardPage() {
   const followUp = filaDeFollowUp(leads);
 
   return (
+    <>
+    <BannerChaves />
     <main className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
       <p className="mt-1 text-sm text-muted">
@@ -91,72 +105,38 @@ export default async function DashboardPage() {
             Funil por estágio
           </h2>
           {leads.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">
-              Nenhum Lead ainda.{" "}
-              <Link
-                href="/leads"
-                className="text-primary hover:text-primary-hover hover:underline"
-              >
-                Coletar os primeiros →
-              </Link>
-            </p>
+            <div className="mt-4">
+              <EmptyState
+                titulo={
+                  semChaves
+                    ? "Configure as chaves pra começar"
+                    : "Nenhum Lead no funil"
+                }
+                descricao={
+                  semChaves
+                    ? "Cole Google + provedor de IA em Configuração. Sem isso a coleta e o Outreach não rodam."
+                    : "Colete os primeiros estabelecimentos em Leads pra encher o funil."
+                }
+                acao={
+                  semChaves
+                    ? { href: "/configuracao", label: "Ir para Configuração" }
+                    : { href: "/leads", label: "Coletar Leads" }
+                }
+                secundaria={
+                  semChaves
+                    ? {
+                        href: "/configuracao/tutorial-google",
+                        label: "Tutorial Google",
+                      }
+                    : undefined
+                }
+              />
+            </div>
           ) : (
-            <>
-              <div className="mt-5 flex gap-3">
-                <div className="w-24 shrink-0">
-                  {funilStages.map((e) => (
-                    <div
-                      key={e.status}
-                      className="flex h-[42px] items-center justify-end pr-1 text-right text-xs leading-tight text-zinc-400"
-                    >
-                      {e.label}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex-1">
-                  {funilStages.map((e, i) => {
-                    const topW = larguras[i] ?? 3;
-                    const botW = larguras[i + 1] ?? topW;
-                    return (
-                      <div
-                        key={e.status}
-                        className={`relative ${e.cor}`}
-                        style={{
-                          height: 42,
-                          clipPath: `polygon(${50 - topW / 2}% 0, ${50 + topW / 2}% 0, ${50 + botW / 2}% 100%, ${50 - botW / 2}% 100%)`,
-                        }}
-                      >
-                        <span className="absolute inset-0 flex items-center justify-center font-mono text-[11px] font-semibold text-white/95">
-                          {porStatus[e.status]}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-3 border-t border-border/60 pt-3 text-xs">
-                <span className="w-24 shrink-0 text-right text-zinc-400">
-                  Perdido
-                </span>
-                <div className="h-2 flex-1 overflow-hidden rounded bg-zinc-800/40">
-                  <div
-                    className="h-full rounded bg-red-500"
-                    style={{
-                      width: `${Math.max(
-                        porStatus.perdido > 0 ? 4 : 0,
-                        (porStatus.perdido / maxEstagio) * 100,
-                      )}%`,
-                    }}
-                  />
-                </div>
-                <span className="w-8 shrink-0 text-right font-mono text-zinc-300">
-                  {porStatus.perdido}
-                </span>
-              </div>
-              <p className="mt-2 text-[11px] text-zinc-500">
-                Perdido = vazamento lateral (sai de qualquer estágio pós-contato)
-              </p>
-            </>
+            <FunilChart
+              stages={funilStages}
+              perdido={{ value: porStatus.perdido, max: maxEstagio }}
+            />
           )}
         </section>
 
@@ -302,5 +282,6 @@ export default async function DashboardPage() {
         </section>
       </div>
     </main>
+    </>
   );
 }

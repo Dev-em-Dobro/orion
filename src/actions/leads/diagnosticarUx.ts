@@ -4,7 +4,9 @@
 // Spec: F008-diagnostico-ux-ia.md
 
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { obterChave } from "@/lib/chaves";
+import { createLlmForUser } from "@/lib/llm";
+import { mensagemEscopo, requireLeadOwned } from "@/lib/db/scoped";
 import {
   capturarScreenshots,
   ScreenshotError,
@@ -33,38 +35,37 @@ export async function diagnosticarUxAction(
     return { kind: "erro", mensagem: "Input inválido" };
   }
 
-  // AC4: falha de configuração detectada antes de qualquer chamada.
-  // (Screenshot não exige env: Playwright local é o provider default — ADR-006.)
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return { kind: "erro", mensagem: "ANTHROPIC_API_KEY não configurada" };
-  }
-
-  const lead = await prisma.lead.findUnique({
-    where: { id: parsed.data.lead_id },
-  });
-  if (!lead) {
-    return { kind: "erro", mensagem: "Lead não encontrado" };
-  }
-  if (!lead.website) {
-    return {
-      kind: "erro",
-      mensagem: "Lead sem site — Diagnóstico UX exige website",
-    };
-  }
-
   try {
-    const { desktopB64, mobileB64 } = await capturarScreenshots(lead.website);
+    const { lead, userId } = await requireLeadOwned(parsed.data.lead_id);
+    const llm = await createLlmForUser(userId);
+    const screenshotKey = await obterChave(userId, "screenshotone");
 
-    const analise = await analisarUx({
-      nome: lead.nome,
-      categoria: lead.categoria,
-      desktopB64,
-      mobileB64,
-    });
+    if (!lead.website) {
+      return {
+        kind: "erro",
+        mensagem: "Lead sem site — Diagnóstico UX exige website",
+      };
+    }
 
-    // AC6: nada é persistido nesta fase (ver F008 — Fora do escopo).
+    const { desktopB64, mobileB64 } = await capturarScreenshots(
+      lead.website,
+      screenshotKey,
+    );
+
+    const analise = await analisarUx(
+      {
+        nome: lead.nome,
+        categoria: lead.categoria,
+        desktopB64,
+        mobileB64,
+      },
+      llm,
+    );
+
     return { kind: "ok", analise };
   } catch (e) {
+    const escopo = mensagemEscopo(e);
+    if (escopo) return { kind: "erro", mensagem: escopo };
     if (e instanceof ScreenshotError || e instanceof AnaliseUxError) {
       return { kind: "erro", mensagem: e.message };
     }

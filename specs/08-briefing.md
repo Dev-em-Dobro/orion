@@ -1,8 +1,8 @@
 # 08 — Briefing do Produto
 
 ## Status
-Briefing — 2026-07-13. **Produto: Orion** (nome definido em 2026-07-13 — o
-caçador da mitologia; "caça" os Leads).
+Briefing — 2026-07-13. **Nome do produto:** *Orion Lead Hunter*
+(domínio `orion-lead-hunter.devemdobro.com`).
 
 ## Lançamento
 **20 de julho de 2026, ao vivo (live) às 20h**, para alunos (Dev em Dobro).

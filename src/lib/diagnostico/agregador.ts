@@ -6,7 +6,7 @@
 // Promover/rebaixar uma plataforma é mudança de estratégia → editar a spec antes.
 
 // Domínios registráveis (eTLD+1) de agregadores link-in-bio.
-const AGREGADORES = new Set<string>([
+export const AGREGADORES = new Set<string>([
   "linktr.ee",
   "linktree.com",
   "beacons.ai",
@@ -34,7 +34,7 @@ const AGREGADORES = new Set<string>([
 ]);
 
 // Perfis de rede social usados como "site" (escopo F009: Instagram + Facebook).
-const SOCIAIS = new Set<string>([
+export const SOCIAIS = new Set<string>([
   "instagram.com",
   "instagr.am",
   "facebook.com",

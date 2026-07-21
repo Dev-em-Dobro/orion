@@ -1,11 +1,13 @@
-# prospect engine
+# Orion Lead Hunter
+
+> Repositório / codename interno: `prospect-engine`.
 
 Motor de prospecção para **negócios locais**: acha estabelecimentos que precisam
 de um dev, diagnostica a presença digital, prioriza por score e gera Outreach via
 Claude API. **A partir da Fase 2, é um app hospedado para alunos**: cada aluno faz
 **login**, o app é **multi-tenant** (cada um vê só os seus dados) e usa as
 **próprias chaves de API** (BYOK), configuráveis na UI. A marca/oferta fica em
-`src/lib/brand.ts`. Visão em `specs/00-product-vision.md`, roadmap de lançamento
+`src/lib/brand.ts`; o nome do produto na UI/e-mails em `src/lib/produto.ts`. Visão em `specs/00-product-vision.md`, roadmap de lançamento
 em `specs/07-lancamento-para-alunos.md`, briefing em `specs/08-briefing.md`.
 
 > **Fase 2 em construção.** Login, multi-tenant e BYOK ainda estão sendo

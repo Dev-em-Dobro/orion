@@ -1,10 +1,9 @@
-// F008 — análise de UX dos screenshots via Claude API (visão).
-// Spec: /specs/02-features/F008-diagnostico-ux-ia.md · Padrão SDK: ADR-005.
-// Lança AnaliseUxError; quem traduz pra UI é a Server Action.
+// F008 — Diagnóstico UX via LlmClient (visão) — F017 / ADR-011.
 
-import Anthropic from "@anthropic-ai/sdk";
-import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
+import { z } from "zod";
 import type { Severidade } from "@prisma/client";
+import type { LlmClient } from "@/lib/llm";
+import { LlmError } from "@/lib/llm";
 
 export class AnaliseUxError extends Error {
   constructor(message: string) {
@@ -28,32 +27,20 @@ export type AnaliseUx = {
 export type ContextoAnalise = {
   nome: string;
   categoria: string;
-  /** Screenshots JPEG em base64. */
   desktopB64: string;
   mobileB64: string;
 };
 
-const ANALISE_FORMAT = jsonSchemaOutputFormat({
-  type: "object",
-  properties: {
-    resumo: { type: "string" },
-    problemas: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          titulo: { type: "string" },
-          severidade: { type: "string", enum: ["ALTA", "MEDIA", "BAIXA"] },
-          detalhe: { type: "string" },
-        },
-        required: ["titulo", "severidade", "detalhe"],
-        additionalProperties: false,
-      },
-    },
-    pontos_positivos: { type: "array", items: { type: "string" } },
-  },
-  required: ["resumo", "problemas", "pontos_positivos"],
-  additionalProperties: false,
+const schema = z.object({
+  resumo: z.string(),
+  problemas: z.array(
+    z.object({
+      titulo: z.string(),
+      severidade: z.enum(["ALTA", "MEDIA", "BAIXA"]),
+      detalhe: z.string(),
+    }),
+  ),
+  pontos_positivos: z.array(z.string()),
 });
 
 const SYSTEM = `Você é um consultor sênior de UX/UI avaliando o site de um estabelecimento local. A primeira imagem é o site em desktop (1280×800) e a segunda em mobile (390×844) — apenas a dobra inicial de cada um.
@@ -66,59 +53,26 @@ Sua análise vira um diagnóstico gratuito enviado ao dono do negócio. Regras:
 - "problemas": 3 a 6, ordenados da maior pra menor severidade.
 - "pontos_positivos": até 3, sinceros (lista vazia se não houver).`;
 
-/** Analisa os screenshots do site de um Lead e retorna o diagnóstico de UX. */
-export async function analisarUx(ctx: ContextoAnalise): Promise<AnaliseUx> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new AnaliseUxError("ANTHROPIC_API_KEY não configurada");
-  }
-
-  const client = new Anthropic();
-
+export async function analisarUx(
+  ctx: ContextoAnalise,
+  llm: LlmClient,
+): Promise<AnaliseUx> {
   try {
-    const res = await client.messages.parse({
-      model: "claude-haiku-4-5",
-      max_tokens: 2048,
-      thinking: { type: "disabled" },
+    return await llm.generateVisionStructured({
       system: SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: "image/jpeg",
-                data: ctx.desktopB64,
-              },
-            },
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: "image/jpeg",
-                data: ctx.mobileB64,
-              },
-            },
-            {
-              type: "text",
-              text: `Estabelecimento: ${ctx.nome} (${ctx.categoria}). Analise o site nos dois screenshots.`,
-            },
-          ],
-        },
+      prompt: `Estabelecimento: ${ctx.nome} (${ctx.categoria}). Analise o site nos dois screenshots.`,
+      images: [
+        { mediaType: "image/jpeg", dataBase64: ctx.desktopB64 },
+        { mediaType: "image/jpeg", dataBase64: ctx.mobileB64 },
       ],
-      output_config: { format: ANALISE_FORMAT },
+      schema,
+      tier: "fast",
+      maxTokens: 2048,
     });
-
-    const out = res.parsed_output as AnaliseUx | null;
-    if (!out) {
-      throw new AnaliseUxError("Claude não retornou uma análise válida");
-    }
-    return out;
   } catch (e) {
     if (e instanceof AnaliseUxError) throw e;
-    if (e instanceof Anthropic.APIError) {
-      throw new AnaliseUxError(`Claude API: ${e.message}`);
+    if (e instanceof LlmError) {
+      throw new AnaliseUxError(e.message);
     }
     throw e;
   }

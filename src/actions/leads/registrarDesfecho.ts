@@ -6,11 +6,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { mensagemEscopo, requireLeadOwned } from "@/lib/db/scoped";
 import { podeRegistrarDesfecho } from "@/lib/funil";
 
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
-  // F010: `qualificado` e `proposta` entram entre `respondeu` e `ganho`.
   desfecho: z.enum(["respondeu", "qualificado", "proposta", "ganho", "perdido"]),
 });
 
@@ -31,26 +31,25 @@ export async function registrarDesfecho(
     return { kind: "erro", mensagem: "Input inválido" };
   }
 
-  const lead = await prisma.lead.findUnique({
-    where: { id: parsed.data.lead_id },
-  });
-  if (!lead) {
-    return { kind: "erro", mensagem: "Lead não encontrado" };
+  try {
+    const { lead } = await requireLeadOwned(parsed.data.lead_id);
+
+    if (!podeRegistrarDesfecho(lead.status, parsed.data.desfecho)) {
+      return { kind: "ok", status: lead.status };
+    }
+
+    await prisma.lead.update({
+      where: { id: lead.id },
+      data: { status: parsed.data.desfecho },
+    });
+
+    revalidatePath("/leads");
+    revalidatePath("/");
+
+    return { kind: "ok", status: parsed.data.desfecho };
+  } catch (e) {
+    const escopo = mensagemEscopo(e);
+    if (escopo) return { kind: "erro", mensagem: escopo };
+    throw e;
   }
-
-  // F010/F006: marcar desfecho nunca regride o funil. Regressão é no-op (não é
-  // erro — botão clicado por engano só não tem efeito).
-  if (!podeRegistrarDesfecho(lead.status, parsed.data.desfecho)) {
-    return { kind: "ok", status: lead.status };
-  }
-
-  await prisma.lead.update({
-    where: { id: lead.id },
-    data: { status: parsed.data.desfecho },
-  });
-
-  revalidatePath("/leads");
-  revalidatePath("/");
-
-  return { kind: "ok", status: parsed.data.desfecho };
 }

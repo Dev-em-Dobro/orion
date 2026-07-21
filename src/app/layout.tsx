@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fira_Code, Fira_Sans } from "next/font/google";
-import { Sidebar } from "@/components/sidebar";
+import { AppShell } from "@/components/app-shell";
+import { NOME_PRODUTO } from "@/lib/produto";
 import "./globals.css";
 
 const firaSans = Fira_Sans({
@@ -15,8 +16,8 @@ const firaCode = Fira_Code({
 });
 
 export const metadata: Metadata = {
-  title: "Orion",
-  description: "Motor de prospecção — encontre e feche clientes locais",
+  title: NOME_PRODUTO,
+  description: "Motor de prospecção para alunos — Leads prontos com Dor e Outreach",
 };
 
 export default function RootLayout({
@@ -27,8 +28,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${firaSans.variable} ${firaCode.variable}`}>
       <body className="font-sans antialiased">
-        <Sidebar />
-        <div className="md:pl-60">{children}</div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

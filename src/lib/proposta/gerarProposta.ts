@@ -1,10 +1,8 @@
-// F012 — Geração da prosa da Proposta via Claude API (SDK oficial).
-// Contrato: /specs/03-contracts/claude-messages.md · Decisão: ADR-005.
-// A IA escreve só o texto; o preço vem de precos.ts. Lança PropostaError;
-// quem traduz pra UI é a Server Action.
+// F012 — Proposta via LlmClient (F017 / ADR-011).
 
-import Anthropic from "@anthropic-ai/sdk";
-import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
+import { z } from "zod";
+import type { LlmClient } from "@/lib/llm";
+import { LlmError } from "@/lib/llm";
 import {
   SYSTEM_PROMPT_PROPOSTA,
   montarContextoProposta,
@@ -31,61 +29,35 @@ export type PropostaTexto = {
   observacoes: string;
 };
 
-const PROPOSTA_FORMAT = jsonSchemaOutputFormat({
-  type: "object",
-  properties: {
-    resumo: { type: "string" },
-    escopo: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          item: { type: "string" },
-          descricao: { type: "string" },
-        },
-        required: ["item", "descricao"],
-        additionalProperties: false,
-      },
-    },
-    entregaveis: { type: "array", items: { type: "string" } },
-    prazo_estimado: { type: "string" },
-    observacoes: { type: "string" },
-  },
-  required: ["resumo", "escopo", "entregaveis", "prazo_estimado", "observacoes"],
-  additionalProperties: false,
+const schema = z.object({
+  resumo: z.string(),
+  escopo: z.array(
+    z.object({
+      item: z.string(),
+      descricao: z.string(),
+    }),
+  ),
+  entregaveis: z.array(z.string()),
+  prazo_estimado: z.string(),
+  observacoes: z.string(),
 });
 
-/** Gera a prosa da Proposta (sem preço) para um Lead. */
 export async function gerarProposta(
   ctx: ContextoProposta,
+  llm: LlmClient,
 ): Promise<PropostaTexto> {
-  // Falha de configuração antes de qualquer chamada (padrão F002/F005).
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new PropostaError(0, "ANTHROPIC_API_KEY não configurada");
-  }
-
-  const client = new Anthropic();
-
   try {
-    const res = await client.messages.parse({
-      model: "claude-opus-4-8",
-      max_tokens: 1500,
-      thinking: { type: "disabled" },
+    return await llm.generateStructured({
       system: SYSTEM_PROMPT_PROPOSTA,
-      messages: [{ role: "user", content: montarContextoProposta(ctx) }],
-      output_config: { format: PROPOSTA_FORMAT },
+      prompt: montarContextoProposta(ctx),
+      schema,
+      tier: "strong",
+      maxTokens: 1500,
     });
-
-    const out = res.parsed_output as PropostaTexto | null;
-    if (!out) {
-      // parsed_output nulo: refusal, max_tokens, etc.
-      throw new PropostaError(200, "Claude não retornou uma proposta válida");
-    }
-    return out;
   } catch (e) {
     if (e instanceof PropostaError) throw e;
-    if (e instanceof Anthropic.APIError) {
-      throw new PropostaError(e.status ?? 0, e.message);
+    if (e instanceof LlmError) {
+      throw new PropostaError(e.status, e.message);
     }
     throw e;
   }

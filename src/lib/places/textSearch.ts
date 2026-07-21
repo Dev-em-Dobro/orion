@@ -45,10 +45,15 @@ type RawPlace = {
   userRatingCount?: number;
 };
 
-export async function textSearch(query: string): Promise<PlacesResult[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+export async function textSearch(
+  query: string,
+  apiKey: string,
+): Promise<PlacesResult[]> {
   if (!apiKey) {
-    throw new PlacesError(0, "GOOGLE_PLACES_API_KEY não configurada");
+    throw new PlacesError(
+      0,
+      "Google (Places + PageSpeed) não configurada — configure em /configuracao",
+    );
   }
 
   const res = await fetch(ENDPOINT, {

@@ -1,9 +1,8 @@
-// F007 — Geração de Ideias de Vídeo via Claude API (SDK oficial).
-// Contrato: /specs/03-contracts/claude-messages.md · Decisão: ADR-005.
-// Lança ConteudoError; quem traduz pra UI é a Server Action.
+// F007 — Ideias de Vídeo via LlmClient (F017 / ADR-011).
 
-import Anthropic from "@anthropic-ai/sdk";
-import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
+import { z } from "zod";
+import type { LlmClient } from "@/lib/llm";
+import { LlmError } from "@/lib/llm";
 import {
   SYSTEM_PROMPT_CONTEUDO,
   montarTema,
@@ -20,65 +19,43 @@ export class ConteudoError extends Error {
   }
 }
 
-const IDEIAS_FORMAT = jsonSchemaOutputFormat({
-  type: "object",
-  properties: {
-    ideias: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          titulo: { type: "string" },
-          formato: { type: "string" },
-          atrai: { type: "string" },
-          etapa: { type: "string", enum: ["topo", "meio", "fundo"] },
-          cta: { type: "string" },
-          roteiro: { type: "array", items: { type: "string" } },
-        },
-        required: ["titulo", "formato", "atrai", "etapa", "cta", "roteiro"],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ["ideias"],
-  additionalProperties: false,
+const schema = z.object({
+  ideias: z.array(
+    z.object({
+      titulo: z.string(),
+      formato: z.string(),
+      atrai: z.string(),
+      etapa: z.enum(["topo", "meio", "fundo"]),
+      cta: z.string(),
+      roteiro: z.array(z.string()),
+    }),
+  ),
 });
 
-/** Gera Ideias de Vídeo-Funil a partir de um tema. */
-export async function sugerirVideos(tema: string): Promise<IdeiaVideo[]> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new ConteudoError(0, "ANTHROPIC_API_KEY não configurada");
-  }
-
-  const client = new Anthropic();
-
+export async function sugerirVideos(
+  tema: string,
+  llm: LlmClient,
+): Promise<IdeiaVideo[]> {
   try {
-    const res = await client.messages.parse({
-      model: "claude-opus-4-8",
-      max_tokens: 4096,
-      thinking: { type: "disabled" },
+    const out = await llm.generateStructured({
       system: SYSTEM_PROMPT_CONTEUDO,
-      messages: [{ role: "user", content: montarTema(tema) }],
-      output_config: { format: IDEIAS_FORMAT },
+      prompt: montarTema(tema),
+      schema,
+      tier: "strong",
+      maxTokens: 4096,
     });
-
-    const out = res.parsed_output;
-    if (!out) {
-      throw new ConteudoError(200, "Claude não retornou ideias válidas");
-    }
-
     return out.ideias.map((i) => ({
       titulo: i.titulo,
       formato: i.formato,
       atrai: i.atrai,
-      etapa: i.etapa as IdeiaVideo["etapa"],
+      etapa: i.etapa,
       cta: i.cta,
       roteiro: i.roteiro,
     }));
   } catch (e) {
     if (e instanceof ConteudoError) throw e;
-    if (e instanceof Anthropic.APIError) {
-      throw new ConteudoError(e.status ?? 0, e.message);
+    if (e instanceof LlmError) {
+      throw new ConteudoError(e.status, e.message);
     }
     throw e;
   }

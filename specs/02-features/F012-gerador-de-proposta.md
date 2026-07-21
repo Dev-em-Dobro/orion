@@ -34,8 +34,9 @@ contrato.
   ajustada por Tier de nicho e porte.
 
 ## Dor → Serviço (catálogo)
-Derivado do último Diagnóstico (mesma fonte da F005; via
-`src/lib/dores/derivarDoDiagnostico`), mapeado por `src/lib/proposta/servicos.ts`:
+Derivado das **Dores persistidas** ([F004](F004-deteccao-de-dor.md)); o
+Diagnóstico alimenta a detecção. Mapeado por `src/lib/proposta/servicos.ts`
+(e equivalente por `TipoDor` quando aplicável):
 
 | Situação do Diagnóstico | Serviço sugerido |
 |-------------------------|------------------|
@@ -160,8 +161,8 @@ duplica** essa lógica.
 - `src/actions/leads/gerarProposta.ts` — fina (só geração; **sem** action de
   transição — a promoção a `proposta` reusa `registrarDesfecho`).
 - `src/app/leads/gerar-proposta-button.tsx` — painel, padrão dos existentes.
-- `src/lib/dores/derivarDoDiagnostico.ts` — **criado nesta feature** (puro);
-  reusado por F011/F013. Reusa também `src/lib/score/tierDoNicho` (F003).
+- `src/lib/dores/` — detecção/persistência na [F004](F004-deteccao-de-dor.md);
+  textos via `textosDasDores`. Reusa também `src/lib/score/tierDoNicho` (F003).
 - Lib nova? Não — reusa `@anthropic-ai/sdk` ([ADR-005](../04-decisions/ADR-005-anthropic-sdk-outreach.md)). **Sem ADR.**
 
 ## Fora do escopo (F012)

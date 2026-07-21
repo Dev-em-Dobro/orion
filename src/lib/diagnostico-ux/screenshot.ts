@@ -1,9 +1,6 @@
 // F008 — captura de screenshots (desktop + mobile) do site de um Lead.
-// Provider primário: Playwright local (Chromium headless). Alternativo:
-// ScreenshotOne, ativado quando SCREENSHOTONE_ACCESS_KEY está definida
-// (deploy serverless). Decisão: ADR-006.
-// Contrato do provider externo: /specs/03-contracts/screenshotone.md
-// Lança ScreenshotError; quem traduz pra UI é a Server Action.
+// Provider: ScreenshotOne (chave do aluno) em serverless; Playwright local
+// sem chave. Decisão: ADR-006. Contrato: /specs/03-contracts/screenshotone.md
 
 import type { Browser } from "playwright";
 
@@ -21,18 +18,28 @@ const DESKTOP = { width: 1280, height: 800 };
 const MOBILE = { width: 390, height: 844 };
 const TIMEOUT_PAGINA_MS = 30_000;
 
-/** Captura os screenshots desktop e mobile da URL. */
-export async function capturarScreenshots(url: string): Promise<Screenshots> {
-  return process.env.SCREENSHOTONE_ACCESS_KEY
-    ? viaScreenshotOne(url)
-    : viaPlaywright(url);
+/**
+ * Captura screenshots. `accessKey` = ScreenshotOne do aluno (BYOK).
+ * Sem chave: Playwright em local; em serverless (VERCEL) falha com orientação.
+ */
+export async function capturarScreenshots(
+  url: string,
+  accessKey?: string | null,
+): Promise<Screenshots> {
+  if (accessKey) {
+    return viaScreenshotOne(url, accessKey);
+  }
+
+  if (process.env.VERCEL) {
+    throw new ScreenshotError(
+      "ScreenshotOne não configurada — configure em /configuracao (necessária em produção serverless)",
+    );
+  }
+
+  return viaPlaywright(url);
 }
 
-// --- Provider primário: Playwright (Fase 1, local) -----------------------
-
 async function viaPlaywright(url: string): Promise<Screenshots> {
-  // Import dinâmico: a lib (e o Chromium) só carregam quando este provider
-  // é usado — em deploy com ScreenshotOne o Playwright nem precisa existir.
   const { chromium, devices } = await import("playwright");
 
   let browser: Browser;
@@ -40,7 +47,7 @@ async function viaPlaywright(url: string): Promise<Screenshots> {
     browser = await chromium.launch();
   } catch {
     throw new ScreenshotError(
-      "Chromium do Playwright não instalado — rode: npx playwright install chromium",
+      "Chromium do Playwright não instalado — rode: npx playwright install chromium. Ou configure ScreenshotOne em /configuracao",
     );
   }
 
@@ -70,7 +77,6 @@ async function capturarPagina(
         "Site fora do ar ou demorou demais pra carregar",
       );
     }
-    // Respiro pra fontes e animações de entrada assentarem.
     await page.waitForTimeout(1500);
     const buf = await page.screenshot({ type: "jpeg", quality: 80 });
     return buf.toString("base64");
@@ -79,12 +85,13 @@ async function capturarPagina(
   }
 }
 
-// --- Provider alternativo: ScreenshotOne (deploy serverless) -------------
-
-async function viaScreenshotOne(url: string): Promise<Screenshots> {
+async function viaScreenshotOne(
+  url: string,
+  accessKey: string,
+): Promise<Screenshots> {
   const [desktopB64, mobileB64] = await Promise.all([
-    fetchScreenshotOne(url, DESKTOP, "desktop"),
-    fetchScreenshotOne(url, MOBILE, "mobile"),
+    fetchScreenshotOne(url, DESKTOP, "desktop", accessKey),
+    fetchScreenshotOne(url, MOBILE, "mobile", accessKey),
   ]);
   return { desktopB64, mobileB64 };
 }
@@ -93,9 +100,10 @@ async function fetchScreenshotOne(
   url: string,
   viewport: { width: number; height: number },
   rotulo: string,
+  accessKey: string,
 ): Promise<string> {
   const params = new URLSearchParams({
-    access_key: process.env.SCREENSHOTONE_ACCESS_KEY!,
+    access_key: accessKey,
     url,
     viewport_width: String(viewport.width),
     viewport_height: String(viewport.height),

@@ -1,0 +1,10 @@
+# Dev local — Mailpit para inspecionar e-mails do magic link (ADR-010 / F014).
+# UI: http://127.0.0.1:8025 · SMTP: 1025 · API: mesma porta da UI
+
+services:
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped

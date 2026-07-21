@@ -43,27 +43,33 @@ enum Canal {
 }
 
 model Lead {
-  id         String     @id @default(cuid())
-  nome       String
-  endereco   String
-  telefone   String?
-  website    String?
-  categoria  String
+  id             String     @id @default(cuid())
+  user_id        String
+  nome           String
+  endereco       String
+  telefone       String?
+  website        String?
+  categoria      String
   nota           Float?
   num_avaliacoes Int?
-  place_id   String     @unique
-  status     LeadStatus @default(novo)
-  score      Int        @default(0)
-  created_at DateTime   @default(now())
-  updated_at DateTime   @updatedAt
+  place_id       String
+  status         LeadStatus @default(novo)
+  score          Int        @default(0)
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @updatedAt
 
+  user         User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
   diagnosticos Diagnostico[]
   dores        Dor[]
   outreaches   Outreach[]
+
+  @@unique([user_id, place_id])
+  @@index([user_id])
 }
 
 model Diagnostico {
   id                    String   @id @default(cuid())
+  user_id               String
   lead_id               String
   tem_site              Boolean
   // F009: website é Agregador link-in-bio ou perfil social (não é site próprio).
@@ -73,33 +79,181 @@ model Diagnostico {
   tempo_carregamento_ms Int?
   executado_em          DateTime @default(now())
 
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   lead Lead @relation(fields: [lead_id], references: [id], onDelete: Cascade)
 
   @@index([lead_id])
+  @@index([user_id])
 }
 
 model Dor {
   id         String     @id @default(cuid())
+  user_id    String
   lead_id    String
   tipo       TipoDor
   severidade Severidade
   detalhes   String
 
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   lead Lead @relation(fields: [lead_id], references: [id], onDelete: Cascade)
 
   @@index([lead_id])
+  @@index([user_id])
 }
 
 model Outreach {
-  id        String   @id @default(cuid())
-  lead_id   String
-  canal     Canal
+  id         String    @id @default(cuid())
+  user_id    String
+  lead_id    String
+  canal      Canal
   conteudo   String
   gerado_em  DateTime  @default(now())
   enviado    Boolean   @default(false)
   enviado_em DateTime?
 
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   lead Lead @relation(fields: [lead_id], references: [id], onDelete: Cascade)
 
   @@index([lead_id])
+  @@index([user_id])
+}
+
+// F016 / ADR-009 — chaves BYOK cifradas (AES-256-GCM). Um registro por User.
+enum ChaveApiStatus {
+  faltando
+  configurada
+  invalida
+}
+
+enum LlmProvider {
+  anthropic
+  openai
+  gemini
+}
+
+model UserApiKeys {
+  id         String   @id @default(cuid())
+  user_id    String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Provedor de IA ativo nas features (F017). Default Anthropic.
+  llm_provider LlmProvider @default(anthropic)
+
+  // Google — Places + PageSpeed (mesma chave Cloud).
+  google_ciphertext  Bytes?
+  google_iv          Bytes?
+  google_auth_tag    Bytes?
+  google_key_version Int            @default(1)
+  google_last4       String?
+  google_status      ChaveApiStatus @default(faltando)
+
+  // Anthropic (MVP de IA).
+  anthropic_ciphertext  Bytes?
+  anthropic_iv          Bytes?
+  anthropic_auth_tag    Bytes?
+  anthropic_key_version Int            @default(1)
+  anthropic_last4       String?
+  anthropic_status      ChaveApiStatus @default(faltando)
+
+  // OpenAI / Gemini — BYOK; uso efetivo via llm_provider (F017).
+  openai_ciphertext  Bytes?
+  openai_iv          Bytes?
+  openai_auth_tag    Bytes?
+  openai_key_version Int            @default(1)
+  openai_last4       String?
+  openai_status      ChaveApiStatus @default(faltando)
+
+  gemini_ciphertext  Bytes?
+  gemini_iv          Bytes?
+  gemini_auth_tag    Bytes?
+  gemini_key_version Int            @default(1)
+  gemini_last4       String?
+  gemini_status      ChaveApiStatus @default(faltando)
+
+  // ScreenshotOne — opcional (F008 em serverless).
+  screenshotone_ciphertext  Bytes?
+  screenshotone_iv          Bytes?
+  screenshotone_auth_tag    Bytes?
+  screenshotone_key_version Int            @default(1)
+  screenshotone_last4       String?
+  screenshotone_status      ChaveApiStatus @default(faltando)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("user_api_keys")
+}
+
+// ---------------------------------------------------------------------------
+// F014 / ADR-007 — modelos de infra de auth (Better Auth). Distintos do domínio.
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  leads          Lead[]
+  diagnosticos   Diagnostico[]
+  dores          Dor[]
+  outreaches     Outreach[]
+  apiKeys        UserApiKeys?
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }

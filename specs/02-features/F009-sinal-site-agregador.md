@@ -111,7 +111,8 @@ Delta sobre [F002](F002-diagnostico-de-presenca-digital.md) e
 - F002 e F003 atualizadas com o delta e a referência a esta spec.
 
 ## Fora do escopo (F009)
-- Criar o registro de **Dor** `SITE_AGREGADOR` → F004 (aqui só o sinal e o score).
+- Criar o registro de **Dor** `SITE_AGREGADOR` → feito na
+  [F004](F004-deteccao-de-dor.md) (aqui só o sinal e o score).
 - Outras plataformas como "site": TikTok, LinkedIn, YouTube, `wa.me`, Google
   Maps, iFood/delivery — promover por spec se virar caso real (escopo escolhido:
   agregadores link-in-bio + Instagram/Facebook).

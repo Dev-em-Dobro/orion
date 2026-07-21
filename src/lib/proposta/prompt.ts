@@ -9,7 +9,7 @@ import { SERVICO_LABEL, type Servico } from "./servicos";
 export type ContextoProposta = {
   nome: string;
   categoria: string;
-  /** Dores em linguagem natural (derivarDoDiagnostico). */
+  /** Dores em linguagem natural (`textosDasDores` / F004). */
   dores: string[];
   servicos: Servico[];
 };

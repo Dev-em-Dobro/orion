@@ -141,7 +141,8 @@ Cada linha exibe `score`, Tier do nicho e um realce visual para `score ≥ 60`.
   ver delta no contrato e na F001) e do último Diagnóstico (F002).
 
 ## Fora do escopo (F003)
-- Detecção/persistência de Dor (F004) — a F003 lê o Diagnóstico direto por ora.
+- Necessidade a partir de Dor persistida ([F004](F004-deteccao-de-dor.md)) —
+  a F003 continua lendo o Diagnóstico direto até evolução própria.
 - Geração de Outreach (F005).
 - Priorização em lote ("priorizar todos os enriquecidos") — conflita com a
   guideline síncrona; avaliar por spec se virar dor real.

@@ -1,7 +1,9 @@
 # F007 — Sugestões de Vídeo-Funil (conteúdo inbound)
 
 ## Status
-Proposta — 2026-06-12
+**Fora do menu (2026-07-20).** Código em `/conteudo` permanece no repo, mas a
+aba foi removida da sidebar — produto foca no funil outbound. Reativar exige
+recolocar o item no nav.
 
 ## Objetivo
 Gerar **Ideias de Vídeo** pro seu canal de conteúdo (YouTube por padrão,

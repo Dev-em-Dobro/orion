@@ -118,7 +118,7 @@ operador cola a mensagem do Lead + botão **Sugerir respostas**.
   existente (`registrarDesfecho`, F006/F010). A F011 apenas **arma a conversa**;
   quem marca o status é o operador, e não há nova action de transição aqui.
 - Classificação automática do tipo de objeção (preço/tempo/confiança).
-- Geração a partir de Dores persistidas (F004) — por ora deriva do Diagnóstico.
+- Geração a partir de Dores persistidas ([F004](F004-deteccao-de-dor.md)).
 - Sugestão de resposta por e-mail — esta feature mira WhatsApp.
 
 ## Custo estimado

@@ -110,14 +110,14 @@ structured output e visão (F008). Suportar **OpenAI e Gemini** exige uma
 > **Gemini** como fast-follow (a config já aceita as 3 chaves desde o início).
 
 ## 5. Spec faltante — Dor (F004)
-Único item de **dívida de spec**: a entidade `Dor` existe no schema mas **nada a
-cria**. Hoje F003/F005/F011/F012 derivam as Dores do Diagnóstico direto (via
-`derivarDoDiagnostico`). Não bloqueia o lançamento, mas fecha o modelo de domínio.
+Único item de **dívida de spec** fechado: a entidade `Dor` existia no schema mas
+**nada a criava**. F003/F005/F011/F012 derivavam do Diagnóstico via
+`derivarDoDiagnostico`.
 
-- [ ] Escrever `specs/02-features/F004-deteccao-de-dor.md`.
-- [ ] Persistir `Dor` no passo do Diagnóstico (F002) e migrar as fontes que hoje
-      leem o Diagnóstico direto (pontos marcados "até a F004 existir" em
-      `derivarDoDiagnostico`, F003, F005, F011, F012, F009).
+- [x] Escrever `specs/02-features/F004-deteccao-de-dor.md`.
+- [x] Persistir `Dor` no passo do Diagnóstico (F002) e migrar as fontes que
+      liam o Diagnóstico direto (F005, F011, F012, F013; F003 permanece no
+      Diagnóstico até evolução própria).
 
 ## 6. UI/UX mais clean
 Redesign pra cara de produto (hoje é dashboard funcional interna).
@@ -130,32 +130,42 @@ Redesign pra cara de produto (hoje é dashboard funcional interna).
 - [ ] Landing/login com identidade da marca final.
 
 ## 7. Deploy + domínio final
-- [ ] Escolher hospedagem (Vercel provável) — **atenção:** F008 usa Playwright
-      local, que **não roda em serverless**; em produção exige ScreenshotOne
-      (ADR-006) → entra no BYOK (F016).
-- [ ] Neon de produção + `prisma migrate deploy` no pipeline; backups.
-- [ ] Secrets do servidor (chave de cifra do BYOK, secret de sessão) — não `.env` commitado.
-- [ ] **Comprar o domínio final** (ainda não temos) + DNS + HTTPS.
-- [ ] `.vercelignore` já existe; revisar build e variáveis de ambiente de produção.
+- [x] Hospedagem **Vercel** — F008: Playwright local; em prod (serverless)
+      ScreenshotOne via BYOK (ADR-006 / F016). Código: `screenshot.ts` + aviso
+      em `/configuracao`. Health: `GET /api/health`.
+- [x] Neon de produção + `prisma migrate deploy` — migrations aplicadas no banco
+      principal (ops). Backups seguem no Neon. Checklist no `README.md` § Deploy.
+- [x] Secrets do servidor sem default — `BYOK_MASTER_KEY`, `BETTER_AUTH_SECRET`,
+      `BETTER_AUTH_URL`, `DATABASE_URL` validados no boot (`instrumentation.ts` +
+      `src/lib/seguranca/env-servidor.ts`) e em `/api/health` (503 se faltar).
+- [x] **Domínio de produção** — `orion-lead-hunter.devemdobro.com` (DNS Cloudflare
+      + Vercel, HTTPS). `BETTER_AUTH_URL` em prod deve apontar para
+      `https://orion-lead-hunter.devemdobro.com`.
+- [x] `.vercelignore` existe; vars documentadas em `.env.example` + README.
 
 ## 8. Segurança / LGPD / legal
 Agora há **usuários externos + chaves + dados** — o risco muda de patamar.
 
-- [ ] Cifra das chaves em repouso (ver F016) e nunca logar segredo.
-- [ ] Isolamento de dados por usuário testado (ver F015).
-- [ ] **Termos de Uso + Política de Privacidade** (deixa de ser uso interno).
-- [ ] LGPD: base legal, dados dos alunos (PII de login), e manter a regra de só
-      coletar **dado público** dos Leads (Google Places) — envio segue manual.
+- [x] Cifra das chaves em repouso (F016 / ADR-009) e nunca logar segredo.
+- [x] Isolamento de dados por usuário testado (F015 + E2E isolamento).
+- [x] **Termos de Uso + Política de Privacidade** — rotas públicas `/termos` e
+      `/privacidade` (contato em `src/lib/legal.ts`).
+- [x] LGPD: privacidade descreve PII de conta, chaves BYOK cifradas, Leads só
+      com **dado público** (Places); envio de Outreach permanece manual.
 - [ ] Limites anti-abuso do recurso **compartilhado** (rate limit por usuário no
-      app/DB). Custo de API é BYOK, mas compute/DB é nosso.
+      app/DB). Custo de API é BYOK, mas compute/DB é nosso. (fast-follow)
 
 ## 9. Dívida técnica / polish
-- [ ] **Fix arredondamento da faixa de preço (F012)** — `1500×1,15` dá
-      `1724,999…` em ponto flutuante e a faixa sai `R$ 1.700` em vez de `R$ 1.750`.
-      Arredondar o produto antes do `/50` em `src/lib/proposta/precos.ts`. (P)
-- [ ] Testes automatizados (as libs puras — score, precos, servicos — são fáceis
-      de cobrir; hoje não há runner de teste no projeto).
-- [ ] Observabilidade mínima (erros/uso) e tratamento de erro consistente.
+- [x] **Fix arredondamento da faixa de preço (F012)** — `arredondar50` arredonda
+      o float antes do `/50` (`src/lib/proposta/precos.ts`); regressão coberta em
+      `tests/unit/proposta.test.ts`.
+- [x] Testes automatizados unitários — **Vitest** ([ADR-012](04-decisions/ADR-012-vitest-unitarios.md)):
+      `npm test` cobre score, precos/servicos, cifra BYOK, máscara, mensagemEscopo,
+      secrets (`tests/unit/`). E2E de isolamento F015 permanece separado.
+- [x] Observabilidade mínima de **erros** — Sentry (`@sentry/nextjs`,
+      [ADR-013](04-decisions/ADR-013-observabilidade.md)): client + server,
+      `error.tsx` / `global-error.tsx`, `reportarErro` / `setSentryUser`. Sem DSN
+      ⇒ no-op. PostHog (uso/quotas) fica fast-follow.
 - [ ] Persistência opcional de F007 (Ideias de Vídeo) e F008 (Diagnóstico UX) —
       hoje deferidas; avaliar se entram no produto pro aluno.
 
@@ -191,11 +201,14 @@ Agora há **usuários externos + chaves + dados** — o risco muda de patamar.
   "caça" os Leads e "varre o céu" atrás deles). O app fica em **subdomínio Dev em
   Dobro** (ex.: `orion.devemdobro.com`).
 
+### 2026-07-15
+- **Domínio:** subdomínio Dev em Dobro
+  **`https://orion-lead-hunter.devemdobro.com`** — DNS na Cloudflare, app na
+  Vercel (HTTPS). Produção: `BETTER_AUTH_URL` = essa URL (sem barra no fim).
+
 ## Decisões em aberto (precisam da sua definição)
-1. **Domínio/DNS:** confirmar o subdomínio de produção `orion.devemdobro.com`
-   (DNS na Vercel, titularidade do registrar com você). Nome já decidido (Orion);
-   se um dia quiser marca própria, avaliar um domínio dedicado (`.com`/`.app` de
-   "Orion" são disputados → provável precisar de um qualificador).
+_Nenhuma no momento._ (Marca/oferta em `src/lib/brand.ts` continua editável
+pelo operador; não bloqueia o domínio.)
 
 ## MVP — caminho crítico (o mínimo pra abrir)
 Ordem sugerida (bloqueadores primeiro):

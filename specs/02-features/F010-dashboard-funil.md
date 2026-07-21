@@ -61,9 +61,10 @@ adiciona os botões de desfecho correspondentes na área de ações da linha
 Layout no espírito da referência (`ref.png`), em cards sobre o tema escuro atual.
 Todos os números vêm de uma única leitura do banco no server component.
 
-1. **Funil por estágio** (card principal) — uma barra por estágio com contagem,
-   na ordem do funil. Largura proporcional ao maior estágio (como já é hoje),
-   agora incluindo `qualificado` e `proposta`.
+1. **Funil por estágio** (card principal) — silhueta vertical com anéis
+   (halo), cores por estágio, hover + legenda interativa; contagem e % do
+   pico. Inclui `qualificado` e `proposta`. `perdido` fica como barra de
+   vazamento lateral.
 2. **Taxas de conversão** — entre os estágios do funil de venda:
    `contatado → respondeu → qualificado → proposta → ganho`. Cada passo mostra a
    % (ex.: "Contatado→Respondeu 40%"). Denominador 0 → exibe "—", nunca divisão

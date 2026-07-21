@@ -6,6 +6,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { mensagemEscopo, requireOutreachOwned } from "@/lib/db/scoped";
 
 const schema = z.object({
   outreach_id: z.string().cuid("outreach_id inválido"),
@@ -25,38 +26,39 @@ export async function marcarEnviado(
     return { kind: "erro", mensagem: "outreach_id inválido" };
   }
 
-  const outreach = await prisma.outreach.findUnique({
-    where: { id: parsed.data.outreach_id },
-    include: { lead: true },
-  });
-  if (!outreach) {
-    return { kind: "erro", mensagem: "Outreach não encontrada" };
+  try {
+    const { outreach } = await requireOutreachOwned(parsed.data.outreach_id);
+
+    const promove =
+      outreach.lead.status === "priorizado" ||
+      outreach.lead.status === "enriquecido";
+
+    await prisma.$transaction([
+      prisma.outreach.update({
+        where: { id: outreach.id },
+        data: { enviado: true, enviado_em: new Date() },
+      }),
+      ...(promove
+        ? [
+            prisma.lead.update({
+              where: { id: outreach.lead_id },
+              data: { status: "contatado" },
+            }),
+          ]
+        : []),
+    ]);
+
+    revalidatePath("/leads");
+
+    return {
+      kind: "ok",
+      mensagem: promove
+        ? "Enviada ✓ — Lead movido para contatado."
+        : "Enviada ✓.",
+    };
+  } catch (e) {
+    const escopo = mensagemEscopo(e);
+    if (escopo) return { kind: "erro", mensagem: escopo };
+    throw e;
   }
-
-  // Avança o funil só a partir de priorizado/enriquecido — nunca regride.
-  const promove =
-    outreach.lead.status === "priorizado" ||
-    outreach.lead.status === "enriquecido";
-
-  await prisma.$transaction([
-    prisma.outreach.update({
-      where: { id: outreach.id },
-      data: { enviado: true, enviado_em: new Date() },
-    }),
-    ...(promove
-      ? [
-          prisma.lead.update({
-            where: { id: outreach.lead_id },
-            data: { status: "contatado" },
-          }),
-        ]
-      : []),
-  ]);
-
-  revalidatePath("/leads");
-
-  return {
-    kind: "ok",
-    mensagem: promove ? "Enviada ✓ — Lead movido para contatado." : "Enviada ✓.",
-  };
 }

@@ -15,8 +15,12 @@ fora (existe? HTTPS? performance); a F008 olha o site como um usuário —
 aparência, clareza, chamada pra ação, experiência mobile.
 
 ## Input (UI)
-Botão **Diagnóstico UX** em cada linha da lista em `/leads`, visível
-apenas para Leads com `website` não-nulo.
+> **Pausa (2026-07-20):** o botão **não está exposto na UI** por hora
+> (detalhe do Lead em `/leads`). Código da Server Action e do componente
+> permanecem; reativar quando a feature voltar ao fluxo do operador.
+
+Botão **Diagnóstico UX** (quando reativado) no detalhe do Lead em
+`/leads`, visível apenas para Leads com `website` não-nulo.
 
 Input da Server Action:
 

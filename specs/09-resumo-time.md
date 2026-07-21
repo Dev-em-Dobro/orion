@@ -54,8 +54,7 @@ completo. Ver [roadmap](07-lancamento-para-alunos.md).
 ### 0. Antes de qualquer código
 - [ ] Fechar o [ADR-011](04-decisions/ADR-011-multi-provider-llm.md): **interface
       própria vs. Vercel AI SDK** pro multi-provider (afeta só a F017, mas decidir cedo).
-- [ ] (Ricardo) Configurar o subdomínio de produção **`orion.devemdobro.com`**
-      (nome já definido: **Orion**).
+- [x] Domínio: `orion-lead-hunter.devemdobro.com` (Cloudflare + Vercel).
 
 ### 1. F015 — Multi-tenant (fundação de dados) — *fazer primeiro*
 - [ ] `user_id` (FK) em Lead, Diagnóstico, Dor, Outreach + índices + migração com backfill.
@@ -82,9 +81,10 @@ completo. Ver [roadmap](07-lancamento-para-alunos.md).
 - [ ] Login, `/configuracao`, empty states/onboarding.
 
 ### 5. Deploy + domínio + segurança/LGPD
-- [ ] Vercel, Neon de produção, secrets (chave-mestra da cifra, secret de sessão).
-- [ ] Termos de Uso + Política de Privacidade.
-- [ ] ⚠️ F008 usa Playwright (não roda serverless) → exige ScreenshotOne em produção.
+- [x] Domínio `orion-lead-hunter.devemdobro.com` + secrets/health (ver [07](07-lancamento-para-alunos.md) §§7–8).
+- [x] Termos de Uso + Política de Privacidade (`/termos`, `/privacidade`).
+- [x] F008 em serverless → ScreenshotOne via BYOK (ADR-006).
+- [x] Neon de produção — migrations aplicadas no banco principal.
 
 ### 6. Beta fechado
 - [ ] Abrir pra um grupo pequeno de alunos.

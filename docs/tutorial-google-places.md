@@ -5,11 +5,11 @@ ficam na **sua** conta Google, isolados dos demais. Este guia mostra como:
 
 1. criar a chave no Google Cloud,
 2. entender como funcionam os créditos/cobrança (pra não tomar susto),
-3. colocar a chave no projeto (`.env`),
-4. **nunca** deixar a chave vazar (não comitar o `.env`).
+3. colar a chave em **Configuração** no app (BYOK — [F016](../specs/02-features/F016-configuracao-de-chaves.md)),
+4. **nunca** deixar a chave vazar (não comitar o `.env` do servidor).
 
-> Tudo aqui é **local, na sua máquina**. Você **não precisa** publicar/fazer
-> deploy do projeto — ele roda no seu próprio computador.
+> No app hospedado, você cola a chave na UI. O `.env` é só do servidor
+> (banco, auth, chave-mestra BYOK) — não das keys de Places do aluno.
 
 ---
 
@@ -91,21 +91,19 @@ Na prática:
    - **Restrições de API:** deixe marcadas **apenas** a *Places API (New)* e a
      *PageSpeed Insights API*. Se a chave vazar, ela não serve pra mais nada.
 
-## Passo 6 — Colocar a chave no projeto (`.env`)
+## Passo 6 — Colar a chave no app (BYOK)
 
-1. Na pasta do projeto, copie o arquivo de exemplo para um `.env`:
-   - **Windows (PowerShell):** `Copy-Item .env.example .env`
-   - **Mac/Linux:** `cp .env.example .env`
-2. Abra o `.env` e preencha as duas linhas do Google com a sua chave:
-   ```env
-   GOOGLE_PLACES_API_KEY=cole_sua_chave_aqui
-   PAGESPEED_API_KEY=cole_a_mesma_chave_aqui
-   ```
-   Pode usar **a mesma chave** nas duas, contanto que ela tenha as duas APIs
-   liberadas (Passo 2 e Passo 5).
-3. O `.env` também tem outras variáveis, que você preenche conforme for usar:
-   - `DATABASE_URL` — o seu banco de dados.
-   - `ANTHROPIC_API_KEY` — a chave da Claude, usada pra **gerar Outreach**.
+Na **Fase 2** a chave **não** vai no `.env` do aluno pra Places/PageSpeed —
+ela fica em **Configuração** (`/configuracao`), cifrada, só da sua conta.
+
+1. Abra o app, faça login e vá em **Configuração**.
+2. No card **Google (Places + PageSpeed)**, cole a chave → **Salvar** →
+   **Testar chave**.
+3. (Opcional, local/dev do time) variáveis de servidor no `.env` seguem
+   sendo `DATABASE_URL`, `BYOK_MASTER_KEY`, `BETTER_AUTH_*` — veja
+   [`.env.example`](../.env.example).
+
+Guia resumido também dentro do app: `/configuracao/tutorial-google`.
 
 ## Passo 7 — NUNCA comite o `.env`
 

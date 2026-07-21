@@ -1,0 +1,35 @@
+-- F016 / ADR-009 — campos cifrados em UserApiKeys (BYOK).
+
+CREATE TYPE "ChaveApiStatus" AS ENUM ('faltando', 'configurada', 'invalida');
+
+ALTER TABLE "user_api_keys"
+  ADD COLUMN "google_ciphertext" BYTEA,
+  ADD COLUMN "google_iv" BYTEA,
+  ADD COLUMN "google_auth_tag" BYTEA,
+  ADD COLUMN "google_key_version" INTEGER NOT NULL DEFAULT 1,
+  ADD COLUMN "google_last4" TEXT,
+  ADD COLUMN "google_status" "ChaveApiStatus" NOT NULL DEFAULT 'faltando',
+  ADD COLUMN "anthropic_ciphertext" BYTEA,
+  ADD COLUMN "anthropic_iv" BYTEA,
+  ADD COLUMN "anthropic_auth_tag" BYTEA,
+  ADD COLUMN "anthropic_key_version" INTEGER NOT NULL DEFAULT 1,
+  ADD COLUMN "anthropic_last4" TEXT,
+  ADD COLUMN "anthropic_status" "ChaveApiStatus" NOT NULL DEFAULT 'faltando',
+  ADD COLUMN "openai_ciphertext" BYTEA,
+  ADD COLUMN "openai_iv" BYTEA,
+  ADD COLUMN "openai_auth_tag" BYTEA,
+  ADD COLUMN "openai_key_version" INTEGER NOT NULL DEFAULT 1,
+  ADD COLUMN "openai_last4" TEXT,
+  ADD COLUMN "openai_status" "ChaveApiStatus" NOT NULL DEFAULT 'faltando',
+  ADD COLUMN "gemini_ciphertext" BYTEA,
+  ADD COLUMN "gemini_iv" BYTEA,
+  ADD COLUMN "gemini_auth_tag" BYTEA,
+  ADD COLUMN "gemini_key_version" INTEGER NOT NULL DEFAULT 1,
+  ADD COLUMN "gemini_last4" TEXT,
+  ADD COLUMN "gemini_status" "ChaveApiStatus" NOT NULL DEFAULT 'faltando',
+  ADD COLUMN "screenshotone_ciphertext" BYTEA,
+  ADD COLUMN "screenshotone_iv" BYTEA,
+  ADD COLUMN "screenshotone_auth_tag" BYTEA,
+  ADD COLUMN "screenshotone_key_version" INTEGER NOT NULL DEFAULT 1,
+  ADD COLUMN "screenshotone_last4" TEXT,
+  ADD COLUMN "screenshotone_status" "ChaveApiStatus" NOT NULL DEFAULT 'faltando';

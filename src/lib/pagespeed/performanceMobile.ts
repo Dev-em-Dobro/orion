@@ -25,10 +25,15 @@ type RawPagespeed = {
 };
 
 /** Roda o PSI mobile e retorna o score 0–100. */
-export async function performanceMobile(url: string): Promise<number> {
-  const apiKey = process.env.PAGESPEED_API_KEY;
+export async function performanceMobile(
+  url: string,
+  apiKey: string,
+): Promise<number> {
   if (!apiKey) {
-    throw new PagespeedError(0, "PAGESPEED_API_KEY não configurada");
+    throw new PagespeedError(
+      0,
+      "Google (Places + PageSpeed) não configurada — configure em /configuracao",
+    );
   }
 
   const params = new URLSearchParams({

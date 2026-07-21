@@ -1,7 +1,7 @@
 # F014 — Autenticação (login)
 
 ## Status
-Proposta — 2026-07-13
+Implementada — 2026-07-13
 
 ## Objetivo
 Dar a cada **aluno** uma conta própria: **login**, **sessão** e **proteção das
@@ -41,17 +41,20 @@ Gerados pelo Better Auth com adapter Prisma: `User`, `Session`, `Account`,
    sessão ou lança. É o ponto único de checagem, consumido pela F015.
 
 ## Critérios de aceitação
-- [ ] **AC1** — Sem sessão, acessar `/`, `/leads`, `/conteudo`, `/treino` ou
+- [x] **AC1** — Sem sessão, acessar `/`, `/leads`, `/treino` ou
       `/configuracao` redireciona pra `/login`. Rotas de login/callback são públicas.
-- [ ] **AC2** — Login com Google cria `User`+`Session` na 1ª vez e reusa nas
+- [x] **AC2** — Login com Google cria `User`+`Session` na 1ª vez e reusa nas
       seguintes (mesmo `User` pelo e-mail/Account).
-- [ ] **AC3** — Magic link: informar e-mail dispara um e-mail com link válido;
+- [x] **AC3** — Magic link: informar e-mail dispara um e-mail com link válido;
       abrir o link autentica e abre sessão. Link expirado/reusado → erro claro.
-- [ ] **AC4** — `requireUser()` devolve o usuário logado nas Server Actions e
+- [x] **AC4** — `requireUser()` devolve o usuário logado nas Server Actions e
       lança (tratado como erro amigável) quando não há sessão.
-- [ ] **AC5** — Logout encerra a sessão e volta a barrar as rotas protegidas.
-- [ ] **AC6** — Segredo de sessão e credenciais de OAuth lidos de env do servidor;
-      ausência → erro descritivo no boot/health, nunca valores default.
+- [x] **AC5** — Logout encerra a sessão e volta a barrar as rotas protegidas.
+- [x] **AC6** — Segredo de sessão (`BETTER_AUTH_SECRET`) e `BETTER_AUTH_URL`
+      lidos de env do servidor; ausência → erro descritivo no boot, nunca
+      valores default. Credenciais Google (`GOOGLE_CLIENT_*`) são **opcionais**
+      no boot: se ausentes, OAuth Google fica desabilitado (magic link segue);
+      se presentes, o provider é habilitado sem defaults inventados.
 
 ## Decisões de implementação
 - `src/lib/auth/` — config do Better Auth (adapter Prisma, providers) +
@@ -60,7 +63,28 @@ Gerados pelo Better Auth com adapter Prisma: `User`, `Session`, `Account`,
 - Middleware de proteção de rotas em `src/middleware.ts`.
 - `src/app/login/page.tsx` (client: Google + magic link).
 - Lib nova? **Sim** — `better-auth` ([ADR-007](../04-decisions/ADR-007-better-auth.md))
-  e `resend` ([ADR-010](../04-decisions/ADR-010-email-transacional.md)).
+  e `nodemailer` para SMTP Resend
+  ([ADR-010](../04-decisions/ADR-010-email-transacional.md)).
+
+## Como testar (manual)
+1. Preencher no `.env` as vars mínimas (`BETTER_AUTH_*` + e-mail). Secret:
+   `openssl rand -base64 32`. Google OAuth é opcional (`GOOGLE_CLIENT_*`).
+2. Com Google: no Cloud Console, redirect URI
+   `{BETTER_AUTH_URL}/api/auth/callback/google`.
+3. Aplicar migração: `npx prisma migrate deploy` (ou `npm run db:migrate`).
+4. **Magic link local:** `docker compose up -d` (Mailpit) e
+   `EMAIL_PROVIDER=mailpit` + `EMAIL_FROM` + `MAILPIT_URL=http://127.0.0.1:8025`
+   ([ADR-010](../04-decisions/ADR-010-email-transacional.md)). UI: http://127.0.0.1:8025
+   Em produção: `EMAIL_PROVIDER=resend` + `RESEND_SMTP_*`.
+5. `npm run dev` — sem as envs de auth o boot deve falhar com mensagem clara.
+6. Sem cookie: abrir `/`, `/leads`, `/treino`, `/configuracao` → redirect `/login`.
+7. Google: entrar → 1ª vez cria User/Session (Prisma Studio / tabela `user`);
+   segunda vez reusa o mesmo User.
+8. Magic link: informar e-mail → estado "enviamos um link"; abrir o link no
+   Mailpit (ou Resend em prod) → sessão. Reabrir o mesmo link → erro claro.
+9. **Sair** na sidebar → rotas protegidas voltam a pedir login.
+10. Em Server Action (quando F015 ligar): `await requireUser()` devolve o user
+    ou lança `AuthError`.
 
 ## Fora do escopo (F014)
 - E-mail+senha e "recuperar senha" (decidido: sem senha) — só como plano B de

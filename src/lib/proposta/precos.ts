@@ -25,8 +25,9 @@ function multPorte(num_avaliacoes: number | null): number {
 }
 
 // Arredonda pra múltiplos de R$50 (proposta com número "redondo").
+// Math.round(v) antes do /50 evita IEEE-754 (ex.: 1500×1.15 → 1724.999… → 1700).
 function arredondar50(v: number): number {
-  return Math.round(v / 50) * 50;
+  return Math.round(Math.round(v) / 50) * 50;
 }
 
 export type Precificacao = {

@@ -2,6 +2,8 @@
 // (client). Sem hooks nem "use client" → usável dos dois lados.
 import type { LeadStatus } from "@prisma/client";
 
+export { linkWhatsapp } from "@/lib/outreach/whatsappLink";
+
 export const STATUS_BADGE: Record<LeadStatus, string> = {
   novo: "bg-zinc-500/15 text-zinc-300",
   enriquecido: "bg-sky-500/15 text-sky-300",
@@ -29,16 +31,4 @@ export function SimNao({ valor }: { valor: boolean | null | undefined }) {
   ) : (
     <span className="text-red-400">✗</span>
   );
-}
-
-// Link wa.me a partir do telefone + mensagem (mesma regra da gerarOutreach action).
-export function linkWhatsapp(
-  telefone: string | null,
-  mensagem: string,
-): string | null {
-  if (!telefone) return null;
-  let d = telefone.replace(/\D/g, "");
-  if (!d) return null;
-  if (d.length <= 11) d = `55${d}`;
-  return `https://wa.me/${d}?text=${encodeURIComponent(mensagem)}`;
 }

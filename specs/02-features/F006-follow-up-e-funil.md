@@ -51,8 +51,9 @@ Na página `/leads`:
   - Botões de desfecho **Respondeu / Ganho / Perdido** quando o Lead está
     `contatado` ou `respondeu`.
 
-A mensagem de follow-up usa o mesmo fluxo da F005 (texto + link `wa.me` +
-**Marcar como enviada**), mas com prompt próprio (2º toque).
+A mensagem de follow-up usa o mesmo fluxo da F005 (texto + link
+`api.whatsapp.com/send` + **Marcar como enviada**), mas com prompt próprio
+(2º toque). Mesmas regras de tom da F005: **sem emojis**.
 
 ## Fluxo
 ### Marcar enviada — `marcarEnviado({ outreach_id })`
@@ -69,7 +70,8 @@ A mensagem de follow-up usa o mesmo fluxo da F005 (texto + link `wa.me` +
 ### Gerar follow-up
 Reusa a Server Action da F005 com `tipo = "followup"` — gera novo `Outreach`
 (`canal = whatsapp`, `enviado = false`) com o **prompt de follow-up** (mais
-curto, leve, sem cobrança, retoma o gancho e re-oferece o diagnóstico gratuito).
+curto, leve, sem cobrança, **sem emoji**, retoma o gancho e re-oferece o
+diagnóstico gratuito).
 Não muda status; o avanço ocorre ao marcar enviada.
 
 ## Critérios de aceitação

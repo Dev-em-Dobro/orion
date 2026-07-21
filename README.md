@@ -1,19 +1,21 @@
-# prospect-engine
+# Orion Lead Hunter
 
-Motor de prospecção automatizada, genérico e sem marca. Coleta
-estabelecimentos via Google Places, identifica quem tem presença digital
-fraca (sem site, site lento, sem HTTPS), prioriza cada um por um score e
-usa a Claude API pra escrever o texto que inicia a conversa com cada Lead.
+> Repositório: `prospect-engine`
 
-Você roda a sua própria instância: crie as suas chaves de API, coloque no
-`.env` e (opcional) personalize a sua empresa/oferta em `src/lib/brand.ts`.
+Motor de prospecção para alunos (Dev em Dobro). Coleta estabelecimentos via
+Google Places, identifica quem tem presença digital fraca (sem site, site
+lento, sem HTTPS), prioriza cada um por um score e usa a Claude API pra
+escrever o texto que inicia a conversa com cada Lead.
+
+Multi-tenant (Fase 2): cada aluno faz login e cola as próprias chaves de API
+em `/configuracao` (BYOK). Personalize a oferta em `src/lib/brand.ts`.
 
 Esse texto gerado — pronto pra você enviar por WhatsApp ou e-mail — é o
 que o projeto chama de **Outreach**. É o termo oficial, definido no
 [domain model](./specs/01-domain-model.md), e aparece com esse mesmo
 sentido em todo o código e na interface.
 
-Single-tenant: cada pessoa roda a sua própria instância. Tudo síncrono na Fase 1.
+Row-level multi-tenant por `user_id` (F015). Chaves BYOK cifradas (F016 / ADR-009).
 
 ## Stack
 - Next.js 15 (App Router) + TypeScript estrito
@@ -23,26 +25,37 @@ Single-tenant: cada pessoa roda a sua própria instância. Tudo síncrono na Fas
 
 ## Como rodar localmente
 
-Pré-requisitos: Node 20+, conta no Neon, chaves de API (Claude, Google
-Places, PageSpeed).
+Pré-requisitos: Node 20+, conta no Neon, `BYOK_MASTER_KEY` (e depois as
+chaves do aluno em `/configuracao`).
 
 ```bash
 # instalar dependências (depois que o Next estiver inicializado)
 npm install
 
 # configurar as variáveis de ambiente (copie .env.example → .env e preencha)
-# DATABASE_URL, ANTHROPIC_API_KEY, GOOGLE_PLACES_API_KEY, PAGESPEED_API_KEY
+# DATABASE_URL, BYOK_MASTER_KEY (openssl rand -base64 32)
+# F014 auth: BETTER_AUTH_SECRET, BETTER_AUTH_URL, EMAIL_* / RESEND_SMTP_*
+# (magic link local: npm run mailpit + EMAIL_PROVIDER=mailpit — ver F014)
+# Chaves Google/Anthropic/ScreenshotOne: UI /configuracao (F016), não .env
+# Isolamento multi-tenant (F015): npm run test:e2e:isolamento
+# → screenshots em test-results/isolamento/ (gitignored)
+# Unitários (ADR-012): npm test
+# Coverage das libs: npm run test:coverage
 
 # (opcional) personalizar a sua empresa/oferta nas mensagens: src/lib/brand.ts
 
 # criar as tabelas no banco (migrations)
 npx prisma migrate dev
 
+# magic link local (Mailpit) — UI em http://127.0.0.1:8025
+npm run mailpit
+
 # subir o servidor de desenvolvimento
 npm run dev
 ```
 
-Abra http://localhost:3000.
+Abra http://localhost:3000. Sem sessão, o app redireciona para `/login`.
+Magic links locais aparecem em http://127.0.0.1:8025.
 
 ## Obter a chave da Google Places API
 
@@ -66,8 +79,53 @@ Com o 2FA ativo:
 2. Em **APIs e serviços → Biblioteca**, habilite a **Places API** e a
    **PageSpeed Insights API**.
 3. Em **APIs e serviços → Credenciais**, crie uma **chave de API**.
-4. Copie a chave para `.env` em `GOOGLE_PLACES_API_KEY` e
-   `PAGESPEED_API_KEY`.
+4. Cole a chave em **Configuração** (`/configuracao`) no slot Google
+   (Places + PageSpeed usam a mesma chave).
+
+## Deploy (Vercel + Neon) — beta
+
+Checklist mínimo para colocar o app no ar para alunos:
+
+1. **Neon de produção** — projeto/branch de prod; `DATABASE_URL` na Vercel.
+   Migrations do banco principal já aplicadas (`prisma migrate deploy`).
+   Backups: painel Neon.
+2. **Secrets do servidor** (Vercel → Environment Variables) — **sem default**;
+   ausência falha no boot e em `/api/health` (503):
+   - `BYOK_MASTER_KEY` — `openssl rand -base64 32` (ADR-009 / F016)
+   - `BETTER_AUTH_SECRET` — `openssl rand -base64 32` (F014)
+   - `BETTER_AUTH_URL` — `https://orion-lead-hunter.devemdobro.com`
+   - `DATABASE_URL`
+   - E-mail do magic link (`EMAIL_PROVIDER=resend` + vars Resend)
+   - Google OAuth (opcional): `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET`
+3. **Health** — `GET /api/health` deve retornar `{"ok":true}` (secrets + `SELECT 1`).
+4. **Sentry (ADR-013)** — `SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN` (mesmo valor).
+   Sem DSN o app sobe normalmente (no-op). Opcional: `SENTRY_AUTH_TOKEN` /
+   `SENTRY_ORG` / `SENTRY_PROJECT` pra source maps no build.
+5. **F008 em serverless** — Playwright não roda na Vercel; o aluno precisa da
+   chave **ScreenshotOne** em `/configuracao` (BYOK). Já implementado em
+   `src/lib/diagnostico-ux/screenshot.ts` (ADR-006).
+6. **Páginas legais** — `/termos` e `/privacidade` (LGPD); e-mail em
+   `src/lib/legal.ts`.
+7. **Domínio** — `https://orion-lead-hunter.devemdobro.com` (Cloudflare DNS +
+   Vercel). Conferir `BETTER_AUTH_URL` e redirect OAuth/magic link nessa URL.
+
+Variáveis de referência: [`.env.example`](./.env.example).
+
+## Testes
+
+```bash
+# Libs puras (Vitest) — score, proposta, cifra, secrets…
+npm test
+
+# Coverage em src/lib (~83% stmts)
+npm run test:coverage
+
+# Watch
+npm run test:watch
+
+# E2E isolamento multi-tenant (F015) — precisa app + Neon + Chromium
+npm run test:e2e:isolamento
+```
 
 ## Documentação
 

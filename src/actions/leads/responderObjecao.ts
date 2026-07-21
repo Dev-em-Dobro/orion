@@ -6,7 +6,9 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { derivarDoDiagnostico } from "@/lib/dores/derivarDoDiagnostico";
+import { createLlmForUser } from "@/lib/llm";
+import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
+import { detectarDores, textosDasDores } from "@/lib/dores";
 import {
   responderObjecao as responderObjecaoLib,
   ObjecaoError,
@@ -43,48 +45,58 @@ export async function responderObjecaoAction(
     };
   }
 
-  // AC4: falha de configuração detectada antes de qualquer chamada.
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return { kind: "erro", mensagem: "ANTHROPIC_API_KEY não configurada" };
-  }
-
-  const lead = await prisma.lead.findUnique({
-    where: { id: parsed.data.lead_id },
-    include: { diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 } },
-  });
-  if (!lead) {
-    return { kind: "erro", mensagem: "Lead não encontrado" };
-  }
-
-  const diag = lead.diagnosticos[0];
-  if (!diag) {
-    // AC3: sem Diagnóstico não há Dor concreta pra ancorar a resposta.
-    return {
-      kind: "erro",
-      mensagem: "Diagnostique o Lead antes de responder objeções",
-    };
-  }
-
-  const dores = derivarDoDiagnostico(diag, lead.website);
-
-  let respostas: RespostaObjecao[];
   try {
-    ({ respostas } = await responderObjecaoLib({
-      nome: lead.nome,
-      categoria: lead.categoria,
-      dores,
-      mensagemDoLead: parsed.data.mensagem_do_lead,
-    }));
-  } catch (e) {
-    if (e instanceof ObjecaoError) {
-      return { kind: "erro", mensagem: e.message };
+    const { userId } = await requireTenant();
+    const llm = await createLlmForUser(userId);
+    const lead = await prisma.lead.findFirst({
+      where: { id: parsed.data.lead_id, user_id: userId },
+      include: {
+        diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 },
+        dores: true,
+      },
+    });
+    if (!lead) {
+      return { kind: "erro", mensagem: "Lead não encontrado" };
     }
-    return {
-      kind: "erro",
-      mensagem: "Falha ao gerar as respostas. Tente novamente.",
-    };
-  }
 
-  // AC6: nada é persistido, status não muda.
-  return { kind: "ok", respostas };
+    const diag = lead.diagnosticos[0];
+    if (!diag) {
+      return {
+        kind: "erro",
+        mensagem: "Diagnostique o Lead antes de responder objeções",
+      };
+    }
+
+    const dores =
+      lead.dores.length > 0
+        ? textosDasDores(lead.dores)
+        : textosDasDores(detectarDores(diag, lead.website));
+
+    let respostas: RespostaObjecao[];
+    try {
+      ({ respostas } = await responderObjecaoLib(
+        {
+          nome: lead.nome,
+          categoria: lead.categoria,
+          dores,
+          mensagemDoLead: parsed.data.mensagem_do_lead,
+        },
+        llm,
+      ));
+    } catch (e) {
+      if (e instanceof ObjecaoError) {
+        return { kind: "erro", mensagem: e.message };
+      }
+      return {
+        kind: "erro",
+        mensagem: "Falha ao gerar as respostas. Tente novamente.",
+      };
+    }
+
+    return { kind: "ok", respostas };
+  } catch (e) {
+    const escopo = mensagemEscopo(e);
+    if (escopo) return { kind: "erro", mensagem: escopo };
+    throw e;
+  }
 }

@@ -21,7 +21,8 @@ Estabelecimento coletado da Google Places API. É a unidade central de trabalho.
 | `categoria`   | string                                                                          | Categoria primária do Places (`primaryType`) |
 | `nota`        | float \| null                                                                   | Avaliação média no Google (0–5), quando exposta |
 | `num_avaliacoes` | int \| null                                                                  | Nº de avaliações no Google — proxy de porte/movimento |
-| `place_id`    | string                                                                          | ID estável do Google Places (único) |
+| `place_id`    | string                                                                          | ID estável do Google Places; único **por usuário** (`unique(user_id, place_id)` — [F015](02-features/F015-multi-tenant.md)) |
+| `user_id`     | string                                                                          | FK → User (auth). Isolamento multi-tenant ([F015](02-features/F015-multi-tenant.md) / [ADR-008](04-decisions/ADR-008-multi-tenant.md)) |
 | `status`      | enum: `novo` \| `enriquecido` \| `priorizado` \| `contatado` \| `respondeu` \| `qualificado` \| `proposta` \| `ganho` \| `perdido` | Estado no funil. Visualizado pela [F010](02-features/F010-dashboard-funil.md) |
 | `score`       | int 0–100                                                                       | Combina **Necessidade** (Dores/Diagnóstico) e **Valor** (nicho + porte). Ver [F003](02-features/F003-score-e-priorizacao.md) |
 | `created_at`  | datetime                                                                        | |
@@ -49,6 +50,7 @@ Diagnósticos ao longo do tempo (re-diagnóstico).
 |------------------------|--------------------|-------|
 | `id`                   | string             | PK |
 | `lead_id`              | string             | FK → Lead |
+| `user_id`              | string             | FK → User (auth). Isolamento multi-tenant ([F015](02-features/F015-multi-tenant.md)) |
 | `tem_site`             | bool               | Verdadeiro se `Lead.website` resolve |
 | `site_e_agregador`     | bool               | `true` se o `website` é um **Agregador** link-in-bio ou perfil de rede social usado como site — não é site próprio. Ver [F009](02-features/F009-sinal-site-agregador.md) |
 | `performance_mobile`   | int 0–100 \| null  | Score do PageSpeed Insights mobile |
@@ -64,6 +66,7 @@ ter várias Dores. É o que justifica o outreach.
 |--------------|-------------------------------------------------------------------------------------------------------|-------|
 | `id`         | string                                                                                                | PK |
 | `lead_id`    | string                                                                                                | FK → Lead |
+| `user_id`    | string                                                                                                | FK → User (auth). Isolamento multi-tenant ([F015](02-features/F015-multi-tenant.md)) |
 | `tipo`       | enum: `SEM_SITE` \| `SITE_AGREGADOR` \| `SITE_LENTO` \| `SEM_HTTPS` \| `SEM_RESPOSTA_REVIEWS` \| ... (extensível por spec) | Categoria da Dor (`SITE_AGREGADOR` definida na [F009](02-features/F009-sinal-site-agregador.md); registro criado na F004) |
 | `severidade` | enum: `BAIXA` \| `MEDIA` \| `ALTA`                                                                    | Peso no score |
 | `detalhes`   | string                                                                                                | Texto curto explicando a Dor |
@@ -76,6 +79,7 @@ Outreaches por Lead (canais diferentes, reescritas, etc.).
 |--------------|---------------------------------|-------|
 | `id`         | string                          | PK |
 | `lead_id`    | string                          | FK → Lead |
+| `user_id`    | string                          | FK → User (auth). Isolamento multi-tenant ([F015](02-features/F015-multi-tenant.md)) |
 | `canal`      | enum: `whatsapp` \| `email`     | Canal-alvo |
 | `conteudo`   | text                            | Texto final da mensagem |
 | `gerado_em`  | datetime                        | |
@@ -87,10 +91,20 @@ Outreaches por Lead (canais diferentes, reescritas, etc.).
 ## Relacionamentos
 
 ```
+User (auth) 1 ─── N Lead
+User (auth) 1 ─── N Diagnóstico
+User (auth) 1 ─── N Dor
+User (auth) 1 ─── N Outreach
+User (auth) 1 ─── 1 UserApiKeys (BYOK, infra — [F016](02-features/F016-configuracao-de-chaves.md))
 Lead 1 ─── N Diagnóstico
 Lead 1 ─── N Dor
 Lead 1 ─── N Outreach
 ```
+
+Toda entidade de domínio acima é escopada por `user_id` ([F015](02-features/F015-multi-tenant.md)).
+`User` é infra de auth ([F014](02-features/F014-autenticacao.md)), não linguagem de negócio.
+`UserApiKeys` guarda as chaves do aluno **cifradas** ([ADR-009](04-decisions/ADR-009-cifra-chaves-byok.md));
+não é linguagem de negócio.
 
 ---
 

@@ -38,7 +38,8 @@ O que move a taxa de fechamento — codificado em `src/lib/outreach/prompt.ts`:
    couber — não um currículo.
 5. **Brevidade.** WhatsApp: **≤ ~70 palavras**, 3–5 frases.
 6. **Sem cara de massa.** PT-BR coloquial, sem "Prezado", usa o nome do
-   negócio, varia a abertura.
+   negócio, varia a abertura. **Sem emojis** — texto só (profissionalismo +
+   evita quebra de encode em click-to-chat).
 7. **Honestidade.** Não inventar dados que não temos sobre o Lead; não
    prometer resultado garantido.
 8. **Mirar quem vale (F003).** Gerar Outreach preferencialmente para Leads
@@ -56,7 +57,8 @@ tem ao menos um Diagnóstico — sem Diagnóstico não há Dor concreta pra cita
 
 ## Saída (UI)
 - A **mensagem** gerada num campo de texto (editável/copiável).
-- Um botão **Abrir no WhatsApp** (`https://wa.me/<tel>?text=<msg>`) quando o
+- Um botão **Abrir no WhatsApp**
+  (`https://api.whatsapp.com/send?phone=<tel>&text=<msg>`) quando o
   Lead tem `telefone`; senão, só o texto pra copiar.
 
 ## Fluxo
@@ -127,7 +129,8 @@ no envio manual (fora do escopo desta feature).
 - Reescrita/variações A/B de uma Outreach existente.
 - Geração em lote ("gerar pra todos os priorizados") — conflita com a
   guideline síncrona.
-- Uso de Dores persistidas (F004) — por ora deriva do Diagnóstico direto.
+- Uso de Dores persistidas ([F004](F004-deteccao-de-dor.md)) — consumers leem
+  `Lead.dores.detalhes` após o Diagnóstico.
 
 ## Custo estimado
 ~R$0,05 por Outreach (Opus 4.8) — ver [contrato](../03-contracts/claude-messages.md).

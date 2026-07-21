@@ -6,6 +6,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { exigirChave } from "@/lib/chaves";
+import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import { PlacesError, textSearch } from "@/lib/places/textSearch";
 
 const schema = z.object({
@@ -43,12 +45,14 @@ export async function coletarLeads(
   const query = `${parsed.data.termo} em ${parsed.data.localizacao}`;
 
   try {
-    const resultados = await textSearch(query);
+    const { userId } = await requireTenant();
+    const googleKey = await exigirChave(userId, "google");
+    const resultados = await textSearch(query, googleKey);
 
-    // status=novo e score=0 são defaults do schema Prisma.
-    // skipDuplicates: conflito em place_id (unique) é ignorado.
+    // skipDuplicates: conflito em (user_id, place_id) é ignorado (F015).
     const { count: criados } = await prisma.lead.createMany({
       data: resultados.map((p) => ({
+        user_id: userId,
         nome: p.nome,
         endereco: p.endereco,
         telefone: p.telefone,
@@ -64,6 +68,8 @@ export async function coletarLeads(
     revalidatePath("/leads");
     return { kind: "ok", criados, ignorados: resultados.length - criados };
   } catch (e) {
+    const escopo = mensagemEscopo(e);
+    if (escopo) return { kind: "erro", mensagem: escopo };
     if (e instanceof PlacesError) {
       const detalhe = e.message.slice(0, 300);
       return {

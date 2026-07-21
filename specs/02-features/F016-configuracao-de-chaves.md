@@ -1,7 +1,7 @@
 # F016 — Configuração de chaves do aluno (BYOK)
 
 ## Status
-Proposta — 2026-07-13
+Implementada — 2026-07-14
 
 ## Objetivo
 Dar ao aluno um menu **`/configuracao`** onde ele cola as **próprias chaves de
@@ -45,23 +45,26 @@ dentro da lib):
 
 ## Onboarding
 Se faltam chaves essenciais, guiar o aluno pro `/configuracao` (banner + empty
-state explicativo). Reaproveitar o tutorial existente do Google Places.
+state explicativo). Reaproveitar o tutorial existente do Google Places
+(`docs/tutorial-google-places.md` + rota in-app `/configuracao/tutorial-google`).
 
 ## Critérios de aceitação
-- [ ] **AC1** — Salvar uma chave grava em `UserApiKeys` **cifrada** (ADR-009);
+- [x] **AC1** — Salvar uma chave grava em `UserApiKeys` **cifrada** (ADR-009);
       o valor em claro nunca vai ao banco, ao log nem de volta ao client.
-- [ ] **AC2** — "Testar chave" reporta **configurada/inválida** por um ping real
+- [x] **AC2** — "Testar chave" reporta **configurada/inválida** por um ping real
       barato ao provedor.
-- [ ] **AC3** — Cada feature usa a chave **do aluno logado**; aluno A nunca usa a
+- [x] **AC3** — Cada feature usa a chave **do aluno logado**; aluno A nunca usa a
       chave de B (via F015).
-- [ ] **AC4** — Feature sem a chave essencial → erro claro e específico ("X não
+- [x] **AC4** — Feature sem a chave essencial → erro claro e específico ("X não
       configurada — configure em /configuracao"), seguindo o padrão atual, **sem**
       chamar o provedor.
-- [ ] **AC5** — A UI mostra a chave **mascarada** e o `status` correto por chave.
-- [ ] **AC6** — ScreenshotOne ausente + ambiente serverless → F008 falha com
+- [x] **AC5** — A UI mostra a chave **mascarada** e o `status` correto por chave.
+- [x] **AC6** — ScreenshotOne ausente + ambiente serverless → F008 falha com
       orientação clara (ADR-006); presente → usa o provider externo.
-- [ ] **AC7** — Editar/remover uma chave atualiza o status e o comportamento das
+- [x] **AC7** — Editar/remover uma chave atualiza o status e o comportamento das
       features na hora.
+- [x] **AC8** — Sem chaves essenciais: banner + empty states apontam pra
+      `/configuracao` (e tutorial Google quando faltar Places).
 
 ## Decisões de implementação
 - `src/lib/seguranca/cifra.ts` (ADR-009) para cifrar/decifrar.
@@ -69,6 +72,13 @@ state explicativo). Reaproveitar o tutorial existente do Google Places.
   usuário atual, entregue às libs por parâmetro (as libs deixam de tocar `env`).
 - `src/app/configuracao/page.tsx` + Server Actions finas em `src/actions/configuracao/`.
 - Sem lib nova (cifra é `crypto` nativo — ADR-009).
+- Servidor exige `BYOK_MASTER_KEY` (32 bytes base64) pra operar BYOK.
+
+## Como testar
+1. `.env` com `BYOK_MASTER_KEY` (`openssl rand -base64 32`) + migrate
+2. Login → `/configuracao` → salvar Google + Anthropic → "Testar chave"
+3. Coletar Lead e gerar Outreach (usam a chave do aluno, não o `.env`)
+4. Remover Anthropic → Outreach falha com mensagem apontando `/configuracao`
 
 ## Fora do escopo (F016)
 - Escolha/uso efetivo de OpenAI/Gemini → [F017](F017-multi-provider-llm.md)

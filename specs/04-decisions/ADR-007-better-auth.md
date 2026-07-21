@@ -25,7 +25,7 @@ sobre o Neon.
 - **Modelos no schema:** `User`, `Session`, `Account`, `Verification` (gerados
   pelo Better Auth). São entidades de **infra de auth**, distintas das entidades
   de domínio ([01](../01-domain-model.md)).
-- **Proteção de rotas:** middleware exige sessão em `/`, `/leads`, `/conteudo`,
+- **Proteção de rotas:** middleware exige sessão em `/`, `/leads`,
   `/treino`, `/configuracao`. Rotas públicas: login e as de callback.
 - **Sessão nas Server Actions:** helper `requireUser()` em `src/lib/auth/` que
   devolve o usuário da sessão ou lança — base do escopo multi-tenant (F015).
