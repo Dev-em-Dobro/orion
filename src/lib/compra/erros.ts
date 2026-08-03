@@ -17,3 +17,12 @@ export class CompraNaoEncontradaError extends Error {
     this.name = "CompraNaoEncontradaError";
   }
 }
+
+export class CompraJaVinculadaError extends Error {
+  constructor(
+    message = "Esse e-mail de compra já está vinculado a outra conta.",
+  ) {
+    super(message);
+    this.name = "CompraJaVinculadaError";
+  }
+}

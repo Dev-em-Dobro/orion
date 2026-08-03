@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
-import { consumirCota, verificarCota } from "@/lib/limites";
+import { estornarCota, reservarCota } from "@/lib/limites";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import {
   PLACES_PAGE_SIZE,
@@ -68,10 +68,18 @@ export async function coletarLeads(
     .join(" ");
   const paginas = Math.ceil(parsed.data.quantidade / PLACES_PAGE_SIZE);
 
+  // Estado da reserva de cota: o `catch` precisa saber se há o que estornar.
+  let reservou = false;
+  let userId: string | null = null;
+
   try {
-    const { userId } = await requireTenant();
-    await verificarCota(userId, "coleta");
-    const googleKey = await exigirChave(userId, "google");
+    // `userId` (o `let` acima) existe só pro `catch` saber quem estornar; o
+    // valor de verdade vem daqui, e é ele que entra nos closures abaixo.
+    const tenant = await requireTenant();
+    userId = tenant.userId;
+    await reservarCota(tenant.userId, "coleta");
+    reservou = true;
+    const googleKey = await exigirChave(tenant.userId, "google");
     const resultados = await textSearch(query, googleKey, {
       includedType: nicho?.includedType,
       paginas,
@@ -91,7 +99,7 @@ export async function coletarLeads(
     // skipDuplicates: conflito em (user_id, place_id) é ignorado (F015).
     const { count: criados } = await prisma.lead.createMany({
       data: triados.map(({ resultado: p, score }) => ({
-        user_id: userId,
+        user_id: tenant.userId,
         nome: p.nome,
         endereco: p.endereco,
         telefone: p.telefone,
@@ -108,7 +116,6 @@ export async function coletarLeads(
 
     revalidatePath("/leads");
     revalidatePath("/");
-    await consumirCota(userId, "coleta");
     return {
       kind: "ok",
       criados,
@@ -117,6 +124,9 @@ export async function coletarLeads(
       ampliou: resultados.ampliou === true,
     };
   } catch (e) {
+    if (reservou && userId) {
+      await estornarCota(userId, "coleta").catch(() => undefined);
+    }
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };
     if (e instanceof PlacesError) {

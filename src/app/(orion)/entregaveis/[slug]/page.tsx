@@ -73,7 +73,7 @@ export default async function EntregavelPage({ params }: Props) {
         src={src}
         title={item.titulo}
         className="min-h-0 w-full flex-1 border-0 bg-[#0b0d10]"
-        sandbox="allow-scripts allow-same-origin allow-downloads allow-popups"
+        sandbox="allow-scripts allow-downloads allow-popups"
       />
     </div>
   );

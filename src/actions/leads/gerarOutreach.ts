@@ -14,7 +14,7 @@ import {
   OutreachError,
 } from "@/lib/outreach/gerarOutreach";
 import { createLlmForUser } from "@/lib/llm";
-import { consumirCota, verificarCota } from "@/lib/limites";
+import { estornarCota, reservarCota } from "@/lib/limites";
 import { exigirRecurso } from "@/lib/planos";
 import type { ContextoLead } from "@/lib/outreach/prompt";
 import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
@@ -59,13 +59,18 @@ export async function gerarOutreachAction(
     return { kind: "erro", mensagem: "Input inválido" };
   }
 
+  let reservou = false;
+  let userId: string | null = null;
+
   try {
-    const { userId } = await requireTenant();
+    ({ userId } = await requireTenant());
     // F035 — canal e-mail é de plano pago. WhatsApp continua no Free.
+    // Antes da reserva: bloqueio de plano não pode gastar cota.
     if (parsed.data.canal === "email") {
       await exigirRecurso(userId, "email");
     }
-    await verificarCota(userId, "outreach");
+    await reservarCota(userId, "outreach");
+    reservou = true;
     const llm = await createLlmForUser(userId);
     const lead = await prisma.lead.findFirst({
       where: { id: parsed.data.lead_id, user_id: userId },
@@ -75,11 +80,15 @@ export async function gerarOutreachAction(
       },
     });
     if (!lead) {
+      await estornarCota(userId, "outreach");
+      reservou = false;
       return { kind: "erro", mensagem: "Lead não encontrado" };
     }
 
     const diag = lead.diagnosticos[0];
     if (!diag) {
+      await estornarCota(userId, "outreach");
+      reservou = false;
       return {
         kind: "erro",
         mensagem: "Diagnostique o Lead antes de gerar a Outreach",
@@ -104,6 +113,9 @@ export async function gerarOutreachAction(
 
     if (ehEmail && !destino) {
       // Sem endereço não há e-mail — e não gastamos cota nem chamada de LLM.
+      // Com a reserva atômica, devolver a cota aqui é o que mantém a promessa.
+      await estornarCota(userId, "outreach");
+      reservou = false;
       return {
         kind: "erro",
         mensagem: "Lead sem e-mail — cole um endereço ou use o WhatsApp.",
@@ -121,6 +133,8 @@ export async function gerarOutreachAction(
         ({ mensagem } = await gerarOutreachLib(ctx, llm, parsed.data.tipo));
       }
     } catch (e) {
+      await estornarCota(userId, "outreach");
+      reservou = false;
       if (e instanceof OutreachError) {
         return { kind: "erro", mensagem: e.message };
       }
@@ -152,7 +166,6 @@ export async function gerarOutreachAction(
 
     revalidatePath("/leads");
     revalidatePath(`/leads/${lead.id}`);
-    await consumirCota(userId, "outreach");
 
     return {
       kind: "ok",
@@ -167,6 +180,9 @@ export async function gerarOutreachAction(
       outreachId: outreach.id,
     };
   } catch (e) {
+    if (reservou && userId) {
+      await estornarCota(userId, "outreach").catch(() => undefined);
+    }
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };
     throw e;

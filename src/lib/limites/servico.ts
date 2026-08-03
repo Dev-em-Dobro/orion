@@ -1,4 +1,5 @@
 // F018 — contagem diária de uso (modo Orion).
+// Reserva atômica ANTES de APIs pagas (evita race TOCTOU).
 
 import { prisma } from "@/lib/db";
 import { obterModoChave } from "@/lib/chaves/modo";
@@ -59,22 +60,11 @@ export async function obterUsoDiario(
   return visaoDe(operacao, usado);
 }
 
-/** Só aplica cotas no modo Orion. */
-export async function verificarCota(
-  userId: string,
-  operacao: OperacaoCota,
-): Promise<void> {
-  const modo = await obterModoChave(userId);
-  if (modo === "byok") return;
-
-  const { usado, limite } = await obterUsoDiario(userId, operacao);
-  if (usado >= limite) {
-    throw new QuotaExcedidaError(operacao, usado, limite);
-  }
-}
-
-/** Incrementa contador após sucesso (modo Orion). Idempotente sob limite. */
-export async function consumirCota(
+/**
+ * Reserva 1 unidade de cota de forma atômica (modo Orion).
+ * Chamar ANTES de Places/LLM; em falha posterior use `estornarCota`.
+ */
+export async function reservarCota(
   userId: string,
   operacao: OperacaoCota,
 ): Promise<VisaoUso> {
@@ -120,4 +110,52 @@ export async function consumirCota(
   });
 
   return visaoDe(operacao, row.contador);
+}
+
+/** @deprecated Use `reservarCota` (reserva atômica). Mantido como alias. */
+export async function verificarCota(
+  userId: string,
+  operacao: OperacaoCota,
+): Promise<void> {
+  await reservarCota(userId, operacao);
+}
+
+/**
+ * @deprecated A reserva já incrementa. No-op em sucesso (compat).
+ * Preferir `reservarCota` + `estornarCota` no catch.
+ */
+export async function consumirCota(
+  userId: string,
+  operacao: OperacaoCota,
+): Promise<VisaoUso> {
+  return obterUsoDiario(userId, operacao);
+}
+
+/** Desfaz uma reserva após falha da operação paga (modo Orion). */
+export async function estornarCota(
+  userId: string,
+  operacao: OperacaoCota,
+): Promise<void> {
+  const modo = await obterModoChave(userId);
+  if (modo === "byok") return;
+
+  const data = dataHojeBr();
+  const prismaOp = toPrismaOperacao(operacao);
+
+  await prisma.$transaction(async (tx) => {
+    const atual = await tx.dailyUsage.findUnique({
+      where: {
+        user_id_data_operacao: {
+          user_id: userId,
+          data,
+          operacao: prismaOp,
+        },
+      },
+    });
+    if (!atual || atual.contador <= 0) return;
+    await tx.dailyUsage.update({
+      where: { id: atual.id },
+      data: { contador: { decrement: 1 } },
+    });
+  });
 }

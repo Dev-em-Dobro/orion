@@ -50,8 +50,15 @@ describe("limites diários (F018)", () => {
   });
 
   it("verificarCota lança quando no limite", async () => {
-    prismaMock.dailyUsage.findUnique.mockResolvedValue({
-      contador: 5,
+    prismaMock.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
+      const tx = {
+        dailyUsage: {
+          findUnique: vi.fn().mockResolvedValue({ id: "1", contador: 5 }),
+          update: vi.fn(),
+          create: vi.fn(),
+        },
+      };
+      return fn(tx);
     });
     await expect(verificarCota(userId, "coleta")).rejects.toBeInstanceOf(
       QuotaExcedidaError,
@@ -61,10 +68,11 @@ describe("limites diários (F018)", () => {
   it("verificarCota ignora no modo BYOK", async () => {
     vi.mocked(obterModoChave).mockResolvedValue("byok");
     await expect(verificarCota(userId, "coleta")).resolves.toBeUndefined();
-    expect(prismaMock.dailyUsage.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
   });
 
-  it("consumirCota cria registro na primeira vez", async () => {
+  it("reservarCota cria registro na primeira vez", async () => {
+    const { reservarCota } = await import("@/lib/limites/servico");
     prismaMock.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
       const tx = {
         dailyUsage: {
@@ -74,9 +82,15 @@ describe("limites diários (F018)", () => {
       };
       return fn(tx);
     });
-    const uso = await consumirCota(userId, "outreach");
+    const uso = await reservarCota(userId, "outreach");
     expect(uso.usado).toBe(1);
     expect(uso.restante).toBe(4);
+  });
+
+  it("consumirCota (compat) só lê uso atual", async () => {
+    prismaMock.dailyUsage.findUnique.mockResolvedValue({ contador: 2 });
+    const uso = await consumirCota(userId, "outreach");
+    expect(uso.usado).toBe(2);
   });
 
   it("listarUsoDiario retorna todas as operações", async () => {

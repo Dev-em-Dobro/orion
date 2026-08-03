@@ -4,6 +4,7 @@ const { prismaMock } = vi.hoisted(() => ({
   prismaMock: {
     user: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       update: vi.fn(),
     },
     hublaEntitlement: {
@@ -44,6 +45,7 @@ describe("compra F019.1", () => {
       purchaseProductId: null,
     });
     prismaMock.hublaEntitlement.findFirst.mockResolvedValue({ status: "ativo" });
+    prismaMock.user.findFirst.mockResolvedValue(null);
     prismaMock.user.update.mockResolvedValue({});
 
     const ok = await tentarAutoVerificar(USER_ID);
@@ -69,6 +71,7 @@ describe("compra F019.1", () => {
 
   it("verificarCompraManual grava cache quando ativo", async () => {
     prismaMock.hublaEntitlement.findFirst.mockResolvedValue({ status: "ativo" });
+    prismaMock.user.findFirst.mockResolvedValue(null);
     prismaMock.user.update.mockResolvedValue({});
 
     const res = await verificarCompraManual(USER_ID, "Comprador@Hubla.com");

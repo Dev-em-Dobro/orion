@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/require-user";
 import {
+  CompraJaVinculadaError,
   CompraNaoEncontradaError,
   verificarCompraManual,
 } from "@/lib/compra";
@@ -36,7 +37,10 @@ export async function verificarCompraAction(
     revalidatePath("/");
     redirect("/");
   } catch (e) {
-    if (e instanceof CompraNaoEncontradaError) {
+    if (
+      e instanceof CompraNaoEncontradaError ||
+      e instanceof CompraJaVinculadaError
+    ) {
       return { kind: "erro", mensagem: e.message };
     }
     throw e;

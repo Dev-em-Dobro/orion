@@ -1,10 +1,19 @@
 // Só ativo com E2E_SESSION_HELPER=1 — emite cookie de sessão com o mesmo
 // formato do Better Auth (HMAC-SHA256 + base64 com padding).
+// Bloqueado em produção / Preview Vercel mesmo se a env vazar.
 
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+
+function helperPermitido(): boolean {
+  if (process.env.E2E_SESSION_HELPER !== "1") return false;
+  if (process.env.NODE_ENV === "production") return false;
+  if (process.env.VERCEL_ENV === "production") return false;
+  if (process.env.VERCEL_ENV === "preview") return false;
+  return true;
+}
 
 async function signCookieValue(value: string, secret: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -24,8 +33,16 @@ async function signCookieValue(value: string, secret: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  if (process.env.E2E_SESSION_HELPER !== "1") {
+  if (!helperPermitido()) {
     return NextResponse.json({ error: "disabled" }, { status: 404 });
+  }
+
+  const esperado = process.env.E2E_SESSION_SECRET?.trim();
+  if (esperado) {
+    const recebido = req.headers.get("x-e2e-secret");
+    if (!recebido || recebido !== esperado) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
   }
 
   const body = (await req.json()) as { userId?: string };

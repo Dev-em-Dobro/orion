@@ -8,6 +8,11 @@
 // descartado. O corpo era lido só pra medir o tempo de carregamento; agora o
 // mesmo corpo alimenta a detecção de atendimento automatizado e a captura do
 // e-mail público. Zero requisição a mais.
+//
+// SSRF: só http(s), host público (sem IPs privados/metadata).
+
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
 
 import { HTML_MAX_BYTES } from "./atendimento";
 
@@ -62,6 +67,66 @@ async function lerCorpoLimitado(res: Response): Promise<Uint8Array | null> {
   return total;
 }
 
+function ipPrivadoOuLocal(ip: string): boolean {
+  const v = ip.toLowerCase();
+  if (v === "::1" || v === "0.0.0.0") return true;
+  if (v.startsWith("127.") || v.startsWith("10.")) return true;
+  if (v.startsWith("192.168.")) return true;
+  if (v.startsWith("169.254.")) return true;
+  if (v.startsWith("fc") || v.startsWith("fd") || v.startsWith("fe80")) return true;
+  const m = /^172\.(\d+)\./.exec(v);
+  if (m) {
+    const n = Number(m[1]);
+    if (n >= 16 && n <= 31) return true;
+  }
+  // link-local / metadata comuns
+  if (v === "169.254.169.254" || v === "metadata.google.internal") return true;
+  return false;
+}
+
+function hostnameProibido(hostname: string): boolean {
+  const h = hostname.toLowerCase().replace(/\.$/, "");
+  if (
+    h === "localhost" ||
+    h.endsWith(".localhost") ||
+    h.endsWith(".local") ||
+    h.endsWith(".internal") ||
+    h === "metadata.google.internal"
+  ) {
+    return true;
+  }
+  if (isIP(h) && ipPrivadoOuLocal(h)) return true;
+  return false;
+}
+
+/** Valida URL antes do fetch (protocolo + host + DNS → IP público). */
+export async function urlPermitidaParaFetch(urlStr: string): Promise<boolean> {
+  let u: URL;
+  try {
+    u = new URL(urlStr);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return false;
+  if (u.username || u.password) return false;
+  if (u.port && u.port !== "80" && u.port !== "443" && u.port !== "") {
+    return false;
+  }
+  if (hostnameProibido(u.hostname)) return false;
+
+  if (isIP(u.hostname)) {
+    return !ipPrivadoOuLocal(u.hostname);
+  }
+
+  try {
+    const records = await lookup(u.hostname, { all: true });
+    if (records.length === 0) return false;
+    return records.every((r) => !ipPrivadoOuLocal(r.address));
+  } catch {
+    return false;
+  }
+}
+
 export async function verificarSite(url: string): Promise<ResultadoSite> {
   const inicio = performance.now();
   const controller = new AbortController();
@@ -71,6 +136,10 @@ export async function verificarSite(url: string): Promise<ResultadoSite> {
     let urlAtual = url;
 
     for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects++) {
+      if (!(await urlPermitidaParaFetch(urlAtual))) {
+        return { temSite: false };
+      }
+
       const res = await fetch(urlAtual, {
         redirect: "manual",
         signal: controller.signal,

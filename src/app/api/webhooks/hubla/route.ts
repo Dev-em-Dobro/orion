@@ -23,6 +23,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const productId = productIdFiltro();
+  if (!productId) {
+    return NextResponse.json(
+      { ok: false, erro: "HUBLA_PRODUCT_ID não configurado" },
+      { status: 503 },
+    );
+  }
+
   const recebido = request.headers.get("x-hubla-token");
   if (!recebido || recebido !== esperado) {
     return NextResponse.json({ ok: false, erro: "Não autorizado" }, { status: 401 });
@@ -47,7 +55,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const resultado = await processarWebhookHubla(payload, {
-      productIdFiltro: productIdFiltro(),
+      productIdFiltro: productId,
       idempotencyKey,
       eventType,
     });

@@ -7,7 +7,7 @@
 // (registrarDesfecho, F006/F010).
 
 import { createLlmForUser } from "@/lib/llm";
-import { consumirCota, verificarCota } from "@/lib/limites";
+import { estornarCota, reservarCota } from "@/lib/limites";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import { detectarDores, textosDasDores } from "@/lib/dores";
 import { servicosRecomendados } from "@/lib/proposta/servicos";
@@ -44,9 +44,13 @@ export async function gerarPropostaAction(
     return { kind: "erro", mensagem: "Input inválido" };
   }
 
+  let reservou = false;
+  let userId: string | null = null;
+
   try {
-    const { userId } = await requireTenant();
-    await verificarCota(userId, "proposta");
+    ({ userId } = await requireTenant());
+    await reservarCota(userId, "proposta");
+    reservou = true;
     const llm = await createLlmForUser(userId);
     const lead = await prisma.lead.findFirst({
       where: { id: parsed.data.lead_id, user_id: userId },
@@ -56,11 +60,15 @@ export async function gerarPropostaAction(
       },
     });
     if (!lead) {
+      await estornarCota(userId, "proposta");
+      reservou = false;
       return { kind: "erro", mensagem: "Lead não encontrado" };
     }
 
     const diag = lead.diagnosticos[0];
     if (!diag) {
+      await estornarCota(userId, "proposta");
+      reservou = false;
       return {
         kind: "erro",
         mensagem: "Diagnostique o Lead antes de gerar a Proposta",
@@ -90,6 +98,8 @@ export async function gerarPropostaAction(
         llm,
       );
     } catch (e) {
+      await estornarCota(userId, "proposta");
+      reservou = false;
       if (e instanceof PropostaError) {
         return { kind: "erro", mensagem: e.message };
       }
@@ -99,8 +109,6 @@ export async function gerarPropostaAction(
       };
     }
 
-    await consumirCota(userId, "proposta");
-
     return {
       kind: "ok",
       proposta,
@@ -108,6 +116,9 @@ export async function gerarPropostaAction(
       textoCopiavel: formatarPropostaTexto(proposta, precificacao),
     };
   } catch (e) {
+    if (reservou && userId) {
+      await estornarCota(userId, "proposta").catch(() => undefined);
+    }
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };
     throw e;
