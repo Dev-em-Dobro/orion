@@ -10,10 +10,13 @@ Claude API. **A partir da Fase 2, é um app hospedado para alunos**: cada aluno 
 `src/lib/brand.ts`; o nome do produto na UI/e-mails em `src/lib/produto.ts`. Visão em `specs/00-product-vision.md`, roadmap de lançamento
 em `specs/07-lancamento-para-alunos.md`, briefing em `specs/08-briefing.md`.
 
-> **Fase 2 em construção.** Login, multi-tenant e BYOK ainda estão sendo
-> implementados (ver `specs/07`). Governança: specs (00 + 07) já atualizadas;
-> **falta abrir os ADRs** (Better Auth, cifra BYOK, e-mail transacional,
-> multi-provider LLM) **antes** do código dessa fase. "Sem nova lib sem ADR."
+> **Fase 3 em construção — revamp do fluxo.** Login, multi-tenant e BYOK (Fase 2)
+> estão na `main`. A Fase 3 transforma o app de balcão de ferramentas manuais em
+> **motor com opinião**: priorização automática, Fila do dia, canal e-mail,
+> cobrança de tarefas, Skills e Agente. Plano mestre em
+> `specs/10-revamp-do-fluxo.md` (features **F024–F031**, ADRs **014–016**).
+> Os IDs F021–F023 estão **reservados** por branches não mergeadas (ver §7 do
+> plano). "Sem nova lib sem ADR."
 
 ## Regras absolutas
 - **Specs em `/specs` são a fonte da verdade.** Código segue spec, nunca o contrário.
@@ -30,10 +33,13 @@ em `specs/07-lancamento-para-alunos.md`, briefing em `specs/08-briefing.md`.
 - Tailwind + shadcn/ui
 - Claude API para geração de outreach
 - Google Places API + PageSpeed Insights API para coleta e diagnóstico
-- **Sem workers, sem filas** — tudo via Server Actions síncronas na Fase 1
-- **Fase 2 (pendente de ADR):** Better Auth (login), multi-tenant por `user_id`,
-  cifra das chaves BYOK, e-mail transacional (magic link) e camada multi-provider
-  LLM. Ver `specs/07-lancamento-para-alunos.md`.
+- **Sem workers, sem filas** — tudo via Server Actions síncronas (ADR-002,
+  mantido na Fase 3: operações longas viram **lotes curtos** com progresso)
+- **Fase 2 (na `main`):** Better Auth (login), multi-tenant por `user_id`, cifra
+  das chaves BYOK, e-mail transacional (magic link) e camada multi-provider LLM
+  (Vercel AI SDK). Ver `specs/07-lancamento-para-alunos.md`.
+- **Fase 3 (em construção):** priorização automática, canal e-mail (sem envio
+  pela plataforma), agente com ferramentas read-only. Ver `specs/10-revamp-do-fluxo.md`.
 - **Sem nova lib sem ADR** em `/specs/04-decisions/`
 
 ## Convenções de código

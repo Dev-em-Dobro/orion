@@ -4,6 +4,12 @@
 Handoff — 2026-07-13. Documento de comunicação pro time; a fonte da verdade
 continua nas specs (00, 07, 08 e F014–F017). Atualizar quando o plano mudar.
 
+> **Atualização 2026-08-10 — Fase 3.** A Fase 2 (login, multi-tenant, BYOK) está
+> na `main`. O plano em vigor agora é o
+> **[revamp do fluxo](10-revamp-do-fluxo.md)** (F024–F031): priorização
+> automática, Fila do dia, canal e-mail, cobrança de tarefas, Skills e Agente.
+> As "próximas tarefas" listadas abaixo são da Fase 2 e ficam como histórico.
+
 ---
 
 ## O que é
