@@ -6,7 +6,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { mensagemEscopo, requireLeadOwned } from "@/lib/db/scoped";
+import {
+  mensagemEscopo,
+  requireLeadOwned,
+  requireTenant,
+} from "@/lib/db/scoped";
 import { mudarStatus, statusAoRestaurar } from "@/lib/leads/status";
 
 const MOTIVO_MAX = 140;
@@ -60,6 +64,58 @@ export async function descartarLead(
 
     revalidar();
     return { kind: "ok", status: "descartado" };
+  } catch (e) {
+    const escopo = mensagemEscopo(e);
+    if (escopo) return { kind: "erro", mensagem: escopo };
+    throw e;
+  }
+}
+
+const schemaLote = z.object({
+  // Vem como CSV de ids no FormData (a seleção da grade da F032).
+  lead_ids: z
+    .string()
+    .transform((s) => s.split(",").map((v) => v.trim()).filter(Boolean))
+    .pipe(
+      z
+        .array(z.string().cuid())
+        .min(1, "Selecione ao menos um Lead")
+        .max(200, "Selecione no máximo 200 por vez"),
+    ),
+});
+
+export type DescarteLoteState =
+  | { kind: "idle" }
+  | { kind: "ok"; descartados: number }
+  | { kind: "erro"; mensagem: string };
+
+/**
+ * F032 (AC6) — descarte dos Leads selecionados na grade. `updateMany` escopado
+ * por `user_id`: ids de outro tenant simplesmente não casam, então o retorno
+ * pode ser menor que o pedido — é isso que a UI informa.
+ */
+export async function descartarEmLote(
+  _prev: DescarteLoteState,
+  formData: FormData,
+): Promise<DescarteLoteState> {
+  const parsed = schemaLote.safeParse({ lead_ids: formData.get("lead_ids") });
+  if (!parsed.success) {
+    return {
+      kind: "erro",
+      mensagem: parsed.error.issues[0]?.message ?? "Seleção inválida",
+    };
+  }
+
+  try {
+    const { whereUser } = await requireTenant();
+
+    const { count } = await prisma.lead.updateMany({
+      where: { ...whereUser, id: { in: parsed.data.lead_ids } },
+      data: mudarStatus("descartado"),
+    });
+
+    revalidar();
+    return { kind: "ok", descartados: count };
   } catch (e) {
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };

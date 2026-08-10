@@ -18,11 +18,8 @@ export const STATUS_BADGE: Record<LeadStatus, string> = {
   descartado: "bg-zinc-700/40 text-zinc-500",
 };
 
-export function scoreBadge(score: number) {
-  if (score >= 60) return "bg-emerald-500/15 text-emerald-300";
-  if (score >= 30) return "bg-amber-500/15 text-amber-300";
-  return "bg-zinc-500/15 text-zinc-400";
-}
+// F032 — a lógica pura vive em `@/lib/leads/faixa` (testável sem JSX).
+export { faixaDeScore, scoreBadge } from "@/lib/leads/faixa";
 
 export function SimNao({ valor }: { valor: boolean | null | undefined }) {
   if (valor === null || valor === undefined) {

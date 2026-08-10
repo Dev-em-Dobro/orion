@@ -61,6 +61,42 @@ export function DashboardSkeleton() {
   );
 }
 
+/** F032 — a grade de cards, usada como fallback do `<Suspense>` da lista. */
+export function GridLeadsSkeleton() {
+  return (
+    <div className="mt-8" aria-busy="true" aria-label="Carregando leads">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+        <div className="flex gap-2">
+          {Array.from({ length: 4 }, (_, i) => (
+            <SkeletonPulse key={i} className="h-8 w-24 rounded-full" />
+          ))}
+        </div>
+        <div className="flex gap-3">
+          <SkeletonPulse className="h-10 w-40" />
+          <SkeletonPulse className="h-10 w-32" />
+        </div>
+      </div>
+      <SkeletonPulse className="h-4 w-32" />
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div
+            key={i}
+            className="space-y-3 rounded-xl border border-border bg-card p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <SkeletonPulse className="h-4 w-32" />
+              <SkeletonPulse className="h-5 w-16 rounded-full" />
+            </div>
+            <SkeletonPulse className="h-3 w-24" />
+            <SkeletonPulse className="h-3 w-full" />
+            <SkeletonPulse className="h-8 w-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function LeadsSkeleton() {
   return (
     <main
@@ -76,29 +112,7 @@ export function LeadsSkeleton() {
           <SkeletonPulse className="h-10 w-28" />
         </div>
       </div>
-      <div className="mt-8 flex flex-wrap items-end justify-between gap-4">
-        <SkeletonPulse className="h-4 w-32" />
-        <div className="flex gap-3">
-          <SkeletonPulse className="h-10 w-40" />
-          <SkeletonPulse className="h-10 w-32" />
-        </div>
-      </div>
-      <div className="mt-3 overflow-hidden rounded-xl border border-border bg-card">
-        <div className="border-b border-border px-3 py-3">
-          <SkeletonPulse className="h-3 w-full max-w-xl" />
-        </div>
-        {Array.from({ length: 8 }, (_, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-3 border-b border-border/60 px-3 py-3 last:border-0"
-          >
-            <SkeletonPulse className="h-4 w-36" />
-            <SkeletonPulse className="h-4 w-24" />
-            <SkeletonPulse className="h-5 w-16 rounded-full" />
-            <SkeletonPulse className="ml-auto h-4 w-12" />
-          </div>
-        ))}
-      </div>
+      <GridLeadsSkeleton />
     </main>
   );
 }

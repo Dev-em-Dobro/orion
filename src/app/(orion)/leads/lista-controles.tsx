@@ -9,28 +9,16 @@ const PAGE_SIZE = 20;
 
 export { PAGE_SIZE };
 
-export type QueryLista = {
-  categoria?: string | null;
-  site?: FiltroSite | null;
-  page: number;
-};
-
-function hrefLista(opts: QueryLista): string {
-  const params = new URLSearchParams();
-  if (opts.categoria) params.set("categoria", opts.categoria);
-  if (opts.site) params.set("site", opts.site);
-  if (opts.page > 1) params.set("page", String(opts.page));
-  const q = params.toString();
-  return q ? `/leads?${q}` : "/leads";
-}
-
 type FiltrosListaProps = {
   categorias: string[];
   categoriaAtual: string | null;
   siteAtual: FiltroSite | null;
 };
 
-/** Form GET: filtros + volta para a página 1. */
+/**
+ * Form GET: categoria + tipo de site, sempre voltando à página 1.
+ * Os chips rápidos (F032) vivem ao lado e compõem com este recorte.
+ */
 export function FiltrosLista({
   categorias,
   categoriaAtual,
@@ -43,7 +31,7 @@ export function FiltrosLista({
       className="flex flex-wrap items-end gap-3"
     >
       {categorias.length > 0 && (
-        <label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-xs text-zinc-400">
+        <label className="flex min-w-[12rem] flex-col gap-1 text-xs text-zinc-400">
           Categoria
           <select
             name="categoria"
@@ -85,25 +73,27 @@ type PaginacaoProps = {
   page: number;
   totalPages: number;
   total: number;
-  categoria: string | null;
-  site: FiltroSite | null;
+  /** Querystring do filtro atual, sem `page` (vem de `queryDoFiltro`). */
+  query: string;
 };
 
 export function PaginacaoLeads({
   page,
   totalPages,
   total,
-  categoria,
-  site,
+  query,
 }: PaginacaoProps) {
   if (total === 0 || totalPages <= 1) return null;
 
+  const href = (p: number) => {
+    const params = new URLSearchParams(query);
+    if (p > 1) params.set("page", String(p));
+    const q = params.toString();
+    return q ? `/leads?${q}` : "/leads";
+  };
+
   const prev = page > 1 ? page - 1 : null;
   const next = page < totalPages ? page + 1 : null;
-  const base = {
-    categoria: categoria ?? undefined,
-    site: site ?? undefined,
-  };
 
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
@@ -112,10 +102,7 @@ export function PaginacaoLeads({
       </p>
       <div className="flex items-center gap-2">
         {prev ? (
-          <Link
-            href={hrefLista({ ...base, page: prev })}
-            className="btn-ghost"
-          >
+          <Link href={href(prev)} className="btn-ghost">
             Anterior
           </Link>
         ) : (
@@ -124,10 +111,7 @@ export function PaginacaoLeads({
           </span>
         )}
         {next ? (
-          <Link
-            href={hrefLista({ ...base, page: next })}
-            className="btn-ghost"
-          >
+          <Link href={href(next)} className="btn-ghost">
             Próxima
           </Link>
         ) : (

@@ -40,6 +40,12 @@ São exatamente os cortes que `scoreBadge()` em
 junto da cor, e a lógica continua num único lugar.
 
 ## Navegação (sidebar)
+
+> **Implementação (2026-08-10):** os itens **Funil**, **Tarefas**, **Agente** e
+> **Skills** entram junto com as features que os servem (F034, F031, F029,
+> F030). Adicioná-los agora seria pôr no menu quatro links que dão 404 — o
+> resto da F032 não depende disso.
+
 Grupos, na ordem:
 
 | Grupo | Itens |
