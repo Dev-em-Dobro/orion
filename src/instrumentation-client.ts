@@ -5,6 +5,7 @@ import {
   beforeSendScrub,
   sentryDsn,
   sentryEnabled,
+  tracesSampleRate,
   SENTRY_ENV,
 } from "./lib/observabilidade/opcoes";
 
@@ -12,9 +13,11 @@ Sentry.init({
   dsn: sentryDsn(),
   enabled: sentryEnabled(),
   environment: SENTRY_ENV,
+  // F028 / ADR-015 §3 — TTFB/LCP reais das rotas principais.
+  tracesSampleRate: tracesSampleRate(),
   sendDefaultPii: false,
   beforeSend: beforeSendScrub,
 });
 
-// Exigido pelo SDK (@sentry/nextjs) mesmo com tracing desligado no beta.
+// Exigido pelo SDK (@sentry/nextjs).
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
