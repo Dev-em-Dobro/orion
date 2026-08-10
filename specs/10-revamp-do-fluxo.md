@@ -55,6 +55,12 @@ Somaram-se três features de **suporte**, vindas da revisão das telas do
 
 Nenhuma das três muda o domínio — são superfície sobre o que já existe.
 
+E uma quarta, de modelo de negócio, pedida em 2026-08-10:
+
+| Feature | Por quê |
+|---------|---------|
+| [F035](02-features/F035-planos-e-limites.md) — Planos e limites | Hoje o custo variável por aluno é **ilimitado**. O Free passa a ter 50 Leads diagnosticados/mês (**inclusive em BYOK**), e follow-up automatizado, e-mail, kanban e agente viram plano pago. Custos medidos e preços propostos em [11](11-custos-e-precificacao.md) |
+
 ---
 
 ## 2. A ideia central do revamp

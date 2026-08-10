@@ -63,7 +63,13 @@ de venda *depois* da resposta — ver [domain model](01-domain-model.md).)
   + Política de Privacidade** deixam de ser opcionais.
 - **Custo / chaves**: modo **Orion** (padrão) — custo de API nas chaves do
   servidor, com **limites diários** por aluno (F018). Modo **BYOK** — custo
-  de API do aluno, sem cotas F018. Hospedagem + banco continuam compartilhados.
+  de API do aluno, sem as cotas **diárias** da F018. Hospedagem + banco
+  continuam compartilhados.
+  > **A partir da [F035](02-features/F035-planos-e-limites.md):** existe também
+  > um **limite mensal por plano** (Free: 50 Leads diagnosticados/mês) que vale
+  > nos **dois modos — inclusive BYOK**. O que se vende é o valor entregue, não
+  > o repasse de API. Modelo de custo e preços em
+  > [11 — Custos e Precificação](11-custos-e-precificacao.md).
 - **Multi-tenant hospedado**: login obrigatório e toda query escopada por
   `user_id` (isolamento testado). Deixou de ser "ferramenta interna sem auth".
 - **Tempo**: operações síncronas de até ~30s são aceitáveis (sem workers na

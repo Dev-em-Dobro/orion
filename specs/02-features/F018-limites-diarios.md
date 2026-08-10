@@ -5,15 +5,25 @@ Implementada — 2026-07-27
 
 ## Objetivo
 Proteger as **chaves compartilhadas da Orion** (modo padrão) com cotas
-diárias por aluno, exibir o consumo na UI e preparar upgrade futuro (remover
-limite via plano pago). O **BYOK** ([F016](F016-configuracao-de-chaves.md))
-permanece disponível via toggle — sem cotas diárias no modo BYOK.
+diárias por aluno e exibir o consumo na UI. O **BYOK**
+([F016](F016-configuracao-de-chaves.md)) permanece disponível via toggle — sem
+cotas **diárias** no modo BYOK.
+
+> **Atualização 2026-08-10 — [F035](F035-planos-e-limites.md).** A frase
+> "preparar upgrade futuro (remover limite via plano pago)" deixou de valer
+> assim: os planos **não removem** as cotas diárias, e o **limite mensal de
+> plano é ortogonal a esta spec** — ele vale nos **dois** modos, inclusive
+> BYOK. Divisão de responsabilidade:
+> - **F018 (esta spec)** — cota **diária**, anti-abuso, protege a **chave da
+>   Orion**. Não se aplica ao BYOK, porque lá a chave é do aluno.
+> - **F035** — limite **mensal** de Leads diagnosticados, por **plano**.
+>   Aplica-se sempre, porque mede **valor entregue**, não consumo de API.
 
 ## Modos de chave
-| Modo | Chaves | Cotas diárias |
-|------|--------|---------------|
-| **Orion** (padrão) | Google + OpenAI do servidor (`ORION_*` env) | Sim |
-| **BYOK** | Chaves do aluno em `UserApiKeys` | Não |
+| Modo | Chaves | Cotas diárias (F018) | Limite mensal de plano (F035) |
+|------|--------|----------------------|-------------------------------|
+| **Orion** (padrão) | Google + OpenAI do servidor (`ORION_*` env) | Sim | Sim |
+| **BYOK** | Chaves do aluno em `UserApiKeys` | Não | **Sim** |
 
 Toggle em `/configuracao` (`key_mode` em `UserApiKeys`).
 
