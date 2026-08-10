@@ -3,7 +3,11 @@ import { requireTenant } from "@/lib/db/scoped";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
 import { valor as calcularValor } from "@/lib/score/score";
 import { classificarWebsite } from "@/lib/diagnostico/agregador";
-import { filaDeFollowUp } from "@/lib/followup";
+import {
+  filaDeFollowUp,
+  limiteDaJanela,
+  whereFilaFollowUp,
+} from "@/lib/followup";
 import { ESTAGIOS_EM_ABERTO } from "@/lib/funil";
 import { demoUrlFor } from "@/lib/demos";
 import { BannerChaves } from "@/components/banner-chaves";
@@ -39,29 +43,62 @@ type SearchParams = Promise<{
   page?: string;
 }>;
 
+/** Teto de exibição do painel de follow-up (F028: a fila não pode crescer sem fim). */
+const FOLLOWUP_MAX = 20;
+
 export default async function LeadsPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
-  const categoriaRaw = params.categoria?.trim() ?? "";
+  // Categoria entra no filtro como veio (limitada em tamanho). Antes era
+  // validada contra a lista de categorias existentes, o que obrigava a esperar
+  // aquela query antes de montar o where — e serializava a página inteira.
+  // Valor inexistente agora cai no empty state "nenhum Lead com esses filtros".
+  const categoriaFiltro = (params.categoria?.trim() ?? "").slice(0, 80) || null;
   const siteFiltro = parseFiltroSite(params.site);
 
   const { whereUser, userId } = await requireTenant();
 
-  const [categoriasRows, totalTenant, faltandoChaves, leadsFollowUp] =
+  const whereLista = {
+    ...whereUser,
+    ...(categoriaFiltro ? { categoria: categoriaFiltro } : {}),
+    ...(siteFiltro ? whereFiltroSite(siteFiltro) : {}),
+  };
+  const temFiltroAtivo = categoriaFiltro !== null || siteFiltro !== null;
+
+  const pageRaw = Number.parseInt(params.page ?? "1", 10);
+  const pageRequested =
+    Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
+
+  const buscarPagina = (p: number) =>
+    prisma.lead.findMany({
+      where: whereLista,
+      orderBy: [{ score: "desc" }, { created_at: "desc" }],
+      skip: (p - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 },
+        // take: 1 + _count — antes trazia TODAS as Outreaches de cada Lead da
+        // página só para usar a primeira e a contagem.
+        outreaches: { orderBy: { gerado_em: "desc" }, take: 1 },
+        _count: { select: { outreaches: true } },
+      },
+    });
+
+  // Uma rodada só: nada aqui depende do resultado do vizinho, então tudo vai
+  // em paralelo. O custo é 1 ida-e-volta ao banco, não 5 (ADR-015).
+  const [categoriasRows, faltandoChaves, leadsFollowUp, total, leadsPagina] =
     await Promise.all([
-      prisma.lead.findMany({
+      prisma.lead.groupBy({
+        by: ["categoria"],
         where: whereUser,
-        select: { categoria: true },
-        distinct: ["categoria"],
         orderBy: { categoria: "asc" },
       }),
-      prisma.lead.count({ where: whereUser }),
       chavesEssenciaisFaltando(userId),
       prisma.lead.findMany({
-        where: { ...whereUser, status: "contatado" },
+        where: { ...whereUser, ...whereFilaFollowUp(limiteDaJanela()) },
         include: {
           outreaches: {
             where: { enviado: true },
@@ -69,49 +106,31 @@ export default async function LeadsPage({
             take: 1,
           },
         },
+        orderBy: { score: "desc" },
+        take: FOLLOWUP_MAX,
       }),
+      prisma.lead.count({ where: whereLista }),
+      buscarPagina(pageRequested),
     ]);
 
   const categorias = categoriasRows
     .map((r) => r.categoria)
     .filter((c) => c.length > 0);
 
-  const categoriaValida =
-    categoriaRaw.length > 0 && categorias.includes(categoriaRaw)
-      ? categoriaRaw
-      : null;
-
-  const whereLista = {
-    ...whereUser,
-    ...(categoriaValida ? { categoria: categoriaValida } : {}),
-    ...(siteFiltro ? whereFiltroSite(siteFiltro) : {}),
-  };
-
-  const total =
-    categoriaValida || siteFiltro
-      ? await prisma.lead.count({ where: whereLista })
-      : totalTenant;
-
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const pageRaw = Number.parseInt(params.page ?? "1", 10);
-  const pageRequested =
-    Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
   const page = Math.min(pageRequested, totalPages);
-  const skip = (page - 1) * PAGE_SIZE;
+  // Página pedida além do fim (ou filtro que encolheu o resultado): rebusca
+  // só nesse caso raro, em vez de custar uma rodada extra em toda visita.
+  const leads = page === pageRequested ? leadsPagina : await buscarPagina(page);
 
-  const leads =
-    total === 0
-      ? []
-      : await prisma.lead.findMany({
-          where: whereLista,
-          orderBy: [{ score: "desc" }, { created_at: "desc" }],
-          skip,
-          take: PAGE_SIZE,
-          include: {
-            diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 },
-            outreaches: { orderBy: { gerado_em: "desc" } },
-          },
-        });
+  // Só precisa distinguir "base vazia" de "filtro sem resultado" quando o
+  // filtro não devolveu nada — então a query extra é rara, não fixa.
+  const temAlgumLead =
+    total > 0
+      ? true
+      : temFiltroAtivo
+        ? (await prisma.lead.count({ where: whereUser })) > 0
+        : false;
 
   const semGoogle = faltandoChaves.includes("google");
   const followUp = filaDeFollowUp(leadsFollowUp);
@@ -128,8 +147,7 @@ export default async function LeadsPage({
     };
   });
 
-  const temFiltroAtivo = categoriaValida !== null || siteFiltro !== null;
-  const semResultadosFiltro = totalTenant > 0 && total === 0 && temFiltroAtivo;
+  const semResultadosFiltro = temAlgumLead && total === 0 && temFiltroAtivo;
 
   return (
     <>
@@ -189,10 +207,10 @@ export default async function LeadsPage({
             <div>
               <p className="text-sm text-muted">
                 {total} Lead(s)
-                {categoriaValida ? (
+                {categoriaFiltro ? (
                   <span className="text-zinc-500">
                     {" "}
-                    · categoria “{categoriaValida}”
+                    · categoria “{categoriaFiltro}”
                   </span>
                 ) : null}
                 {siteFiltro ? (
@@ -209,16 +227,16 @@ export default async function LeadsPage({
                 </p>
               )}
             </div>
-            {totalTenant > 0 ? (
+            {temAlgumLead ? (
               <FiltrosLista
                 categorias={categorias}
-                categoriaAtual={categoriaValida}
+                categoriaAtual={categoriaFiltro}
                 siteAtual={siteFiltro}
               />
             ) : null}
           </div>
 
-          {totalTenant === 0 ? (
+          {!temAlgumLead ? (
             <div className="mt-3">
               <EmptyState
                 titulo={
@@ -311,7 +329,7 @@ export default async function LeadsPage({
                           }
                           outreachConteudo={ultimoOutreach?.conteudo ?? null}
                           outreachEnviado={ultimoOutreach?.enviado ?? false}
-                          outreachCount={lead.outreaches.length}
+                          outreachCount={lead._count.outreaches}
                           waLink={waLink}
                           emAberto={ESTAGIOS_EM_ABERTO.includes(lead.status)}
                           demoUrl={demoUrlFor(lead.place_id)}
@@ -325,7 +343,7 @@ export default async function LeadsPage({
                 page={page}
                 totalPages={totalPages}
                 total={total}
-                categoria={categoriaValida}
+                categoria={categoriaFiltro}
                 site={siteFiltro}
               />
             </>

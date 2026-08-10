@@ -34,6 +34,17 @@ export const auth = betterAuth({
       trustedProviders: ["google"],
     },
   },
+  // F028 (H5) / ADR-015 — sessão assinada no cookie por 5 minutos: corta uma
+  // consulta ao banco em toda navegação. O middleware já checava o cookie
+  // antes; agora a validação também para de ir ao banco no caminho comum.
+  // Custo aceito: até 5 min de defasagem se a sessão for revogada em outro
+  // dispositivo. Logout local limpa o cookie na hora.
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60,
+    },
+  },
   plugins: [
     magicLink({
       expiresIn: 60 * 5,

@@ -61,6 +61,14 @@ O código atual (`src/app/(orion)/leads/page.tsx`) tem três problemas concretos
 | `include: { outreaches: { orderBy } }` **sem `take`** | lista principal | Traz todas as Outreaches de cada Lead da página só pra usar a primeira e a contagem | `take: 1` + `_count` |
 | `count` extra **sequencial** depois do `Promise.all` quando há filtro | `total` | Um round-trip a mais em série | Entrar no mesmo `Promise.all` |
 
+> **Feito em 2026-08-10.** Além dos três acima, a serialização tinha uma quarta
+> causa: a categoria do filtro era **validada contra a lista de categorias
+> existentes**, então o `where` da lista só ficava pronto depois daquela query.
+> Removida a validação (categoria inexistente agora cai no empty state "nenhum
+> Lead com esses filtros", que já existia), a página passou de **4 rodadas
+> sequenciais para 1**. A busca da página usa a página pedida direto e só
+> refaz a consulta no caso raro de o número pedido passar do fim.
+
 ### H4. Faltam índices para a ordenação e os filtros
 A lista ordena por `score desc, created_at desc` e filtra por `status`; existe
 só `@@index([user_id])`.
@@ -87,6 +95,12 @@ coleta) pinta imediato e cada bloco pesado (lista, funil, fila) chega em
 streaming. Mais `prefetch` nos links da sidebar. Não deixa o servidor mais
 rápido; deixa o app **perceptivelmente** rápido, que é o que o relato descreve.
 
+> **Adiada para a [F032](F032-interface-do-orion.md), de propósito.** Fatiar a
+> página em blocos com `<Suspense>` exige quebrá-la em componentes que buscam
+> os próprios dados — e a F032 reescreve exatamente essa página (tabela → grid
+> de cards, modal → detalhe com abas). Fazer agora seria refazer depois. As
+> correções de query e índice (H3/H4) **não** dependem disso e já entraram.
+
 ### H7. Cold start
 Se a instrumentação mostrar cold start relevante (primeira requisição depois de
 ociosidade), avaliar: reduzir o bundle do servidor (o `playwright` já está fora
@@ -104,8 +118,17 @@ Diagnósticos e 100 Outreaches:
 - [ ] **AC3** — TTFB de `/` (dashboard + Fila do dia) **< 1 s** (p95).
 - [ ] **AC4** — Ação de navegação entre páginas do app **< 500 ms** até o
       primeiro conteúdo novo (com streaming, o shell é imediato).
-- [ ] **AC5** — Nenhuma página faz mais de **4 queries** por request (contadas
-      pelo log da etapa 1).
+- [ ] **AC5** — Nenhuma página faz mais de **uma rodada sequencial** de
+      queries: tudo que não depende do resultado do vizinho vai junto num
+      `Promise.all`. Teto secundário de **6 queries** por request (log da
+      etapa 1).
+      > **Corrigido em 2026-08-10, durante a implementação.** A versão original
+      > deste AC exigia "≤ 4 queries por request" — métrica errada. O que
+      > multiplica latência é **ida-e-volta em série**: 5 queries em paralelo
+      > custam ~1 RTT, enquanto 2 em série custam 2 RTT. Contar queries teria
+      > premiado juntar consultas e ignorado o problema real, que era a lista
+      > `/leads` esperar a query de categorias pra montar o filtro, depois o
+      > count, depois os Leads.
 - [ ] **AC6** — O tempo de `/leads` **não cresce** com o número de Leads
       `contatado` (a consulta de follow-up passa a ser filtrada no banco):
       comparar 50 vs 500 contatados, variação < 20%.

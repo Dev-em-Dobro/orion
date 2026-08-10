@@ -65,6 +65,10 @@ model Lead {
 
   @@unique([user_id, place_id])
   @@index([user_id])
+  // F028 — ordenação da lista /leads (score desc, depois created_at desc).
+  @@index([user_id, score(sort: Desc), created_at(sort: Desc)])
+  // F028 — funil, fila do dia e Central de Tarefas filtram por status.
+  @@index([user_id, status])
 }
 
 model Diagnostico {
@@ -84,6 +88,8 @@ model Diagnostico {
 
   @@index([lead_id])
   @@index([user_id])
+  // F028 — "último Diagnóstico do Lead" é a leitura mais frequente.
+  @@index([lead_id, executado_em(sort: Desc)])
 }
 
 model Dor {
@@ -116,6 +122,8 @@ model Outreach {
 
   @@index([lead_id])
   @@index([user_id])
+  // F028 — fila de follow-up (F006): "última Outreach enviada" por Lead.
+  @@index([lead_id, enviado, enviado_em(sort: Desc)])
 }
 
 // F016 / ADR-009 — chaves BYOK cifradas (AES-256-GCM). Um registro por User.

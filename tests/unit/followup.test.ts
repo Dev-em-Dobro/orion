@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { filaDeFollowUp, FOLLOWUP_DIAS } from "@/lib/followup";
+import {
+  filaDeFollowUp,
+  FOLLOWUP_DIAS,
+  limiteDaJanela,
+  whereFilaFollowUp,
+} from "@/lib/followup";
 import type { Lead, Outreach } from "@prisma/client";
 
 type LeadComOutreach = Lead & { outreaches: Outreach[] };
@@ -58,5 +63,28 @@ describe("filaDeFollowUp", () => {
     expect(fila).toHaveLength(1);
     expect(fila[0]?.lead.id).toBe("a");
     expect(fila[0]?.dias).toBe(5);
+  });
+});
+
+// F028 — a fila passou a ser filtrada no banco. Estes testes travam a forma da
+// cláusula: é ela que garante que a página não carrega todos os contatados.
+describe("whereFilaFollowUp", () => {
+  const agora = Date.UTC(2026, 6, 15);
+  const limite = limiteDaJanela(agora);
+
+  it("limite é FOLLOWUP_DIAS atrás", () => {
+    expect(agora - limite.getTime()).toBe(FOLLOWUP_DIAS * 86_400_000);
+  });
+
+  it("exige contatado, com envio, e nenhum envio depois do limite", () => {
+    const where = whereFilaFollowUp(limite);
+
+    expect(where.status).toBe("contatado");
+    // `some` sozinho traria de volta quem já recebeu follow-up hoje (ele tem
+    // um envio antigo). O `none` é o que fecha a janela pelo envio mais recente.
+    expect(where.outreaches).toEqual({
+      some: { enviado: true },
+      none: { enviado: true, enviado_em: { gt: limite } },
+    });
   });
 });
