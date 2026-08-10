@@ -92,6 +92,15 @@ Quando a F003 estiver implementada, o score faz essa ordenação sozinho.
 ## Manutenção
 - Este arquivo é a **fonte única** do mapa nicho → Tier. A F003 lê deste mapa
   (na prática, o mapa vira uma constante em `src/lib/score/`).
+- **A partir da [F033](../02-features/F033-busca-estruturada.md)** ele é também
+  a fonte do **dropdown de nicho** da busca: cada linha das tabelas acima vira
+  uma entrada de `src/lib/nichos/catalogo.ts` (`slug`, `label`, `termoBusca`,
+  `includedType`, `tier`), e o mapa de Tier da F003 passa a ler **desse mesmo
+  catálogo** — uma fonte só, sem duplicação. Um teste falha se o catálogo e
+  este documento divergirem (F033 AC7).
+- A coluna `primaryType` deixa de ser só documentação: vira o `includedType`
+  enviado ao Places. Onde estiver escrito "(varia — confirmar no retorno)", o
+  nicho entra **sem** `includedType`.
 - Os `primaryType` acima são prováveis; **confirmar contra o que o Places
   realmente devolve** e ajustar. Tipo não mapeado → Tier BAIXO.
 - Promover/rebaixar um nicho é mudança de estratégia → **editar este arquivo

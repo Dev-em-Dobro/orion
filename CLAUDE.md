@@ -14,7 +14,7 @@ em `specs/07-lancamento-para-alunos.md`, briefing em `specs/08-briefing.md`.
 > estão na `main`. A Fase 3 transforma o app de balcão de ferramentas manuais em
 > **motor com opinião**: priorização automática, Fila do dia, canal e-mail,
 > cobrança de tarefas, Skills e Agente. Plano mestre em
-> `specs/10-revamp-do-fluxo.md` (features **F024–F031**, ADRs **014–016**).
+> `specs/10-revamp-do-fluxo.md` (features **F024–F034**, ADRs **014–016**).
 > Os IDs F021–F023 estão **reservados** por branches não mergeadas (ver §7 do
 > plano). "Sem nova lib sem ADR."
 

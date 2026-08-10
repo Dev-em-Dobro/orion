@@ -40,10 +40,11 @@ X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.na
 ### Body
 ```json
 {
-  "textQuery": "barbearia em Curitiba PR",
+  "textQuery": "dentista Curitiba PR",
   "languageCode": "pt-BR",
   "regionCode": "BR",
   "maxResultCount": 20,
+  "includedType": "dentist",
   "pageToken": "<opcional — próxima página>"
 }
 ```
@@ -51,6 +52,23 @@ X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.na
 `maxResultCount` máximo da API é **20** por request. Para trazer mais
 estabelecimentos, a lib segue `nextPageToken` (até
 `PLACES_MAX_PAGES` em `textSearch.ts`).
+
+#### `includedType` (F033)
+Restringe o resultado a um `primaryType` específico. Enviado pela
+[F033](../02-features/F033-busca-estruturada.md) quando o nicho escolhido mapeia
+um tipo único e confiável (`dentista` → `dentist`); **omitido** no modo "Outro
+(digitar)" e nos nichos cujo tipo varia.
+
+- Ganho: menos ruído no retorno e `primaryType` previsível — o **Tier de nicho**
+  da [F003](../02-features/F003-score-e-priorizacao.md) deixa de cair em `BAIXO`
+  por categoria não mapeada.
+- **SKU**: não altera a cobrança. O SKU é determinado pela `X-Goog-FieldMask`,
+  que não muda; `includedType` é filtro de request. **Confirmar contra a tabela
+  de preços vigente antes de ligar em produção.**
+- Vazio com filtro: a lib repete a busca **uma vez** sem `includedType` e
+  sinaliza na UI (F033 AC6).
+- Valor inválido → **400 `INVALID_ARGUMENT`**; tratado como bug nosso (o valor
+  sai de constante, não de input do aluno).
 
 ### Resposta (sucesso 200)
 ```json
@@ -103,7 +121,11 @@ export type PlacesResult = {
   num_avaliacoes: number | null; // places.userRatingCount
 };
 
-export async function textSearch(query: string): Promise<PlacesResult[]>;
+export async function textSearch(
+  query: string,
+  apiKey: string,
+  opcoes?: { includedType?: string; paginas?: number }, // F033
+): Promise<PlacesResult[]>;
 ```
 
 A camada `lib/places` é responsável por:
@@ -127,3 +149,8 @@ A Server Action consome esse tipo, **não** o JSON cru do Google.
 ## Paginação
 Usada na F001: `textSearch` itera `nextPageToken` até esgotar ou atingir
 o teto `PLACES_MAX_PAGES` (custo/latência na coleta síncrona Orion).
+
+A partir da [F033](../02-features/F033-busca-estruturada.md), o número de
+páginas passa a ser **escolha do aluno** (20/40/60 → 1/2/3 páginas), com
+`PLACES_MAX_PAGES = 5` como teto duro. Antes disso, toda coleta paginava até o
+teto — o padrão novo (1 página) reduz o consumo do SKU Enterprise.

@@ -13,7 +13,16 @@ como um Lead com `status = novo`, deduplicado por `place_id` **do aluno**
 priorizar ou abordar.
 
 ## Input (UI)
-Form simples com dois campos:
+
+> **Superseded pela [F033](F033-busca-estruturada.md) (2026-08-10).** A entrada
+> passou a ser estruturada — `UF → município → bairro (opcional)` + **nicho em
+> dropdown** (com escape "Outro (digitar)", que preserva o comportamento
+> descrito abaixo) + quantidade `20/40/60`. O restante desta spec (mapeamento
+> Places → Lead, dedupe por `place_id`, paginação, cota, erros) **continua
+> valendo**.
+
+Forma original (Fase 1), mantida como referência e ainda acessível via
+"Outro (digitar)":
 
 | Campo         | Tipo   | Validação                          | Exemplo            |
 |---------------|--------|------------------------------------|--------------------|
@@ -54,6 +63,9 @@ depois `created_at desc` — [F003](F003-score-e-priorizacao.md)).
       `score = 0`, `user_id` da sessão. Conflito em `(user_id, place_id)`
       (unique por aluno — [F015](F015-multi-tenant.md)) → ignora silenciosamente
       e incrementa `ignorados`.
+      > A partir da [F025](F025-fila-do-dia.md), o Lead **não** nasce mais com
+      > `score = 0`: a Triagem calcula o score na hora da coleta e grava
+      > `score_estimado = true`. O `status` continua `novo`.
    4. Retorna `{ criados, ignorados }`.
 3. UI mostra mensagem e atualiza a lista.
 

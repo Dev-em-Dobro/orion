@@ -147,8 +147,10 @@ cada requisição curta.
 
 ### 4. Fila do dia na home
 `/` passa a abrir com o bloco **"Sua fila de hoje"** acima do funil (F010):
-- Card por Lead: nome, categoria, score, **Dor principal** (maior severidade),
-  telefone/site e a ação primária **Gerar abordagem** (F005/F027).
+- Card por Lead — o **mesmo componente** da [F032](F032-interface-do-orion.md),
+  usado também na lista e no resultado da busca: nome, categoria, score (com
+  `~` quando estimado), **Dor principal** (maior severidade), telefone/site e a
+  ação primária **Gerar abordagem** (F005/F027).
 - Ações secundárias por card: **Descartar** (F024) e abrir o detalhe.
 - Estado vazio inteligente:
   - Sem Lead nenhum → "Faça sua primeira busca" (link pra `/leads`).

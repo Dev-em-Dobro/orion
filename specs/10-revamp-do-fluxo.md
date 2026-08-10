@@ -6,7 +6,7 @@ Proposta — 2026-08-10 · branch `feature/revamp-fluxo-orion`
 Documento **mestre** desta rodada. Descreve o **novo fluxo de trabalho do
 Orion** ponta a ponta e distribui o trabalho em features com ID
 ([F024](02-features/F024-estado-do-lead-reversivel.md) a
-[F031](02-features/F031-central-de-tarefas.md)) e ADRs
+[F034](02-features/F034-funil-kanban.md)) e ADRs
 ([014](04-decisions/ADR-014-agente-orion.md) a
 [016](04-decisions/ADR-016-leitura-do-site-do-lead.md)).
 
@@ -43,6 +43,17 @@ Somando o que o uso mostrou, oito problemas concretos:
 | 6 | Um agente de IA dentro do Orion pra perguntar coisas | [F029](02-features/F029-agente-orion.md) |
 | 7 | Falta o menu Skills (com o extrator-de-DNA) | [F030](02-features/F030-menu-skills.md) |
 | 8 | O Orion devia cobrar as tarefas (ex.: 12h sem resposta → follow-up) | [F031](02-features/F031-central-de-tarefas.md) |
+
+Somaram-se três features de **suporte**, vindas da revisão das telas do
+**LeadSite** (concorrente direto, capturas em `~/Downloads/ref use lead`):
+
+| Feature | Por quê |
+|---------|---------|
+| [F032](02-features/F032-interface-do-orion.md) — Interface | A tabela de 7 colunas + modal único não sustenta a Fila do dia. Vira grid de cards + detalhe com abas |
+| [F033](02-features/F033-busca-estruturada.md) — Busca estruturada | Texto livre faz o Tier de nicho cair em `BAIXO` silenciosamente. Nicho controlado corrige o score na origem |
+| [F034](02-features/F034-funil-kanban.md) — Funil kanban | O funil é só leitura hoje; o kanban dá a superfície pra operar, usando o `corrigirStatus` da F024 |
+
+Nenhuma das três muda o domínio — são superfície sobre o que já existe.
 
 ---
 
@@ -172,26 +183,36 @@ seguinte. Dentro de cada fase, a ordem importa.
 2. **[F024](02-features/F024-estado-do-lead-reversivel.md) Estado reversível** —
    barato, tira a frustração imediata e é pré-requisito do "descartar" da fila.
 
-### Fase B — O coração do revamp
-3. **[F025](02-features/F025-fila-do-dia.md) Fila do dia** — triagem automática
+### Fase B — A cara nova
+3. **[F032](02-features/F032-interface-do-orion.md) Interface** — grid de cards,
+   detalhe com abas, navegação da sidebar. Vem antes da Fila do dia porque é a
+   casca que ela (e todas as outras) usa pra aparecer.
+
+### Fase C — O coração do revamp
+4. **[F025](02-features/F025-fila-do-dia.md) Fila do dia** — triagem automática
    na coleta + aprofundamento em lotes + priorização automática.
-4. **[F026](02-features/F026-sinal-atendimento-automatizado.md) Atendimento
+5. **[F033](02-features/F033-busca-estruturada.md) Busca estruturada** — nicho
+   controlado; corrige o Tier na origem, então quanto antes entrar, menos Lead
+   entra na base com score torto.
+6. **[F026](02-features/F026-sinal-atendimento-automatizado.md) Atendimento
    automatizado** — entra no mesmo Diagnóstico da F025 (zero requisição extra:
    aproveita o HTML que a F002 já baixa).
 
-### Fase C — Abordar e cobrar
-5. **[F027](02-features/F027-outreach-por-email.md) Outreach por e-mail** —
+### Fase D — Abordar, cobrar e operar
+7. **[F027](02-features/F027-outreach-por-email.md) Outreach por e-mail** —
    depende da captura de e-mail feita junto com a F026.
-6. **[F031](02-features/F031-central-de-tarefas.md) Central de Tarefas** —
+8. **[F031](02-features/F031-central-de-tarefas.md) Central de Tarefas** —
    depende de `status_em` (F024/F025) pra saber há quanto tempo algo parou.
+9. **[F034](02-features/F034-funil-kanban.md) Funil kanban** — depende do
+   `corrigirStatus` (F024) e do card compacto (F032).
 
-### Fase D — Superfície nova
-7. **[F030](02-features/F030-menu-skills.md) Menu Skills** — independente das
-   demais; pode entrar em paralelo a qualquer momento (só depende do conteúdo
-   das skills).
-8. **[F029](02-features/F029-agente-orion.md) Agente Orion** — *por último de
-   propósito*: o agente fica muito melhor depois que os dados dele (score
-   confirmado, Dores, tarefas) existirem.
+### Fase E — Superfície nova
+10. **[F030](02-features/F030-menu-skills.md) Menu Skills** — independente das
+    demais; pode entrar em paralelo a qualquer momento (só depende do conteúdo
+    das skills).
+11. **[F029](02-features/F029-agente-orion.md) Agente Orion** — *por último de
+    propósito*: o agente fica muito melhor depois que os dados dele (score
+    confirmado, Dores, tarefas) existirem.
 
 ---
 

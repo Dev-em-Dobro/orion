@@ -105,6 +105,9 @@ Em produção serverless exige a API de screenshot externa (entra no BYOK — F0
 - **Outreach por e-mail**, preparado na plataforma e enviado pelo aluno ([F027](02-features/F027-outreach-por-email.md)).
 - **Central de Tarefas** in-app, sem cron ([F031](02-features/F031-central-de-tarefas.md)).
 - **Menu Skills** ([F030](02-features/F030-menu-skills.md)) e **Agente Orion** ([F029](02-features/F029-agente-orion.md)).
+- **Interface nova**: grid de cards e detalhe com abas ([F032](02-features/F032-interface-do-orion.md)),
+  **busca estruturada** com nicho controlado ([F033](02-features/F033-busca-estruturada.md))
+  e **funil kanban** ([F034](02-features/F034-funil-kanban.md)).
 
 ### Entregue na Fase 2
 - **Login / autenticação** por aluno (Better Auth).
