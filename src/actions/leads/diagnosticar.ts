@@ -2,17 +2,20 @@
 
 // F002 — Diagnóstico de presença digital.
 // Spec: /specs/02-features/F002-diagnostico-de-presenca-digital.md
+//
+// Casca: valida, resolve chave e delega. A execução vive em
+// `src/lib/diagnostico/executar.ts` (compartilhada com o lote da F025) e a
+// persistência em `src/lib/diagnostico/persistir.ts`.
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
 import { mensagemEscopo, requireLeadOwned } from "@/lib/db/scoped";
-import { classificarWebsite } from "@/lib/diagnostico/agregador";
-import { verificarSite } from "@/lib/diagnostico/verificarSite";
-import { performanceMobile } from "@/lib/pagespeed/performanceMobile";
-import { detectarDores, substituirDoresDoLead } from "@/lib/dores";
-import { mudarStatus } from "@/lib/leads/status";
+import {
+  executarDiagnostico,
+  resumoDiagnostico,
+} from "@/lib/diagnostico/executar";
+import { persistirDiagnostico } from "@/lib/diagnostico/persistir";
 
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
@@ -36,90 +39,17 @@ export async function diagnosticarLead(
     const { lead, userId } = await requireLeadOwned(parsed.data.lead_id);
     const googleKey = await exigirChave(userId, "google");
 
-    let tem_site = false;
-    let site_e_agregador = false;
-    let tem_https: boolean | null = null;
-    let tempo_carregamento_ms: number | null = null;
-    let performance_mobile: number | null = null;
-
-    if (lead.website) {
-      const classif = classificarWebsite(lead.website);
-      if (classif.ehAgregador) {
-        tem_site = true;
-        site_e_agregador = true;
-        tem_https = classif.temHttps;
-      } else {
-        const site = await verificarSite(lead.website);
-        if (site.temSite) {
-          tem_site = true;
-          tem_https = site.temHttps;
-          tempo_carregamento_ms = site.tempoMs;
-          try {
-            performance_mobile = await performanceMobile(
-              site.urlFinal,
-              googleKey,
-            );
-          } catch {
-            performance_mobile = null;
-          }
-        }
-      }
-    }
-
-    await prisma.$transaction([
-      prisma.diagnostico.create({
-        data: {
-          user_id: userId,
-          lead_id: lead.id,
-          tem_site,
-          site_e_agregador,
-          tem_https,
-          tempo_carregamento_ms,
-          performance_mobile,
-        },
-      }),
-      ...(lead.status === "novo"
-        ? [
-            prisma.lead.update({
-              where: { id: lead.id },
-              data: mudarStatus("enriquecido"),
-            }),
-          ]
-        : []),
-    ]);
-
-    // F004 — Dores do último Diagnóstico (substitui conjunto anterior).
-    await substituirDoresDoLead(
-      userId,
-      lead.id,
-      detectarDores(
-        {
-          tem_site,
-          site_e_agregador,
-          tem_https,
-          performance_mobile,
-        },
-        lead.website,
-      ),
-    );
+    const dados = await executarDiagnostico(lead.website, googleKey);
+    await persistirDiagnostico({ userId, lead, dados });
 
     revalidatePath("/leads");
+    revalidatePath(`/leads/${lead.id}`);
+    revalidatePath("/");
 
-    const resumo = !lead.website
-      ? "sem site"
-      : site_e_agregador
-        ? "presença só em agregador/rede social — sem site próprio"
-        : !tem_site
-          ? "site fora do ar"
-          : [
-              "site ok",
-              tem_https ? "HTTPS ok" : "sem HTTPS",
-              performance_mobile === null
-                ? "performance indisponível"
-                : `performance mobile ${performance_mobile}`,
-            ].join(" · ");
-
-    return { kind: "ok", resumo: `Diagnóstico concluído: ${resumo}.` };
+    return {
+      kind: "ok",
+      resumo: `Diagnóstico concluído: ${resumoDiagnostico(dados, lead.website)}.`,
+    };
   } catch (e) {
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };

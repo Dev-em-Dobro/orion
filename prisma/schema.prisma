@@ -32,6 +32,18 @@ enum TipoDor {
   SITE_LENTO
   SEM_HTTPS
   SEM_RESPOSTA_REVIEWS
+  // F026 — nenhum sinal de chatbot/atendente automatico no site publico.
+  SEM_ATENDIMENTO_AUTOMATIZADO
+}
+
+// F026 — sinal inferido do site publico. `nao_detectado` significa "nao
+// encontramos sinal", nunca "nao tem": um bot pode rodar so dentro do
+// WhatsApp, sem vestigio no site.
+enum AtendimentoAutomatizado {
+  detectado
+  indicios
+  nao_detectado
+  nao_avaliado
 }
 
 enum Severidade {
@@ -89,6 +101,9 @@ model Diagnostico {
   performance_mobile    Int?
   tem_https             Boolean?
   tempo_carregamento_ms Int?
+  // F026 — atendimento automatizado (chatbot) detectado no site.
+  atendimento_automatizado AtendimentoAutomatizado @default(nao_avaliado)
+  atendimento_evidencia    String?
   executado_em          DateTime @default(now())
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)

@@ -1,13 +1,19 @@
 // F004 — detecção pura de Dor a partir do Diagnóstico (+ website).
 // Spec: /specs/02-features/F004-deteccao-de-dor.md
 
-import type { Severidade, TipoDor } from "@prisma/client";
+import type {
+  AtendimentoAutomatizado,
+  Severidade,
+  TipoDor,
+} from "@prisma/client";
 
 export type DiagnosticoParaDeteccao = {
   tem_site: boolean;
   site_e_agregador: boolean;
   tem_https: boolean | null;
   performance_mobile: number | null;
+  /** F026 — ausente em Diagnósticos anteriores à feature. */
+  atendimento_automatizado?: AtendimentoAutomatizado;
 };
 
 export type DorDetectada = {
@@ -16,10 +22,30 @@ export type DorDetectada = {
   detalhes: string;
 };
 
+/**
+ * F026 — sem telefone não há WhatsApp pra automatizar, então não há o que
+ * vender. A Dor só existe quando olhamos o site e não achamos sinal
+ * (`nao_detectado`); `nao_avaliado` significa que não deu pra olhar.
+ */
+function dorDeAtendimento(
+  diag: DiagnosticoParaDeteccao,
+  telefone: string | null | undefined,
+): DorDetectada | null {
+  if (diag.atendimento_automatizado !== "nao_detectado") return null;
+  if (!telefone || telefone.trim().length === 0) return null;
+  return {
+    tipo: "SEM_ATENDIMENTO_AUTOMATIZADO",
+    severidade: "MEDIA",
+    detalhes:
+      "nenhum sinal de atendimento automatizado no site — o WhatsApp provavelmente é respondido no braço",
+  };
+}
+
 /** Detecta Dores candidatas. Sem rede / sem Prisma. */
 export function detectarDores(
   diag: DiagnosticoParaDeteccao,
   website: string | null,
+  telefone?: string | null,
 ): DorDetectada[] {
   if (!website || !diag.tem_site) {
     return [
@@ -57,5 +83,7 @@ export function detectarDores(
       detalhes: "site sem HTTPS (sem cadeado de segurança)",
     });
   }
+  const atendimento = dorDeAtendimento(diag, telefone);
+  if (atendimento) dores.push(atendimento);
   return dores;
 }

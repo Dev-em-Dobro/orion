@@ -25,6 +25,7 @@ describe("parseFiltroLista", () => {
       site: null,
       scoreMin: null,
       comTelefone: false,
+      semAtendimento: false,
       descartados: false,
     });
     expect(temFiltro(f)).toBe(false);

@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { TenantNotFoundError, requireLeadOwned } from "@/lib/db/scoped";
 import { valor as calcularValor } from "@/lib/score/score";
 import { classificarWebsite } from "@/lib/diagnostico/agregador";
+import { ROTULO_ATENDIMENTO } from "@/lib/diagnostico/atendimento";
 import { demoUrlFor } from "@/lib/demos";
 import { ESTAGIOS_EM_ABERTO } from "@/lib/funil";
 import {
@@ -46,6 +47,7 @@ type SearchParams = Promise<{
   site?: string;
   score?: string;
   telefone?: string;
+  atendimento?: string;
   status?: string;
   page?: string;
 }>;
@@ -246,6 +248,27 @@ export default async function LeadByIdPage({
                     <Campo rotulo="Performance mobile">
                       <span className="font-mono">
                         {diagnostico.performance_mobile ?? "—"}
+                      </span>
+                    </Campo>
+                    <Campo rotulo="Atendimento automatizado">
+                      <span
+                        title="Verificamos só o site público do negócio. Não enviamos mensagem para o WhatsApp dele."
+                        className={
+                          diagnostico.atendimento_automatizado === "detectado"
+                            ? "text-emerald-300"
+                            : diagnostico.atendimento_automatizado ===
+                                "nao_detectado"
+                              ? "text-sky-300"
+                              : "text-zinc-400"
+                        }
+                      >
+                        {ROTULO_ATENDIMENTO[diagnostico.atendimento_automatizado]}
+                        {diagnostico.atendimento_evidencia && (
+                          <span className="text-zinc-500">
+                            {" "}
+                            · {diagnostico.atendimento_evidencia}
+                          </span>
+                        )}
                       </span>
                     </Campo>
                     <Campo rotulo="Executado em">

@@ -20,6 +20,8 @@ export type FiltroLista = {
   site: FiltroSite | null;
   scoreMin: number | null;
   comTelefone: boolean;
+  /** F026 — Leads sem sinal de atendimento automatizado no site. */
+  semAtendimento: boolean;
   descartados: boolean;
 };
 
@@ -28,6 +30,7 @@ export type ParamsLista = {
   site?: string;
   score?: string;
   telefone?: string;
+  atendimento?: string;
   status?: string;
 };
 
@@ -41,6 +44,7 @@ export function parseFiltroLista(params: ParamsLista): FiltroLista {
         ? scoreBruto
         : null,
     comTelefone: params.telefone === "1",
+    semAtendimento: params.atendimento === "nao",
     descartados: params.status === "descartados",
   };
 }
@@ -51,7 +55,8 @@ export function temFiltro(f: FiltroLista): boolean {
     f.categoria !== null ||
     f.site !== null ||
     f.scoreMin !== null ||
-    f.comTelefone
+    f.comTelefone ||
+    f.semAtendimento
   );
 }
 
@@ -66,6 +71,13 @@ export function whereFiltroLista(f: FiltroLista): Prisma.LeadWhereInput {
     ...(f.comTelefone
       ? { AND: [{ telefone: { not: null } }, { NOT: { telefone: "" } }] }
       : {}),
+    // F026 — filtra pela **Dor**, não pelo campo do Diagnóstico. As Dores são
+    // substituídas a cada novo Diagnóstico (`substituirDoresDoLead`), então
+    // refletem sempre o último; um `some` sobre Diagnostico casaria com
+    // qualquer diagnóstico antigo e daria resultado errado após re-diagnóstico.
+    ...(f.semAtendimento
+      ? { dores: { some: { tipo: "SEM_ATENDIMENTO_AUTOMATIZADO" as const } } }
+      : {}),
   };
 }
 
@@ -79,6 +91,7 @@ export function queryDoFiltro(
   if (f.site) p.set("site", f.site);
   if (f.scoreMin !== null) p.set("score", String(f.scoreMin));
   if (f.comTelefone) p.set("telefone", "1");
+  if (f.semAtendimento) p.set("atendimento", "nao");
   if (f.descartados) p.set("status", "descartados");
   for (const [k, v] of Object.entries(extra)) {
     if (v !== undefined && v !== "") p.set(k, String(v));

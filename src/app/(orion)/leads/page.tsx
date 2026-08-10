@@ -42,6 +42,7 @@ type SearchParams = Promise<{
   page?: string;
   score?: string;
   telefone?: string;
+  atendimento?: string;
   status?: string;
 }>;
 
@@ -132,7 +133,7 @@ async function BlocoLista({
       take: PAGE_SIZE,
       include: {
         diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 },
-        dores: { select: { severidade: true, detalhes: true } },
+        dores: { select: { tipo: true, severidade: true, detalhes: true } },
         outreaches: { orderBy: { gerado_em: "desc" }, take: 1 },
         _count: { select: { outreaches: true } },
       },
@@ -195,6 +196,9 @@ async function BlocoLista({
       temDiagnostico: lead.diagnosticos.length > 0,
       dorPrincipal: dor?.detalhes ?? null,
       temOutreach: lead._count.outreaches > 0,
+      semAtendimento: lead.dores.some(
+        (d) => d.tipo === "SEM_ATENDIMENTO_AUTOMATIZADO",
+      ),
       outreachEnviado: ultimoOutreach?.enviado ?? false,
       waLink: ultimoOutreach
         ? linkWhatsapp(lead.telefone, ultimoOutreach.conteudo)

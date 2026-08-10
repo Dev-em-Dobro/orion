@@ -22,6 +22,7 @@ const NEUTRO: FiltroLista = {
   site: null,
   scoreMin: null,
   comTelefone: false,
+  semAtendimento: false,
   descartados: false,
 };
 
@@ -58,6 +59,14 @@ export function ChipsFiltro({
       label: "Com telefone",
       ativo: filtro.comTelefone,
       destino: filtro.comTelefone ? base : { ...base, comTelefone: true },
+    },
+    {
+      // F026 — o gancho de venda de automação de atendimento.
+      label: "WhatsApp no braço",
+      ativo: filtro.semAtendimento,
+      destino: filtro.semAtendimento
+        ? base
+        : { ...base, semAtendimento: true },
     },
   ];
 

@@ -30,6 +30,8 @@ export type LeadCardProps = {
   temDiagnostico: boolean;
   dorPrincipal: string | null;
   temOutreach: boolean;
+  /** F026 — sem sinal de atendimento automatizado (e com telefone). */
+  semAtendimento: boolean;
   outreachEnviado: boolean;
   waLink: string | null;
   motivoDescarte: string | null;
@@ -164,6 +166,14 @@ export function LeadCard({
           {lead.status}
         </span>
         <Avaliacoes nota={lead.nota} numAvaliacoes={lead.numAvaliacoes} />
+        {lead.semAtendimento && (
+          <span
+            className="badge bg-sky-500/15 text-sky-300"
+            title="Nenhum sinal de atendimento automatizado no site público. Não enviamos mensagem para o WhatsApp do negócio."
+          >
+            WhatsApp no braço
+          </span>
+        )}
       </div>
 
       {lead.dorPrincipal && (

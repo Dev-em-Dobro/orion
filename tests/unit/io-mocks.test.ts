@@ -115,20 +115,39 @@ describe("verificarSite", () => {
     vi.unstubAllGlobals();
   });
 
-  it("200 HTTPS → temSite", async () => {
+  it("200 HTTPS → temSite e devolve o HTML (F026)", async () => {
+    // Response de verdade: o mock antigo era um objeto solto sem headers nem
+    // body, e escondia o caminho que a F026 usa (content-type + stream).
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValueOnce({
-        status: 200,
-        arrayBuffer: async () => new ArrayBuffer(8),
-      }),
+      vi.fn().mockResolvedValueOnce(
+        new Response("<html><body>oi</body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      ),
     );
     const r = await verificarSite("https://exemplo.com");
     expect(r).toMatchObject({
       temSite: true,
       temHttps: true,
       urlFinal: "https://exemplo.com",
+      html: "<html><body>oi</body></html>",
     });
+  });
+
+  it("resposta não-HTML não vira html (ADR-016)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValueOnce(
+        new Response("{}", {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+    const r = await verificarSite("https://exemplo.com");
+    expect(r).toMatchObject({ temSite: true, html: null });
   });
 
   it("segue redirect e 404 → sem site", async () => {
@@ -141,10 +160,12 @@ describe("verificarSite", () => {
           headers: { get: () => "https://final.com/" },
           body: { cancel: async () => undefined },
         })
-        .mockResolvedValueOnce({
-          status: 200,
-          arrayBuffer: async () => new ArrayBuffer(0),
-        }),
+        .mockResolvedValueOnce(
+          new Response("", {
+            status: 200,
+            headers: { "content-type": "text/html" },
+          }),
+        ),
     );
     const ok = await verificarSite("http://exemplo.com");
     expect(ok).toMatchObject({
