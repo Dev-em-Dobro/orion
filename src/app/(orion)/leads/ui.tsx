@@ -14,6 +14,8 @@ export const STATUS_BADGE: Record<LeadStatus, string> = {
   proposta: "bg-indigo-500/15 text-indigo-300",
   ganho: "bg-emerald-500/15 text-emerald-300",
   perdido: "bg-red-500/15 text-red-300",
+  // F024 — apagado de propósito: descartado não disputa atenção na lista.
+  descartado: "bg-zinc-700/40 text-zinc-500",
 };
 
 export function scoreBadge(score: number) {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
@@ -8,13 +9,18 @@ import {
   limiteDaJanela,
   whereFilaFollowUp,
 } from "@/lib/followup";
-import { ESTAGIOS_EM_ABERTO } from "@/lib/funil";
+import {
+  ESTAGIOS_EM_ABERTO,
+  ONDE_NAO_DESCARTADO,
+  STATUS_DESCARTADO,
+} from "@/lib/funil";
 import { demoUrlFor } from "@/lib/demos";
 import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
 import { UsoDiarioBanner } from "@/components/uso-diario";
 import { AjudaScore } from "./ajuda-score";
 import { ColetarForm } from "./coletar-form";
+import { ExcluirDescartadosForm } from "./excluir-descartados-form";
 import { GerarOutreachButton } from "./gerar-outreach-button";
 import { LeadRow } from "./lead-row";
 import {
@@ -41,6 +47,8 @@ type SearchParams = Promise<{
   categoria?: string;
   site?: string;
   page?: string;
+  /** F024 — `?status=descartados` abre a visão dos descartados. */
+  status?: string;
 }>;
 
 /** Teto de exibição do painel de follow-up (F028: a fila não pode crescer sem fim). */
@@ -58,11 +66,16 @@ export default async function LeadsPage({
   // Valor inexistente agora cai no empty state "nenhum Lead com esses filtros".
   const categoriaFiltro = (params.categoria?.trim() ?? "").slice(0, 80) || null;
   const siteFiltro = parseFiltroSite(params.site);
+  // F024 — descartados só aparecem quando pedidos explicitamente.
+  const verDescartados = params.status === "descartados";
 
   const { whereUser, userId } = await requireTenant();
 
   const whereLista = {
     ...whereUser,
+    ...(verDescartados
+      ? { status: STATUS_DESCARTADO }
+      : ONDE_NAO_DESCARTADO),
     ...(categoriaFiltro ? { categoria: categoriaFiltro } : {}),
     ...(siteFiltro ? whereFiltroSite(siteFiltro) : {}),
   };
@@ -89,11 +102,17 @@ export default async function LeadsPage({
 
   // Uma rodada só: nada aqui depende do resultado do vizinho, então tudo vai
   // em paralelo. O custo é 1 ida-e-volta ao banco, não 5 (ADR-015).
-  const [categoriasRows, faltandoChaves, leadsFollowUp, total, leadsPagina] =
-    await Promise.all([
+  const [
+    categoriasRows,
+    faltandoChaves,
+    leadsFollowUp,
+    total,
+    leadsPagina,
+    descartados,
+  ] = await Promise.all([
       prisma.lead.groupBy({
         by: ["categoria"],
-        where: whereUser,
+        where: { ...whereUser, ...ONDE_NAO_DESCARTADO },
         orderBy: { categoria: "asc" },
       }),
       chavesEssenciaisFaltando(userId),
@@ -111,6 +130,9 @@ export default async function LeadsPage({
       }),
       prisma.lead.count({ where: whereLista }),
       buscarPagina(pageRequested),
+      prisma.lead.count({
+        where: { ...whereUser, status: STATUS_DESCARTADO },
+      }),
     ]);
 
   const categorias = categoriasRows
@@ -129,7 +151,9 @@ export default async function LeadsPage({
     total > 0
       ? true
       : temFiltroAtivo
-        ? (await prisma.lead.count({ where: whereUser })) > 0
+        ? (await prisma.lead.count({
+            where: { ...whereUser, ...ONDE_NAO_DESCARTADO },
+          })) > 0
         : false;
 
   const semGoogle = faltandoChaves.includes("google");
@@ -202,11 +226,34 @@ export default async function LeadsPage({
           </div>
         )}
 
+        {/* F024 — visão dos descartados */}
+        {verDescartados ? (
+          <div className="mt-8 rounded-xl border border-border bg-zinc-900/40 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-zinc-300">
+                Vendo <strong>{descartados}</strong> Lead(s) descartado(s).
+                Restaurar devolve o Lead à lista.
+              </p>
+              <Link href="/leads" className="btn-ghost">
+                ← Voltar aos ativos
+              </Link>
+            </div>
+            {descartados > 0 && (
+              <div className="mt-3 border-t border-border pt-3">
+                <ExcluirDescartadosForm quantidade={descartados} />
+              </div>
+            )}
+          </div>
+        ) : null}
+
         <div className="mt-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm text-muted">
                 {total} Lead(s)
+                {verDescartados ? (
+                  <span className="text-zinc-500"> · descartados</span>
+                ) : null}
                 {categoriaFiltro ? (
                   <span className="text-zinc-500">
                     {" "}
@@ -224,6 +271,17 @@ export default async function LeadsPage({
                 <p className="mt-0.5 text-xs text-zinc-500">
                   Ordenado por Score (depois data). Até {PAGE_SIZE} por página.
                   Score 0 = ainda não priorizado — Diagnosticar → Priorizar.
+                </p>
+              )}
+              {!verDescartados && descartados > 0 && (
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  {descartados} descartado(s) ·{" "}
+                  <Link
+                    href="/leads?status=descartados"
+                    className="text-zinc-400 underline underline-offset-2 hover:text-zinc-200"
+                  >
+                    ver
+                  </Link>
                 </p>
               )}
             </div>
@@ -333,6 +391,7 @@ export default async function LeadsPage({
                           waLink={waLink}
                           emAberto={ESTAGIOS_EM_ABERTO.includes(lead.status)}
                           demoUrl={demoUrlFor(lead.place_id)}
+                          motivoDescarte={lead.motivo_descarte}
                         />
                       );
                     })}

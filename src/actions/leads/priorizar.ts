@@ -12,6 +12,7 @@ import {
   necessidade as calcularNecessidade,
   calcularScore,
 } from "@/lib/score/score";
+import { mudarStatus } from "@/lib/leads/status";
 
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
@@ -63,9 +64,11 @@ export async function priorizarLead(
 
     await prisma.lead.update({
       where: { id: lead.id },
+      // F024 — quando promove, passa por `mudarStatus` pra gravar `status_em`.
+      // Re-priorizar sem promover só regrava o score, então não é transição.
       data:
         lead.status === "enriquecido"
-          ? { score, status: "priorizado" }
+          ? { score, ...mudarStatus("priorizado") }
           : { score },
     });
 

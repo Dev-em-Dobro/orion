@@ -24,6 +24,8 @@ function fakeLead(
     num_avaliacoes: null,
     place_id: "p1",
     status: "contatado",
+    status_em: new Date(),
+    motivo_descarte: null,
     score: 0,
     created_at: new Date(),
     updated_at: new Date(),

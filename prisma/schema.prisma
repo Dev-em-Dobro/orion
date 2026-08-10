@@ -21,6 +21,9 @@ enum LeadStatus {
   proposta
   ganho
   perdido
+  // F024 — nunca vale a pena abordar. Terminal lateral e reversível; não é
+  // resultado de venda (isso é `perdido`), é limpeza de base.
+  descartado
 }
 
 enum TipoDor {
@@ -54,6 +57,11 @@ model Lead {
   num_avaliacoes Int?
   place_id       String
   status         LeadStatus @default(novo)
+  // F024 — quando o status atual foi assumido. Base das cobranças da F031;
+  // `updated_at` não serve, porque muda com qualquer escrita no Lead.
+  status_em      DateTime   @default(now())
+  // F024 — por que o aluno descartou (≤ 140 chars, validado no Zod).
+  motivo_descarte String?
   score          Int        @default(0)
   created_at     DateTime   @default(now())
   updated_at     DateTime   @updatedAt

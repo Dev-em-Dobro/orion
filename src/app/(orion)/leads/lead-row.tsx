@@ -11,6 +11,8 @@ import { GerarOutreachButton } from "./gerar-outreach-button";
 import { ResponderObjecaoPanel } from "./responder-objecao-panel";
 import { GerarPropostaButton } from "./gerar-proposta-button";
 import { DesfechoButtons } from "./desfecho-buttons";
+import { DescartarButton, RestaurarButton } from "./descarte-buttons";
+import { CorrigirStatusForm } from "./corrigir-status-form";
 
 export type LeadRowProps = {
   id: string;
@@ -40,6 +42,8 @@ export type LeadRowProps = {
   waLink: string | null;
   emAberto: boolean;
   demoUrl: string | null;
+  // F024
+  motivoDescarte: string | null;
 };
 
 function SiteBadge({
@@ -317,9 +321,15 @@ export function LeadRow(p: LeadRowProps) {
                     Ações
                   </p>
                   <div className="mt-2 flex flex-wrap items-start gap-2">
-                    <DiagnosticarButton leadId={p.id} />
-                    <PriorizarButton leadId={p.id} />
-                    <GerarOutreachButton leadId={p.id} />
+                    {p.status === "descartado" ? (
+                      <RestaurarButton leadId={p.id} />
+                    ) : (
+                      <>
+                        <DiagnosticarButton leadId={p.id} />
+                        <PriorizarButton leadId={p.id} />
+                        <GerarOutreachButton leadId={p.id} />
+                      </>
+                    )}
                     {["contatado", "respondeu", "qualificado"].includes(
                       p.status,
                     ) && <ResponderObjecaoPanel leadId={p.id} />}
@@ -329,6 +339,22 @@ export function LeadRow(p: LeadRowProps) {
                       p.diag && <GerarPropostaButton leadId={p.id} />}
                     {p.emAberto && <DesfechoButtons leadId={p.id} />}
                   </div>
+
+                  {/* F024 — descartar e corrigir status */}
+                  {p.status !== "descartado" && (
+                    <div className="mt-3 space-y-2 border-t border-border pt-3">
+                      <CorrigirStatusForm
+                        leadId={p.id}
+                        statusAtual={p.status}
+                      />
+                      <DescartarButton leadId={p.id} />
+                    </div>
+                  )}
+                  {p.motivoDescarte && (
+                    <p className="mt-3 border-t border-border pt-3 text-xs text-zinc-500">
+                      Descartado: {p.motivoDescarte}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

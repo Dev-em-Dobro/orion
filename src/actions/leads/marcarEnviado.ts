@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { mensagemEscopo, requireOutreachOwned } from "@/lib/db/scoped";
+import { mudarStatus } from "@/lib/leads/status";
 
 const schema = z.object({
   outreach_id: z.string().cuid("outreach_id inválido"),
@@ -42,7 +43,7 @@ export async function marcarEnviado(
         ? [
             prisma.lead.update({
               where: { id: outreach.lead_id },
-              data: { status: "contatado" },
+              data: mudarStatus("contatado"),
             }),
           ]
         : []),

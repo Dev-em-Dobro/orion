@@ -4,6 +4,7 @@
 import type { LeadStatus } from "@prisma/client";
 
 // Ordem canônica do funil (preparo interno → funil de venda → desfecho).
+// `descartado` (F024) fica fora: nunca esteve na disputa, então não é etapa.
 export const ESTAGIOS_FUNIL: LeadStatus[] = [
   "novo",
   "enriquecido",
@@ -15,6 +16,18 @@ export const ESTAGIOS_FUNIL: LeadStatus[] = [
   "ganho",
   "perdido",
 ];
+
+/**
+ * F024 — Lead que o aluno decidiu nunca abordar. Some da lista, do funil e
+ * das cobranças, mas continua no banco (e não volta como novidade na próxima
+ * coleta, porque o dedupe é por `place_id`).
+ */
+export const STATUS_DESCARTADO: LeadStatus = "descartado";
+
+/** Fragmento de where para esconder descartados da visão padrão. */
+export const ONDE_NAO_DESCARTADO = {
+  status: { not: STATUS_DESCARTADO },
+} as const;
 
 // Estágios "em aberto": no funil de venda e ainda sem desfecho final.
 export const ESTAGIOS_EM_ABERTO: LeadStatus[] = [
@@ -46,10 +59,16 @@ const RANK: Record<LeadStatus, number> = {
   proposta: 6,
   ganho: 7,
   perdido: 7,
+  // F024 — terminal, igual a ganho/perdido: registrar desfecho não tira um
+  // Lead de descartado (pra isso existe o Restaurar).
+  descartado: 7,
 };
 
 // Registrar desfecho nunca regride o funil (F006/F010). `perdido` é permitido de
 // qualquer estágio; os demais só avançam (rank destino ≥ rank atual).
+//
+// F024 — esta trava continua valendo pro **desfecho**. A porta pra voltar atrás
+// é outra e explícita: `corrigirStatus`, que aceita qualquer destino.
 export function podeRegistrarDesfecho(
   atual: LeadStatus,
   desfecho: LeadStatus,

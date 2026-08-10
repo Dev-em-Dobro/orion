@@ -6,7 +6,11 @@ import { chavesEssenciaisFaltando } from "@/lib/chaves";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { filaDeFollowUp } from "@/lib/followup";
-import { ESTAGIOS_EM_ABERTO, taxasDeConversao } from "@/lib/funil";
+import {
+  ESTAGIOS_EM_ABERTO,
+  ONDE_NAO_DESCARTADO,
+  taxasDeConversao,
+} from "@/lib/funil";
 import type { LeadStatus } from "@prisma/client";
 
 // Dashboard sempre reflete só os dados do aluno (F015).
@@ -32,7 +36,9 @@ export default async function DashboardPage() {
   const { whereUser, userId } = await requireTenant();
   const [leads, faltandoChaves] = await Promise.all([
     prisma.lead.findMany({
-      where: whereUser,
+      // F024 — descartado nunca esteve na disputa: fica fora das contagens,
+      // das taxas de conversão e do score médio.
+      where: { ...whereUser, ...ONDE_NAO_DESCARTADO },
       orderBy: { score: "desc" },
       include: {
         outreaches: {

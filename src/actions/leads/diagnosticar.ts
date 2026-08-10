@@ -12,6 +12,7 @@ import { classificarWebsite } from "@/lib/diagnostico/agregador";
 import { verificarSite } from "@/lib/diagnostico/verificarSite";
 import { performanceMobile } from "@/lib/pagespeed/performanceMobile";
 import { detectarDores, substituirDoresDoLead } from "@/lib/dores";
+import { mudarStatus } from "@/lib/leads/status";
 
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
@@ -81,7 +82,7 @@ export async function diagnosticarLead(
         ? [
             prisma.lead.update({
               where: { id: lead.id },
-              data: { status: "enriquecido" },
+              data: mudarStatus("enriquecido"),
             }),
           ]
         : []),
