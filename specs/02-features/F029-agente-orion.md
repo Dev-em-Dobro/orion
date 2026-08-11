@@ -1,7 +1,7 @@
 # F029 — Agente Orion (chat com os dados do aluno)
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase D — **por último**)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase D — **por último**)
 
 ## Objetivo
 Um chat dentro do Orion onde o aluno **pergunta** em português e o agente

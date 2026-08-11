@@ -1,7 +1,13 @@
 # F028 — Desempenho do app (medir, corrigir, provar)
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase A — **primeira**)
+Implementada em software — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase A — **primeira**)
+
+> **Falta a parte de infra (H1/H2), que não é código:** co-localizar função e
+> banco (região do Neon + `vercel.json`) e apontar a `DATABASE_URL` para o
+> endpoint `-pooler`. É a correção de **maior impacto** e depende de acesso ao
+> painel do Neon/Vercel. Local (Postgres em Docker) o `db_rtt_ms` fica em
+> ~2 ms, dentro do alvo de 15 ms — o alvo só é significativo em produção.
 
 ## Objetivo
 Fazer o Orion **responder rápido**. Hoje o relato é "todas as interações estão
@@ -100,6 +106,29 @@ rápido; deixa o app **perceptivelmente** rápido, que é o que o relato descrev
 > os próprios dados — e a F032 reescreve exatamente essa página (tabela → grid
 > de cards, modal → detalhe com abas). Fazer agora seria refazer depois. As
 > correções de query e índice (H3/H4) **não** dependem disso e já entraram.
+
+#### `<Suspense>` na página, nunca `loading.tsx` na rota
+Descoberto ao rodar o e2e de isolamento (2026-08-10): `src/app/loading.tsx` e
+`src/app/(orion)/leads/loading.tsx` **quebravam o AC6 da
+[F015](F015-multi-tenant.md)**. Um `loading.tsx` cria um boundary de Suspense
+no nível da **rota**: o Next envia o shell na hora, **commita HTTP 200**, e o
+`notFound()` que a página lança depois chega tarde — vira troca de UI no
+cliente, não status. Resultado: `/leads/{id}` de outro aluno respondia **200**.
+
+O dado **não** vazava (a página não renderiza nada do Lead alheio), mas o
+contrato do AC6 é 404 — e antes disso era pior: uma **corrida**. A página
+antiga era pequena e às vezes ganhava do flush; a nova, com 7 queries, perdia
+sempre. Teste de segurança que depende de corrida não vale nada.
+
+**Decisão:** os dois `loading.tsx` foram removidos. O skeleton dessas telas
+vive num `<Suspense>` **dentro da página** — mesmo ganho de percepção, porque
+o shell continua pintando antes dos blocos pesados, sem boundary de rota
+acima do `notFound()`. `/configuracao` e `/treino` mantêm o `loading.tsx`
+delas: não usam `notFound()`.
+
+Guarda de regressão: `tests/unit/notfound-sem-boundary.test.ts` falha se
+alguém recriar um `loading.tsx` acima de `/leads/[id]`, `/skills/[slug]` ou
+`/entregaveis/[slug]`.
 
 ### H7. Cold start
 Se a instrumentação mostrar cold start relevante (primeira requisição depois de

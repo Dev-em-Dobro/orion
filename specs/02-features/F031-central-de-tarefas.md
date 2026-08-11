@@ -1,7 +1,7 @@
 # F031 — Central de Tarefas (o Orion cobra o que ficou parado)
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase C)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase C)
 
 ## Objetivo
 Fazer o Orion **cobrar** o aluno. Hoje o funil só anda se ele lembrar: abordou

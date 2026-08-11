@@ -1,4 +1,9 @@
-/** Blocos de skeleton compartilhados (loading.tsx das rotas autenticadas). */
+// Blocos de skeleton compartilhados.
+//
+// F015 AC6 / F028: as rotas com Lead (`/leads`, `/leads/[id]`) NÃO têm
+// `loading.tsx`. Um boundary de rota faz o Next enviar o shell antes da
+// página resolver, e aí `notFound()` chega tarde demais para virar 404.
+// O skeleton dessas telas vive num `<Suspense>` dentro da própria página.
 
 export function SkeletonPulse({ className = "" }: { className?: string }) {
   return (
@@ -22,44 +27,6 @@ export function PageSkeletonHeader({
   );
 }
 
-export function DashboardSkeleton() {
-  return (
-    <main
-      className="mx-auto max-w-6xl px-6 py-8"
-      aria-busy="true"
-      aria-label="Carregando dashboard"
-    >
-      <PageSkeletonHeader />
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <div className="card lg:col-span-2 space-y-4">
-          <SkeletonPulse className="h-4 w-36" />
-          <SkeletonPulse className="mx-auto h-72 w-full max-w-md" />
-          <div className="flex flex-wrap gap-2">
-            {Array.from({ length: 6 }, (_, i) => (
-              <SkeletonPulse key={i} className="h-7 w-24 rounded-full" />
-            ))}
-          </div>
-        </div>
-        <div className="grid gap-4">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={i} className="card space-y-3">
-              <SkeletonPulse className="h-3 w-28" />
-              <SkeletonPulse className="h-9 w-16" />
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="card mt-4 space-y-3">
-        <SkeletonPulse className="h-4 w-40" />
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: 4 }, (_, i) => (
-            <SkeletonPulse key={i} className="h-16 min-w-[8rem] flex-1" />
-          ))}
-        </div>
-      </div>
-    </main>
-  );
-}
 
 /** F032 — a grade de cards, usada como fallback do `<Suspense>` da lista. */
 export function GridLeadsSkeleton() {
@@ -97,25 +64,6 @@ export function GridLeadsSkeleton() {
   );
 }
 
-export function LeadsSkeleton() {
-  return (
-    <main
-      className="mx-auto max-w-6xl px-6 py-10"
-      aria-busy="true"
-      aria-label="Carregando leads"
-    >
-      <PageSkeletonHeader tituloLargo />
-      <div className="card mt-6 space-y-3">
-        <div className="flex flex-wrap gap-3">
-          <SkeletonPulse className="h-10 flex-1 min-w-[10rem]" />
-          <SkeletonPulse className="h-10 flex-1 min-w-[10rem]" />
-          <SkeletonPulse className="h-10 w-28" />
-        </div>
-      </div>
-      <GridLeadsSkeleton />
-    </main>
-  );
-}
 
 export function TreinoSkeleton() {
   return (

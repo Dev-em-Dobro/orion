@@ -1,7 +1,7 @@
 # F034 — Funil kanban
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase D)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase D)
 
 ## Objetivo
 Dar ao funil uma **superfície de trabalho**. Hoje o `status` do Lead é uma

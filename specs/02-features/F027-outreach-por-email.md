@@ -1,7 +1,7 @@
 # F027 — Outreach por e-mail (dentro da plataforma)
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase C)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase C)
 
 ## Objetivo
 Permitir abordar o Lead **por e-mail** sem sair do Orion: descobrir o e-mail

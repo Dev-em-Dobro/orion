@@ -1,7 +1,7 @@
 # F032 — Interface do Orion (shell, cards e detalhe com abas)
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase B)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase B)
 
 ## Objetivo
 Trocar a interface de **planilha** por uma de **trabalho**. Hoje `/leads` é uma

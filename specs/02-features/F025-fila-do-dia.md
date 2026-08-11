@@ -1,7 +1,7 @@
 # F025 — Fila do dia: triagem, aprofundamento e priorização automáticos
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase B)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase B)
 
 ## Objetivo
 Fazer a busca **entregar trabalho pronto**, não matéria-prima. Depois de uma

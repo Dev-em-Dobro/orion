@@ -1,7 +1,7 @@
 # F026 — Sinal de atendimento automatizado no WhatsApp
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase B)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase B)
 
 ## Objetivo
 Descobrir, durante o Diagnóstico, se o negócio **já tem atendimento

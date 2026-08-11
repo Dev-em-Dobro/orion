@@ -1,7 +1,7 @@
 # F024 — Estado do Lead reversível (descartar, restaurar, corrigir)
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase A)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase A)
 
 ## Objetivo
 Tornar o `status` do Lead **reversível e explícito**. Hoje toda transição é de

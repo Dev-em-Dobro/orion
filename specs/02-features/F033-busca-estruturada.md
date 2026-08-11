@@ -1,7 +1,7 @@
 # F033 — Busca estruturada de Leads (localidade e nicho controlados)
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase C)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase C)
 
 Substitui a seção **Input (UI)** da [F001](F001-coleta-de-leads.md); o resto da
 F001 (paginação, dedupe por `place_id`, cota) continua valendo.

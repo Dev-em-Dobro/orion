@@ -1,7 +1,7 @@
 # F030 — Menu Skills (arsenal de skills pra instalar)
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase D)
+Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase D)
 
 ## Objetivo
 Entregar dentro do Orion as **skills** que o time usa no dia a dia — a começar
