@@ -48,6 +48,21 @@ Mailpit.
 | `/funil` | Kanban — arraste um card ou use o seletor dentro dele |
 | `/tarefas` | As seis cobranças, agrupadas por atraso, com Adiar e Dispensar |
 | `/agente` | Sobe, mas precisa de chave de IA pra responder |
+| `/planos` | Comparativo dos três planos, com o seu marcado |
+
+### Ver o app como Free e como Pro
+
+O plano vem dos entitlements da Hubla, nunca de uma coluna do usuário. No local
+o `seed:dev` cria o entitlement do Pro quando `HUBLA_PRODUCT_ID_PRO` está no
+`.env` (já está, com o valor `demo-plano-pro`).
+
+| Quero ver como | O que fazer |
+|----------------|-------------|
+| **Pro** | Nada — é o padrão depois do seed |
+| **Free** | Comente `HUBLA_PRODUCT_ID_PRO` no `.env` e reinicie o `npm run dev` |
+
+No Free, `/tarefas`, `/funil` e `/agente` ficam com cadeado na barra lateral e
+levam pra `/planos`; o banner de uso mostra o limite de 50 Leads no mês.
 
 ## 4. Para testar de ponta a ponta (com chaves)
 
@@ -74,7 +89,7 @@ estado e cidade, e o aprofundamento dispara sozinho depois da coleta.
 ## Comandos úteis
 
 ```bash
-npm test                  # 230 testes unitários
+npm test                  # 258 testes unitários
 npm run db:studio         # inspecionar o banco
 npm run dev:down          # derrubar Postgres e Mailpit
 npm run seed:dev -- x@y.z # repopular (apaga só os Leads "demo-")
