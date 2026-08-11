@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { authClient } from "@/lib/auth/client";
-import { ENTREGAVEIS_MENU } from "@/lib/entregaveis/catalogo";
 import { SKILLS_MENU } from "@/lib/skills/catalogo";
 import { temRecurso, type Plano, type Recurso } from "@/lib/planos/catalogo";
 import { NOME_PRODUTO_PARTES } from "@/lib/produto";
@@ -26,99 +25,6 @@ function Icone({ d }: { d: React.ReactNode }) {
   );
 }
 
-const ICONES_ENTREGAVEIS: Record<string, React.ReactNode> = {
-  "arsenal-sites": (
-    <Icone
-      d={
-        <>
-          <rect x="3" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="3" width="7" height="7" rx="1" />
-          <rect x="3" y="14" width="7" height="7" rx="1" />
-          <rect x="14" y="14" width="7" height="7" rx="1" />
-        </>
-      }
-    />
-  ),
-  prompts: (
-    <Icone
-      d={
-        <>
-          <path d="m12 3-1.9 5.8H4l4.9 3.6-1.9 5.8L12 14.6l4.9 3.8-1.9-5.8L20 8.8h-6.1L12 3z" />
-        </>
-      }
-    />
-  ),
-  portfolio: (
-    <Icone
-      d={
-        <>
-          <rect x="2" y="7" width="20" height="14" rx="2" />
-          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-        </>
-      }
-    />
-  ),
-  contrato: (
-    <Icone
-      d={
-        <>
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <path d="M14 2v6h6" />
-          <path d="M8 13h8" />
-          <path d="M8 17h6" />
-        </>
-      }
-    />
-  ),
-  "scripts-venda": (
-    <Icone
-      d={
-        <>
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          <path d="M8 9h8" />
-          <path d="M8 13h5" />
-        </>
-      }
-    />
-  ),
-  "setup-orion": (
-    <Icone
-      d={
-        <>
-          <circle cx="8" cy="15" r="4" />
-          <path d="m10.5 10.5 6 6" />
-          <path d="m18 6-3-3" />
-          <path d="m15 9 3-3" />
-        </>
-      }
-    />
-  ),
-  briefing: (
-    <Icone
-      d={
-        <>
-          <rect x="8" y="2" width="8" height="4" rx="1" />
-          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-          <path d="M12 11h4" />
-          <path d="M12 16h4" />
-          <path d="M8 11h.01" />
-          <path d="M8 16h.01" />
-        </>
-      }
-    />
-  ),
-  precificacao: (
-    <Icone
-      d={
-        <>
-          <line x1="12" y1="1" x2="12" y2="23" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </>
-      }
-    />
-  ),
-};
-
 function IconeCadeado() {
   return (
     <Icone
@@ -131,9 +37,6 @@ function IconeCadeado() {
     />
   );
 }
-
-const GRUPO_MATERIAIS = "Materiais";
-const ARENA_DOBRO_URL = "https://arena.devemdobro.com";
 
 type NavItem = {
   href: string;
@@ -257,51 +160,9 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       },
     ],
   },
-  {
-    titulo: "Arena",
-    itens: [
-      {
-        href: ARENA_DOBRO_URL,
-        label: "Arena Dobro",
-        externo: true,
-        icone: (
-          <Icone
-            d={
-              <>
-                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 7 12 7s5-3 7.5-3a2.5 2.5 0 0 1 0 5H18" />
-                <path d="M12 7v13" />
-                <path d="M8 21h8" />
-                <path d="M6 9c0 3 2.5 5 6 5s6-2 6-5" />
-              </>
-            }
-          />
-        ),
-      },
-    ],
-  },
-  {
-    titulo: "Materiais",
-    itens: [
-      {
-        href: "/entregaveis",
-        label: "Visão geral",
-        icone: (
-          <Icone
-            d={
-              <>
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a2.5 2.5 0 0 1 0-5H20" />
-              </>
-            }
-          />
-        ),
-      },
-      ...ENTREGAVEIS_MENU.map((item) => ({
-        href: `/entregaveis/${item.slug}`,
-        label: item.titulo,
-        icone: ICONES_ENTREGAVEIS[item.slug],
-      })),
-    ],
-  },
+  // F020/F032 — os grupos "Arena" (link externo) e "Materiais" saíram em
+  // 2026-08-11: o menu é do trabalho de prospecção. `/entregaveis` continua
+  // servindo, gateado por compra, só não parte daqui.
   ...(SKILLS_MENU.length > 0
     ? [
         {
@@ -580,13 +441,11 @@ function IconeFechar() {
 }
 
 function NavGrupos({
-  materiaisLiberados,
   tarefasVencidas,
   plano,
   ativo,
   onNavigate,
 }: {
-  materiaisLiberados: boolean;
   tarefasVencidas: number;
   /** F035 — decide o cadeado dos itens de plano pago. */
   plano: Plano;
@@ -596,31 +455,18 @@ function NavGrupos({
   return (
     <>
       {grupos(tarefasVencidas).map((grupo) => {
-        const materiaisBloqueado =
-          grupo.titulo === GRUPO_MATERIAIS && !materiaisLiberados;
-
         return (
           <div key={grupo.titulo}>
-            <p
-              className={`px-2 text-xs font-medium tracking-wider uppercase ${
-                materiaisBloqueado ? "text-zinc-600" : "text-zinc-500"
-              }`}
-            >
+            <p className="px-2 text-xs font-medium tracking-wider text-zinc-500 uppercase">
               {grupo.titulo}
-              {materiaisBloqueado ? (
-                <span className="ml-1.5 inline-flex align-middle text-zinc-600">
-                  <IconeCadeado />
-                </span>
-              ) : null}
             </p>
             <ul className="mt-2 space-y-1">
               {grupo.itens.map((item) => {
                 // F035 — o item **não some**: fica visível com cadeado e leva
                 // a /planos. Ver é o que dá vontade de assinar.
-                const planoBloqueia = Boolean(
+                const bloqueado = Boolean(
                   item.recurso && !temRecurso(plano, item.recurso),
                 );
-                const bloqueado = materiaisBloqueado || planoBloqueia;
                 return (
                   <li key={item.href}>
                     <NavLink
@@ -629,18 +475,10 @@ function NavGrupos({
                       icone={item.icone}
                       ativo={!item.externo && !bloqueado && ativo(item.href)}
                       bloqueado={bloqueado}
-                      destinoBloqueado={
-                        planoBloqueia
-                          ? `/planos?recurso=${item.recurso}`
-                          : "/ativar-acesso"
-                      }
-                      tituloBloqueado={
-                        planoBloqueia
-                          ? "Disponível nos planos pagos"
-                          : "Ative sua compra para acessar os materiais"
-                      }
+                      destinoBloqueado={`/planos?recurso=${item.recurso}`}
+                      tituloBloqueado="Disponível nos planos pagos"
                       externo={item.externo}
-                      badge={planoBloqueia ? undefined : item.badge}
+                      badge={bloqueado ? undefined : item.badge}
                       onNavigate={onNavigate}
                     />
                   </li>
@@ -655,11 +493,9 @@ function NavGrupos({
 }
 
 export function Sidebar({
-  materiaisLiberados = false,
   tarefasVencidas = 0,
   plano = "free",
 }: {
-  materiaisLiberados?: boolean;
   /** F031 — cobranças vencidas, no badge do item Tarefas. */
   tarefasVencidas?: number;
   /** F035 — plano do aluno, pro cadeado dos itens pagos. */
@@ -670,7 +506,6 @@ export function Sidebar({
 
   const ativo = (href: string) => {
     if (href === "/") return pathname === "/";
-    if (href === "/entregaveis") return pathname === "/entregaveis";
     return pathname.startsWith(href);
   };
 
@@ -702,7 +537,6 @@ export function Sidebar({
         </div>
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
           <NavGrupos
-            materiaisLiberados={materiaisLiberados}
             tarefasVencidas={tarefasVencidas}
             plano={plano}
             ativo={ativo}
@@ -758,7 +592,6 @@ export function Sidebar({
             </div>
             <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
               <NavGrupos
-                materiaisLiberados={materiaisLiberados}
                 tarefasVencidas={tarefasVencidas}
                 plano={plano}
                 ativo={ativo}

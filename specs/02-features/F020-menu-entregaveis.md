@@ -1,11 +1,23 @@
 # F020 — Menu de entregáveis (Builders Club)
 
 ## Status
-Implementada — 2026-07-27
+Implementada — 2026-07-27 · **grupo removido da sidebar em 2026-08-11**
+
+> **Mudança de 2026-08-11 — Materiais sai do menu.** O Orion é motor de
+> prospecção; material de curso é conteúdo de comunidade e vive fora dele. As
+> rotas continuam de pé (`/entregaveis`, `/entregaveis/[slug]`, os `.zip`), com
+> o mesmo gate de compra — o que sumiu foi a **entrada no menu lateral**. Quem
+> tem o link continua acessando; ninguém tropeça nisso navegando.
+>
+> Consequência: **AC1 deixa de valer** (ver Critérios de aceitação). E, como o
+> menu era o único lugar que dependia de saber se a compra estava verificada, a
+> sidebar parou de chamar `statusCompra` — uma consulta a menos em **toda**
+> página ([F028](F028-desempenho.md)). Não se perde verificação: quem faz isso
+> é o gate das rotas, que já chama `tentarAutoVerificar` por dentro.
 
 ## Objetivo
-Exibir os materiais da Consultoria Freela no Orion: grupo **Materiais** na sidebar,
-páginas em `/entregaveis` e links externos para a central hospedada.
+Servir os materiais da Consultoria Freela dentro do Orion: páginas em
+`/entregaveis`, com o conteúdo espelhado internamente em vez de link público.
 
 Pré-requisito de acesso: compra verificada ([F019.1](F019.1-ativacao-acesso.md)).
 
@@ -38,8 +50,12 @@ Layout de `/entregaveis/*` chama `redirectSeCompraPendente()`.
 Orion principal permanece aberto sem compra.
 
 ## Critérios de aceitação
-- [ ] **AC1** — Sidebar exibe grupo "Materiais" com visão geral + itens disponíveis.
+- [x] ~~**AC1** — Sidebar exibe grupo "Materiais" com visão geral + itens disponíveis.~~
+      **Revogado em 2026-08-11**: o grupo saiu do menu. Nenhum link para
+      `/entregaveis` parte da navegação.
 - [ ] **AC2** — Usuário sem compra verificada é redirecionado a `/ativar-acesso`.
 - [ ] **AC3** — Conteúdo servido internamente via `/api/entregaveis/*` (sem URL pública do hub externo).
-- [ ] **AC4** — Itens "em breve" não aparecem no menu lateral.
+- [x] ~~**AC4** — Itens "em breve" não aparecem no menu lateral.~~
+      **Sem efeito desde 2026-08-11**: não há mais menu. `ENTREGAVEIS_MENU`
+      continua no catálogo, sem consumidor.
 - [ ] **AC5** — Visão geral oferece "Baixar .zip" para portfolio, contrato e scripts-venda.

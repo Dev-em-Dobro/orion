@@ -52,13 +52,20 @@ Grupos, na ordem:
 |-------|-------|
 | Prospecção | Dashboard · Leads · **Funil** ([F034](F034-funil-kanban.md)) · **Tarefas** (badge) ([F031](F031-central-de-tarefas.md)) · **Agente** ([F029](F029-agente-orion.md)) |
 | Treino | Simulador de venda |
-| Arena | Arena Dobro (externo) |
-| Materiais | Entregáveis ([F020](F020-menu-entregaveis.md)) |
 | **Skills** | Skills ([F030](F030-menu-skills.md)) |
-| Conta | Configuração |
+| Conta | Planos ([F035](F035-planos-e-limites.md)) · Configuração |
 
-Itens novos entram no mesmo componente e no mesmo padrão de bloqueio por compra
-que já existe (`src/components/sidebar.tsx`).
+> **Mudança de 2026-08-11 — o menu só tem prospecção.** Os grupos **Arena**
+> (link externo pra `arena.devemdobro.com`) e **Materiais**
+> ([F020](F020-menu-entregaveis.md)) saíram. Conteúdo de comunidade e material
+> de curso não são o trabalho que o Orion faz; misturados no menu, competiam
+> com a fila do dia pela atenção de quem abriu o app pra prospectar. As rotas
+> de `/entregaveis` continuam de pé e gateadas — só não se chega nelas pelo
+> menu.
+
+Itens novos entram no mesmo componente (`src/components/sidebar.tsx`) e no
+padrão de bloqueio por plano da [F035](F035-planos-e-limites.md): item visível,
+com cadeado, apontando pra `/planos`.
 
 ## Card de Lead
 Substitui a linha da tabela. Anatomia, de cima pra baixo:
