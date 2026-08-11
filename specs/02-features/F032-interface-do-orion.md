@@ -39,6 +39,62 @@ São exatamente os cortes que `scoreBadge()` em
 `src/app/(orion)/leads/ui.tsx` **já usa** — a F032 só passa a exibir o rótulo
 junto da cor, e a lógica continua num único lugar.
 
+## Sistema visual (2026-08-11)
+
+Mora em `src/app/globals.css`. O Dashboard é o primeiro consumidor; as demais
+telas migram usando as mesmas classes.
+
+### O que estava errado, em número
+
+| Medida | Antes | Depois |
+|--------|-------|--------|
+| Card (`#101013`) vs. fundo (`#09090b`) | **1.05:1** | 1.10:1 **+ borda + sombra + realce** |
+| Borda (`#27272a`) vs. fundo | **1.34:1** | 2.1:1 (`#2f2f38`) |
+| Corpo de texto | 14px | 15px |
+| Informação secundária | 12px | 13px |
+| Altura do `.btn-ghost` | ~26px | ~34px |
+
+Em fundo quase preto, clarear a superfície tem retorno decrescente: mesmo
+`#16161b` só chega a 1.10:1. Quem desenha a quina é a **combinação** —
+preenchimento + borda + sombra + realce interno de 1px no topo (`--elev-1`). O
+olho lê o gradiente da borda, não o contraste chapado. Por isso o token de
+elevação é uma variável só, e não três decisões soltas por componente.
+
+### Tipografia
+
+Fira Sans → **Inter**; Fira Code → **JetBrains Mono**. A troca não é de gosto:
+Fira Sans nasceu para a UI do Firefox OS e tem x-height modesto, então rende
+menor que o tamanho nominal. Inter foi desenhada para tela, com x-height alto e
+figuras tabulares. `tabular-nums` fica no `body` — sem isso a coluna de números
+"dança" a cada atualização.
+
+Escala: **13 · 15 · 16 · 18 · 22 · 28 · 34**, cada degrau com entrelinha
+própria (corpo 1.5–1.6, título 1.15–1.35).
+
+Versalete (`uppercase`) sobrevive **só** em rótulo curto de número
+(`.metric-label`). Título de seção a 14px em versalete somava forma de palavra
+achatada com corpo pequeno — o pior caso de leitura; virou 16px em caixa
+normal (`.card-title`).
+
+### Classes
+
+| Classe | Uso |
+|--------|-----|
+| `.card` | Superfície padrão, `--elev-1` |
+| `.card-interativo` | Card clicável: quina reage no hover |
+| `.surface-2` | Caixa **dentro** de um card (senão some contra ele) |
+| `.card-title` / `.card-sub` | Título e subtítulo de seção |
+| `.metric-label` / `.metric-value` / `.metric-nota` | Trio do indicador |
+
+### Layout do Dashboard
+
+Os quatro indicadores saíram da coluna estreita ao lado do funil e ganharam
+faixa própria de quatro colunas. Número de 30px espremido em 1/3 da largura não
+é indicador, é rodapé.
+
+O par funil + follow-up usa `items-start`: sem isso o card de follow-up estica
+para acompanhar a altura do funil e vira um bloco vermelho quase vazio.
+
 ## Navegação (sidebar)
 
 > **Implementação (2026-08-10):** os itens **Funil**, **Tarefas**, **Agente** e

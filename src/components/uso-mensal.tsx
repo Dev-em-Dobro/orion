@@ -25,21 +25,21 @@ export async function UsoMensalBanner() {
       : "bg-emerald-500";
 
   return (
-    <div className="rounded-lg border border-border bg-zinc-900/40 px-3 py-2">
+    <div className="surface-2">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className="text-xs text-zinc-300">
-          <strong className="font-semibold">
+        <span className="text-sm text-zinc-200">
+          <strong className="font-mono font-semibold text-foreground">
             {uso.usado} / {uso.limite}
           </strong>{" "}
           Leads diagnosticados este mês
         </span>
-        <span className="text-[11px] text-zinc-500">
+        <span className="text-xs text-zinc-400">
           Plano {definicao(uso.plano).nome}
           {uso.byok && definicao(uso.plano).bonusByok && " · BYOK (2×)"}
         </span>
       </div>
 
-      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+      <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
         <div
           className={`h-full ${cor} transition-all duration-500`}
           style={{ width: `${Math.round(uso.fracao * 100)}%` }}
@@ -47,7 +47,7 @@ export async function UsoMensalBanner() {
       </div>
 
       {(alerta || estourado) && (
-        <p className="mt-1.5 text-[11px] text-zinc-400">
+        <p className="mt-2 text-xs text-zinc-300">
           {estourado
             ? "Limite do mês atingido. Buscar e ver a fila continua funcionando."
             : `Faltam ${uso.restante} para o limite do mês.`}{" "}

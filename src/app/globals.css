@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: var(--font-fira-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-fira-code), ui-monospace, monospace;
+/* ---------------------------------------------------------------------------
+   Sistema visual do Orion — redesenho de 2026-08-11.
 
-  --color-background: #09090b;
+   Três problemas medidos na versão anterior:
+
+   1. Card #101013 sobre fundo #09090b = **1.05:1** de contraste. Cinco por
+      cento de diferença: a divisão entre card e página não existia.
+   2. Borda #27272a sobre o fundo = **1.34:1**. WCAG 1.4.11 pede 3:1 para
+      contorno de componente.
+   3. Escala tipográfica comprimida — 12px carregava informação secundária,
+      14px era o corpo. O piso recomendado para leitura é 16px.
+
+   A correção não é só "clarear o card": em fundo quase preto, subir a cor da
+   superfície tem retorno decrescente (mesmo #16161b só chega a 1.10:1). Quem
+   desenha a borda de verdade é a **combinação** — preenchimento + borda mais
+   clara + sombra + realce interno de 1px no topo. O olho lê o gradiente da
+   quina, não o contraste chapado.
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* Inter no lugar de Fira Sans: x-height alto e figuras tabulares, desenhada
+     para UI de tela. No mesmo tamanho em px, lê maior. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* Escala de elevação, não duas cores quase iguais. */
+  --color-background: #0a0a0c;
+  --color-card: #16161b;
+  --color-card-raised: #1f1f26;
+  --color-border: #2f2f38;
+  --color-border-strong: #474751;
+
   --color-foreground: #fafafa;
-  --color-card: #101013;
-  --color-border: #27272a;
-  --color-muted: #a1a1aa;
+  --color-muted: #a8a8b4;
   --color-primary: #22c55e;
   --color-primary-hover: #16a34a;
   --color-primary-foreground: #03180a;
+
+  /* Escala tipográfica: 13 · 15 · 16 · 18 · 22 · 28 · 34.
+     Cada degrau com entrelinha própria — corpo em 1.5–1.6, título em 1.2. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.45;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.55;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.35;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 2.125rem;
+  --text-3xl--line-height: 1.15;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1.1;
 }
 
 @layer base {
   :root {
     color-scheme: dark;
+
+    /* Quina do card: realce no topo (luz vindo de cima) + sombra embaixo.
+       É o que faz a divisão aparecer sem borda berrante. */
+    --elev-1:
+      inset 0 1px 0 rgb(255 255 255 / 0.055),
+      0 1px 2px rgb(0 0 0 / 0.5),
+      0 10px 26px -16px rgb(0 0 0 / 0.9);
+    --elev-2:
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      0 2px 4px rgb(0 0 0 / 0.55),
+      0 16px 40px -20px rgb(0 0 0 / 0.95);
   }
 
   body {
     @apply bg-background text-foreground;
+    /* Números alinhados em coluna — dashboard de métrica sem isso "dança". */
+    font-variant-numeric: tabular-nums;
   }
 
   ::selection {
@@ -30,23 +87,65 @@
 
 @layer components {
   .card {
-    @apply rounded-xl border border-border bg-card p-5;
+    @apply rounded-xl border border-border bg-card p-6;
+    box-shadow: var(--elev-1);
+  }
+
+  /* Card que é link/ação: a quina reage antes do clique. */
+  .card-interativo {
+    @apply cursor-pointer transition-[border-color,box-shadow,background-color] duration-200;
+    &:hover {
+      @apply border-border-strong bg-card-raised;
+      box-shadow: var(--elev-2);
+    }
+  }
+
+  /* Caixa aninhada dentro de um card — precisa subir mais um degrau, senão
+     some contra o próprio card. */
+  .surface-2 {
+    @apply rounded-lg border border-border bg-card-raised px-4 py-3;
+  }
+
+  /* Título de seção: 16px em caixa normal. Versalete a 14px, que era o padrão
+     anterior, é o pior caso de leitura — forma de palavra achatada e corpo
+     pequeno ao mesmo tempo. */
+  .card-title {
+    @apply text-base font-semibold tracking-tight text-foreground;
+  }
+
+  .card-sub {
+    @apply mt-1 text-sm text-muted;
+  }
+
+  /* Versalete sobrevive só onde é rótulo curto de número. */
+  .metric-label {
+    @apply text-xs font-medium tracking-wider text-zinc-400 uppercase;
+  }
+
+  .metric-value {
+    @apply mt-2 font-mono text-4xl font-semibold tracking-tight;
+  }
+
+  .metric-nota {
+    @apply mt-1 text-xs text-zinc-500;
   }
 
   .btn-primary {
-    @apply inline-flex cursor-pointer items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex cursor-pointer items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50;
   }
 
+  /* Alvo de toque: 12px de altura era 26px no total, metade do mínimo de
+     44px. Sobe pra ~34px e ganha respiro lateral. */
   .btn-ghost {
-    @apply inline-flex cursor-pointer items-center rounded-md border border-border bg-transparent px-2 py-1 text-xs text-zinc-300 transition-colors duration-200 hover:border-zinc-600 hover:bg-zinc-800/60 hover:text-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex cursor-pointer items-center rounded-md border border-border bg-transparent px-3 py-1.5 text-sm text-zinc-300 transition-colors duration-200 hover:border-border-strong hover:bg-card-raised hover:text-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .input-base {
-    @apply w-full rounded-lg border border-border bg-zinc-900/70 px-3 py-2 text-sm text-foreground transition-colors duration-200 placeholder:text-zinc-500 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 focus:outline-none;
+    @apply w-full rounded-lg border border-border bg-zinc-900/70 px-3 py-2.5 text-sm text-foreground transition-colors duration-200 placeholder:text-zinc-500 focus:border-primary/60 focus:ring-2 focus:ring-primary/25 focus:outline-none;
   }
 
   .badge {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 
   .alert-ok {

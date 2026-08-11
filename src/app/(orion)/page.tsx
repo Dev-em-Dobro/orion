@@ -105,15 +105,15 @@ export default async function DashboardPage() {
     <>
     <BannerChaves />
     <main className="mx-auto max-w-6xl px-6 py-8">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-      <p className="mt-1 text-sm text-muted">
+      <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <p className="mt-1.5 text-base text-muted">
         Funil de prospecção · visão geral
       </p>
 
       {/* F035 — medidor do plano no topo: é o número que decide quanto o aluno
           ainda pode aprofundar este mês. */}
-      <div className="mt-4 max-w-md">
-        <Suspense fallback={<SkeletonPulse className="h-14 w-full" />}>
+      <div className="mt-5 max-w-md">
+        <Suspense fallback={<SkeletonPulse className="h-16 w-full" />}>
           <UsoMensalBanner />
         </Suspense>
       </div>
@@ -127,17 +127,43 @@ export default async function DashboardPage() {
       </div>
 
       {/* F031 — o par da fila: quem abordar (acima) + o que cobrar (aqui). */}
-      <div className="mt-4">
+      <div className="mt-6">
         <Suspense fallback={<SkeletonPulse className="h-32 w-full" />}>
           <PraFazerAgora />
         </Suspense>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+      {/* Métricas em faixa própria. Antes viviam empilhadas numa coluna
+          estreita ao lado do funil: número de 30px espremido em 1/3 da
+          largura não é indicador, é rodapé. */}
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="card">
+          <p className="metric-label">Total de Leads</p>
+          <p className="metric-value">{leads.length}</p>
+          <p className="metric-nota">no funil, sem descartados</p>
+        </section>
+        <section className="card">
+          <p className="metric-label">Score médio</p>
+          <p className="metric-value">{scoreMedio}</p>
+          <p className="metric-nota">de 0 a 100</p>
+        </section>
+        <section className="card">
+          <p className="metric-label">Ganhos</p>
+          <p className="metric-value text-primary">{porStatus.ganho}</p>
+          <p className="metric-nota">{porStatus.perdido} perdido(s)</p>
+        </section>
+        <section className="card">
+          <p className="metric-label">Em aberto</p>
+          <p className="metric-value text-amber-300">{emAberto}</p>
+          <p className="metric-nota">contatado → proposta, sem desfecho</p>
+        </section>
+      </div>
+
+      {/* items-start: sem isso o card de follow-up estica pra acompanhar a
+          altura do funil e vira um bloco vermelho quase vazio. */}
+      <div className="mt-6 grid items-start gap-5 lg:grid-cols-3">
         <section className="card lg:col-span-2">
-          <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
-            Funil por estágio
-          </h2>
+          <h2 className="card-title">Funil por estágio</h2>
           {leads.length === 0 ? (
             <div className="mt-4">
               <EmptyState
@@ -174,131 +200,22 @@ export default async function DashboardPage() {
           )}
         </section>
 
-        <div className="grid gap-4">
-          <section className="card">
-            <p className="text-xs font-medium tracking-wider text-zinc-500 uppercase">
-              Total de Leads
-            </p>
-            <p className="mt-2 font-mono text-3xl font-semibold">
-              {leads.length}
-            </p>
-          </section>
-          <section className="card">
-            <p className="text-xs font-medium tracking-wider text-zinc-500 uppercase">
-              Score médio
-            </p>
-            <p className="mt-2 font-mono text-3xl font-semibold">
-              {scoreMedio}
-            </p>
-            <p className="mt-1 text-xs text-zinc-500">de 0 a 100</p>
-          </section>
-          <section className="card">
-            <p className="text-xs font-medium tracking-wider text-zinc-500 uppercase">
-              Ganhos
-            </p>
-            <p className="mt-2 font-mono text-3xl font-semibold text-primary">
-              {porStatus.ganho}
-            </p>
-            <p className="mt-1 text-xs text-zinc-500">
-              {porStatus.perdido} perdido(s)
-            </p>
-          </section>
-          <section className="card">
-            <p className="text-xs font-medium tracking-wider text-zinc-500 uppercase">
-              Em aberto
-            </p>
-            <p className="mt-2 font-mono text-3xl font-semibold text-amber-300">
-              {emAberto}
-            </p>
-            <p className="mt-1 text-xs text-zinc-500">
-              contatado → proposta, sem desfecho
-            </p>
-          </section>
-        </div>
-      </div>
-
-      <section className="card mt-4">
-        <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
-          Taxas de conversão
-        </h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          Funil de venda · aproximação sobre o estado atual (sem histórico)
-        </p>
-        <div className="mt-4 flex flex-wrap items-stretch gap-2">
-          {taxas.map((passo) => (
-            <div
-              key={`${passo.de}-${passo.para}`}
-              className="min-w-[8rem] flex-1 rounded-lg border border-border bg-zinc-800/30 px-3 py-2.5"
-            >
-              <p className="truncate text-xs text-zinc-400">
-                {LABEL[passo.de]} → {LABEL[passo.para]}
-              </p>
-              <p className="mt-1 font-mono text-xl font-semibold text-zinc-100">
-                {passo.taxa === null
-                  ? "—"
-                  : `${Math.round(passo.taxa * 100)}%`}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <section className="card lg:col-span-2">
-          <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
-            Exigem atenção
-          </h2>
-          <p className="mt-1 text-xs text-zinc-500">
-            Score ≥ 60 e ainda sem Outreach enviado
-          </p>
-          {exigemAtencao.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">Nada pendente por aqui.</p>
-          ) : (
-            <ul className="mt-3 divide-y divide-border/60">
-              {exigemAtencao.map((lead) => (
-                <li
-                  key={lead.id}
-                  className="flex items-center justify-between gap-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{lead.nome}</p>
-                    <p className="truncate text-xs text-zinc-500">
-                      {lead.categoria}
-                    </p>
-                  </div>
-                  <span className="badge shrink-0 bg-emerald-500/15 font-mono text-emerald-300">
-                    {lead.score}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link
-            href="/leads"
-            className="mt-3 inline-block text-sm text-primary transition-colors hover:text-primary-hover hover:underline"
-          >
-            Abrir Leads →
-          </Link>
-        </section>
-
-        <section className="rounded-xl border border-red-500/30 bg-red-500/[0.06] p-5">
-          <h2 className="text-sm font-semibold tracking-wide text-red-300 uppercase">
-            Follow-up pendente
-          </h2>
-          <p className="mt-1 text-xs text-red-300/60">
+        <section className="rounded-xl border border-red-500/35 bg-red-500/[0.07] p-6 shadow-[var(--elev-1)]">
+          <h2 className="card-title text-red-200">Follow-up pendente</h2>
+          <p className="mt-1 text-sm text-red-300/70">
             Contatados sem resposta há 3+ dias
           </p>
           {followUp.length === 0 ? (
             <p className="mt-4 text-sm text-muted">Ninguém esperando.</p>
           ) : (
-            <ul className="mt-3 space-y-2">
+            <ul className="mt-4 space-y-2.5">
               {followUp.map(({ lead, dias }) => (
                 <li
                   key={lead.id}
                   className="flex items-center justify-between gap-3 text-sm"
                 >
                   <span className="truncate font-medium">{lead.nome}</span>
-                  <span className="badge shrink-0 bg-red-500/15 font-mono text-red-300">
+                  <span className="badge shrink-0 bg-red-500/20 font-mono text-red-200">
                     {dias}d
                   </span>
                 </li>
@@ -308,13 +225,70 @@ export default async function DashboardPage() {
           {followUp.length > 0 && (
             <Link
               href="/leads"
-              className="mt-3 inline-block text-sm text-red-300 transition-colors hover:text-red-200 hover:underline"
+              className="mt-4 inline-block text-sm font-medium text-red-300 transition-colors hover:text-red-200 hover:underline"
             >
               Resolver →
             </Link>
           )}
         </section>
       </div>
+
+      <section className="card mt-6">
+        <h2 className="card-title">Taxas de conversão</h2>
+        <p className="card-sub">
+          Funil de venda · aproximação sobre o estado atual (sem histórico)
+        </p>
+        <div className="mt-5 flex flex-wrap items-stretch gap-3">
+          {taxas.map((passo) => (
+            <div
+              key={`${passo.de}-${passo.para}`}
+              className="surface-2 min-w-[9rem] flex-1"
+            >
+              <p className="truncate text-xs text-zinc-400">
+                {LABEL[passo.de]} → {LABEL[passo.para]}
+              </p>
+              <p className="mt-1.5 font-mono text-2xl font-semibold text-zinc-50">
+                {passo.taxa === null
+                  ? "—"
+                  : `${Math.round(passo.taxa * 100)}%`}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="card mt-6">
+        <h2 className="card-title">Exigem atenção</h2>
+        <p className="card-sub">Score ≥ 60 e ainda sem Outreach enviado</p>
+        {exigemAtencao.length === 0 ? (
+          <p className="mt-4 text-sm text-muted">Nada pendente por aqui.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-border">
+            {exigemAtencao.map((lead) => (
+              <li
+                key={lead.id}
+                className="flex items-center justify-between gap-3 py-3 first:pt-0"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{lead.nome}</p>
+                  <p className="truncate text-xs text-zinc-500">
+                    {lead.categoria}
+                  </p>
+                </div>
+                <span className="badge shrink-0 bg-emerald-500/20 font-mono text-emerald-300">
+                  {lead.score}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <Link
+          href="/leads"
+          className="mt-4 inline-block text-sm font-medium text-primary transition-colors hover:text-primary-hover hover:underline"
+        >
+          Abrir Leads →
+        </Link>
+      </section>
     </main>
     </>
   );

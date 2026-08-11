@@ -19,30 +19,33 @@ export async function PraFazerAgora() {
   return (
     <section className="card border-amber-500/30 bg-amber-500/5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold tracking-wide text-amber-300 uppercase">
+        <h2 className="card-title text-amber-200">
           Pra fazer agora ({vencidas.length})
         </h2>
         {vencidas.length > NA_HOME && (
-          <Link href="/tarefas" className="text-xs text-primary hover:underline">
+          <Link
+            href="/tarefas"
+            className="text-sm font-medium text-primary hover:underline"
+          >
             ver todas
           </Link>
         )}
       </div>
 
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-4 divide-y divide-amber-500/15">
         {vencidas.slice(0, NA_HOME).map((t) => (
           <li
             key={`${t.tipo}-${t.leadId ?? "geral"}`}
-            className="flex flex-wrap items-center justify-between gap-2 text-sm"
+            className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm first:pt-0"
           >
             <span className="min-w-0">
               <span className="font-medium text-zinc-100">
                 {TITULO[t.tipo]}
               </span>
               {t.leadNome && (
-                <span className="text-zinc-400"> — {t.leadNome}</span>
+                <span className="text-zinc-300"> — {t.leadNome}</span>
               )}
-              <span className="block text-xs text-zinc-500">
+              <span className="block text-xs text-zinc-400">
                 {EXPLICACAO[t.tipo]}
               </span>
             </span>

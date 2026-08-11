@@ -44,10 +44,8 @@ export async function FilaDoDia() {
     <section className="card">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
-            Sua fila de hoje
-          </h2>
-          <p className="mt-1 text-xs text-muted">
+          <h2 className="card-title text-lg">Sua fila de hoje</h2>
+          <p className="card-sub">
             Diagnosticados, priorizados e ainda não abordados — do melhor para
             o pior.
           </p>

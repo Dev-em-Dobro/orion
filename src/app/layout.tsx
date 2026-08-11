@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
-import { Fira_Code, Fira_Sans } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
 import { NOME_PRODUTO } from "@/lib/produto";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
 
-const firaSans = Fira_Sans({
+// Inter no lugar de Fira Sans (2026-08-11): x-height alto, desenhada para UI
+// de tela. Mesmo tamanho em px, leitura maior. JetBrains Mono para número —
+// tabular por construção, com zero cortado, que num painel de score importa.
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-fira-sans",
+  variable: "--font-inter",
 });
 
-const firaCode = Fira_Code({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-fira-code",
+  variable: "--font-jetbrains-mono",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +30,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${firaSans.variable} ${firaCode.variable}`}>
+    <html
+      lang="pt-BR"
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
+    >
       <body className="font-sans antialiased">
         <AppShell>{children}</AppShell>
       </body>
