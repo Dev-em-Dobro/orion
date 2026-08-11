@@ -26,7 +26,10 @@ export default defineConfig({
         command: "npm run dev",
         url: baseURL,
         reuseExistingServer: false,
-        timeout: 120_000,
+        // `.next` frio: o dev server compila tudo na primeira subida e passa
+        // fácil de 2 min numa máquina Windows. 120s reprovava o run inteiro
+        // antes de qualquer asserção de isolamento rodar.
+        timeout: 300_000,
         env: {
           ...process.env,
           E2E_SESSION_HELPER: "1",

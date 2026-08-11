@@ -35,11 +35,30 @@ async function loginComSessao(page: Page, userId: string) {
   }
 }
 
+/**
+ * O `npm run dev` compila cada rota no primeiro acesso, e o primeiro teste
+ * pagava essa conta dentro do próprio timeout — falhava em `goto("/")` num
+ * `.next` frio e passava no run seguinte. Aquece as rotas antes, autenticado
+ * (sem sessão o middleware redireciona pro login e a página nem compila).
+ */
+async function aquecerRotas(page: Page, s: IsolamentoSeed) {
+  await loginComSessao(page, s.alunoA.id);
+  for (const rota of ["/leads", "/", "/treino", `/leads/${s.alunoA.leadId}`]) {
+    await page
+      .goto(rota, { waitUntil: "commit", timeout: 120_000 })
+      .catch(() => {});
+  }
+}
+
 test.describe("F015 — isolamento multi-tenant", () => {
   let seed: IsolamentoSeed;
 
-  test.beforeAll(async () => {
+  test.beforeAll(async ({ browser }) => {
+    test.setTimeout(300_000);
     seed = await seedIsolamento();
+    const page = await browser.newPage();
+    await aquecerRotas(page, seed).catch(() => {});
+    await page.close();
   });
 
   test.afterAll(async () => {
