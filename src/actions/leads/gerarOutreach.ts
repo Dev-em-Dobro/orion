@@ -15,6 +15,7 @@ import {
 } from "@/lib/outreach/gerarOutreach";
 import { createLlmForUser } from "@/lib/llm";
 import { consumirCota, verificarCota } from "@/lib/limites";
+import { exigirRecurso } from "@/lib/planos";
 import type { ContextoLead } from "@/lib/outreach/prompt";
 import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
 import { gerarOutreachEmail } from "@/lib/outreach/gerarOutreach";
@@ -60,6 +61,10 @@ export async function gerarOutreachAction(
 
   try {
     const { userId } = await requireTenant();
+    // F035 — canal e-mail é de plano pago. WhatsApp continua no Free.
+    if (parsed.data.canal === "email") {
+      await exigirRecurso(userId, "email");
+    }
     await verificarCota(userId, "outreach");
     const llm = await createLlmForUser(userId);
     const lead = await prisma.lead.findFirst({

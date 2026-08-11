@@ -3,70 +3,50 @@
 // F032 — grade de cards + seleção em massa.
 // Spec: /specs/02-features/F032-interface-do-orion.md
 
+import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import {
   descartarEmLote,
   type DescarteLoteState,
 } from "@/actions/leads/descartar";
+import { exportarLeadsCsv } from "@/actions/leads/exportarCsv";
 import { LeadCard, type LeadCardProps } from "./lead-card";
 
 const initial: DescarteLoteState = { kind: "idle" };
 
-function paraCsv(leads: LeadCardProps[]): string {
-  const escapar = (v: string | number | null) => {
-    const s = v === null ? "" : String(v);
-    return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  const cabecalho = [
-    "nome",
-    "categoria",
-    "status",
-    "score",
-    "telefone",
-    "website",
-    "endereco",
-    "dor_principal",
-  ];
-  const linhas = leads.map((l) =>
-    [
-      l.nome,
-      l.categoria,
-      l.status,
-      l.score,
-      l.telefone,
-      l.website,
-      l.endereco,
-      l.dorPrincipal,
-    ]
-      .map(escapar)
-      .join(";"),
-  );
-  // Ponto e vírgula + BOM: é o que o Excel em pt-BR abre sem virar uma coluna só.
-  return `﻿${cabecalho.join(";")}\n${linhas.join("\n")}`;
-}
-
-function baixarCsv(leads: LeadCardProps[]) {
-  const blob = new Blob([paraCsv(leads)], {
-    type: "text/csv;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "leads-orion.csv";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export function LeadsGrid({
   leads,
   comSelecao = true,
+  podeExportar = false,
 }: {
   leads: LeadCardProps[];
   /** F025 — a Fila do dia mostra os mesmos cards sem ação em massa. */
   comSelecao?: boolean;
+  /** F035 — vem do servidor. Sem o recurso, o botão fica visível com cadeado:
+   *  ver é o que dá vontade de assinar; sumir não vende nada. */
+  podeExportar?: boolean;
 }) {
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [state, action, pending] = useActionState(descartarEmLote, initial);
+  const [erroCsv, setErroCsv] = useState<string | null>(null);
+
+  // O CSV é montado no servidor (F035 AC9): aqui só disparamos o download.
+  async function exportar(ids: string[]) {
+    setErroCsv(null);
+    const r = await exportarLeadsCsv(ids);
+    if (r.kind !== "ok") {
+      setErroCsv(r.kind === "erro" ? r.mensagem : "Falha ao exportar");
+      return;
+    }
+    const url = URL.createObjectURL(
+      new Blob([r.csv], { type: "text/csv;charset=utf-8" }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "leads-orion.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const idsSelecionados = useMemo(
     () => leads.filter((l) => selecionados.has(l.id)),
@@ -108,13 +88,19 @@ export function LeadsGrid({
             <span className="text-xs text-zinc-400">
               {idsSelecionados.length} selecionado(s)
             </span>
-            <button
-              type="button"
-              onClick={() => baixarCsv(idsSelecionados)}
-              className="btn-ghost"
-            >
-              Exportar CSV
-            </button>
+            {podeExportar ? (
+              <button
+                type="button"
+                onClick={() => void exportar(idsSelecionados.map((l) => l.id))}
+                className="btn-ghost"
+              >
+                Exportar CSV
+              </button>
+            ) : (
+              <Link href="/planos?recurso=exportar_csv" className="btn-ghost">
+                🔒 Exportar CSV
+              </Link>
+            )}
             <form
               action={action}
               onSubmit={(e) => {
@@ -146,6 +132,7 @@ export function LeadsGrid({
       {state.kind === "erro" && (
         <p className="mb-3 text-xs text-red-400">{state.mensagem}</p>
       )}
+      {erroCsv && <p className="mb-3 text-xs text-red-400">{erroCsv}</p>}
       {state.kind === "ok" && (
         <p className="mb-3 text-xs text-zinc-400">
           {state.descartados} Lead(s) descartado(s).

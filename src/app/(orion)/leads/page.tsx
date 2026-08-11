@@ -20,12 +20,14 @@ import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
 import { GridLeadsSkeleton, SkeletonPulse } from "@/components/page-skeleton";
 import { UsoDiarioBanner } from "@/components/uso-diario";
+import { UsoMensalBanner } from "@/components/uso-mensal";
 import { AjudaScore } from "./ajuda-score";
 import { ChipsFiltro } from "./chips-filtro";
 import { ColetarForm } from "./coletar-form";
 import { ExcluirDescartadosForm } from "./excluir-descartados-form";
 import { GerarOutreachButton } from "./gerar-outreach-button";
 import { INCLUDE_CARD, paraCardProps } from "./card-props";
+import { podeUsar } from "@/lib/planos";
 import { LeadsGrid } from "./leads-grid";
 import type { LeadCardProps } from "./lead-card";
 import { FiltrosLista, PAGE_SIZE, PaginacaoLeads } from "./lista-controles";
@@ -119,8 +121,11 @@ async function BlocoLista({
   filtro: FiltroLista;
   pageRequested: number;
 }) {
-  const { whereUser } = await requireTenant();
+  const { userId, whereUser } = await requireTenant();
   const whereLista = { ...whereUser, ...whereFiltroLista(filtro) };
+  // F035 — o botão de exportar aparece sempre; o plano decide se ele
+  // funciona ou leva pra /planos.
+  const podeExportar = await podeUsar(userId, "exportar_csv");
 
   const buscarPagina = (p: number) =>
     prisma.lead.findMany({
@@ -232,7 +237,7 @@ async function BlocoLista({
         {cards.length > 0 && (
           <>
             <div className="mt-3">
-              <LeadsGrid leads={cards} />
+              <LeadsGrid leads={cards} podeExportar={podeExportar} />
             </div>
             <PaginacaoLeads
               page={page}
@@ -272,8 +277,13 @@ export default async function LeadsPage({
               diagnóstico completo, a abordagem e a proposta.
             </p>
           </div>
-          {/* F032 — cota no topo, como na referência. */}
-          <div className="min-w-[16rem]">
+          {/* F032 — cota no topo, como na referência.
+              F035 — e o medidor do plano acima dela: é o limite que o aluno
+              esbarra primeiro. */}
+          <div className="min-w-[16rem] space-y-2">
+            <Suspense fallback={<SkeletonPulse className="h-14 w-full" />}>
+              <UsoMensalBanner />
+            </Suspense>
             <UsoDiarioBanner operacoes={["coleta", "proposta", "outreach"]} />
           </div>
         </div>

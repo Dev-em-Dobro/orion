@@ -13,6 +13,7 @@ import { QuotaExcedidaError } from "@/lib/limites/erros";
 import { LlmError } from "@/lib/llm";
 import { ChaveAusenteError, ChaveOperacaoError } from "@/lib/chaves/erros";
 import { ChaveOrionIndisponivelError } from "@/lib/chaves/orion";
+import { exigirRecurso, RecursoDoPlanoError } from "@/lib/planos";
 import { responderAgente } from "@/lib/agente/executar";
 
 export const runtime = "nodejs";
@@ -51,6 +52,9 @@ export async function POST(req: Request) {
   }
 
   try {
+    // F035 — o Agente é de plano pago. Gate no servidor: a página bloqueada
+    // não é o que protege o endpoint.
+    await exigirRecurso(userId, "agente");
     // Cota antes de qualquer chamada ao provider (F018).
     await verificarCota(userId, "agente_msg");
 
@@ -67,6 +71,9 @@ export async function POST(req: Request) {
 
     return resultado.toTextStreamResponse();
   } catch (e) {
+    if (e instanceof RecursoDoPlanoError) {
+      return NextResponse.json({ erro: e.message }, { status: 402 });
+    }
     if (
       e instanceof QuotaExcedidaError ||
       e instanceof ChaveAusenteError ||

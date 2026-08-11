@@ -9,7 +9,9 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
+import { verificarLimiteMensal } from "@/lib/planos";
 import { mensagemEscopo, requireLeadOwned } from "@/lib/db/scoped";
 import {
   executarDiagnostico,
@@ -37,6 +39,13 @@ export async function diagnosticarLead(
 
   try {
     const { lead, userId } = await requireLeadOwned(parsed.data.lead_id);
+    // F035 — teto do plano antes da chave: no limite, não gasta API nenhuma.
+    // Re-diagnosticar um Lead que já conta não deveria barrar, então só checa
+    // quando é o primeiro Diagnóstico dele.
+    const jaContou = await prisma.diagnostico.count({
+      where: { lead_id: lead.id, user_id: userId },
+    });
+    if (jaContou === 0) await verificarLimiteMensal(userId);
     const googleKey = await exigirChave(userId, "google");
 
     const { dados, email } = await executarDiagnostico(

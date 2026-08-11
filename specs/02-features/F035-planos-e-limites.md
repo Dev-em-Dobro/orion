@@ -1,8 +1,17 @@
 # F035 — Planos e limites de uso
 
 ## Status
-Proposta — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md)
+Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md)
 · custos e preços em [11](../11-custos-e-precificacao.md)
+
+> **Falta um dado, não código:** os `product_id` dos planos na Hubla. Enquanto
+> `HUBLA_PRODUCT_ID_PRO` / `HUBLA_PRODUCT_ID_AGENCIA` estiverem vazios, todo
+> mundo é `free` — que é o comportamento **correto** (não existe plano pago
+> configurado), não uma falha. Criar os produtos na Hubla e preencher as duas
+> vars liga a feature sem tocar em código.
+>
+> Os **preços** continuam proposta: dependem da medição pendente em
+> [11 §7](../11-custos-e-precificacao.md#7-o-que-precisa-ser-medido-antes-de-publicar-preço).
 
 ## Objetivo
 Transformar o Orion de "tudo liberado pra todo aluno" em produto com **planos**:
@@ -79,13 +88,13 @@ cobrança nova — o webhook que já existe passa a mapear mais produtos.
 Precedência quando há mais de um: `agencia` > `pro` > `free`.
 
 ## Modelo de dados
-```prisma
-enum Plano {
-  free
-  pro
-  agencia
-}
 
+> **Desvio na implementação:** o `enum Plano` **não** foi criado no banco.
+> Nenhuma coluna o referencia (o plano é derivado dos entitlements), e um enum
+> sem coluna é schema morto que ainda assim exige migração pra mudar. O tipo
+> vive em `src/lib/planos/catalogo.ts`.
+
+```prisma
 model UsoMensal {
   id                    String   @id @default(cuid())
   user_id               String
@@ -180,11 +189,27 @@ por plano. Quem já tem plano vê o que ganharia subindo.
       furam o limite (incremento atômico no `upsert`).
 - [ ] **AC13** — Isolamento (F015): `UsoMensal` é escopado por `user_id`.
 
+> **Nota do AC9 (exportar CSV):** o CSV era montado no navegador, a partir dos
+> cards já entregues na página — ali "gate no servidor" seria mentira. A
+> exportação virou a Server Action `exportarLeadsCsv`, que faz `exigirRecurso`
+> e refaz a query com `whereUser`. O botão continua visível no Free, com
+> cadeado, levando a `/planos`.
+
 ## Decisões de implementação
 - `src/lib/planos/catalogo.ts` (limites e features por plano — dado puro),
-  `resolver.ts` (entitlements → plano), `medidor.ts` (competência, incremento,
-  verificação), `erros.ts` (`LimiteDoPlanoError`, tratado por
-  `mensagemEscopo`).
+  `competencia.ts` (mês em `America/Sao_Paulo`, puro), `resolver.ts`
+  (entitlements → plano, memoizado por request), `medidor.ts` (consulta,
+  verificação e incremento), `gate.ts` (`exigirRecurso`,
+  `redirectSeRecursoBloqueado`), `erros.ts` (`LimiteDoPlanoError` e
+  `RecursoDoPlanoError`, ambos tratados por `mensagemEscopo`).
+- O incremento entrou na transação do Diagnóstico
+  (`src/lib/diagnostico/persistir.ts`), que passou de transação de **array**
+  para **interativa**: o medidor precisa saber, dentro dela, se este é o
+  primeiro Diagnóstico do Lead.
+- Os gates de página (`/tarefas`, `/funil`, `/agente`) rodam **antes** do JSX,
+  fora do `<Suspense>` — dentro do boundary o `redirect` chegaria depois do
+  shell e viraria 200 (mesma armadilha que a [F028](F028-desempenho.md)
+  documenta para o `notFound()`).
 - Competência via `America/Sao_Paulo` num helper puro e testável — nada de
   `new Date()` espalhado.
 - O gate reusa o padrão de `redirectSeCompraPendente` (F019.1), que já existe.

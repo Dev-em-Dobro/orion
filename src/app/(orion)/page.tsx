@@ -14,6 +14,7 @@ import {
 } from "@/lib/funil";
 import type { LeadStatus } from "@prisma/client";
 import { SkeletonPulse } from "@/components/page-skeleton";
+import { UsoMensalBanner } from "@/components/uso-mensal";
 import { FilaDoDia } from "./fila-do-dia";
 import { PraFazerAgora } from "./pra-fazer-agora";
 
@@ -108,6 +109,14 @@ export default async function DashboardPage() {
       <p className="mt-1 text-sm text-muted">
         Funil de prospecção · visão geral
       </p>
+
+      {/* F035 — medidor do plano no topo: é o número que decide quanto o aluno
+          ainda pode aprofundar este mês. */}
+      <div className="mt-4 max-w-md">
+        <Suspense fallback={<SkeletonPulse className="h-14 w-full" />}>
+          <UsoMensalBanner />
+        </Suspense>
+      </div>
 
       {/* F025 — a fila vem antes do funil: a primeira pergunta do dia é
           "quem eu abordo agora", não "como está o funil". */}

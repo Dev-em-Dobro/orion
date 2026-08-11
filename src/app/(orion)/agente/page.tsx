@@ -6,11 +6,18 @@
 // (F031). Antes disso ele responderia sobre uma base vazia.
 
 import { UsoDiarioBanner } from "@/components/uso-diario";
+import { requireTenant } from "@/lib/db/scoped";
+import { redirectSeRecursoBloqueado } from "@/lib/planos";
 import { Chat } from "./chat";
 
 export const dynamic = "force-dynamic";
 
-export default function AgentePage() {
+export default async function AgentePage() {
+  // F035 — gate de plano no servidor, **antes** do JSX: dentro de um
+  // <Suspense> o redirect chegaria depois do shell, e viraria 200.
+  const { userId } = await requireTenant();
+  await redirectSeRecursoBloqueado(userId, "agente");
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <div className="flex flex-wrap items-start justify-between gap-4">

@@ -11,6 +11,7 @@ import { Suspense } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonPulse } from "@/components/page-skeleton";
 import { requireTenant } from "@/lib/db/scoped";
+import { redirectSeRecursoBloqueado } from "@/lib/planos";
 import { tarefasDoUsuario } from "@/lib/tarefas/consultar";
 import { ListaTarefas } from "./lista-tarefas";
 
@@ -33,7 +34,12 @@ async function Conteudo() {
   return <ListaTarefas tarefas={tarefas} />;
 }
 
-export default function TarefasPage() {
+export default async function TarefasPage() {
+  // F035 — gate de plano no servidor, **antes** do JSX: dentro de um
+  // <Suspense> o redirect chegaria depois do shell, e viraria 200.
+  const { userId } = await requireTenant();
+  await redirectSeRecursoBloqueado(userId, "tarefas");
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <h1 className="text-2xl font-bold tracking-tight">Tarefas</h1>

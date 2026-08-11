@@ -55,7 +55,12 @@ export function AprofundarButton({
       total += r.processados;
       setFeitos(total);
 
-      if (r.cotaEsgotada || r.restantes === 0 || r.processados === 0) {
+      if (
+        r.limiteAtingido ||
+        r.cotaEsgotada ||
+        r.restantes === 0 ||
+        r.processados === 0
+      ) {
         setMensagem(r.mensagem);
         break;
       }

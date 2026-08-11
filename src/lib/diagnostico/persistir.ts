@@ -5,6 +5,7 @@ import type { Lead } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { detectarDores, substituirDoresDoLead } from "@/lib/dores";
 import { mudarStatus } from "@/lib/leads/status";
+import { contarLeadDiagnosticado } from "@/lib/planos/medidor";
 import type { DadosDiagnostico } from "./executar";
 
 type Args = {
@@ -39,14 +40,20 @@ export async function persistirDiagnostico({
     ...(gravarEmail ? { email, email_origem: "site" as const } : {}),
   };
 
-  await prisma.$transaction([
-    prisma.diagnostico.create({
+  // Transação interativa (não a de array) porque o medidor da F035 precisa
+  // saber, **dentro** dela, se este é o primeiro Diagnóstico do Lead.
+  await prisma.$transaction(async (tx) => {
+    // F035 — conta antes de criar: depois do create, todo Lead teria "um
+    // Diagnóstico anterior" e o medidor nunca incrementaria.
+    await contarLeadDiagnosticado(tx, userId, lead.id);
+
+    await tx.diagnostico.create({
       data: { user_id: userId, lead_id: lead.id, ...dados },
-    }),
-    ...(Object.keys(dadosLead).length > 0
-      ? [prisma.lead.update({ where: { id: lead.id }, data: dadosLead })]
-      : []),
-  ]);
+    });
+    if (Object.keys(dadosLead).length > 0) {
+      await tx.lead.update({ where: { id: lead.id }, data: dadosLead });
+    }
+  });
 
   // F004 — Dores do último Diagnóstico (substitui o conjunto anterior).
   await substituirDoresDoLead(

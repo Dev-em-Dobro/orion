@@ -320,6 +320,18 @@ async function main() {
     },
   });
 
+  // F035 — entitlement do plano Pro, pra dar pra ver as duas experiências
+  // localmente. Comente `HUBLA_PRODUCT_ID_PRO` no `.env` e o mesmo usuário
+  // vira Free (Tarefas, Funil, Agente e e-mail com cadeado).
+  const planoPro = process.env.HUBLA_PRODUCT_ID_PRO?.trim();
+  if (planoPro) {
+    await prisma.hublaEntitlement.upsert({
+      where: { email_product_id: { email, product_id: planoPro } },
+      update: { status: "ativo" },
+      create: { email, product_id: planoPro, status: "ativo" },
+    });
+  }
+
   // Idempotente: limpa só o que este script criou.
   await prisma.lead.deleteMany({
     where: { user_id: user.id, place_id: { startsWith: "demo-" } },
@@ -396,6 +408,11 @@ async function main() {
   console.log(`Seed pronto para ${email}:`);
   console.log(`  ${CENARIOS.length} Leads de demonstração`);
   console.log("  compra verificada (Materiais e Skills liberados)");
+  console.log(
+    planoPro
+      ? `  plano Pro (F035) — comente HUBLA_PRODUCT_ID_PRO no .env pra ver como é no Free`
+      : "  plano Free (F035) — defina HUBLA_PRODUCT_ID_PRO no .env pra virar Pro",
+  );
   console.log("");
   console.log("Agora: npm run dev → http://localhost:3000 → entre com esse");
   console.log("e-mail e pegue o magic link em http://127.0.0.1:8025");

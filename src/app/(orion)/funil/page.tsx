@@ -8,6 +8,7 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
+import { redirectSeRecursoBloqueado } from "@/lib/planos";
 import { COLUNAS_FUNIL, colunaDoStatus, STATUS_DO_BOARD } from "@/lib/funil";
 import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
 import { EmptyState } from "@/components/empty-state";
@@ -107,7 +108,12 @@ async function Conteudo() {
   return <Board cards={cards} colunas={colunas} />;
 }
 
-export default function FunilPage() {
+export default async function FunilPage() {
+  // F035 — gate de plano no servidor, **antes** do JSX: dentro de um
+  // <Suspense> o redirect chegaria depois do shell, e viraria 200.
+  const { userId } = await requireTenant();
+  await redirectSeRecursoBloqueado(userId, "kanban");
+
   return (
     <main className="mx-auto max-w-[100rem] px-6 py-10">
       <h1 className="text-2xl font-bold tracking-tight">Funil</h1>

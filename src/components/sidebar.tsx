@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import { authClient } from "@/lib/auth/client";
 import { ENTREGAVEIS_MENU } from "@/lib/entregaveis/catalogo";
 import { SKILLS_MENU } from "@/lib/skills/catalogo";
+import { temRecurso, type Plano, type Recurso } from "@/lib/planos/catalogo";
 import { NOME_PRODUTO_PARTES } from "@/lib/produto";
 
 function Icone({ d }: { d: React.ReactNode }) {
@@ -141,6 +142,8 @@ type NavItem = {
   externo?: boolean;
   /** F031 — contador de cobranças vencidas. */
   badge?: number;
+  /** F035 — recurso de plano que o item exige. Sem ele: cadeado + /planos. */
+  recurso?: Recurso;
 };
 
 function grupos(tarefasVencidas: number): { titulo: string; itens: NavItem[] }[] {
@@ -175,6 +178,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/agente",
         label: "Agente",
+        recurso: "agente",
         icone: (
           <Icone
             d={
@@ -189,6 +193,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/funil",
         label: "Funil",
+        recurso: "kanban",
         icone: (
           <Icone
             d={
@@ -204,6 +209,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/tarefas",
         label: "Tarefas",
+        recurso: "tarefas",
         icone: (
           <Icone
             d={
@@ -328,6 +334,20 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
     titulo: "Conta",
     itens: [
       {
+        href: "/planos",
+        label: "Planos",
+        icone: (
+          <Icone
+            d={
+              <>
+                <path d="M3 10h18M7 15h4" />
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+              </>
+            }
+          />
+        ),
+      },
+      {
         href: "/configuracao",
         label: "Configuração",
         icone: (
@@ -433,6 +453,8 @@ function NavLink({
   bloqueado,
   externo,
   badge,
+  destinoBloqueado = "/ativar-acesso",
+  tituloBloqueado = "Ative sua compra para acessar os materiais",
   onNavigate,
 }: {
   href: string;
@@ -443,11 +465,14 @@ function NavLink({
   bloqueado?: boolean;
   externo?: boolean;
   badge?: number;
+  /** Para onde o cadeado leva (compra pendente vs. plano). */
+  destinoBloqueado?: string;
+  tituloBloqueado?: string;
   onNavigate?: () => void;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const destino = bloqueado ? "/ativar-acesso" : href;
+  const destino = bloqueado ? destinoBloqueado : href;
   const className = navClassName(compact, bloqueado, ativo, pending);
 
   const conteudo = (
@@ -499,7 +524,7 @@ function NavLink({
       href={destino}
       aria-busy={pending || undefined}
       aria-disabled={bloqueado || undefined}
-      title={bloqueado ? "Ative sua compra para acessar os materiais" : undefined}
+      title={bloqueado ? tituloBloqueado : undefined}
       onClick={(e) => {
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
           return;
@@ -557,11 +582,14 @@ function IconeFechar() {
 function NavGrupos({
   materiaisLiberados,
   tarefasVencidas,
+  plano,
   ativo,
   onNavigate,
 }: {
   materiaisLiberados: boolean;
   tarefasVencidas: number;
+  /** F035 — decide o cadeado dos itens de plano pago. */
+  plano: Plano;
   ativo: (href: string) => boolean;
   onNavigate?: () => void;
 }) {
@@ -586,24 +614,38 @@ function NavGrupos({
               ) : null}
             </p>
             <ul className="mt-2 space-y-1">
-              {grupo.itens.map((item) => (
-                <li key={item.href}>
-                  <NavLink
-                    href={item.href}
-                    label={item.label}
-                    icone={item.icone}
-                    ativo={
-                      !item.externo &&
-                      !materiaisBloqueado &&
-                      ativo(item.href)
-                    }
-                    bloqueado={materiaisBloqueado}
-                    externo={item.externo}
-                    badge={item.badge}
-                    onNavigate={onNavigate}
-                  />
-                </li>
-              ))}
+              {grupo.itens.map((item) => {
+                // F035 — o item **não some**: fica visível com cadeado e leva
+                // a /planos. Ver é o que dá vontade de assinar.
+                const planoBloqueia = Boolean(
+                  item.recurso && !temRecurso(plano, item.recurso),
+                );
+                const bloqueado = materiaisBloqueado || planoBloqueia;
+                return (
+                  <li key={item.href}>
+                    <NavLink
+                      href={item.href}
+                      label={item.label}
+                      icone={item.icone}
+                      ativo={!item.externo && !bloqueado && ativo(item.href)}
+                      bloqueado={bloqueado}
+                      destinoBloqueado={
+                        planoBloqueia
+                          ? `/planos?recurso=${item.recurso}`
+                          : "/ativar-acesso"
+                      }
+                      tituloBloqueado={
+                        planoBloqueia
+                          ? "Disponível nos planos pagos"
+                          : "Ative sua compra para acessar os materiais"
+                      }
+                      externo={item.externo}
+                      badge={planoBloqueia ? undefined : item.badge}
+                      onNavigate={onNavigate}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </div>
         );
@@ -615,10 +657,13 @@ function NavGrupos({
 export function Sidebar({
   materiaisLiberados = false,
   tarefasVencidas = 0,
+  plano = "free",
 }: {
   materiaisLiberados?: boolean;
   /** F031 — cobranças vencidas, no badge do item Tarefas. */
   tarefasVencidas?: number;
+  /** F035 — plano do aluno, pro cadeado dos itens pagos. */
+  plano?: Plano;
 }) {
   const pathname = usePathname();
   const [menuAberto, setMenuAberto] = useState(false);
@@ -659,6 +704,7 @@ export function Sidebar({
           <NavGrupos
             materiaisLiberados={materiaisLiberados}
             tarefasVencidas={tarefasVencidas}
+            plano={plano}
             ativo={ativo}
           />
         </nav>
@@ -714,6 +760,7 @@ export function Sidebar({
               <NavGrupos
                 materiaisLiberados={materiaisLiberados}
                 tarefasVencidas={tarefasVencidas}
+                plano={plano}
                 ativo={ativo}
                 onNavigate={fecharMenu}
               />

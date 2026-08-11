@@ -9,6 +9,9 @@ import { ChaveAusenteError, ChaveOperacaoError } from "@/lib/chaves/erros";
 import { ChaveOrionIndisponivelError } from "@/lib/chaves/orion";
 import { LlmError } from "@/lib/llm/erros";
 import { QuotaExcedidaError } from "@/lib/limites/erros";
+// Import direto do módulo de erros (não do barrel): `@/lib/planos` puxaria o
+// gate, que importa `next/navigation`, e isso entraria em todo consumidor.
+import { LimiteDoPlanoError, RecursoDoPlanoError } from "@/lib/planos/erros";
 import { CifraError } from "@/lib/seguranca/cifra";
 
 export class TenantNotFoundError extends Error {
@@ -43,6 +46,8 @@ export function mensagemEscopo(e: unknown): string | null {
     e instanceof ChaveOrionIndisponivelError ||
     e instanceof ChaveOperacaoError ||
     e instanceof QuotaExcedidaError ||
+    e instanceof LimiteDoPlanoError ||
+    e instanceof RecursoDoPlanoError ||
     e instanceof CifraError ||
     e instanceof LlmError
   ) {
