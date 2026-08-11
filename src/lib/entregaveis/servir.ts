@@ -1,58 +1,25 @@
 // F020 — leitura segura dos arquivos espelhados em content/entregaveis/.
+//
+// A checagem de path e o mapa de MIME vivem em `lib/arquivos/servir` desde a
+// F030, que precisou do mesmo comportamento para as Skills. Aqui fica só o que
+// é específico dos entregáveis: a sanitização de URLs externas.
 
-import fs from "node:fs/promises";
 import path from "node:path";
+import {
+  lerArquivo,
+  mimeDoArquivo,
+} from "@/lib/arquivos/servir";
 
 const ROOT = path.join(process.cwd(), "content", "entregaveis");
 
-const MIME: Record<string, string> = {
-  ".html": "text/html; charset=utf-8",
-  ".htm": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".md": "text/markdown; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-  ".svg": "image/svg+xml",
-  ".zip": "application/zip",
-  ".pdf": "application/pdf",
-};
-
 export function mimeEntregavel(arquivo: string): string {
-  const ext = path.extname(arquivo).toLowerCase();
-  return MIME[ext] ?? "application/octet-stream";
-}
-
-function caminhoSeguro(segments: string[]): string | null {
-  if (segments.length === 0) return null;
-  if (segments.some((s) => s === ".." || s.includes("\0"))) return null;
-
-  const joined = segments.join("/");
-  const abs = path.resolve(ROOT, joined);
-  const rootResolved = path.resolve(ROOT);
-  if (!abs.startsWith(rootResolved + path.sep) && abs !== rootResolved) {
-    return null;
-  }
-  return abs;
+  return mimeDoArquivo(arquivo);
 }
 
 export async function lerArquivoEntregavel(
   segments: string[],
 ): Promise<{ body: Buffer; contentType: string } | null> {
-  const abs = caminhoSeguro(segments);
-  if (!abs) return null;
-
-  try {
-    const stat = await fs.stat(abs);
-    if (!stat.isFile()) return null;
-    const body = await fs.readFile(abs);
-    return { body, contentType: mimeEntregavel(abs) };
-  } catch {
-    return null;
-  }
+  return lerArquivo(ROOT, segments);
 }
 
 export function urlInternaEntregavel(pasta: string): string {

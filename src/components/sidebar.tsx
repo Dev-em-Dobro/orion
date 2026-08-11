@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { authClient } from "@/lib/auth/client";
 import { ENTREGAVEIS_MENU } from "@/lib/entregaveis/catalogo";
+import { SKILLS_MENU } from "@/lib/skills/catalogo";
 import { NOME_PRODUTO_PARTES } from "@/lib/produto";
 
 function Icone({ d }: { d: React.ReactNode }) {
@@ -281,6 +282,34 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       })),
     ],
   },
+  ...(SKILLS_MENU.length > 0
+    ? [
+        {
+          // F030 — o grupo só existe quando há skill publicada: menu com link
+          // morto é pior que menu sem o item.
+          titulo: "Skills",
+          itens: [
+            {
+              href: "/skills",
+              label: "Visão geral",
+              icone: (
+                <Icone
+                  d={
+                    <>
+                      <path d="m12 3-1.9 5.8H4l4.9 3.6-1.9 5.8L12 14.6l4.9 3.8-1.9-5.8L20 8.8h-6.1L12 3z" />
+                    </>
+                  }
+                />
+              ),
+            },
+            ...SKILLS_MENU.map((skill) => ({
+              href: `/skills/${skill.slug}`,
+              label: skill.titulo,
+            })),
+          ],
+        },
+      ]
+    : []),
   {
     titulo: "Conta",
     itens: [
