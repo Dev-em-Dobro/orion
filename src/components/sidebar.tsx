@@ -138,7 +138,18 @@ type NavItem = {
   label: string;
   icone?: React.ReactNode;
   externo?: boolean;
+  /** F031 — contador de cobranças vencidas. */
+  badge?: number;
 };
+
+function grupos(tarefasVencidas: number): { titulo: string; itens: NavItem[] }[] {
+  return GRUPOS_BASE.map((g) => ({
+    ...g,
+    itens: g.itens.map((i) =>
+      i.href === "/tarefas" ? { ...i, badge: tarefasVencidas } : i,
+    ),
+  }));
+}
 
 const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
   {
@@ -155,6 +166,20 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
                 <rect x="14" y="3" width="7" height="5" rx="1" />
                 <rect x="14" y="12" width="7" height="9" rx="1" />
                 <rect x="3" y="16" width="7" height="5" rx="1" />
+              </>
+            }
+          />
+        ),
+      },
+      {
+        href: "/tarefas",
+        label: "Tarefas",
+        icone: (
+          <Icone
+            d={
+              <>
+                <path d="M9 11l3 3 8-8" />
+                <path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" />
               </>
             }
           />
@@ -349,6 +374,7 @@ function NavLink({
   compact,
   bloqueado,
   externo,
+  badge,
   onNavigate,
 }: {
   href: string;
@@ -358,6 +384,7 @@ function NavLink({
   compact?: boolean;
   bloqueado?: boolean;
   externo?: boolean;
+  badge?: number;
   onNavigate?: () => void;
 }) {
   const router = useRouter();
@@ -381,6 +408,11 @@ function NavLink({
         </span>
       ) : null}
       <span className="min-w-0 flex-1 truncate">{label}</span>
+      {badge ? (
+        <span className="ml-auto rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">
+          {badge}
+        </span>
+      ) : null}
       {bloqueado ? (
         <span className="ml-auto text-zinc-600" aria-hidden>
           <IconeCadeado />
@@ -466,16 +498,18 @@ function IconeFechar() {
 
 function NavGrupos({
   materiaisLiberados,
+  tarefasVencidas,
   ativo,
   onNavigate,
 }: {
   materiaisLiberados: boolean;
+  tarefasVencidas: number;
   ativo: (href: string) => boolean;
   onNavigate?: () => void;
 }) {
   return (
     <>
-      {GRUPOS_BASE.map((grupo) => {
+      {grupos(tarefasVencidas).map((grupo) => {
         const materiaisBloqueado =
           grupo.titulo === GRUPO_MATERIAIS && !materiaisLiberados;
 
@@ -507,6 +541,7 @@ function NavGrupos({
                     }
                     bloqueado={materiaisBloqueado}
                     externo={item.externo}
+                    badge={item.badge}
                     onNavigate={onNavigate}
                   />
                 </li>
@@ -519,7 +554,14 @@ function NavGrupos({
   );
 }
 
-export function Sidebar({ materiaisLiberados = false }: { materiaisLiberados?: boolean }) {
+export function Sidebar({
+  materiaisLiberados = false,
+  tarefasVencidas = 0,
+}: {
+  materiaisLiberados?: boolean;
+  /** F031 — cobranças vencidas, no badge do item Tarefas. */
+  tarefasVencidas?: number;
+}) {
   const pathname = usePathname();
   const [menuAberto, setMenuAberto] = useState(false);
 
@@ -558,6 +600,7 @@ export function Sidebar({ materiaisLiberados = false }: { materiaisLiberados?: b
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
           <NavGrupos
             materiaisLiberados={materiaisLiberados}
+            tarefasVencidas={tarefasVencidas}
             ativo={ativo}
           />
         </nav>
@@ -612,6 +655,7 @@ export function Sidebar({ materiaisLiberados = false }: { materiaisLiberados?: b
             <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
               <NavGrupos
                 materiaisLiberados={materiaisLiberados}
+                tarefasVencidas={tarefasVencidas}
                 ativo={ativo}
                 onNavigate={fecharMenu}
               />

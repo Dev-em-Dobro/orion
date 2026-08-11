@@ -95,6 +95,7 @@ model Lead {
   diagnosticos Diagnostico[]
   dores        Dor[]
   outreaches   Outreach[]
+  adiamentos   TarefaAdiamento[]
 
   @@unique([user_id, place_id])
   @@index([user_id])
@@ -162,6 +163,38 @@ model Outreach {
   @@index([user_id])
   // F028 — fila de follow-up (F006): "última Outreach enviada" por Lead.
   @@index([lead_id, enviado, enviado_em(sort: Desc)])
+}
+
+// F031 — cobrancas derivadas do estado. A Tarefa em si nao e persistida; so
+// o que o aluno adiou ou dispensou.
+enum TipoTarefa {
+  CONFIRMAR_RESPOSTA
+  MANDAR_FOLLOWUP
+  ENVIAR_ABORDAGEM
+  AVANCAR_RESPONDEU
+  COBRAR_PROPOSTA
+  APROFUNDAR_FILA
+}
+
+model TarefaAdiamento {
+  id            String     @id @default(cuid())
+  user_id       String
+  /// Null nas tarefas agregadas (APROFUNDAR_FILA).
+  lead_id       String?
+  tipo          TipoTarefa
+  /// Timestamp do fato que originou a Tarefa. Se o marco mudar, ela volta.
+  marco         DateTime
+  adiada_ate    DateTime?
+  dispensada_em DateTime?
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  user User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  lead Lead? @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, lead_id, tipo])
+  @@index([user_id])
+  @@map("tarefa_adiamento")
 }
 
 // F016 / ADR-009 — chaves BYOK cifradas (AES-256-GCM). Um registro por User.
@@ -275,6 +308,7 @@ model User {
   outreaches     Outreach[]
   apiKeys        UserApiKeys?
   dailyUsages    DailyUsage[]
+  adiamentos     TarefaAdiamento[]
 
   @@unique([email])
   @@map("user")

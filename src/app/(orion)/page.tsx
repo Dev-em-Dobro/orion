@@ -15,6 +15,7 @@ import {
 import type { LeadStatus } from "@prisma/client";
 import { SkeletonPulse } from "@/components/page-skeleton";
 import { FilaDoDia } from "./fila-do-dia";
+import { PraFazerAgora } from "./pra-fazer-agora";
 
 // Dashboard sempre reflete só os dados do aluno (F015).
 export const dynamic = "force-dynamic";
@@ -113,6 +114,13 @@ export default async function DashboardPage() {
       <div className="mt-6">
         <Suspense fallback={<SkeletonPulse className="h-64 w-full" />}>
           <FilaDoDia />
+        </Suspense>
+      </div>
+
+      {/* F031 — o par da fila: quem abordar (acima) + o que cobrar (aqui). */}
+      <div className="mt-4">
+        <Suspense fallback={<SkeletonPulse className="h-32 w-full" />}>
+          <PraFazerAgora />
         </Suspense>
       </div>
 
