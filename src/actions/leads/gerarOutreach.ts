@@ -17,15 +17,31 @@ import { createLlmForUser } from "@/lib/llm";
 import { consumirCota, verificarCota } from "@/lib/limites";
 import type { ContextoLead } from "@/lib/outreach/prompt";
 import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
+import { gerarOutreachEmail } from "@/lib/outreach/gerarOutreach";
+import { montarMailto } from "@/lib/outreach/mailto";
 
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
   tipo: z.enum(["primeira", "followup"]).default("primeira"),
+  // F027 — o canal deixou de ser fixo em whatsapp.
+  canal: z.enum(["whatsapp", "email"]).default("whatsapp"),
+  /** E-mail digitado na hora, quando o Lead não tem um capturado. */
+  email: z.string().trim().email("E-mail inválido").optional().or(z.literal("")),
 });
 
 export type GerarOutreachState =
   | { kind: "idle" }
-  | { kind: "ok"; mensagem: string; waLink: string | null; outreachId: string }
+  | {
+      kind: "ok";
+      canal: "whatsapp" | "email";
+      mensagem: string;
+      /** F027 — só no canal e-mail. */
+      assunto: string | null;
+      waLink: string | null;
+      /** F027 — `mailto:` pronto, com assunto e corpo (só no canal e-mail). */
+      mailto: string | null;
+      outreachId: string;
+    }
   | { kind: "erro"; mensagem: string };
 
 export async function gerarOutreachAction(
@@ -35,6 +51,8 @@ export async function gerarOutreachAction(
   const parsed = schema.safeParse({
     lead_id: formData.get("lead_id"),
     tipo: formData.get("tipo") ?? undefined,
+    canal: formData.get("canal") ?? undefined,
+    email: formData.get("email") ?? undefined,
   });
   if (!parsed.success) {
     return { kind: "erro", mensagem: "Input inválido" };
@@ -75,9 +93,28 @@ export async function gerarOutreachAction(
       dores,
     };
 
+    const ehEmail = parsed.data.canal === "email";
+    const emailDigitado = parsed.data.email?.trim() || null;
+    const destino = emailDigitado ?? lead.email;
+
+    if (ehEmail && !destino) {
+      // Sem endereço não há e-mail — e não gastamos cota nem chamada de LLM.
+      return {
+        kind: "erro",
+        mensagem: "Lead sem e-mail — cole um endereço ou use o WhatsApp.",
+      };
+    }
+
     let mensagem: string;
+    let assunto: string | null = null;
     try {
-      ({ mensagem } = await gerarOutreachLib(ctx, llm, parsed.data.tipo));
+      if (ehEmail) {
+        const out = await gerarOutreachEmail(ctx, llm, parsed.data.tipo);
+        assunto = out.assunto;
+        mensagem = out.corpo;
+      } else {
+        ({ mensagem } = await gerarOutreachLib(ctx, llm, parsed.data.tipo));
+      }
     } catch (e) {
       if (e instanceof OutreachError) {
         return { kind: "erro", mensagem: e.message };
@@ -92,19 +129,36 @@ export async function gerarOutreachAction(
       data: {
         user_id: userId,
         lead_id: lead.id,
-        canal: "whatsapp",
+        canal: parsed.data.canal,
+        assunto,
         conteudo: mensagem,
         enviado: false,
       },
     });
 
+    // E-mail digitado na hora fica gravado como `manual` — e re-diagnóstico
+    // não o sobrescreve (F027).
+    if (ehEmail && emailDigitado && emailDigitado !== lead.email) {
+      await prisma.lead.update({
+        where: { id: lead.id },
+        data: { email: emailDigitado, email_origem: "manual" },
+      });
+    }
+
     revalidatePath("/leads");
+    revalidatePath(`/leads/${lead.id}`);
     await consumirCota(userId, "outreach");
 
     return {
       kind: "ok",
+      canal: parsed.data.canal,
       mensagem,
-      waLink: linkWhatsapp(lead.telefone, mensagem),
+      assunto,
+      waLink: ehEmail ? null : linkWhatsapp(lead.telefone, mensagem),
+      mailto:
+        ehEmail && destino
+          ? montarMailto(destino, assunto ?? "", mensagem)
+          : null,
       outreachId: outreach.id,
     };
   } catch (e) {

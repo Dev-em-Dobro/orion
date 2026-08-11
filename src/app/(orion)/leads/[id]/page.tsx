@@ -323,9 +323,62 @@ export default async function LeadByIdPage({
 
           {aba === "abordagem" && (
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <GerarOutreachButton leadId={lead.id} />
-                <GerarOutreachButton leadId={lead.id} tipo="followup" />
+              {/* F027 — dois canais. O de e-mail pede o endereço quando o
+                  Lead não tem um capturado do site. */}
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                    WhatsApp
+                  </p>
+                  {!lead.telefone && (
+                    <span className="text-xs text-zinc-600">sem telefone</span>
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <GerarOutreachButton leadId={lead.id} />
+                  <GerarOutreachButton leadId={lead.id} tipo="followup" />
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                    E-mail
+                  </p>
+                  {lead.email ? (
+                    <span className="text-xs text-zinc-400">
+                      {lead.email}
+                      <span className="text-zinc-600">
+                        {" "}
+                        ·{" "}
+                        {lead.email_origem === "manual"
+                          ? "digitado por você"
+                          : "publicado no site do Lead"}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-xs text-zinc-600">
+                      nenhum e-mail encontrado no site
+                    </span>
+                  )}
+                </div>
+                <div className="mt-2 space-y-2">
+                  <GerarOutreachButton
+                    leadId={lead.id}
+                    canal="email"
+                    temEmail={Boolean(lead.email)}
+                  />
+                  <GerarOutreachButton
+                    leadId={lead.id}
+                    canal="email"
+                    tipo="followup"
+                    temEmail={Boolean(lead.email)}
+                  />
+                </div>
+                <p className="mt-3 border-t border-border pt-2 text-xs text-zinc-600">
+                  O Orion prepara o e-mail; quem envia é o seu cliente de
+                  e-mail. Assim a resposta chega pra você.
+                </p>
               </div>
 
               {outreaches.length === 0 ? (
@@ -355,6 +408,12 @@ export default async function LeadByIdPage({
                             {o.enviado ? "enviado" : "não enviado"}
                           </span>
                         </div>
+                        {o.assunto && (
+                          <p className="mt-2 text-xs text-zinc-300">
+                            <span className="text-zinc-500">Assunto:</span>{" "}
+                            {o.assunto}
+                          </p>
+                        )}
                         <textarea
                           readOnly
                           value={o.conteudo}

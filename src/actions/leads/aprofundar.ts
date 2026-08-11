@@ -81,8 +81,11 @@ export async function aprofundarLote(
     const resultados = await Promise.allSettled(
       candidatos.map(async (lead) => {
         await verificarCota(userId, "diagnostico");
-        const dados = await executarDiagnostico(lead.website, googleKey);
-        await persistirDiagnostico({ userId, lead, dados });
+        const { dados, email } = await executarDiagnostico(
+          lead.website,
+          googleKey,
+        );
+        await persistirDiagnostico({ userId, lead, dados, email });
         await recalcularScore(userId, lead.id);
         await consumirCota(userId, "diagnostico");
       }),

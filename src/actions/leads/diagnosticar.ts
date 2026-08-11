@@ -39,8 +39,11 @@ export async function diagnosticarLead(
     const { lead, userId } = await requireLeadOwned(parsed.data.lead_id);
     const googleKey = await exigirChave(userId, "google");
 
-    const dados = await executarDiagnostico(lead.website, googleKey);
-    await persistirDiagnostico({ userId, lead, dados });
+    const { dados, email } = await executarDiagnostico(
+      lead.website,
+      googleKey,
+    );
+    await persistirDiagnostico({ userId, lead, dados, email });
 
     revalidatePath("/leads");
     revalidatePath(`/leads/${lead.id}`);

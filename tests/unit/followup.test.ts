@@ -19,6 +19,8 @@ function fakeLead(
     endereco: "Rua 1",
     telefone: null,
     website: null,
+    email: null,
+    email_origem: null,
     categoria: "cafe",
     nota: null,
     num_avaliacoes: null,

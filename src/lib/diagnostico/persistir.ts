@@ -9,8 +9,13 @@ import type { DadosDiagnostico } from "./executar";
 
 type Args = {
   userId: string;
-  lead: Pick<Lead, "id" | "status" | "website" | "telefone">;
+  lead: Pick<
+    Lead,
+    "id" | "status" | "website" | "telefone" | "email" | "email_origem"
+  >;
   dados: DadosDiagnostico;
+  /** F027 — e-mail achado no site nesta execução. */
+  email?: string | null;
 };
 
 /**
@@ -18,18 +23,28 @@ type Args = {
  * enriquecido`; a promoção a `priorizado` é do recálculo de score (F025), que
  * roda logo depois no fluxo automático.
  */
-export async function persistirDiagnostico({ userId, lead, dados }: Args) {
+export async function persistirDiagnostico({
+  userId,
+  lead,
+  dados,
+  email,
+}: Args) {
+  // F027 — e-mail digitado pelo aluno (`manual`) nunca é sobrescrito por um
+  // re-diagnóstico: ele sabe mais que o parser.
+  const gravarEmail =
+    email && email !== lead.email && lead.email_origem !== "manual";
+
+  const dadosLead = {
+    ...(lead.status === "novo" ? mudarStatus("enriquecido") : {}),
+    ...(gravarEmail ? { email, email_origem: "site" as const } : {}),
+  };
+
   await prisma.$transaction([
     prisma.diagnostico.create({
       data: { user_id: userId, lead_id: lead.id, ...dados },
     }),
-    ...(lead.status === "novo"
-      ? [
-          prisma.lead.update({
-            where: { id: lead.id },
-            data: mudarStatus("enriquecido"),
-          }),
-        ]
+    ...(Object.keys(dadosLead).length > 0
+      ? [prisma.lead.update({ where: { id: lead.id }, data: dadosLead })]
       : []),
   ]);
 

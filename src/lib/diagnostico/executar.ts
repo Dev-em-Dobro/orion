@@ -9,8 +9,10 @@ import type { AtendimentoAutomatizado } from "@prisma/client";
 import { classificarWebsite } from "./agregador";
 import { detectarAtendimento } from "./atendimento";
 import { verificarSite } from "./verificarSite";
+import { extrairEmail } from "@/lib/leads/extrairEmail";
 import { performanceMobile } from "@/lib/pagespeed/performanceMobile";
 
+/** F027 — sai junto do Diagnóstico, mas mora no Lead, não no Diagnóstico. */
 export type DadosDiagnostico = {
   tem_site: boolean;
   site_e_agregador: boolean;
@@ -19,6 +21,13 @@ export type DadosDiagnostico = {
   performance_mobile: number | null;
   atendimento_automatizado: AtendimentoAutomatizado;
   atendimento_evidencia: string | null;
+};
+
+/** Diagnóstico + o que ele descobre sobre o Lead (F027). */
+export type ResultadoExecucao = {
+  dados: DadosDiagnostico;
+  /** E-mail publicado no site, quando houver. */
+  email: string | null;
 };
 
 const VAZIO: DadosDiagnostico = {
@@ -42,23 +51,26 @@ const VAZIO: DadosDiagnostico = {
 export async function executarDiagnostico(
   website: string | null,
   googleKey: string,
-): Promise<DadosDiagnostico> {
-  if (!website) return VAZIO;
+): Promise<ResultadoExecucao> {
+  if (!website) return { dados: VAZIO, email: null };
 
   const classif = classificarWebsite(website);
   if (classif.ehAgregador) {
     // Não seguimos link-in-bio / perfil social (F009): não é site próprio, e
     // ADR-016 limita a leitura à URL que o negócio publicou como site.
     return {
-      ...VAZIO,
-      tem_site: true,
-      site_e_agregador: true,
-      tem_https: classif.temHttps,
+      dados: {
+        ...VAZIO,
+        tem_site: true,
+        site_e_agregador: true,
+        tem_https: classif.temHttps,
+      },
+      email: null,
     };
   }
 
   const site = await verificarSite(website);
-  if (!site.temSite) return VAZIO;
+  if (!site.temSite) return { dados: VAZIO, email: null };
 
   let performance: number | null = null;
   try {
@@ -70,13 +82,17 @@ export async function executarDiagnostico(
   const atendimento = detectarAtendimento(site.html);
 
   return {
-    tem_site: true,
-    site_e_agregador: false,
-    tem_https: site.temHttps,
-    tempo_carregamento_ms: site.tempoMs,
-    performance_mobile: performance,
-    atendimento_automatizado: atendimento.classificacao,
-    atendimento_evidencia: atendimento.evidencia,
+    dados: {
+      tem_site: true,
+      site_e_agregador: false,
+      tem_https: site.temHttps,
+      tempo_carregamento_ms: site.tempoMs,
+      performance_mobile: performance,
+      atendimento_automatizado: atendimento.classificacao,
+      atendimento_evidencia: atendimento.evidencia,
+    },
+    // F027 — mesmo HTML, nenhuma requisição a mais.
+    email: extrairEmail(site.html, website),
   };
 }
 

@@ -57,6 +57,13 @@ enum Canal {
   email
 }
 
+// F027 — de onde veio o e-mail do Lead. `site` = publicado pelo proprio
+// negocio (ADR-016); `manual` = o aluno digitou.
+enum EmailOrigem {
+  site
+  manual
+}
+
 model Lead {
   id             String     @id @default(cuid())
   user_id        String
@@ -64,6 +71,9 @@ model Lead {
   endereco       String
   telefone       String?
   website        String?
+  // F027 — e-mail comercial publicado no site do proprio Lead.
+  email          String?
+  email_origem   EmailOrigem?
   categoria      String
   nota           Float?
   num_avaliacoes Int?
@@ -138,6 +148,8 @@ model Outreach {
   user_id    String
   lead_id    String
   canal      Canal
+  // F027 — so quando canal = email.
+  assunto    String?
   conteudo   String
   gerado_em  DateTime  @default(now())
   enviado    Boolean   @default(false)
