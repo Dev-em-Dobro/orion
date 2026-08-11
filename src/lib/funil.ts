@@ -102,3 +102,65 @@ export function taxasDeConversao(
   }
   return passos;
 }
+
+// ---------------------------------------------------------------------------
+// F034 — colunas do board. Não é entidade nova: é o `Lead.status` que já
+// existe, agrupado. Spec: /specs/02-features/F034-funil-kanban.md
+// ---------------------------------------------------------------------------
+
+export type ColunaFunil = {
+  id: string;
+  titulo: string;
+  /** Status que caem nesta coluna. O primeiro é o destino ao mover pra cá. */
+  status: LeadStatus[];
+  cor: string;
+};
+
+/**
+ * `novo` não tem coluna: Lead sem Diagnóstico não está no funil de venda (ele
+ * aparece na lista e na cobrança APROFUNDAR_FILA da F031).
+ * `descartado` também não: saiu do funil por definição (F024).
+ */
+export const COLUNAS_FUNIL: ColunaFunil[] = [
+  {
+    id: "prontos",
+    titulo: "Prontos",
+    status: ["priorizado", "enriquecido"],
+    cor: "#8b5cf6",
+  },
+  {
+    id: "abordados",
+    titulo: "Abordados",
+    status: ["contatado"],
+    cor: "#f59e0b",
+  },
+  {
+    id: "responderam",
+    titulo: "Responderam",
+    status: ["respondeu"],
+    cor: "#06b6d4",
+  },
+  {
+    id: "qualificados",
+    titulo: "Qualificados",
+    status: ["qualificado"],
+    cor: "#14b8a6",
+  },
+  { id: "proposta", titulo: "Proposta", status: ["proposta"], cor: "#6366f1" },
+  { id: "ganhos", titulo: "Ganhos", status: ["ganho"], cor: "#22c55e" },
+  { id: "perdidos", titulo: "Perdidos", status: ["perdido"], cor: "#ef4444" },
+];
+
+/** Todos os status que o board mostra. */
+export const STATUS_DO_BOARD: LeadStatus[] = COLUNAS_FUNIL.flatMap(
+  (c) => c.status,
+);
+
+export function colunaDoStatus(status: LeadStatus): ColunaFunil | null {
+  return COLUNAS_FUNIL.find((c) => c.status.includes(status)) ?? null;
+}
+
+/** Status que um card assume ao ser solto numa coluna. */
+export function statusAoMover(colunaId: string): LeadStatus | null {
+  return COLUNAS_FUNIL.find((c) => c.id === colunaId)?.status[0] ?? null;
+}

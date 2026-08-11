@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { mudarStatus, statusAoRestaurar } from "@/lib/leads/status";
 import {
+  COLUNAS_FUNIL,
+  colunaDoStatus,
   ESTAGIOS_FUNIL,
   ESTAGIOS_EM_ABERTO,
   ONDE_NAO_DESCARTADO,
   podeRegistrarDesfecho,
   STATUS_DESCARTADO,
+  STATUS_DO_BOARD,
+  statusAoMover,
 } from "@/lib/funil";
 
 // F024 — o valor deste helper é não deixar ninguém esquecer `status_em`.
@@ -66,5 +70,35 @@ describe("descartado no funil", () => {
     // Pra sair de descartado existe o Restaurar (ou o Corrigir status).
     expect(podeRegistrarDesfecho("descartado", "respondeu")).toBe(false);
     expect(podeRegistrarDesfecho("descartado", "ganho")).toBe(true);
+  });
+});
+
+// F034 — as colunas do board são o Lead.status agrupado, não entidade nova.
+describe("colunas do funil (F034)", () => {
+  it("novo e descartado não têm coluna", () => {
+    expect(STATUS_DO_BOARD).not.toContain("novo");
+    expect(STATUS_DO_BOARD).not.toContain(STATUS_DESCARTADO);
+  });
+
+  it("todo status do board pertence a exatamente uma coluna", () => {
+    for (const status of STATUS_DO_BOARD) {
+      const colunas = COLUNAS_FUNIL.filter((c) => c.status.includes(status));
+      expect(colunas).toHaveLength(1);
+    }
+  });
+
+  it("mover para uma coluna assume o primeiro status dela", () => {
+    // "Prontos" agrupa priorizado + enriquecido; soltar ali vira priorizado.
+    expect(statusAoMover("prontos")).toBe("priorizado");
+    expect(statusAoMover("abordados")).toBe("contatado");
+    expect(statusAoMover("inexistente")).toBeNull();
+  });
+
+  it("colunaDoStatus e statusAoMover são consistentes", () => {
+    for (const coluna of COLUNAS_FUNIL) {
+      const primeiro = coluna.status[0]!;
+      expect(colunaDoStatus(primeiro)?.id).toBe(coluna.id);
+      expect(statusAoMover(coluna.id)).toBe(primeiro);
+    }
   });
 });

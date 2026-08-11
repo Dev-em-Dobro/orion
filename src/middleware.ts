@@ -10,6 +10,7 @@ function isProtectedPath(pathname: string): boolean {
   return (
     pathname.startsWith("/leads") ||
     pathname.startsWith("/tarefas") ||
+    pathname.startsWith("/funil") ||
     pathname.startsWith("/treino") ||
     pathname.startsWith("/configuracao") ||
     pathname.startsWith("/conteudo") ||
@@ -48,6 +49,7 @@ export const config = {
     "/",
     "/leads/:path*",
     "/tarefas/:path*",
+    "/funil/:path*",
     "/treino/:path*",
     "/configuracao/:path*",
     "/conteudo/:path*",
