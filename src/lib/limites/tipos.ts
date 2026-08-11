@@ -9,6 +9,8 @@ export const OPERACOES_COTA = [
   "proposta",
   "outreach",
   "simulador_msg",
+  // F029 — uma por pergunta ao Agente (1 a 3 chamadas de LLM cada).
+  "agente_msg",
 ] as const;
 
 export type OperacaoCota = (typeof OPERACOES_COTA)[number];
@@ -20,6 +22,7 @@ export const LIMITES_DIARIOS: Record<OperacaoCota, number> = {
   proposta: 5,
   outreach: 5,
   simulador_msg: 20,
+  agente_msg: 30,
 };
 
 export const LABEL_OPERACAO: Record<OperacaoCota, string> = {
@@ -28,6 +31,7 @@ export const LABEL_OPERACAO: Record<OperacaoCota, string> = {
   proposta: "propostas",
   outreach: "outreaches",
   simulador_msg: "mensagens no simulador",
+  agente_msg: "perguntas ao Agente",
 };
 
 export type VisaoUso = {

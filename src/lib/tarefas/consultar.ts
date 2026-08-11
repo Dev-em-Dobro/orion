@@ -5,7 +5,6 @@
 // contagem da fila que espera aprofundamento.
 
 import { prisma } from "@/lib/db";
-import { requireTenant } from "@/lib/db/scoped";
 import { SCORE_QUALIFICADO } from "@/lib/score/score";
 import { calcularTarefas, type Tarefa } from "./calcular";
 
@@ -20,10 +19,16 @@ const ESTAGIOS_COBRAVEIS = [
 /** Teto de Outreaches lidas por Lead: só as mais recentes importam. */
 const OUTREACHES_POR_LEAD = 5;
 
+/**
+ * Recebe o `userId` em vez de chamar `requireTenant()` por dentro: quem chama
+ * já resolveu a sessão (as páginas) ou já tem o id na mão (as ferramentas do
+ * Agente, F029). Sem isso, o módulo arrastava a auth inteira junto.
+ */
 export async function tarefasDoUsuario(
+  userId: string,
   agora: number = Date.now(),
 ): Promise<Tarefa[]> {
-  const { whereUser } = await requireTenant();
+  const whereUser = { user_id: userId };
 
   const [leads, adiamentos, aguardandoAprofundamento] = await Promise.all([
     prisma.lead.findMany({
@@ -69,7 +74,7 @@ export async function tarefasDoUsuario(
 }
 
 /** Badge da sidebar: só o número de cobranças já vencidas. */
-export async function contarTarefas(): Promise<number> {
-  const tarefas = await tarefasDoUsuario();
+export async function contarTarefas(userId: string): Promise<number> {
+  const tarefas = await tarefasDoUsuario(userId);
   return tarefas.filter((t) => t.faixa !== "hoje").length;
 }

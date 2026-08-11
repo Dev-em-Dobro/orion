@@ -2,13 +2,15 @@
 // Spec: /specs/02-features/F031-central-de-tarefas.md
 
 import Link from "next/link";
+import { requireTenant } from "@/lib/db/scoped";
 import { tarefasDoUsuario } from "@/lib/tarefas/consultar";
 import { EXPLICACAO, TITULO } from "@/lib/tarefas/regras";
 
 const NA_HOME = 5;
 
 export async function PraFazerAgora() {
-  const tarefas = await tarefasDoUsuario();
+  const { userId } = await requireTenant();
+  const tarefas = await tarefasDoUsuario(userId);
   // Só o que já venceu: a home não é lista de afazeres futuros.
   const vencidas = tarefas.filter((t) => t.faixa !== "hoje");
 

@@ -16,7 +16,7 @@ export async function SidebarWithStatus() {
     materiaisLiberados = status.verificada;
     // F031 — badge de cobranças vencidas. Falha aqui não pode derrubar a
     // sidebar inteira: sem contador é melhor que sem navegação.
-    tarefasVencidas = await contarTarefas().catch(() => 0);
+    tarefasVencidas = await contarTarefas(user.id).catch(() => 0);
   } catch {
     materiaisLiberados = false;
   }

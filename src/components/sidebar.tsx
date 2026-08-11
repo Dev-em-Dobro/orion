@@ -173,6 +173,20 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
         ),
       },
       {
+        href: "/agente",
+        label: "Agente",
+        icone: (
+          <Icone
+            d={
+              <>
+                <rect x="4" y="7" width="16" height="12" rx="3" />
+                <path d="M12 3v4M9 13h.01M15 13h.01M9 16h6" />
+              </>
+            }
+          />
+        ),
+      },
+      {
         href: "/funil",
         label: "Funil",
         icone: (

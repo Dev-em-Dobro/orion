@@ -222,6 +222,8 @@ enum QuotaOperacao {
   proposta
   outreach
   simulador_msg
+  // F029 — uma por pergunta ao Agente.
+  agente_msg
 }
 
 model UserApiKeys {

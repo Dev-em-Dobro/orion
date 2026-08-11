@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "npx prisma migrate deploy",
     "db:seed:hubla": "npx tsx scripts/seed-hubla-compradores.mts",
     "db:studio": "prisma studio",
     "mailpit": "docker compose up -d",
@@ -15,7 +16,11 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e:isolamento": "playwright test tests/e2e/isolamento-multi-tenant.spec.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "dev:up": "docker compose up -d",
+    "dev:down": "docker compose down",
+    "dev:setup": "docker compose up -d && npx prisma migrate deploy && npx prisma generate",
+    "seed:dev": "npx tsx scripts/seed-dev.mts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.15",

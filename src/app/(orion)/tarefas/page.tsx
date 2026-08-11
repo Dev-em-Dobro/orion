@@ -10,13 +10,15 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonPulse } from "@/components/page-skeleton";
+import { requireTenant } from "@/lib/db/scoped";
 import { tarefasDoUsuario } from "@/lib/tarefas/consultar";
 import { ListaTarefas } from "./lista-tarefas";
 
 export const dynamic = "force-dynamic";
 
 async function Conteudo() {
-  const tarefas = await tarefasDoUsuario();
+  const { userId } = await requireTenant();
+  const tarefas = await tarefasDoUsuario(userId);
 
   if (tarefas.length === 0) {
     return (
