@@ -16,23 +16,9 @@ import {
 } from "@/lib/places/textSearch";
 import { NICHOS_POR_SLUG } from "@/lib/nichos/catalogo";
 import { municipioPertence, ufValida } from "@/lib/localidades";
-import { QUANTIDADES } from "@/lib/leads/aprofundamento";
+import { lerBusca, primeiroErro } from "@/lib/leads/busca";
 import { triagem } from "@/lib/score/triagem";
 import { SCORE_QUALIFICADO } from "@/lib/score/score";
-
-// F033 — busca estruturada. `nicho` sai do catálogo; "outro" reabre o campo
-// livre da F001, então nada do que dava pra fazer antes se perde.
-const schema = z.object({
-  nicho: z.string().trim().min(1, "Escolha um nicho"),
-  termoLivre: z.string().trim().max(80, "Termo muito longo").optional(),
-  uf: z.string().trim().length(2, "Escolha o estado"),
-  municipio: z.string().trim().min(2, "Escolha a cidade").max(80),
-  bairro: z.string().trim().max(80, "Bairro muito longo").optional(),
-  quantidade: z.coerce.number().int().refine(
-    (q) => QUANTIDADES.includes(q as (typeof QUANTIDADES)[number]),
-    "Quantidade inválida",
-  ),
-});
 
 export type ColetarState =
   | { kind: "idle" }
@@ -51,14 +37,12 @@ export async function coletarLeads(
   _prev: ColetarState,
   formData: FormData,
 ): Promise<ColetarState> {
-  const parsed = schema.safeParse({
-    termo: formData.get("termo"),
-    localizacao: formData.get("localizacao"),
-  });
+  // F033 — a leitura vive em `lib/leads/busca.ts` justamente pra ser testável:
+  // aqui dentro nada garantia que os nomes lidos batessem com os do formulário.
+  const parsed = lerBusca(formData);
 
   if (!parsed.success) {
-    const primeiro = parsed.error.issues[0];
-    return { kind: "erro", mensagem: primeiro?.message ?? "Input inválido" };
+    return { kind: "erro", mensagem: primeiroErro(parsed) ?? "Input inválido" };
   }
 
   const { nicho: slug, termoLivre, uf: ufBruta, municipio, bairro } = parsed.data;

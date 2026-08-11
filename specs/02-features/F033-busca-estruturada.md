@@ -6,6 +6,22 @@ Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 Substitui a seção **Input (UI)** da [F001](F001-coleta-de-leads.md); o resto da
 F001 (paginação, dedupe por `place_id`, cota) continua valendo.
 
+> **Correção de 2026-08-11 — a busca estava quebrada desde a entrega.** O
+> schema virou o da F033 (`nicho`, `uf`, `municipio`, `bairro`, `quantidade`),
+> mas a leitura do `FormData` na Server Action continuou a da F001
+> (`termo`, `localizacao`). Todo campo chegava vazio; o Zod reclamava do
+> primeiro e a tela mostrava o literal **"Required"**. Nenhuma busca funcionou.
+>
+> Passou porque nada verificava que os dois lados usavam o mesmo vocabulário: a
+> validação vivia dentro da action, onde não havia teste. Agora mora em
+> `src/lib/leads/busca.ts`, e `tests/unit/leads-busca.test.ts` lê os `name=` do
+> próprio formulário e exige que cada campo de `CAMPOS_BUSCA` exista lá.
+>
+> Junto veio um segundo problema: `FormData.get` devolve `null` para campo
+> ausente, e o `required_error` do Zod só dispara em `undefined`. Sem
+> `invalid_type_error`, faltar um campo produzia "Expected string, received
+> null". Todo campo obrigatório declara as duas mensagens.
+
 ## Objetivo
 Trocar os dois campos de texto livre (`termo` + `localizacao`) por uma busca
 **estruturada**: `UF → município → bairro (opcional)` e **nicho em dropdown**.
