@@ -9,3 +9,6 @@ export const LOTE_APROFUNDAMENTO = 3;
 
 /** Teto do disparo automático depois de uma coleta. */
 export const APROFUNDAR_POR_COLETA = 10;
+
+/** F033 — opções de quantidade na busca (20/40/60 = 1/2/3 páginas). */
+export const QUANTIDADES = [20, 40, 60] as const;

@@ -9,21 +9,29 @@ import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
 import { consumirCota, verificarCota } from "@/lib/limites";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
-import { PlacesError, textSearch } from "@/lib/places/textSearch";
+import {
+  PLACES_PAGE_SIZE,
+  PlacesError,
+  textSearch,
+} from "@/lib/places/textSearch";
+import { NICHOS_POR_SLUG } from "@/lib/nichos/catalogo";
+import { municipioPertence, ufValida } from "@/lib/localidades";
+import { QUANTIDADES } from "@/lib/leads/aprofundamento";
 import { triagem } from "@/lib/score/triagem";
 import { SCORE_QUALIFICADO } from "@/lib/score/score";
 
+// F033 — busca estruturada. `nicho` sai do catálogo; "outro" reabre o campo
+// livre da F001, então nada do que dava pra fazer antes se perde.
 const schema = z.object({
-  termo: z
-    .string()
-    .trim()
-    .min(2, "Termo precisa ter ao menos 2 caracteres")
-    .max(80, "Termo muito longo"),
-  localizacao: z
-    .string()
-    .trim()
-    .min(2, "Localização precisa ter ao menos 2 caracteres")
-    .max(80, "Localização muito longa"),
+  nicho: z.string().trim().min(1, "Escolha um nicho"),
+  termoLivre: z.string().trim().max(80, "Termo muito longo").optional(),
+  uf: z.string().trim().length(2, "Escolha o estado"),
+  municipio: z.string().trim().min(2, "Escolha a cidade").max(80),
+  bairro: z.string().trim().max(80, "Bairro muito longo").optional(),
+  quantidade: z.coerce.number().int().refine(
+    (q) => QUANTIDADES.includes(q as (typeof QUANTIDADES)[number]),
+    "Quantidade inválida",
+  ),
 });
 
 export type ColetarState =
@@ -34,6 +42,8 @@ export type ColetarState =
       ignorados: number;
       /** F025 — quantos já saíram da Triagem com score de Lead qualificado. */
       comPotencial: number;
+      /** F033 — a busca com tipo veio vazia e foi refeita sem o filtro. */
+      ampliou: boolean;
     }
   | { kind: "erro"; mensagem: string };
 
@@ -51,13 +61,37 @@ export async function coletarLeads(
     return { kind: "erro", mensagem: primeiro?.message ?? "Input inválido" };
   }
 
-  const query = `${parsed.data.termo} em ${parsed.data.localizacao}`;
+  const { nicho: slug, termoLivre, uf: ufBruta, municipio, bairro } = parsed.data;
+
+  const uf = ufValida(ufBruta);
+  if (!uf) return { kind: "erro", mensagem: "Estado inválido" };
+  if (!municipioPertence(uf, municipio)) {
+    return {
+      kind: "erro",
+      mensagem: `"${municipio}" não é um município de ${uf}.`,
+    };
+  }
+
+  const nicho = NICHOS_POR_SLUG.get(slug);
+  const termo = nicho ? nicho.termoBusca : (termoLivre ?? "").trim();
+  if (!termo) {
+    return { kind: "erro", mensagem: "Descreva o que buscar" };
+  }
+
+  // "dentista Batel Curitiba PR" — bairro antes do município, como no endereço.
+  const query = [termo, bairro?.trim(), municipio, uf]
+    .filter((p): p is string => Boolean(p && p.length > 0))
+    .join(" ");
+  const paginas = Math.ceil(parsed.data.quantidade / PLACES_PAGE_SIZE);
 
   try {
     const { userId } = await requireTenant();
     await verificarCota(userId, "coleta");
     const googleKey = await exigirChave(userId, "google");
-    const resultados = await textSearch(query, googleKey);
+    const resultados = await textSearch(query, googleKey, {
+      includedType: nicho?.includedType,
+      paginas,
+    });
 
     // F025 — Triagem: score na hora, sem rede. Aritmética sobre o que o Places
     // já devolveu, então não custa tempo nem dinheiro.
@@ -96,6 +130,7 @@ export async function coletarLeads(
       criados,
       ignorados: resultados.length - criados,
       comPotencial: triados.filter((t) => t.score >= SCORE_QUALIFICADO).length,
+      ampliou: resultados.ampliou === true,
     };
   } catch (e) {
     const escopo = mensagemEscopo(e);
