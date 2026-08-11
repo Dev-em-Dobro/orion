@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { OPERACOES_COTA } from "@/lib/limites/tipos";
 
 const { prismaMock } = vi.hoisted(() => ({
   prismaMock: {
@@ -84,7 +85,9 @@ describe("limites diários (F018)", () => {
       { operacao: "simulador_msg", contador: 10 },
     ]);
     const lista = await listarUsoDiario(userId);
-    expect(lista).toHaveLength(4);
+    // Contra OPERACOES_COTA, não contra um número solto: adicionar uma
+    // operação (F025 somou `diagnostico`) não deve quebrar este teste.
+    expect(lista).toHaveLength(OPERACOES_COTA.length);
     const coleta = lista.find((u) => u.operacao === "coleta");
     expect(coleta?.usado).toBe(2);
     const proposta = lista.find((u) => u.operacao === "proposta");

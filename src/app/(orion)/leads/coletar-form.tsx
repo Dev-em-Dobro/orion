@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { coletarLeads, type ColetarState } from "@/actions/leads/coletar";
+import { AprofundarButton } from "./aprofundar-button";
 
 const initial: ColetarState = { kind: "idle" };
 
@@ -46,10 +47,25 @@ export function ColetarForm() {
       )}
 
       {state.kind === "ok" && (
-        <p className="alert-ok mt-4">
-          Busca concluída: {state.criados} Leads novos criados,{" "}
-          {state.ignorados} ignorados (já existiam).
-        </p>
+        <div className="mt-4 space-y-3">
+          <p className="alert-ok">
+            {state.criados} Lead(s) novo(s) · {state.ignorados} já existiam
+            {state.comPotencial > 0 && (
+              <>
+                {" "}
+                · <strong>{state.comPotencial} com potencial alto</strong>
+              </>
+            )}
+          </p>
+          {/* F025 — o aprofundamento dispara sozinho: a busca entrega
+              trabalho pronto, não matéria-prima. */}
+          {state.criados > 0 && (
+            <AprofundarButton
+              key={`${state.criados}-${state.comPotencial}`}
+              automatico
+            />
+          )}
+        </div>
       )}
     </div>
   );

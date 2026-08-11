@@ -10,10 +10,11 @@
 
 import type { Prisma } from "@prisma/client";
 import { ONDE_NAO_DESCARTADO, STATUS_DESCARTADO } from "@/lib/funil";
+import { SCORE_QUALIFICADO } from "@/lib/score/score";
 import { parseFiltroSite, whereFiltroSite, type FiltroSite } from "./filtroSite";
 
-/** Score mínimo do chip "Score 60+" — alinhado ao SCORE_QUALIFICADO da F003. */
-export const SCORE_CHIP = 60;
+/** Score mínimo do chip "Score 60+" — o corte de Lead qualificado da F003. */
+export const SCORE_CHIP = SCORE_QUALIFICADO;
 
 export type FiltroLista = {
   categoria: string | null;

@@ -75,6 +75,9 @@ model Lead {
   // F024 — por que o aluno descartou (≤ 140 chars, validado no Zod).
   motivo_descarte String?
   score          Int        @default(0)
+  // F025 — `true` enquanto o score vem da Triagem (sem Diagnóstico); `false`
+  // quando é confirmado por Diagnóstico real.
+  score_estimado Boolean    @default(true)
   created_at     DateTime   @default(now())
   updated_at     DateTime   @updatedAt
 
@@ -169,6 +172,8 @@ enum KeyMode {
 
 enum QuotaOperacao {
   coleta
+  // F025 — aprofundamento consome PageSpeed da chave Orion.
+  diagnostico
   proposta
   outreach
   simulador_msg

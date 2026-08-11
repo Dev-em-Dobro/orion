@@ -3,9 +3,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
-import { valor as calcularValor } from "@/lib/score/score";
-import { classificarWebsite } from "@/lib/diagnostico/agregador";
-import { dorPrincipal } from "@/lib/dores/principal";
 import {
   filaDeFollowUp,
   limiteDaJanela,
@@ -28,10 +25,10 @@ import { ChipsFiltro } from "./chips-filtro";
 import { ColetarForm } from "./coletar-form";
 import { ExcluirDescartadosForm } from "./excluir-descartados-form";
 import { GerarOutreachButton } from "./gerar-outreach-button";
+import { INCLUDE_CARD, paraCardProps } from "./card-props";
 import { LeadsGrid } from "./leads-grid";
 import type { LeadCardProps } from "./lead-card";
 import { FiltrosLista, PAGE_SIZE, PaginacaoLeads } from "./lista-controles";
-import { linkWhatsapp } from "./ui";
 
 // Sempre reflete o banco do aluno logado (F015) — sem cache cross-tenant.
 export const dynamic = "force-dynamic";
@@ -131,12 +128,7 @@ async function BlocoLista({
       orderBy: [{ score: "desc" }, { created_at: "desc" }],
       skip: (p - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: {
-        diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 },
-        dores: { select: { tipo: true, severidade: true, detalhes: true } },
-        outreaches: { orderBy: { gerado_em: "desc" }, take: 1 },
-        _count: { select: { outreaches: true } },
-      },
+      include: INCLUDE_CARD,
     });
 
   // Uma rodada só (F028): nada aqui depende do resultado do vizinho.
@@ -170,43 +162,9 @@ async function BlocoLista({
           })) > 0
         : false;
 
-  const cards: LeadCardProps[] = leads.map((lead) => {
-    const classif = lead.website ? classificarWebsite(lead.website) : null;
-    const { tier } = calcularValor({
-      categoria: lead.categoria,
-      num_avaliacoes: lead.num_avaliacoes,
-    });
-    const ultimoOutreach = lead.outreaches[0];
-    const dor = dorPrincipal(lead.dores);
-
-    return {
-      id: lead.id,
-      nome: lead.nome,
-      categoria: lead.categoria,
-      endereco: lead.endereco,
-      telefone: lead.telefone,
-      website: lead.website,
-      nota: lead.nota,
-      numAvaliacoes: lead.num_avaliacoes,
-      status: lead.status,
-      score: lead.score,
-      tier,
-      ehAgregador: classif?.ehAgregador ?? false,
-      agregadorTipo: classif?.ehAgregador ? classif.tipo : null,
-      temDiagnostico: lead.diagnosticos.length > 0,
-      dorPrincipal: dor?.detalhes ?? null,
-      temOutreach: lead._count.outreaches > 0,
-      semAtendimento: lead.dores.some(
-        (d) => d.tipo === "SEM_ATENDIMENTO_AUTOMATIZADO",
-      ),
-      outreachEnviado: ultimoOutreach?.enviado ?? false,
-      waLink: ultimoOutreach
-        ? linkWhatsapp(lead.telefone, ultimoOutreach.conteudo)
-        : null,
-      motivoDescarte: lead.motivo_descarte,
-      href: `/leads/${lead.id}?${queryDoFiltro(filtro, { page })}`,
-    };
-  });
+  const cards: LeadCardProps[] = leads.map((lead) =>
+    paraCardProps(lead, `/leads/${lead.id}?${queryDoFiltro(filtro, { page })}`),
+  );
 
   return (
     <>

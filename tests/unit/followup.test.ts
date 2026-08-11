@@ -27,6 +27,7 @@ function fakeLead(
     status_em: new Date(),
     motivo_descarte: null,
     score: 0,
+    score_estimado: true,
     created_at: new Date(),
     updated_at: new Date(),
     ...patch,

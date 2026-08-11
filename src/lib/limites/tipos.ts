@@ -4,6 +4,8 @@ import type { QuotaOperacao as PrismaQuotaOperacao } from "@prisma/client";
 
 export const OPERACOES_COTA = [
   "coleta",
+  // F025 — aprofundamento: 1 por Lead diagnosticado.
+  "diagnostico",
   "proposta",
   "outreach",
   "simulador_msg",
@@ -13,6 +15,8 @@ export type OperacaoCota = (typeof OPERACOES_COTA)[number];
 
 export const LIMITES_DIARIOS: Record<OperacaoCota, number> = {
   coleta: 5,
+  // 5 coletas × 10 aprofundados por coleta (APROFUNDAR_POR_COLETA) = 50.
+  diagnostico: 50,
   proposta: 5,
   outreach: 5,
   simulador_msg: 20,
@@ -20,6 +24,7 @@ export const LIMITES_DIARIOS: Record<OperacaoCota, number> = {
 
 export const LABEL_OPERACAO: Record<OperacaoCota, string> = {
   coleta: "coletas",
+  diagnostico: "diagnósticos",
   proposta: "propostas",
   outreach: "outreaches",
   simulador_msg: "mensagens no simulador",

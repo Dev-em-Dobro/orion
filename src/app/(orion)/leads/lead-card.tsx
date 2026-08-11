@@ -10,7 +10,6 @@ import type { LeadStatus } from "@prisma/client";
 import { faixaDeScore, scoreBadge, STATUS_BADGE } from "./ui";
 import { DescartarButton, RestaurarButton } from "./descarte-buttons";
 import { DiagnosticarButton } from "./diagnosticar-button";
-import { PriorizarButton } from "./priorizar-button";
 import { GerarOutreachButton } from "./gerar-outreach-button";
 
 export type LeadCardProps = {
@@ -28,6 +27,8 @@ export type LeadCardProps = {
   ehAgregador: boolean;
   agregadorTipo: "agregador" | "social" | null;
   temDiagnostico: boolean;
+  /** F025 — score ainda vem da Triagem (sem Diagnóstico). */
+  scoreEstimado: boolean;
   dorPrincipal: string | null;
   temOutreach: boolean;
   /** F026 — sem sinal de atendimento automatizado (e com telefone). */
@@ -82,8 +83,9 @@ function Avaliacoes({
  */
 function AcaoPrimaria(p: LeadCardProps) {
   if (p.status === "descartado") return <RestaurarButton leadId={p.id} />;
+  // F025 — sem Diagnóstico, o próximo passo é diagnosticar. "Priorizar" saiu:
+  // o score passa a ser recalculado sozinho a cada Diagnóstico.
   if (!p.temDiagnostico) return <DiagnosticarButton leadId={p.id} />;
-  if (p.score === 0) return <PriorizarButton leadId={p.id} />;
   if (!p.temOutreach) return <GerarOutreachButton leadId={p.id} />;
   if (!p.outreachEnviado && p.waLink) {
     return (
@@ -106,12 +108,13 @@ function AcaoPrimaria(p: LeadCardProps) {
 
 export function LeadCard({
   lead,
-  selecionado,
+  selecionado = false,
   onSelecionar,
 }: {
   lead: LeadCardProps;
-  selecionado: boolean;
-  onSelecionar: (id: string, marcado: boolean) => void;
+  selecionado?: boolean;
+  /** Ausente = card sem checkbox (Fila do dia não tem ação em massa). */
+  onSelecionar?: (id: string, marcado: boolean) => void;
 }) {
   return (
     <article
@@ -137,17 +140,24 @@ export function LeadCard({
         <div className="flex shrink-0 items-center gap-2">
           <span
             className={`badge font-mono ${scoreBadge(lead.score)}`}
-            title={`Score ${lead.score} — faixa ${faixaDeScore(lead.score)}`}
+            title={
+              lead.scoreEstimado
+                ? `Score estimado ${lead.score} — da Triagem, sem Diagnóstico ainda`
+                : `Score ${lead.score} — faixa ${faixaDeScore(lead.score)}`
+            }
           >
-            {lead.score} {faixaDeScore(lead.score)}
+            {lead.score}
+            {lead.scoreEstimado ? "~" : ` ${faixaDeScore(lead.score)}`}
           </span>
-          <input
-            type="checkbox"
-            checked={selecionado}
-            onChange={(e) => onSelecionar(lead.id, e.target.checked)}
-            aria-label={`Selecionar ${lead.nome}`}
-            className="h-4 w-4 accent-emerald-500"
-          />
+          {onSelecionar && (
+            <input
+              type="checkbox"
+              checked={selecionado}
+              onChange={(e) => onSelecionar(lead.id, e.target.checked)}
+              aria-label={`Selecionar ${lead.nome}`}
+              className="h-4 w-4 accent-emerald-500"
+            />
+          )}
         </div>
       </header>
 

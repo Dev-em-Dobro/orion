@@ -10,6 +10,8 @@ import { exigirChave } from "@/lib/chaves";
 import { consumirCota, verificarCota } from "@/lib/limites";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import { PlacesError, textSearch } from "@/lib/places/textSearch";
+import { triagem } from "@/lib/score/triagem";
+import { SCORE_QUALIFICADO } from "@/lib/score/score";
 
 const schema = z.object({
   termo: z
@@ -26,7 +28,13 @@ const schema = z.object({
 
 export type ColetarState =
   | { kind: "idle" }
-  | { kind: "ok"; criados: number; ignorados: number }
+  | {
+      kind: "ok";
+      criados: number;
+      ignorados: number;
+      /** F025 — quantos já saíram da Triagem com score de Lead qualificado. */
+      comPotencial: number;
+    }
   | { kind: "erro"; mensagem: string };
 
 export async function coletarLeads(
@@ -51,9 +59,20 @@ export async function coletarLeads(
     const googleKey = await exigirChave(userId, "google");
     const resultados = await textSearch(query, googleKey);
 
+    // F025 — Triagem: score na hora, sem rede. Aritmética sobre o que o Places
+    // já devolveu, então não custa tempo nem dinheiro.
+    const triados = resultados.map((p) => ({
+      resultado: p,
+      score: triagem({
+        categoria: p.categoria,
+        num_avaliacoes: p.num_avaliacoes,
+        website: p.website,
+      }).score,
+    }));
+
     // skipDuplicates: conflito em (user_id, place_id) é ignorado (F015).
     const { count: criados } = await prisma.lead.createMany({
-      data: resultados.map((p) => ({
+      data: triados.map(({ resultado: p, score }) => ({
         user_id: userId,
         nome: p.nome,
         endereco: p.endereco,
@@ -63,13 +82,21 @@ export async function coletarLeads(
         nota: p.nota,
         num_avaliacoes: p.num_avaliacoes,
         place_id: p.id,
+        score,
+        score_estimado: true,
       })),
       skipDuplicates: true,
     });
 
     revalidatePath("/leads");
+    revalidatePath("/");
     await consumirCota(userId, "coleta");
-    return { kind: "ok", criados, ignorados: resultados.length - criados };
+    return {
+      kind: "ok",
+      criados,
+      ignorados: resultados.length - criados,
+      comPotencial: triados.filter((t) => t.score >= SCORE_QUALIFICADO).length,
+    };
   } catch (e) {
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };

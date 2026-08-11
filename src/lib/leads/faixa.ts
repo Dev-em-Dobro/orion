@@ -2,8 +2,9 @@
 // JSX e não é importável de um teste unitário.
 // Spec: /specs/02-features/F032-interface-do-orion.md
 
-/** Corte alinhado ao `SCORE_QUALIFICADO` da F003. */
-const ALTO = 60;
+import { SCORE_QUALIFICADO } from "@/lib/score/score";
+
+const ALTO = SCORE_QUALIFICADO;
 const MEDIO = 30;
 
 export function scoreBadge(score: number): string {

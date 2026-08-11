@@ -3,6 +3,7 @@ import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
 import { FunilChart } from "@/components/funil-chart";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
+import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { filaDeFollowUp } from "@/lib/followup";
@@ -12,6 +13,8 @@ import {
   taxasDeConversao,
 } from "@/lib/funil";
 import type { LeadStatus } from "@prisma/client";
+import { SkeletonPulse } from "@/components/page-skeleton";
+import { FilaDoDia } from "./fila-do-dia";
 
 // Dashboard sempre reflete só os dados do aluno (F015).
 export const dynamic = "force-dynamic";
@@ -105,7 +108,15 @@ export default async function DashboardPage() {
         Funil de prospecção · visão geral
       </p>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      {/* F025 — a fila vem antes do funil: a primeira pergunta do dia é
+          "quem eu abordo agora", não "como está o funil". */}
+      <div className="mt-6">
+        <Suspense fallback={<SkeletonPulse className="h-64 w-full" />}>
+          <FilaDoDia />
+        </Suspense>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <section className="card lg:col-span-2">
           <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
             Funil por estágio

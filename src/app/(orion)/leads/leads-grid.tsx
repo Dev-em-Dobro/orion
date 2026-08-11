@@ -57,7 +57,14 @@ function baixarCsv(leads: LeadCardProps[]) {
   URL.revokeObjectURL(url);
 }
 
-export function LeadsGrid({ leads }: { leads: LeadCardProps[] }) {
+export function LeadsGrid({
+  leads,
+  comSelecao = true,
+}: {
+  leads: LeadCardProps[];
+  /** F025 — a Fila do dia mostra os mesmos cards sem ação em massa. */
+  comSelecao?: boolean;
+}) {
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [state, action, pending] = useActionState(descartarEmLote, initial);
 
@@ -84,6 +91,7 @@ export function LeadsGrid({ leads }: { leads: LeadCardProps[] }) {
 
   return (
     <div>
+      {comSelecao && (
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <label className="inline-flex items-center gap-2 text-xs text-zinc-400">
           <input
@@ -133,6 +141,7 @@ export function LeadsGrid({ leads }: { leads: LeadCardProps[] }) {
           </div>
         )}
       </div>
+      )}
 
       {state.kind === "erro" && (
         <p className="mb-3 text-xs text-red-400">{state.mensagem}</p>
@@ -149,7 +158,7 @@ export function LeadsGrid({ leads }: { leads: LeadCardProps[] }) {
             key={lead.id}
             lead={lead}
             selecionado={selecionados.has(lead.id)}
-            onSelecionar={alternar}
+            onSelecionar={comSelecao ? alternar : undefined}
           />
         ))}
       </div>

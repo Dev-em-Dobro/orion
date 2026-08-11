@@ -14,6 +14,13 @@ export type DiagnosticoParaScore = {
 
 const TIER_SCORE: Record<Tier, number> = { ALTO: 100, MEDIO: 55, BAIXO: 20 };
 
+/**
+ * F003 — corte de "Lead qualificado". Fonte única do 60: faixa visual da UI
+ * (F032), chip "Score 60+" (F032) e contagem de "com potencial" da Triagem
+ * (F025) leem daqui.
+ */
+export const SCORE_QUALIFICADO = 60;
+
 function porteScore(num_avaliacoes: number | null): number {
   if (num_avaliacoes === null || num_avaliacoes <= 20) return 20;
   if (num_avaliacoes <= 80) return 50;
