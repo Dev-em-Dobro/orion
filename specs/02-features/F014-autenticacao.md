@@ -53,6 +53,9 @@ Gerados pelo Better Auth com adapter Prisma: `User`, `Session`, `Account`,
       abrir o link autentica e abre sessão. Link expirado/reusado → erro claro.
 - [x] **AC4** — `requireUser()` devolve o usuário logado nas Server Actions e
       lança (tratado como erro amigável) quando não há sessão.
+- [x] **AC10** — **Cookie inválido não vira tela de erro.** Cookie presente mas
+      sem sessão válida no banco redireciona pro login com o cookie limpo,
+      igual a não ter cookie nenhum. Ver "Cookie velho" abaixo.
 - [x] **AC5** — Logout encerra a sessão e volta a barrar as rotas protegidas.
 - [x] **AC6** — Segredo de sessão (`BETTER_AUTH_SECRET`) e `BETTER_AUTH_URL`
       lidos de env do servidor; ausência → erro descritivo no boot, nunca
@@ -60,11 +63,43 @@ Gerados pelo Better Auth com adapter Prisma: `User`, `Session`, `Account`,
       no boot: se ausentes, OAuth Google fica desabilitado (magic link segue);
       se presentes, o provider é habilitado sem defaults inventados.
 
+## Cookie velho (AC10 — corrigido em 2026-08-11)
+
+O middleware é **otimista**: só verifica se o cookie de sessão existe, porque
+validar contra o banco no edge custaria uma consulta por requisição. Quem valida
+de fato é `requireUser()`, que **lança**.
+
+Faltava alguém convertendo esse lançamento em redirect. Resultado medido:
+
+| Requisição a `/` | Antes | Depois |
+|------------------|-------|--------|
+| Sem cookie | 307 → `/login` | 307 → `/login` |
+| Cookie inválido | **500** (tela "Algo deu errado") | 307 → `/login` |
+
+Acontece sempre que o cookie sobrevive à sessão: banco recriado no
+desenvolvimento, sessão revogada em outro dispositivo, `BETTER_AUTH_SECRET`
+trocado. O aluno via tela de erro sem saída — recarregar não resolvia, porque o
+cookie continuava lá.
+
+**Limpar o cookie é obrigatório, não opcional.** Só redirecionar pro `/login`
+faria loop infinito: o middleware vê cookie em `/login` e devolve pra `/`, que
+lança de novo. Por isso o destino é `/api/auth/sessao-invalida`, um route
+handler — página e layout no App Router **não podem escrever cookie**, só
+Server Action e route handler podem.
+
+O gate mora no layout de `(orion)`, antes de qualquer JSX. Dentro de
+`<Suspense>` o redirect chegaria depois do shell e viraria 200 — a mesma
+armadilha de streaming documentada na [F028](F028-desempenho.md).
+
 ## Decisões de implementação
 - `src/lib/auth/` — config do Better Auth (adapter Prisma, providers) +
   `requireUser()`. Sem dep de Next na parte de domínio; o wiring de sessão fica
   na borda (middleware/route handlers).
 - Middleware de proteção de rotas em `src/middleware.ts`.
+- `src/app/(orion)/layout.tsx` — gate de sessão; `AuthError` vira redirect.
+- `src/app/api/auth/sessao-invalida/route.ts` — limpa os cookies do Better Auth
+  (inclusive o `session_data` do cookie cache e as variantes `__Secure-`) e
+  manda pro `/login?error=sessao_expirada`.
 - `src/app/login/page.tsx` (client: Google + magic link).
 - Lib nova? **Sim** — `better-auth` ([ADR-007](../04-decisions/ADR-007-better-auth.md))
   e `nodemailer` para SMTP Resend

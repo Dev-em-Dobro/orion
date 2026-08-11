@@ -21,6 +21,9 @@ function mensagemErroCallback(code: string | null): string | null {
     TOKEN_EXPIRED: "Link expirado. Solicite um novo pelo e-mail.",
     INVALID_CALLBACK_URL:
       "Link de retorno inválido. Abra /login e solicite um novo acesso.",
+    // F014 AC10 — não é falha de login: a sessão anterior deixou de valer e o
+    // cookie foi limpo. Entrar de novo resolve.
+    sessao_expirada: "Sua sessão expirou. Entre de novo para continuar.",
   };
   return (
     mapa[code] ??
