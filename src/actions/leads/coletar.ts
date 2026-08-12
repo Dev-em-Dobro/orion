@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
+import { consumirCota, verificarCota } from "@/lib/limites";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import { PlacesError, textSearch } from "@/lib/places/textSearch";
 
@@ -46,6 +47,7 @@ export async function coletarLeads(
 
   try {
     const { userId } = await requireTenant();
+    await verificarCota(userId, "coleta");
     const googleKey = await exigirChave(userId, "google");
     const resultados = await textSearch(query, googleKey);
 
@@ -66,6 +68,7 @@ export async function coletarLeads(
     });
 
     revalidatePath("/leads");
+    await consumirCota(userId, "coleta");
     return { kind: "ok", criados, ignorados: resultados.length - criados };
   } catch (e) {
     const escopo = mensagemEscopo(e);

@@ -1,7 +1,9 @@
-// Resolve provider + chave BYOK do aluno → LlmClient.
+// Resolve provider + chave → LlmClient (Orion ou BYOK).
 
 import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
+import { obterModoChave } from "@/lib/chaves/modo";
+import { exigirChaveOrion } from "@/lib/chaves/orion";
 import { createLlmClient, type LlmClient } from "./client";
 import type { LlmProviderId } from "./tipos";
 import { tipoChaveDoProvider } from "./tipos";
@@ -38,8 +40,13 @@ export async function salvarProviderLlm(
   return provider;
 }
 
-/** Cliente LLM do aluno logado (provider escolhido + chave BYOK). */
+/** Cliente LLM do aluno logado (Orion OpenAI ou BYOK do provider escolhido). */
 export async function createLlmForUser(userId: string): Promise<LlmClient> {
+  const modo = await obterModoChave(userId);
+  if (modo === "orion") {
+    const apiKey = exigirChaveOrion("openai");
+    return createLlmClient("openai", apiKey);
+  }
   const provider = await obterProviderLlm(userId);
   const apiKey = await exigirChave(userId, tipoChaveDoProvider(provider));
   return createLlmClient(provider, apiKey);

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:migrate": "prisma migrate dev",
+    "db:seed:hubla": "npx tsx scripts/seed-hubla-compradores.mts",
     "db:studio": "prisma studio",
     "mailpit": "docker compose up -d",
     "test": "vitest run",

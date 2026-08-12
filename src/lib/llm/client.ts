@@ -1,4 +1,7 @@
 // Fachada LlmClient — features usam só isto (F017 / ADR-011).
+// Gemini 2.5/3.x: thinking consome maxOutputTokens → resposta vazia
+// ("No output generated") se o budget for baixo. Desligamos thinking
+// em tasks estruturadas e ampliamos o teto de tokens.
 
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogle } from "@ai-sdk/google";
@@ -56,28 +59,78 @@ function languageModel(
   return createGoogle({ apiKey })(id);
 }
 
-function mensagemAmigavel(provider: LlmProviderId, raw: string, status: number): string {
+/** Opções Google: sem thinking (Outreach/prosa estruturada não precisa). */
+function opcoesGoogle() {
+  return {
+    google: {
+      thinkingConfig: {
+        thinkingBudget: 0,
+      },
+    },
+  } as const;
+}
+
+function providerOptionsPara(provider: LlmProviderId) {
+  return provider === "gemini" ? opcoesGoogle() : undefined;
+}
+
+/** Gemini thinking + structured pedem teto maior que o default das features. */
+export function maxTokensEfetivo(
+  provider: LlmProviderId,
+  requested?: number,
+): number {
+  const base = requested ?? 2048;
+  if (provider === "gemini") return Math.max(base, 8192);
+  return base;
+}
+
+export function mensagemAmigavel(
+  provider: LlmProviderId,
+  raw: string,
+  status: number,
+): string {
   const lower = raw.toLowerCase();
+  const label = LABEL_LLM_PROVIDER[provider];
   const isQuota =
     status === 429 ||
     lower.includes("quota") ||
     lower.includes("rate limit") ||
     lower.includes("resource_exhausted") ||
-    lower.includes("resource exhausted");
+    lower.includes("resource exhausted") ||
+    lower.includes("exceeded your current quota");
+
+  const isEmptyOutput =
+    lower.includes("no output generated") ||
+    lower.includes("no object generated") ||
+    lower.includes("não retornou");
 
   if (isQuota && provider === "gemini") {
     return (
-      "Gemini: cota/rate limit do free tier esgotada (ou cota = 0 no projeto). " +
-      "No Google AI Studio, confira Usage / Rate limits; muitas contas novas precisam " +
-      "ativar billing no projeto (mesmo para continuar no free) ou trocar de modelo/projeto. " +
-      "Detalhe: " +
-      raw.slice(0, 220)
+      "Gemini: cota/rate limit do free tier esgotada. " +
+      "Em /configuracao: ative modo BYOK, escolha Gemini, cole uma chave nova " +
+      "do Google AI Studio e use Testar chave. Contas novas às vezes precisam " +
+      "de billing no projeto Google Cloud. Detalhe: " +
+      raw.slice(0, 180)
     );
   }
   if (isQuota) {
-    return `${LABEL_LLM_PROVIDER[provider]}: cota ou rate limit excedido. ${raw.slice(0, 280)}`;
+    return (
+      `${label}: cota ou rate limit excedido. ` +
+      (provider === "openai"
+        ? "No modo Orion a chave é compartilhada — tente de novo mais tarde ou ative BYOK com sua chave. "
+        : "") +
+      raw.slice(0, 220)
+    );
   }
-  return `${LABEL_LLM_PROVIDER[provider]}: ${raw.slice(0, 400)}`;
+  if (isEmptyOutput && provider === "gemini") {
+    return (
+      "Gemini não gerou texto útil (resposta vazia). " +
+      "Confirme em /configuracao: modo BYOK + provedor Gemini + chave testada com sucesso. " +
+      "Se a chave estiver ok, tente de novo — o modelo às vezes esgota tokens no raciocínio interno. " +
+      `Detalhe: ${raw.slice(0, 160)}`
+    );
+  }
+  return `${label}: ${raw.slice(0, 400)}`;
 }
 
 function wrapErro(provider: LlmProviderId, e: unknown): never {
@@ -110,6 +163,12 @@ export function createLlmClient(
     );
   }
 
+  const common = (maxTokens?: number) => ({
+    maxOutputTokens: maxTokensEfetivo(provider, maxTokens),
+    maxRetries: maxRetriesPara(provider),
+    providerOptions: providerOptionsPara(provider),
+  });
+
   return {
     provider,
 
@@ -117,21 +176,20 @@ export function createLlmClient(
       try {
         const model = languageModel(provider, apiKey, opts.tier ?? "fast");
         if (opts.messages?.length) {
-          const { text } = await generateText({
+          const { text, finishReason } = await generateText({
             model,
             system: opts.system,
             messages: opts.messages.map((m) => ({
               role: m.role,
               content: m.content,
             })),
-            maxOutputTokens: opts.maxTokens ?? 1024,
-            maxRetries: maxRetriesPara(provider),
+            ...common(opts.maxTokens ?? 1024),
           });
           const out = text.trim();
           if (!out) {
             throw new LlmError(
               200,
-              `${LABEL_LLM_PROVIDER[provider]} não retornou texto`,
+              `${LABEL_LLM_PROVIDER[provider]} não retornou texto (finishReason=${finishReason})`,
               provider,
             );
           }
@@ -142,18 +200,17 @@ export function createLlmClient(
           throw new LlmError(0, "prompt ou messages é obrigatório", provider);
         }
 
-        const { text } = await generateText({
+        const { text, finishReason } = await generateText({
           model,
           system: opts.system,
           prompt: opts.prompt,
-          maxOutputTokens: opts.maxTokens ?? 1024,
-          maxRetries: maxRetriesPara(provider),
+          ...common(opts.maxTokens ?? 1024),
         });
         const out = text.trim();
         if (!out) {
           throw new LlmError(
             200,
-            `${LABEL_LLM_PROVIDER[provider]} não retornou texto`,
+            `${LABEL_LLM_PROVIDER[provider]} não retornou texto (finishReason=${finishReason})`,
             provider,
           );
         }
@@ -166,18 +223,18 @@ export function createLlmClient(
     async generateStructured(opts) {
       try {
         const model = languageModel(provider, apiKey, opts.tier ?? "strong");
-        const { output } = await generateText({
+        const { output, finishReason, text } = await generateText({
           model,
           system: opts.system,
           prompt: opts.prompt,
-          maxOutputTokens: opts.maxTokens ?? 2048,
-          maxRetries: maxRetriesPara(provider),
+          ...common(opts.maxTokens ?? 2048),
           output: Output.object({ schema: opts.schema }),
         });
         if (output == null) {
           throw new LlmError(
             200,
-            `${LABEL_LLM_PROVIDER[provider]} não retornou objeto válido`,
+            `${LABEL_LLM_PROVIDER[provider]} não retornou objeto válido ` +
+              `(finishReason=${finishReason}${text ? `; trecho="${text.slice(0, 80)}"` : ""})`,
             provider,
           );
         }
@@ -196,7 +253,7 @@ export function createLlmClient(
           mediaType: img.mediaType,
         }));
 
-        const { output } = await generateText({
+        const { output, finishReason } = await generateText({
           model,
           system: opts.system,
           messages: [
@@ -205,14 +262,13 @@ export function createLlmClient(
               content: [...imageParts, { type: "text", text: opts.prompt }],
             },
           ],
-          maxOutputTokens: opts.maxTokens ?? 2048,
-          maxRetries: maxRetriesPara(provider),
+          ...common(opts.maxTokens ?? 2048),
           output: Output.object({ schema: opts.schema }),
         });
         if (output == null) {
           throw new LlmError(
             200,
-            `${LABEL_LLM_PROVIDER[provider]} não retornou análise válida`,
+            `${LABEL_LLM_PROVIDER[provider]} não retornou análise válida (finishReason=${finishReason})`,
             provider,
           );
         }

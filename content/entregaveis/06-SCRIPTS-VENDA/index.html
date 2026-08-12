@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<!--
+  SCRIPTS DE VENDA - Consultoria Freela (Dev em Dobro)
+  Biblioteca de scripts prontos pra prospeccao e venda de sites/servicos.
+  26 scripts em 6 etapas: abertura (lista quente/fria), qualificacao, proposta,
+  objecoes, fechamento/contrato e pos-venda. Cada card tem botao "Copiar" que
+  copia o texto limpo (com os [COLCHETES] pra preencher).
+
+  Self-contained: depende so da fonte Ubuntu (Google Fonts) + _lib/jszip.min.js
+  + _lib/baixar-zip.js (pro botao "Baixar .zip"). Sem build, sem backend.
+
+  COMO MANTER:
+  - Os scripts vivem embutidos aqui (fonte de verdade da pagina) E em
+    scripts-de-venda.md (versao pra download). Ao editar um, edite os dois.
+  - Placeholders sempre entre [COLCHETES], marcados com <span class="ph">.
+  - Quebra de linha da mensagem = <br>. Linha em branco = <br><br>.
+  Padrao de marca: fonte Ubuntu, copy sem travessao/em-dash.
+-->
+<html lang="pt-BR" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scripts de venda | Consultoria Freela (Dev em Dobro)</title>
+  <meta name="description" content="27 scripts de venda prontos pra copiar e colar: abertura pra lista quente e fria, envio da amostra no ar, follow-up, diagnóstico, proposta, preço, objeções, envio de contrato e pós-venda. Do primeiro oi ao contrato assinado.">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="robots" content="noindex, nofollow">
+  <script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232bd576'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg:#0b0d10; --bg2:#0f1216;
+      --card:#14181e; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+      --text:#f3f5f8; --muted:#9aa4b0; --muted2:#6f7883;
+      --accent:#2bd576;
+      --c:#f97316;                 /* cor do entregavel: scripts de venda (laranja) */
+      --msg-bg:#0e1620;
+      --maxw:1080px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    html{scroll-behavior:smooth}
+    body{
+      background:var(--bg);color:var(--text);
+      font-family:Ubuntu,system-ui,Segoe UI,Roboto,sans-serif;line-height:1.6;
+      -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    svg{display:block}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+    .glow{
+      position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:
+        radial-gradient(1100px 520px at 80% -8%, rgba(249,115,22,.15), transparent 60%),
+        radial-gradient(900px 500px at 6% -12%, rgba(43,213,118,.09), transparent 55%);
+    }
+    .page{position:relative;z-index:1}
+
+    /* topo + breadcrumb */
+    header.top{padding:26px 0 6px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
+    .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+    .brand small{color:var(--muted);font-weight:400;letter-spacing:.3px}
+    .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 15px;transition:border-color .25s,color .25s}
+    .voltar:hover{border-color:var(--line2);color:var(--text)}
+    .voltar svg{width:15px;height:15px}
+
+    /* hero */
+    .hero{padding:46px 0 14px}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:9px;font-size:.78rem;font-weight:500;letter-spacing:2px;
+      text-transform:uppercase;color:var(--c);border:1px solid var(--line2);border-radius:999px;
+      padding:7px 15px;margin-bottom:22px;
+    }
+    .eyebrow .pin{width:6px;height:6px;border-radius:50%;background:var(--c)}
+    h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.08;margin:0 0 18px;font-weight:700;letter-spacing:-.5px;max-width:20ch}
+    h1 .hl{color:var(--c)}
+    .lead{font-size:clamp(1.02rem,1.7vw,1.18rem);color:var(--muted);max-width:64ch;margin:0}
+
+    /* como usar */
+    .como{margin:30px 0 4px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(249,115,22,.07),rgba(249,115,22,.012))}
+    .como h4{margin:0 0 12px;font-size:1rem;font-weight:500;display:flex;align-items:center;gap:9px}
+    .como h4 .sq{width:9px;height:9px;border-radius:2px;background:var(--c)}
+    .como ol{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:7px}
+    .como li{font-size:.94rem}
+    .como li b{color:var(--text);font-weight:500}
+    .como code{font-family:ui-monospace,Consolas,monospace;font-size:.86em;background:color-mix(in srgb,var(--c) 16%,transparent);padding:.1em .4em;border-radius:5px;color:#ffd9bd}
+
+    /* barra de acoes */
+    .acoes{display:flex;flex-wrap:wrap;gap:12px;margin:26px 0 6px;align-items:center}
+    .btn{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-family:inherit;font-size:.92rem;font-weight:500;border-radius:12px;padding:11px 16px;min-height:44px;transition:transform .15s,background .25s,border-color .25s,color .25s,box-shadow .25s}
+    .btn svg{width:16px;height:16px;flex:0 0 auto}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+    .btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line2)}
+    .btn-ghost:hover{border-color:var(--c)}
+    .btn-ghost.ok{border-color:var(--accent);color:var(--accent)}
+    .btn-ghost.err{border-color:#ef4444;color:#fca5a5}
+    .btn-ghost[disabled]{opacity:.7;cursor:progress}
+
+    /* navegacao por etapa (pilulas) */
+    .nav-etapas{display:flex;flex-wrap:wrap;gap:9px;margin:22px 0 6px}
+    .nav-etapas a{
+      display:inline-flex;align-items:center;gap:8px;font-size:.86rem;color:var(--muted);
+      background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;
+      transition:border-color .25s,color .25s,transform .15s;
+    }
+    .nav-etapas a:hover{border-color:var(--c);color:var(--text);transform:translateY(-1px)}
+    .nav-etapas a .n{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);font-size:.76rem;font-weight:700}
+
+    /* secao de etapa */
+    .etapa{margin:44px 0 0;scroll-margin-top:18px}
+    .etapa-cab{display:flex;align-items:center;gap:14px;margin:0 0 6px}
+    .etapa-cab .badge{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:38px;padding:0 10px;border-radius:11px;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c);font-weight:700;font-size:1.05rem}
+    .etapa-cab h2{margin:0;font-size:1.35rem;font-weight:500;letter-spacing:-.2px}
+    .etapa-desc{margin:0 0 20px;color:var(--muted2);font-size:.95rem;max-width:70ch}
+
+    /* grade de scripts */
+    .scripts{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+
+    .sc{
+      display:flex;flex-direction:column;position:relative;
+      background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;
+      padding:18px 18px 18px;
+      transition:border-color .3s,box-shadow .3s,transform .3s;
+    }
+    .sc::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--c);opacity:.85}
+    .sc:hover{border-color:var(--line2);box-shadow:0 16px 40px -22px rgba(0,0,0,.7)}
+    .sc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+    .sc-id{display:flex;align-items:center;gap:9px;min-width:0}
+    .sc-id .tag{font-size:.72rem;font-weight:700;letter-spacing:.4px;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);border-radius:7px;padding:3px 8px;flex:0 0 auto}
+    .sc-id h3{margin:0;font-size:1.02rem;font-weight:500;line-height:1.25}
+    .sc-when{margin:0 0 12px;color:var(--muted2);font-size:.86rem}
+    .sc-when b{color:var(--muted);font-weight:500}
+
+    /* copiar */
+    .copy{
+      display:inline-flex;align-items:center;gap:7px;cursor:pointer;flex:0 0 auto;
+      font-family:inherit;font-size:.82rem;font-weight:500;color:var(--text);line-height:1;
+      background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:10px;
+      padding:8px 12px;min-height:36px;
+      transition:background .22s,border-color .22s,color .22s,transform .12s;
+    }
+    .copy svg{width:15px;height:15px;flex:0 0 auto}
+    .copy:hover{background:color-mix(in srgb,var(--c) 16%,transparent);border-color:var(--c)}
+    .copy:active{transform:translateY(1px)}
+    .copy:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+    .copy.ok{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+    .copy.err{border-color:#ef4444;color:#fca5a5}
+
+    /* mensagem (bolha de whatsapp) */
+    .msg{
+      margin-top:auto;background:var(--msg-bg);border:1px solid var(--line);border-radius:12px;
+      padding:14px 15px;font-size:.92rem;line-height:1.55;color:#e7edf4;
+      white-space:normal;word-break:break-word;
+    }
+    .msg .ph{
+      color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);
+      border-radius:5px;padding:.02em .34em;font-weight:500;white-space:nowrap;
+    }
+
+    footer.rod{border-top:1px solid var(--line);margin-top:52px;padding:26px 0 44px;color:var(--muted2);font-size:.86rem}
+    footer.rod strong{color:var(--muted);font-weight:500}
+    footer.rod a{color:var(--c);text-decoration:underline;text-underline-offset:2px}
+
+    /* animacao de entrada */
+    html.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .55s cubic-bezier(0.16,1,0.3,1),transform .55s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 45ms)}
+    html.js .reveal.visivel{opacity:1;transform:none}
+    html.js .hero .anima{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 85ms)}
+    html.js body.carregado .hero .anima{opacity:1;transform:none}
+    @media (prefers-reduced-motion: reduce){
+      html.js .reveal,html.js .hero .anima{opacity:1 !important;transform:none !important;transition:none !important}
+      html{scroll-behavior:auto}
+      .sc,.btn,.copy,.voltar,.nav-etapas a{transition:none !important}
+    }
+    @media (max-width:620px){
+      .hero{padding:34px 0 12px}
+      .scripts{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="page">
+    <div class="wrap">
+
+      <header class="top">
+        <div class="brand"><span class="dot"></span> DEV EM DOBRO <small>&nbsp;/ Consultoria Freela</small></div>
+        <a class="voltar" href="/entregaveis" target="_top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Voltar aos entregáveis
+        </a>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow anima" style="--i:0"><span class="pin"></span> Scripts de venda</span>
+        <h1 class="anima" style="--i:1">Do primeiro "oi" ao <span class="hl">contrato assinado</span>.</h1>
+        <p class="lead anima" style="--i:2">27 mensagens prontas pra copiar, colar e adaptar. Abertura pra lista quente e fria, envio da amostra no ar, follow-up, diagnóstico, proposta, preço, quebra de objeção, envio de contrato e pós-venda. Você nunca mais trava na hora de falar com o cliente.</p>
+
+        <div class="como anima" style="--i:3">
+          <h4><span class="sq"></span> Como usar em 4 passos</h4>
+          <ol>
+            <li><b>Ache a etapa</b> em que você está pelas pílulas de navegação abaixo.</li>
+            <li><b>Clique em "Copiar"</b> no script e cole no WhatsApp, direct ou e-mail.</li>
+            <li><b>Troque tudo que está entre <code>[COLCHETES]</code></b> pelos dados reais antes de enviar.</li>
+            <li><b>Personalize a primeira linha</b> e mande um bloco por vez. Deixe a pessoa responder.</li>
+          </ol>
+        </div>
+
+        <div class="acoes anima" style="--i:4">
+          <button class="btn btn-ghost dl" type="button"
+                  data-zip-base=""
+                  data-zip-files="scripts-de-venda.md,_GUIA-como-usar.md"
+                  data-zip-name="scripts-de-venda-devemdobro.zip"
+                  data-zip-folder="scripts-de-venda">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            <span class="dl-txt">Baixar tudo em .zip</span>
+          </button>
+        </div>
+
+        <nav class="nav-etapas anima" style="--i:5" aria-label="Etapas">
+          <a href="#etapa-1"><span class="n">1</span> Abertura</a>
+          <a href="#etapa-2"><span class="n">2</span> Qualificação</a>
+          <a href="#etapa-3"><span class="n">3</span> Proposta e preço</a>
+          <a href="#etapa-4"><span class="n">4</span> Objeções</a>
+          <a href="#etapa-5"><span class="n">5</span> Fechamento</a>
+          <a href="#etapa-6"><span class="n">6</span> Pós-venda</a>
+        </nav>
+      </section>
+
+      <!-- ============ ETAPA 1 ============ -->
+      <section class="etapa" id="etapa-1">
+        <div class="etapa-cab reveal"><span class="badge">1</span><h2>Abertura · primeiro contato</h2></div>
+        <p class="etapa-desc reveal">O primeiro toque. Lista quente (quem já te conhece) fecha mais rápido; lista fria (Orion) escala mais. Follow-up é onde a maioria das vendas se perde: insista sem parecer insistente.</p>
+        <div class="scripts">
+
+          <article class="sc reveal" style="--i:0">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">1A</span><h3>Lista quente · rede e conhecidos</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> primeiro contato com quem já te conhece. É por aqui que saem os primeiros clientes.</p>
+            <div class="msg">Oi <span class="ph">[NOME]</span>, tudo bem?<br>Estou desenvolvendo sites e agentes de IA pra ajudar empresas a vender mais.<br>Você conhece algum comércio aqui de <span class="ph">[CIDADE]</span> que tá precisando de site, ou que tem um site velho e parado? Salão, clínica, loja, restaurante, oficina...<br>Se você indicar alguém e o projeto fechar, te dou uma comissão de <span class="ph">[VALOR OU %]</span> como agradecimento. E se for pra você mesmo, melhor ainda.</div>
+          </article>
+
+          <article class="sc reveal" style="--i:1">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">1B</span><h3>Lista quente · pedir indicação</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> propor uma parceria de indicação. Você chega oferecendo ganho, não pedindo favor.</p>
+            <div class="msg">Fala <span class="ph">[NOME]</span>, tudo bem?<br>Estou desenvolvendo sites e agentes de IA pra ajudar empresas a vender mais e quero expandir minha carteira de clientes.<br>Topa uma parceria? Você me indica donos de negócio que precisam (sem site, ou com um feio e lento) e, pra cada projeto que fechar, você ganha uma comissão de <span class="ph">[VALOR OU %]</span>.<br>Pode ser cliente seu, vizinho de comércio, ou você mesmo. O que acha? 🙏</div>
+          </article>
+
+          <article class="sc reveal" style="--i:2">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">1C</span><h3>Lista fria · negócio sem site</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> prospecção fria via Orion, negócio que não tem site nenhum.</p>
+            <div class="msg">Oi, tudo bem? Falo com o responsável pela <span class="ph">[NEGÓCIO]</span>?<br>Sou <span class="ph">[SEU NOME]</span>, desenvolvedor aqui de <span class="ph">[CIDADE]</span>. Vi que vocês ainda não têm site e hoje o cliente pesquisa tudo no Google antes de decidir.<br>Montei uma prévia rápida de como ficaria a página de vocês. Posso te mostrar? Sem compromisso nenhum.</div>
+          </article>
+
+          <article class="sc reveal" style="--i:3">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">1D</span><h3>Lista fria · site quebrado (Orion)</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> o Orion apontou site lento, feio ou sem WhatsApp. Você chega com o diagnóstico na mão.</p>
+            <div class="msg">Oi, tudo bem? É da <span class="ph">[NEGÓCIO]</span>?<br>Sou <span class="ph">[SEU NOME]</span>, trabalho com sites aqui de <span class="ph">[CIDADE]</span>. Entrei no site de vocês e reparei que ele tá <span class="ph">[lento no celular]</span>.<br>Isso faz cliente desistir antes de chegar em vocês. Fiz uns ajustes de exemplo pra te mostrar como fica mais rápido e vendendo mais. Te mando aqui?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:4">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">1E</span><h3>Lista fria · direct do Instagram</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> o negócio só tem Instagram, sem link organizado nem site.</p>
+            <div class="msg">Oi! Acompanhei o perfil de vocês e curti demais o trabalho. 👏<br>Sou <span class="ph">[SEU NOME]</span>, faço sites pra negócios como o de vocês. Reparei que no perfil não tem um link com tudo junto (serviços, fotos, botão de WhatsApp).<br>Montei uma ideia de página pra vocês. Posso te mandar aqui pra dar uma olhada?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:5">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">1F</span><h3>Enviar a amostra no ar</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> a pessoa topou ver, ou você quer causar impacto já mandando o site pronto. Suba uma amostra e mande o link do site funcionando de verdade.</p>
+            <div class="msg">Olha só o que eu preparei pra <span class="ph">[NEGÓCIO]</span>. 👇<br>Já deixei uma amostra no ar pra você ver funcionando de verdade, no celular e no computador:<br>🔗 <span class="ph">[LINK DA AMOSTRA]</span><br>É um exemplo com a cara de vocês pra você sentir como fica. Dá uma navegada e me diz: o que você mudaria?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:6">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">1G</span><h3>Follow-up 1 · sem resposta</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> 1 ou 2 dias depois da abertura, sem retorno.</p>
+            <div class="msg">Oi <span class="ph">[NOME]</span>, passando só pra confirmar se você chegou a ver minha mensagem.<br>Deixo a prévia aqui de novo pra facilitar: <span class="ph">[LINK]</span><br>Se fizer sentido a gente conversa 5 minutinhos. Se não for o momento, sem problema, é só me falar. 👍</div>
+          </article>
+
+          <article class="sc reveal" style="--i:7">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">1H</span><h3>Follow-up 2 · último toque</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> terceiro contato, sem resposta. Encerra sem queimar a ponte.</p>
+            <div class="msg"><span class="ph">[NOME]</span>, esse é meu último toque por aqui pra não te incomodar.<br>Deixo a porta aberta: quando quiser colocar a <span class="ph">[NEGÓCIO]</span> pra aparecer no Google e vender pelo site, é só me chamar.<br>Guarda meu contato. Sucesso aí! 🙌</div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ============ ETAPA 2 ============ -->
+      <section class="etapa" id="etapa-2">
+        <div class="etapa-cab reveal"><span class="badge">2</span><h2>Qualificação e diagnóstico</h2></div>
+        <p class="etapa-desc reveal">Entenda antes de propor. Mostre o problema antes de vender a solução. Ninguém compra a ponte se não enxergou o buraco.</p>
+        <div class="scripts">
+
+          <article class="sc reveal" style="--i:0">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">2A</span><h3>Perguntas de qualificação</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> a pessoa respondeu com interesse. Antes de propor, entenda.</p>
+            <div class="msg">Que bom que você topou! Pra eu montar a melhor solução (e não te empurrar coisa que não precisa), me responde rapidinho:<br>1. Vocês já têm site ou é do zero?<br>2. O que o cliente mais procura de vocês? (serviço, produto, agendamento...)<br>3. Hoje as pessoas entram em contato por onde? (WhatsApp, Insta, telefone)<br>4. Tem alguma data ou temporada que você quer usar como prazo?<br>Com isso eu já te dou um caminho certeiro.</div>
+          </article>
+
+          <article class="sc reveal" style="--i:1">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">2B</span><h3>Diagnóstico · mostrar o problema</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> depois de olhar o que o cliente tem hoje. Mostre o buraco antes de vender a ponte.</p>
+            <div class="msg">Dei uma olhada com calma no que vocês têm hoje. 3 pontos que estão fazendo você perder cliente:<br>• No celular o site <span class="ph">[abre lento]</span>, e 8 de cada 10 pessoas acessam pelo celular.<br>• Não tem um botão de WhatsApp fixo, então quem quer comprar precisa caçar o contato.<br>• As fotos e informações estão desatualizadas, passa impressão de "tá fechado".<br>Tudo isso tem conserto. Te mostro como fica?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:2">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">2C</span><h3>Chamar pra call</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> o papo esquentou e você quer sair do texto pra uma conversa.</p>
+            <div class="msg">Pra te explicar direitinho e já te mostrar a prévia funcionando, que tal uma call rápida de 15 minutos?<br>Consigo hoje às <span class="ph">[HORÁRIO]</span> ou amanhã às <span class="ph">[HORÁRIO]</span>. Qual encaixa melhor pra você?</div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ============ ETAPA 3 ============ -->
+      <section class="etapa" id="etapa-3">
+        <div class="etapa-cab reveal"><span class="badge">3</span><h2>Proposta e preço</h2></div>
+        <p class="etapa-desc reveal">Ancore no valor que a pessoa leva, depois no número. Três opções vendem mais que uma: a do meio vira a escolha óbvia.</p>
+        <div class="scripts">
+
+          <article class="sc reveal" style="--i:0">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">3A</span><h3>Apresentar o valor antes do preço</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> logo antes de falar de dinheiro. Ancore no que a pessoa leva.</p>
+            <div class="msg">Antes de te passar o valor, deixa eu te mostrar o que você leva:<br>✅ Site completo e rápido, feito pra vender (não é template genérico)<br>✅ Otimizado pro Google e pro celular<br>✅ Botão de WhatsApp e formulário de contato<br>✅ 60 dias de garantia: qualquer ajuste nesse período é por minha conta<br>Ou seja: a <span class="ph">[NEGÓCIO]</span> aparecendo profissional pra quem pesquisa. Fechou a ideia?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:1">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">3B</span><h3>Ancoragem · 3 opções</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> apresentar preço. Três faixas fazem a do meio parecer a escolha certa.</p>
+            <div class="msg">Montei 3 formas da gente trabalhar, você escolhe a que cabe:<br>🥉 Essencial: site de 1 página (institucional + WhatsApp) por R$ <span class="ph">[X]</span><br>🥈 Completo: site com várias seções, fotos e SEO por R$ <span class="ph">[Y]</span> ⭐ mais escolhido<br>🥇 Premium: site + agente de WhatsApp + manutenção mensal por R$ <span class="ph">[Z]</span><br>Qual faz mais sentido pra <span class="ph">[NEGÓCIO]</span> agora?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:2">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">3C</span><h3>Envio da proposta · resumo</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> fechar o combinado por escrito, pronto pra o sim.</p>
+            <div class="msg"><span class="ph">[NOME]</span>, segue o resumo do que combinamos:<br>• Entrega: <span class="ph">[o que será feito]</span><br>• Prazo: <span class="ph">[X]</span> dias úteis depois do sinal<br>• Investimento: R$ <span class="ph">[VALOR]</span> (30% pra começar, 70% na entrega)<br>• Garantia: 60 dias de ajustes inclusos<br>Se estiver tudo certo, eu já te mando o contrato e a gente começa essa semana. Pode ser?</div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ============ ETAPA 4 ============ -->
+      <section class="etapa" id="etapa-4">
+        <div class="etapa-cab reveal"><span class="badge">4</span><h2>Objeções</h2></div>
+        <p class="etapa-desc reveal">"Tá caro", "vou pensar", "já tenho site". Toda objeção é um pedido de mais informação. Cada script traz de volta pra conversa sem empurrar.</p>
+        <div class="scripts">
+
+          <article class="sc reveal" style="--i:0">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">4A</span><h3>"Tá caro"</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> a pessoa acha o valor alto. Traga pro custo x retorno.</p>
+            <div class="msg">Entendo total. Mas pensa comigo: um cliente novo por mês já paga esse site em <span class="ph">[X]</span> meses, e ele trabalha pra você todo dia, 24h, sem salário.<br>Se o valor à vista pesou, a gente parcela. Prefere em <span class="ph">[2x]</span> ou <span class="ph">[3x]</span>?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:1">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">4B</span><h3>"Vou pensar"</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> o clássico. Descubra a objeção real por trás.</p>
+            <div class="msg">Fechado, decisão importante mesmo. 👍<br>Só pra eu entender: o que te segura é o valor, o prazo, ou é mais uma questão de momento?<br>Se me falar o ponto, talvez eu já resolva agora e você nem precise adiar.</div>
+          </article>
+
+          <article class="sc reveal" style="--i:2">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">4C</span><h3>"Já tenho site"</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> "já tenho" ou "meu sobrinho faz". Questione o resultado, não a pessoa.</p>
+            <div class="msg">Perfeito, ter já é meio caminho. A pergunta é: ele tá te trazendo cliente?<br>Muita gente tem site, mas ele é lento, não aparece no Google e ninguém acha. Se for o caso, eu faço uma análise gratuita do seu e te falo na real se vale mexer. Topa?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:3">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">4D</span><h3>"Agora não é o momento"</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> adiamento. Mantenha vivo sem pressionar.</p>
+            <div class="msg">Sem problema, respeito. Só não deixa pra depois e perde a temporada.<br>Posso deixar sua prévia salva e te chamar de novo em <span class="ph">[2 semanas]</span>? Se aí fizer sentido, a gente retoma exatamente daqui.</div>
+          </article>
+
+          <article class="sc reveal" style="--i:4">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">4E</span><h3>"Me manda por escrito"</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> pedido de material. Aproveite pra facilitar a decisão.</p>
+            <div class="msg">Claro, já te mando!<br>Prefere que eu mande o resumo por aqui mesmo no WhatsApp, ou em PDF pra você guardar e mostrar pra alguém?</div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ============ ETAPA 5 ============ -->
+      <section class="etapa" id="etapa-5">
+        <div class="etapa-cab reveal"><span class="badge">5</span><h2>Fechamento e contrato</h2></div>
+        <p class="etapa-desc reveal">Puxe o sim, mande o contrato e o Pix do sinal juntos, sem fricção. Sinal pago = projeto começa. É o que separa cliente sério de curioso.</p>
+        <div class="scripts">
+
+          <article class="sc reveal" style="--i:0">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">5A</span><h3>Fechamento · pedir o sim</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> tudo alinhado, hora de puxar a decisão.</p>
+            <div class="msg">Então tá tudo alinhado: <span class="ph">[entrega]</span>, em <span class="ph">[prazo]</span>, por R$ <span class="ph">[VALOR]</span>.<br>Pra garantir sua vaga na minha agenda dessa semana, eu te mando o contrato agora e você faz o sinal de 30%. Assim que cair, eu já começo.<br>Posso te mandar? 🙌</div>
+          </article>
+
+          <article class="sc reveal" style="--i:1">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">5B</span><h3>Envio do contrato + sinal</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> a pessoa disse sim. Contrato e Pix juntos, sem fricção. (Use o <a href="../05-CONTRATO/index.html" style="color:var(--c);text-decoration:underline">modelo de contrato</a>.)</p>
+            <div class="msg"><span class="ph">[NOME]</span>, segue o contrato pra gente oficializar. 📄<br>É simples e protege os dois lados: escopo do que será feito, prazo e garantia.<br>Pra começar, o sinal é de 30%: R$ <span class="ph">[VALOR DO SINAL]</span>.<br>Chave Pix: <span class="ph">[SUA CHAVE PIX]</span><br>Assim que você assinar e o sinal cair, eu inicio o projeto hoje mesmo.</div>
+          </article>
+
+          <article class="sc reveal" style="--i:2">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">5C</span><h3>Cobrança do sinal · lembrete</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> mandou o contrato, o sinal não caiu. Lembre sem constranger.</p>
+            <div class="msg">Oi <span class="ph">[NOME]</span>! Tudo certo por aí?<br>Deixei sua vaga reservada na agenda essa semana. Assim que o sinal de 30% cair, eu começo na hora.<br>Precisa de outra forma de pagamento além do Pix? Me fala que eu ajeito. 👍</div>
+          </article>
+
+          <article class="sc reveal" style="--i:3">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">5D</span><h3>Confirmação de início</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> sinal pago, contrato assinado. Confirme e alinhe o próximo passo.</p>
+            <div class="msg">Recebido! Sinal confirmado e contrato assinado. 🎉<br>A partir de agora a <span class="ph">[NEGÓCIO]</span> entra na produção. Te dou o primeiro retorno até <span class="ph">[DATA]</span> com <span class="ph">[primeira entrega]</span>.<br>Qualquer coisa que você lembrar no caminho, é só me mandar aqui.</div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ============ ETAPA 6 ============ -->
+      <section class="etapa" id="etapa-6">
+        <div class="etapa-cab reveal"><span class="badge">6</span><h2>Pós-venda e recorrência</h2></div>
+        <p class="etapa-desc reveal">Entregue com orgulho, peça feedback, peça indicação e ofereça recorrência. O melhor cliente novo costuma vir do cliente que você acabou de encantar.</p>
+        <div class="scripts">
+
+          <article class="sc reveal" style="--i:0">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">6A</span><h3>Entrega + pedido de feedback</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> projeto no ar. Entregue com orgulho e abra pro elogio.</p>
+            <div class="msg"><span class="ph">[NOME]</span>, tá no ar! 🚀 Seu site: <span class="ph">[LINK]</span><br>Dá uma navegada com calma, testa no celular e no computador. Se quiser ajustar alguma coisa, me fala nesses 60 dias que tá tudo incluso.<br>E me conta: o que você achou? 😄</div>
+          </article>
+
+          <article class="sc reveal" style="--i:1">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">6B</span><h3>Pedir indicação</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> logo depois de um elogio. É o melhor momento pra pedir.</p>
+            <div class="msg">Que bom que você curtiu o resultado! 🙌<br>Posso te pedir uma força? Se você conhece mais 1 ou 2 donos de negócio que precisam de site, me indica?<br>Quem vem por indicação sua eu atendo com uma condição especial. Combinado?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:2">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">6C</span><h3>Oferecer manutenção mensal</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> transformar entrega única em receita mensal.</p>
+            <div class="msg"><span class="ph">[NOME]</span>, seu site tá voando. Pra ele continuar rápido, seguro e atualizado (fotos novas, promoções, textos), tenho um plano de manutenção mensal de R$ <span class="ph">[X]</span>.<br>Você não precisa se preocupar com nada técnico, deixa comigo. Quer que eu te explique como funciona?</div>
+          </article>
+
+          <article class="sc reveal" style="--i:3">
+            <div class="sc-top">
+              <div class="sc-id"><span class="tag">6D</span><h3>Reativar cliente antigo</h3></div>
+              <button class="copy" type="button" aria-label="Copiar script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+            </div>
+            <p class="sc-when"><b>Quando usar:</b> cliente parado há meses. Volte com uma novidade e uma condição.</p>
+            <div class="msg">Oi <span class="ph">[NOME]</span>, quanto tempo! Tudo bem com a <span class="ph">[NEGÓCIO]</span>?<br>Passando pra saber como tá o site e se você quer dar uma repaginada ou colocar algo novo (agendamento online, loja, agente de WhatsApp).<br>Tenho uma condição boa esse mês pra clientes que já são de casa. Quer ver?</div>
+          </article>
+
+        </div>
+      </section>
+
+      <footer class="rod">
+        <strong>Arsenal Dev em Dobro &middot; Consultoria Freela.</strong> Estes scripts são ponto de partida: adapte pro seu jeito de falar e pro contexto de cada cliente. Combine com o <a href="/entregaveis" target="_top">Orion</a> pra achar os leads e com o <a href="../05-CONTRATO/index.html">modelo de contrato</a> pra fechar seguro. Padrão de marca: fonte Ubuntu, copy sem travessão.
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- compactador de zip (vendorado) pro botao "Baixar tudo em .zip" -->
+  <script src="../_lib/jszip.min.js"></script>
+  <script src="../_lib/baixar-zip.js"></script>
+
+  <script>
+    (function(){
+      /* ---------- animacao de entrada ---------- */
+      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var alvos = document.querySelectorAll('.reveal');
+      function mostrarTodos(){ for(var i=0;i<alvos.length;i++) alvos[i].classList.add('visivel'); }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.body.classList.add('carregado'); }); });
+      if(reduz || !('IntersectionObserver' in window)){
+        mostrarTodos();
+      }else{
+        var obs = new IntersectionObserver(function(entradas){
+          entradas.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visivel'); obs.unobserve(e.target); } });
+        }, {threshold:0.08, rootMargin:'0px 0px -4% 0px'});
+        for(var j=0;j<alvos.length;j++) obs.observe(alvos[j]);
+      }
+
+      /* ---------- copiar script ---------- */
+      function copiar(texto){
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          return navigator.clipboard.writeText(texto);
+        }
+        return new Promise(function(res, rej){
+          try{
+            var ta = document.createElement('textarea');
+            ta.value = texto; ta.setAttribute('readonly','');
+            ta.style.position = 'fixed'; ta.style.left = '-9999px';
+            document.body.appendChild(ta); ta.select();
+            var ok = document.execCommand('copy'); ta.remove();
+            ok ? res() : rej(new Error('execCommand falhou'));
+          }catch(e){ rej(e); }
+        });
+      }
+
+      function textoDaMsg(el){
+        // usa innerText (converte <br> em quebra de linha e ignora a marcacao dos [COLCHETES])
+        var t = el.innerText != null ? el.innerText : el.textContent;
+        return t.replace(/ /g, ' ').replace(/[ \t]+\n/g, '\n').trim();
+      }
+
+      function flash(btn, ok){
+        var ct = btn.querySelector('.ct'); var orig = ct ? ct.textContent : '';
+        btn.classList.remove('ok','err'); btn.classList.add(ok ? 'ok' : 'err');
+        if(ct) ct.textContent = ok ? 'Copiado ✓' : 'Tente de novo';
+        setTimeout(function(){ btn.classList.remove('ok','err'); if(ct) ct.textContent = orig || 'Copiar'; }, 2100);
+      }
+
+      document.addEventListener('click', function(ev){
+        var btn = ev.target.closest ? ev.target.closest('.copy') : null;
+        if(!btn) return;
+        var card = btn.closest('.sc');
+        var msg = card ? card.querySelector('.msg') : null;
+        if(!msg){ flash(btn, false); return; }
+        var texto = textoDaMsg(msg);
+        if(!texto){ flash(btn, false); return; }
+        btn.disabled = true;
+        copiar(texto).then(
+          function(){ flash(btn, true); },
+          function(){ flash(btn, false); }
+        ).then(function(){ btn.disabled = false; });
+      });
+    })();
+  </script>
+</body>
+</html>

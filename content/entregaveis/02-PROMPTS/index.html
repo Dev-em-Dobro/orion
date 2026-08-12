@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<!--
+  BIBLIOTECA DE PROMPTS - Consultoria Freela (Dev em Dobro)
+  Leitor bonito dos prompts. Cada card busca o .md ao vivo (fonte unica de verdade,
+  os mesmos arquivos que vao pra Hubla) e renderiza formatado, com botao "Copiar" em
+  cada bloco de prompt. Self-contained: depende so da fonte Ubuntu + _lib/marked.min.js.
+
+  COMO ADICIONAR UM PROMPT NOVO:
+  1) crie o arquivo <slug>.md nesta pasta (mesmo padrao dos outros).
+  2) copie um <article class="p-card"> na grade e troque data-slug, numero, cor (--c),
+     titulo e a linha de "quando usar". O corpo carrega sozinho do .md.
+  Padrao de marca: fonte Ubuntu, copy sem travessao/em-dash.
+-->
+<html lang="pt-BR" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Biblioteca de prompts | Consultoria Freela (Dev em Dobro)</title>
+  <meta name="description" content="Os prompts prontos da Consultoria Freela, organizados num passo a passo fácil de seguir. Gere sites, portfólio, copy e páginas de captura e copie com um clique.">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="robots" content="noindex, nofollow">
+  <script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232bd576'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg:#0b0d10; --bg2:#0f1216;
+      --card:#14181e; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+      --text:#f3f5f8; --muted:#9aa4b0; --muted2:#6f7883;
+      --accent:#2bd576; --accent-esc:#1fae5f;
+      --code-bg:#0c0f13;
+      --maxw:1080px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    body{
+      background:var(--bg);color:var(--text);
+      font-family:Ubuntu,system-ui,Segoe UI,Roboto,sans-serif;line-height:1.6;
+      -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    svg{display:block}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+    .glow{
+      position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:
+        radial-gradient(1100px 520px at 80% -8%, rgba(139,92,246,.13), transparent 60%),
+        radial-gradient(900px 500px at 6% -12%, rgba(43,213,118,.12), transparent 55%);
+    }
+    .page{position:relative;z-index:1}
+
+    /* topo + breadcrumb */
+    header.top{padding:26px 0 6px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
+    .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+    .brand small{color:var(--muted);font-weight:400;letter-spacing:.3px}
+    .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 15px;transition:border-color .25s,color .25s}
+    .voltar:hover{border-color:var(--line2);color:var(--text)}
+    .voltar svg{width:15px;height:15px}
+
+    /* hero */
+    .hero{padding:46px 0 26px}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:9px;font-size:.78rem;font-weight:500;letter-spacing:2px;
+      text-transform:uppercase;color:var(--accent);border:1px solid var(--line2);border-radius:999px;
+      padding:7px 15px;margin-bottom:22px;
+    }
+    .eyebrow .pin{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+    h1{font-size:clamp(2rem,5vw,3.3rem);line-height:1.08;margin:0 0 18px;font-weight:700;letter-spacing:-.5px;max-width:17ch}
+    h1 .hl{color:var(--accent)}
+    .lead{font-size:clamp(1.02rem,1.7vw,1.2rem);color:var(--muted);max-width:62ch;margin:0}
+
+    /* como funciona: 3 passos */
+    .passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin:34px 0 8px}
+    .passo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 20px 18px;position:relative}
+    .passo .n{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);margin-bottom:12px}
+    .passo h4{margin:0 0 6px;font-size:1rem;font-weight:500}
+    .passo p{margin:0;color:var(--muted);font-size:.92rem}
+
+    /* callout regras */
+    .regras{margin:22px 0 4px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(43,213,118,.06),rgba(43,213,118,.01))}
+    .regras h4{margin:0 0 12px;font-size:1rem;font-weight:500;display:flex;align-items:center;gap:9px}
+    .regras h4 .sq{width:9px;height:9px;border-radius:2px;background:var(--accent)}
+    .regras ul{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 22px}
+    .regras li{color:var(--muted);font-size:.93rem;padding-left:20px;position:relative}
+    .regras li::before{content:"";position:absolute;left:0;top:.62em;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+    .regras li b{color:var(--text);font-weight:500}
+
+    /* titulo de secao */
+    .sec-titulo{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin:46px 0 20px;flex-wrap:wrap}
+    .sec-titulo h2{font-size:1.35rem;margin:0;font-weight:500}
+    .sec-titulo .hint{color:var(--muted2);font-size:.92rem}
+
+    /* cards de prompt */
+    .grade{display:grid;gap:18px}
+    .p-card{
+      background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;
+      transition:border-color .3s,box-shadow .3s;position:relative;
+    }
+    .p-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,var(--accent));opacity:.9;z-index:1}
+    .p-card:hover{border-color:var(--line2)}
+    .p-card.expandido{border-color:var(--line2);box-shadow:0 18px 44px -24px rgba(0,0,0,.8)}
+    .p-top{display:flex;gap:18px;padding:22px 22px 0}
+    .p-num{
+      flex:0 0 auto;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      font-weight:700;font-size:1.15rem;background:color-mix(in srgb,var(--c,var(--accent)) 16%,transparent);color:var(--c,var(--accent));
+    }
+    .p-meta{min-width:0}
+    .p-kicker{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:.72rem;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted2);margin-bottom:8px}
+    .p-kicker .sq{width:8px;height:8px;border-radius:2px;background:var(--c,var(--accent))}
+    .badge{font-size:.66rem;letter-spacing:.6px;padding:3px 9px;border-radius:999px;text-transform:uppercase;font-weight:500}
+    .badge-ok{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent)}
+    .badge-guia{background:rgba(255,255,255,.07);color:var(--muted)}
+    .p-meta h3{margin:0 0 6px;font-size:1.22rem;font-weight:500}
+    .p-meta .quando{margin:0;color:var(--muted);font-size:.96rem}
+
+    .p-actions{display:flex;flex-wrap:wrap;gap:10px;padding:16px 22px 22px 86px}
+    .btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-family:inherit;font-size:.9rem;font-weight:500;border-radius:11px;padding:10px 16px;min-height:42px;transition:transform .15s,background .25s,border-color .25s,color .25s}
+    .btn svg{width:16px;height:16px;flex:0 0 auto}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+    .btn-copy{background:var(--c,var(--accent));color:#06210f;border:1px solid transparent;font-weight:700}
+    .btn-copy:hover{box-shadow:0 12px 28px -14px var(--c,var(--accent))}
+    .btn-copy.ok{background:#0f2a18;color:var(--accent);border-color:var(--accent)}
+    .btn-copy.err{background:#2a1414;color:#fca5a5;border-color:#ef4444}
+    .btn-copy[disabled]{opacity:.7;cursor:progress}
+    .btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line2)}
+    .btn-ghost:hover{border-color:var(--c,var(--accent));color:var(--text)}
+    .btn-ghost .chev{transition:transform .3s}
+    .p-card.expandido .btn-ghost .chev{transform:rotate(180deg)}
+
+    /* corpo expandido (markdown renderizado) */
+    .p-body{border-top:1px solid var(--line);padding:8px 26px 26px;background:rgba(0,0,0,.16)}
+    .p-body[hidden]{display:none}
+
+    .prose{color:var(--text)}
+    .prose>*:first-child{margin-top:14px}
+    .prose h2{font-size:1.15rem;font-weight:500;margin:26px 0 10px}
+    .prose h3{font-size:1.02rem;font-weight:500;margin:22px 0 8px;color:var(--text)}
+    .prose p{margin:0 0 12px;color:var(--muted)}
+    .prose strong{color:var(--text);font-weight:700}
+    .prose a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+    .prose ul,.prose ol{margin:0 0 14px;padding-left:22px;color:var(--muted)}
+    .prose li{margin:4px 0}
+    .prose blockquote{margin:0 0 16px;padding:12px 16px;border-left:3px solid var(--c,var(--accent));background:rgba(255,255,255,.03);border-radius:0 10px 10px 0}
+    .prose blockquote p{margin:0 0 6px;color:var(--muted)}
+    .prose blockquote p:last-child{margin:0}
+    .prose code{font-family:"Ubuntu Mono",ui-monospace,Consolas,monospace;font-size:.92em;background:rgba(255,255,255,.07);padding:.1em .4em;border-radius:5px;color:#e6edf3}
+    .prose table{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:.9rem;display:block;overflow-x:auto}
+    .prose th,.prose td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+    .prose th{background:rgba(255,255,255,.04);color:var(--text);font-weight:500}
+    .prose td{color:var(--muted)}
+    .prose hr{border:none;border-top:1px solid var(--line);margin:22px 0}
+    .prose .carregando,.prose .erro{color:var(--muted2);font-style:italic}
+
+    /* bloco de codigo (o prompt) + botao copiar */
+    .prose pre{
+      position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:12px;
+      padding:16px 18px;padding-top:44px;margin:0 0 16px;overflow:auto;
+    }
+    .prose pre code{display:block;background:none;padding:0;border-radius:0;color:#dfe6ee;font-size:.86rem;line-height:1.55;white-space:pre;font-family:"Ubuntu Mono",ui-monospace,Consolas,monospace}
+    .pre-copy{
+      position:absolute;top:9px;right:9px;cursor:pointer;font-family:inherit;font-size:.76rem;font-weight:500;
+      background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line2);border-radius:8px;padding:6px 11px;
+      transition:background .2s,border-color .2s,color .2s;
+    }
+    .pre-copy:hover{background:color-mix(in srgb,var(--accent) 18%,transparent);border-color:var(--accent)}
+    .pre-copy.ok{border-color:var(--accent);color:var(--accent)}
+    .pre-copy.err{border-color:#ef4444;color:#fca5a5}
+    .pre-copy:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+    footer.rod{border-top:1px solid var(--line);margin-top:46px;padding:26px 0 44px;color:var(--muted2);font-size:.86rem}
+    footer.rod strong{color:var(--muted);font-weight:500}
+
+    /* animacao de entrada */
+    html.js .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 60ms)}
+    html.js .reveal.visivel{opacity:1;transform:none}
+    html.js .hero .anima{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 85ms)}
+    html.js body.carregado .hero .anima{opacity:1;transform:none}
+    @media (prefers-reduced-motion: reduce){
+      html.js .reveal,html.js .hero .anima{opacity:1 !important;transform:none !important;transition:none !important}
+      .btn,.btn-ghost .chev,.pre-copy,.voltar{transition:none !important}
+    }
+    @media (max-width:620px){
+      .p-actions{padding-left:22px}
+      .hero{padding:34px 0 20px}
+    }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="page">
+    <div class="wrap">
+
+      <header class="top">
+        <div class="brand"><span class="dot"></span> DEV EM DOBRO <small>&nbsp;/ Consultoria Freela</small></div>
+        <a class="voltar" href="/entregaveis" target="_top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Voltar aos entregáveis
+        </a>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow anima" style="--i:0"><span class="pin"></span> Biblioteca de prompts</span>
+        <h1 class="anima" style="--i:1">Os prompts prontos, <span class="hl">num passo a passo</span>.</h1>
+        <p class="lead anima" style="--i:2">O template cobre o comum, o prompt cobre o resto. Quando o nicho do cliente não está na galeria, você gera o que falta. Escolha o prompt certo, clique em copiar e cole no Claude Code (ou lovable, Cursor, Codex). Você nunca fica na mão.</p>
+
+        <div class="passos anima" style="--i:3">
+          <div class="passo"><div class="n">1</div><h4>Preencha as variáveis</h4><p>Só o que você sabe (nicho, nome, cidade, WhatsApp). O que não souber, deixe vazio: o prompt manda a IA não inventar.</p></div>
+          <div class="passo"><div class="n">2</div><h4>Copie e cole numa conversa nova</h4><p>Botão "Copiar prompt" no card. Cola inteiro no Claude Code e deixa gerar.</p></div>
+          <div class="passo"><div class="n">3</div><h4>Rode os follow-ups</h4><p>Cada guia tem os ajustes finais. É onde "site ok" vira "site que fecha cliente".</p></div>
+        </div>
+
+        <div class="regras anima" style="--i:4">
+          <h4><span class="sq"></span> As 5 regras que valem pra todo prompt (padrão da marca)</h4>
+          <ul>
+            <li><b>Fonte Ubuntu</b> como padrão.</li>
+            <li><b>Sem travessão</b> em nenhuma copy.</li>
+            <li><b>Não inventar fato</b> do cliente: o que faltar vira placeholder.</li>
+            <li><b>Sem promessa não comprovável</b> ("aumente 300%").</li>
+            <li><b>Resultado do cliente acima de tudo:</b> o site é o meio.</li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="sec-titulo reveal" style="--i:0">
+        <h2>Escolha o seu prompt</h2>
+        <span class="hint">na dúvida, comece pelo prompt-mestre (01)</span>
+      </div>
+
+      <main class="grade">
+
+        <article class="p-card reveal" style="--c:#2bd576;--i:0" data-slug="gerar-site-do-zero">
+          <div class="p-top">
+            <div class="p-num">01</div>
+            <div class="p-meta">
+              <div class="p-kicker"><span class="sq"></span> Prompt-mestre <span class="badge badge-ok">testado</span></div>
+              <h3>Gerar um site do zero</h3>
+              <p class="quando">O nicho do cliente não tem template pronto. Resolve 80% dos casos e sai um <code>index.html</code> pronto pra mostrar.</p>
+            </div>
+          </div>
+          <div class="p-actions">
+            <button class="btn btn-copy" type="button" data-copy-prompt>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <span class="t">Copiar prompt</span>
+            </button>
+            <button class="btn btn-ghost" type="button" data-toggle aria-expanded="false">
+              <span class="t">Abrir guia</span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="p-body" hidden><div class="prose" data-prose></div></div>
+        </article>
+
+        <article class="p-card reveal" style="--c:#f5b301;--i:1" data-slug="gerar-portfolio">
+          <div class="p-top">
+            <div class="p-num">02</div>
+            <div class="p-meta">
+              <div class="p-kicker"><span class="sq"></span> Sua vitrine <span class="badge badge-ok">testado</span></div>
+              <h3>Gerar o seu portfólio</h3>
+              <p class="quando">Você ainda não tem portfólio pra mostrar nas abordagens. É o do Bloco 5.5. Portfólio é prova de capacidade, não histórico de clientes.</p>
+            </div>
+          </div>
+          <div class="p-actions">
+            <button class="btn btn-copy" type="button" data-copy-prompt>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <span class="t">Copiar prompt</span>
+            </button>
+            <button class="btn btn-ghost" type="button" data-toggle aria-expanded="false">
+              <span class="t">Abrir guia</span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="p-body" hidden><div class="prose" data-prose></div></div>
+        </article>
+
+        <article class="p-card reveal" style="--c:#38bdf8;--i:2" data-slug="adaptar-template">
+          <div class="p-top">
+            <div class="p-num">03</div>
+            <div class="p-meta">
+              <div class="p-kicker"><span class="sq"></span> O caminho mais rápido <span class="badge badge-guia">guia</span></div>
+              <h3>Adaptar um template pro cliente</h3>
+              <p class="quando">O nicho tem template na galeria e você quer adaptar em vez de gerar do zero. Adaptar não é só trocar o nome: é nome, cor, copy e provas.</p>
+            </div>
+          </div>
+          <div class="p-actions">
+            <button class="btn btn-copy" type="button" data-copy-prompt>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <span class="t">Copiar prompt</span>
+            </button>
+            <button class="btn btn-ghost" type="button" data-toggle aria-expanded="false">
+              <span class="t">Abrir guia</span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="p-body" hidden><div class="prose" data-prose></div></div>
+        </article>
+
+        <article class="p-card reveal" style="--c:#8b5cf6;--i:3" data-slug="copy-do-site">
+          <div class="p-top">
+            <div class="p-num">04</div>
+            <div class="p-meta">
+              <div class="p-kicker"><span class="sq"></span> O texto que vende <span class="badge badge-guia">guia</span></div>
+              <h3>Copy do site</h3>
+              <p class="quando">O site existe mas o texto está genérico. Headline, seções, provas e CTA no tom de quem resolve, não de quem vende.</p>
+            </div>
+          </div>
+          <div class="p-actions">
+            <button class="btn btn-copy" type="button" data-copy-prompt>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <span class="t">Copiar prompt</span>
+            </button>
+            <button class="btn btn-ghost" type="button" data-toggle aria-expanded="false">
+              <span class="t">Abrir guia</span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="p-body" hidden><div class="prose" data-prose></div></div>
+        </article>
+
+        <article class="p-card reveal" style="--c:#25D366;--i:4" data-slug="pagina-captura-agendamento">
+          <div class="p-top">
+            <div class="p-num">05</div>
+            <div class="p-meta">
+              <div class="p-kicker"><span class="sq"></span> A porta mais fácil <span class="badge badge-guia">guia</span></div>
+              <h3>Página de captura / agendamento</h3>
+              <p class="quando">O cliente não precisa de site inteiro, precisa de uma página que capte lead ou marque horário. O entregável mais rápido de vender.</p>
+            </div>
+          </div>
+          <div class="p-actions">
+            <button class="btn btn-copy" type="button" data-copy-prompt>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <span class="t">Copiar prompt</span>
+            </button>
+            <button class="btn btn-ghost" type="button" data-toggle aria-expanded="false">
+              <span class="t">Abrir guia</span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="p-body" hidden><div class="prose" data-prose></div></div>
+        </article>
+
+        <article class="p-card reveal" style="--c:#f97316;--i:5" data-slug="otimizar-performance-responsivo">
+          <div class="p-top">
+            <div class="p-num">06</div>
+            <div class="p-meta">
+              <div class="p-kicker"><span class="sq"></span> O gancho de venda <span class="badge badge-guia">guia · 2 prompts</span></div>
+              <h3>Otimizar performance e responsivo</h3>
+              <p class="quando">Garantir que o site está rápido antes de entregar. E o segundo prompt: o site do lead está lento e você usa isso como gancho. "Dinheiro saindo pela porta."</p>
+            </div>
+          </div>
+          <div class="p-actions">
+            <button class="btn btn-copy" type="button" data-copy-prompt>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+              <span class="t">Copiar 1º prompt</span>
+            </button>
+            <button class="btn btn-ghost" type="button" data-toggle aria-expanded="false">
+              <span class="t">Abrir guia</span>
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="p-body" hidden><div class="prose" data-prose></div></div>
+        </article>
+
+      </main>
+
+      <footer class="rod">
+        <strong>Arsenal Dev em Dobro &middot; Consultoria Freela.</strong> Preencha as variáveis, copie o prompt e cole numa conversa nova. Os textos gerados são exemplos: troque os <code>[PLACEHOLDER]</code> pelos dados reais do cliente antes de publicar. Padrão de marca: fonte Ubuntu, copy sem travessão.
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- renderer de markdown (vendorado) -->
+  <script src="../_lib/marked.min.js"></script>
+  <script>
+    (function(){
+      /* ---------- animacao de entrada ---------- */
+      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var alvos = document.querySelectorAll('.reveal');
+      function mostrarTodos(){ for(var i=0;i<alvos.length;i++) alvos[i].classList.add('visivel'); }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.body.classList.add('carregado'); }); });
+      if(reduz || !('IntersectionObserver' in window)){
+        mostrarTodos();
+      }else{
+        var obs = new IntersectionObserver(function(entradas){
+          entradas.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visivel'); obs.unobserve(e.target); } });
+        }, {threshold:0.12, rootMargin:'0px 0px -6% 0px'});
+        for(var j=0;j<alvos.length;j++) obs.observe(alvos[j]);
+      }
+
+      /* ---------- prompts: buscar .md, renderizar e copiar ---------- */
+      var cache = {};
+      function pegarMd(slug){
+        if(cache[slug]) return Promise.resolve(cache[slug]);
+        return fetch(slug + '.md', {cache:'no-store'}).then(function(r){
+          if(!r.ok) throw new Error('HTTP ' + r.status + ' em ' + slug + '.md');
+          return r.text();
+        }).then(function(t){ cache[slug] = t; return t; });
+      }
+      function primeiroBloco(md){
+        var m = md.match(/```[^\n]*\n([\s\S]*?)```/);
+        return m ? m[1].replace(/[\s﻿]+$/, '') : md;
+      }
+      function semTitulo(md){ return md.replace(/^﻿?\s*#\s+.*\r?\n/, ''); }
+      function copiar(texto){
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          return navigator.clipboard.writeText(texto);
+        }
+        return new Promise(function(res, rej){
+          try{
+            var ta = document.createElement('textarea');
+            ta.value = texto; ta.setAttribute('readonly','');
+            ta.style.position = 'fixed'; ta.style.left = '-9999px';
+            document.body.appendChild(ta); ta.select();
+            var ok = document.execCommand('copy'); ta.remove();
+            ok ? res() : rej(new Error('execCommand falhou'));
+          }catch(e){ rej(e); }
+        });
+      }
+      function flash(btn, ok, rotuloOk){
+        var t = btn.querySelector('.t'); var orig = t ? t.textContent : '';
+        btn.classList.remove('ok','err'); btn.classList.add(ok ? 'ok' : 'err');
+        if(t) t.textContent = ok ? (rotuloOk || 'Copiado ✓') : 'Copie manualmente';
+        setTimeout(function(){ btn.classList.remove('ok','err'); if(t) t.textContent = orig; }, 2200);
+      }
+      function addCopyEmCodigos(container){
+        var pres = container.querySelectorAll('pre');
+        pres.forEach(function(pre){
+          if(pre.querySelector('.pre-copy')) return;
+          var b = document.createElement('button');
+          b.type = 'button'; b.className = 'pre-copy'; b.textContent = 'Copiar';
+          b.addEventListener('click', function(){
+            var code = pre.querySelector('code');
+            var txt = (code ? code.textContent : pre.textContent).replace(/[\s﻿]+$/, '');
+            copiar(txt).then(
+              function(){ b.textContent = 'Copiado ✓'; b.classList.add('ok'); },
+              function(){ b.textContent = 'Erro'; b.classList.add('err'); }
+            );
+            setTimeout(function(){ b.textContent = 'Copiar'; b.classList.remove('ok','err'); }, 2000);
+          });
+          pre.appendChild(b);
+        });
+      }
+      function renderCard(card){
+        if(card.dataset.pronto === '1') return Promise.resolve();
+        var slug = card.getAttribute('data-slug');
+        var prose = card.querySelector('[data-prose]');
+        prose.innerHTML = '<p class="carregando">Carregando o guia…</p>';
+        return pegarMd(slug).then(function(md){
+          if(window.marked && marked.parse){
+            prose.innerHTML = marked.parse(semTitulo(md));
+          }else{
+            var pre = document.createElement('pre'); var code = document.createElement('code');
+            code.textContent = md; pre.appendChild(code); prose.innerHTML = ''; prose.appendChild(pre);
+          }
+          addCopyEmCodigos(prose);
+          card.dataset.pronto = '1';
+        }).catch(function(err){
+          console.error('[prompts]', err);
+          prose.innerHTML = '<p class="erro">Não consegui carregar este guia. Atualize a página ou fale com o suporte Dev em Dobro.</p>';
+        });
+      }
+
+      document.addEventListener('click', function(ev){
+        var tog = ev.target.closest('[data-toggle]');
+        if(tog){
+          var card = tog.closest('.p-card');
+          var body = card.querySelector('.p-body');
+          var t = tog.querySelector('.t');
+          if(body.hasAttribute('hidden')){
+            tog.setAttribute('aria-expanded','true');
+            card.classList.add('expandido');
+            if(t) t.textContent = 'Fechar guia';
+            renderCard(card).then(function(){ body.removeAttribute('hidden'); });
+          }else{
+            body.setAttribute('hidden','');
+            tog.setAttribute('aria-expanded','false');
+            card.classList.remove('expandido');
+            if(t) t.textContent = 'Abrir guia';
+          }
+          return;
+        }
+        var cp = ev.target.closest('[data-copy-prompt]');
+        if(cp){
+          var card2 = cp.closest('.p-card');
+          var slug2 = card2.getAttribute('data-slug');
+          var rotuloOk = card2.getAttribute('data-slug') === 'otimizar-performance-responsivo' ? '1º copiado ✓' : 'Copiado ✓';
+          cp.disabled = true;
+          pegarMd(slug2)
+            .then(function(md){ return copiar(primeiroBloco(md)); })
+            .then(function(){ flash(cp, true, rotuloOk); }, function(){ flash(cp, false); })
+            .then(function(){ cp.disabled = false; });
+          return;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

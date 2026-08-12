@@ -152,8 +152,9 @@ Agora há **usuários externos + chaves + dados** — o risco muda de patamar.
       `/privacidade` (contato em `src/lib/legal.ts`).
 - [x] LGPD: privacidade descreve PII de conta, chaves BYOK cifradas, Leads só
       com **dado público** (Places); envio de Outreach permanece manual.
-- [ ] Limites anti-abuso do recurso **compartilhado** (rate limit por usuário no
-      app/DB). Custo de API é BYOK, mas compute/DB é nosso. (fast-follow)
+- [x] Limites anti-abuso do recurso **compartilhado** — F018: cotas diárias no
+      modo Orion (coleta, proposta, outreach, simulador); BYOK sem cotas.
+- [x] Chaves Orion por padrão (`ORION_*` env) + toggle BYOK em `/configuracao`.
 
 ## 9. Dívida técnica / polish
 - [x] **Fix arredondamento da faixa de preço (F012)** — `arredondar50` arredonda

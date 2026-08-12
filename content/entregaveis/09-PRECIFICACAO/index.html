@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<!--
+  PRECIFICACAO - Consultoria Freela (Dev em Dobro)
+  Tabela de referencia de precos (projetos + recorrencia + custos repassados),
+  principios de precificacao e erros comuns. Fonte de verdade vive aqui E em
+  tabela-precificacao.md + _GUIA-como-precificar.md (download). Ao editar, edite os dois.
+
+  Valores sao FAIXAS DE REFERENCIA, nao tabela oficial. Sempre com disclaimer.
+  Self-contained: fonte Ubuntu + _lib/jszip.min.js + _lib/baixar-zip.js. Sem build.
+  Padrao de marca: fonte Ubuntu, copy sem travessao/em-dash.
+-->
+<html lang="pt-BR" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quanto cobrar | Consultoria Freela (Dev em Dobro)</title>
+  <meta name="description" content="Tabela de referência pra precificar sites, landing pages, bots de WhatsApp e manutenção mensal. Pare de chutar preço: faixas por tipo de projeto, recorrência e os erros que fazem você se vender barato.">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="robots" content="noindex, nofollow">
+  <script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232bd576'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg:#0b0d10; --bg2:#0f1216;
+      --card:#14181e; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+      --text:#f3f5f8; --muted:#9aa4b0; --muted2:#6f7883;
+      --accent:#2bd576;
+      --c:#84cc16;                 /* cor do entregavel: precificacao (lima) */
+      --box-bg:#0e1620;
+      --maxw:1000px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:Ubuntu,system-ui,Segoe UI,Roboto,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    a{color:inherit;text-decoration:none}
+    svg{display:block}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+    .glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(1100px 520px at 80% -8%, rgba(132,204,22,.14), transparent 60%),radial-gradient(900px 500px at 6% -12%, rgba(43,213,118,.08), transparent 55%)}
+    .page{position:relative;z-index:1}
+
+    header.top{padding:26px 0 6px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
+    .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+    .brand small{color:var(--muted);font-weight:400;letter-spacing:.3px}
+    .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 15px;transition:border-color .25s,color .25s}
+    .voltar:hover{border-color:var(--line2);color:var(--text)}
+    .voltar svg{width:15px;height:15px}
+
+    .hero{padding:46px 0 14px}
+    .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:.78rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--c);border:1px solid var(--line2);border-radius:999px;padding:7px 15px;margin-bottom:22px}
+    .eyebrow .pin{width:6px;height:6px;border-radius:50%;background:var(--c)}
+    h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.08;margin:0 0 18px;font-weight:700;letter-spacing:-.5px;max-width:20ch}
+    h1 .hl{color:var(--c)}
+    .lead{font-size:clamp(1.02rem,1.7vw,1.18rem);color:var(--muted);max-width:64ch;margin:0}
+    .lead b{color:var(--text);font-weight:500}
+
+    .como{margin:30px 0 4px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(132,204,22,.08),rgba(132,204,22,.015))}
+    .como h4{margin:0 0 10px;font-size:1rem;font-weight:500;display:flex;align-items:center;gap:9px}
+    .como h4 .sq{width:9px;height:9px;border-radius:2px;background:var(--c)}
+    .como p{margin:0;color:var(--muted);font-size:.96rem}
+    .como p b{color:var(--text);font-weight:500}
+
+    .acoes{display:flex;flex-wrap:wrap;gap:12px;margin:26px 0 6px;align-items:center}
+    .btn{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-family:inherit;font-size:.92rem;font-weight:500;border-radius:12px;padding:11px 16px;min-height:44px;transition:transform .15s,background .25s,border-color .25s,color .25s,box-shadow .25s}
+    .btn svg{width:16px;height:16px;flex:0 0 auto}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+    .btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line2)}
+    .btn-ghost:hover{border-color:var(--c)}
+    .btn-ghost[disabled]{opacity:.7;cursor:progress}
+
+    .sec-titulo{display:flex;align-items:baseline;gap:12px;margin:48px 0 6px;flex-wrap:wrap}
+    .sec-titulo h2{font-size:1.4rem;margin:0;font-weight:500;letter-spacing:-.2px}
+    .sec-titulo .sq{width:10px;height:10px;border-radius:3px;background:var(--c);align-self:center}
+    .sec-titulo .hint{color:var(--muted2);font-size:.9rem}
+
+    /* tabela */
+    .tabela-wrap{margin:18px 0 0;border:1px solid var(--line);border-radius:14px;overflow:hidden;overflow-x:auto}
+    table{width:100%;border-collapse:collapse;min-width:520px}
+    thead th{text-align:left;font-size:.78rem;font-weight:500;letter-spacing:.5px;text-transform:uppercase;color:var(--muted2);background:var(--bg2);padding:13px 18px;border-bottom:1px solid var(--line)}
+    tbody td{padding:15px 18px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.94rem}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover{background:rgba(255,255,255,.02)}
+    td .tipo{font-weight:500;color:var(--text)}
+    td .inclui{color:var(--muted);font-size:.9rem}
+    td .faixa{font-weight:700;color:var(--c);white-space:nowrap}
+
+    .obs{margin:14px 2px 0;font-size:.9rem;color:var(--muted2);border-left:3px solid var(--line2);padding-left:14px}
+    .obs b{color:var(--muted);font-weight:500}
+
+    /* dicas / erros */
+    .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin:22px 0 0}
+    .item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;position:relative;overflow:hidden}
+    .item.tip::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--c);opacity:.8}
+    .item.err::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:#ef4444;opacity:.7}
+    .item h3{margin:0 0 7px;font-size:.98rem;font-weight:500}
+    .item.err h3{color:#fca5a5}
+    .item p{margin:0;color:var(--muted);font-size:.92rem}
+    .item p b{color:var(--text);font-weight:500}
+
+    .disc{margin:34px 0 0;padding:16px 18px;border:1px dashed var(--line2);border-radius:12px;color:var(--muted2);font-size:.88rem}
+    .disc b{color:var(--muted);font-weight:500}
+
+    footer.rod{border-top:1px solid var(--line);margin-top:52px;padding:26px 0 44px;color:var(--muted2);font-size:.86rem}
+    footer.rod strong{color:var(--muted);font-weight:500}
+    footer.rod a{color:var(--c);text-decoration:underline;text-underline-offset:2px}
+
+    html.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .55s cubic-bezier(0.16,1,0.3,1),transform .55s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 45ms)}
+    html.js .reveal.visivel{opacity:1;transform:none}
+    html.js .hero .anima{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 85ms)}
+    html.js body.carregado .hero .anima{opacity:1;transform:none}
+    @media (prefers-reduced-motion: reduce){
+      html.js .reveal,html.js .hero .anima{opacity:1 !important;transform:none !important;transition:none !important}
+      html{scroll-behavior:auto}
+    }
+    @media (max-width:620px){ .hero{padding:34px 0 12px} }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="page">
+    <div class="wrap">
+
+      <header class="top">
+        <div class="brand"><span class="dot"></span> DEV EM DOBRO <small>&nbsp;/ Consultoria Freela</small></div>
+        <a class="voltar" href="/entregaveis" target="_top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Voltar aos entregáveis
+        </a>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow anima" style="--i:0"><span class="pin"></span> Precificação</span>
+        <h1 class="anima" style="--i:1">Quanto cobrar <span class="hl">sem se vender barato</span>.</h1>
+        <p class="lead anima" style="--i:2">Pare de chutar preço com medo de perder o cliente. Aqui estão as <b>faixas de referência</b> por tipo de projeto, a recorrência que sustenta o negócio e os erros que fazem você deixar dinheiro na mesa.</p>
+
+        <div class="como anima" style="--i:3">
+          <h4><span class="sq"></span> O princípio que muda tudo</h4>
+          <p>Você <b>não vende horas, vende resultado.</b> O cliente paga por aparecer no Google, atender melhor e vender mais, não pelo tempo que você levou. Com IA você entrega rápido, e a velocidade é vantagem sua, não desconto pra ele.</p>
+        </div>
+
+        <div class="acoes anima" style="--i:4">
+          <button class="btn btn-ghost dl" type="button"
+                  data-zip-base=""
+                  data-zip-files="tabela-precificacao.md,_GUIA-como-precificar.md"
+                  data-zip-name="precificacao-devemdobro.zip"
+                  data-zip-folder="precificacao">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            <span class="dl-txt">Baixar tudo em .zip</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============ PROJETOS ============ -->
+      <div class="sec-titulo reveal"><span class="sq"></span><h2>Projetos</h2><span class="hint">valor fechado, uma vez</span></div>
+      <div class="tabela-wrap reveal">
+        <table>
+          <thead><tr><th>Tipo de projeto</th><th>O que inclui</th><th>Referência</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tipo">Landing page / 1 página</span></td><td class="inclui">Página única: apresentação, serviços e botão de WhatsApp</td><td class="faixa">R$ 300 a 800</td></tr>
+            <tr><td><span class="tipo">Site institucional completo</span></td><td class="inclui">Várias seções, galeria, SEO, responsivo, formulário</td><td class="faixa">R$ 800 a 2.500</td></tr>
+            <tr><td><span class="tipo">Site + painel administrativo</span></td><td class="inclui">Site + área admin (cadastros, agenda, relatórios)</td><td class="faixa">R$ 2.500 a 6.000</td></tr>
+            <tr><td><span class="tipo">Sistema / e-commerce robusto</span></td><td class="inclui">Login, banco, pagamento, portal do cliente, dashboards</td><td class="faixa">R$ 5.000 +</td></tr>
+            <tr><td><span class="tipo">Agente (bot) de WhatsApp</span></td><td class="inclui">Setup, treinamento do agente e publicação no número do cliente</td><td class="faixa">R$ 500 a 1.500</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="obs reveal"><b>Referência real da turma:</b> site institucional + área admin de contabilidade fechou em R$ 4.900. Landing page de negócio pequeno, entre R$ 500 e R$ 800.</p>
+
+      <!-- ============ RECORRENCIA ============ -->
+      <div class="sec-titulo reveal"><span class="sq"></span><h2>Recorrência</h2><span class="hint">todo mês, a parte mais importante</span></div>
+      <p class="lead reveal" style="max-width:66ch;font-size:1rem">A venda única paga o mês. A <b>recorrência paga o aluguel.</b> Sempre que der, transforme o projeto em algo mensal.</p>
+      <div class="tabela-wrap reveal">
+        <table>
+          <thead><tr><th>Serviço recorrente</th><th>O que é</th><th>Referência</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tipo">Manutenção do site</span></td><td class="inclui">Ajustes, textos novos, fotos, promoções, segurança</td><td class="faixa">R$ 50 a 200 / mês</td></tr>
+            <tr><td><span class="tipo">Manutenção do bot</span></td><td class="inclui">Ajustes de fluxo e créditos de mensagem</td><td class="faixa">R$ 100 a 400 / mês</td></tr>
+            <tr><td><span class="tipo">Hospedagem gerenciada</span></td><td class="inclui">Você cuida do ar, cobra pela tranquilidade</td><td class="faixa">R$ 30 a 100 / mês</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="obs reveal">Cobre a manutenção por <b>no mínimo 3 meses</b> de compromisso. É o que garante correção, ajuste e a sua receita previsível.</p>
+
+      <!-- ============ CUSTOS REPASSADOS ============ -->
+      <div class="sec-titulo reveal"><span class="sq"></span><h2>Custos que você repassa</h2><span class="hint">não saem do seu bolso</span></div>
+      <div class="grade">
+        <div class="item tip reveal" style="--i:0"><h3>Domínio</h3><p>Em torno de <b>R$ 40 a 60 por ano</b> (ex.: Hostinger, tente o cupom da empresa). Repasse pro cliente.</p></div>
+        <div class="item tip reveal" style="--i:1"><h3>Hospedagem</h3><p>Comece <b>de graça na Vercel</b> com o link deles. Só compra domínio depois que o cliente pagou.</p></div>
+        <div class="item tip reveal" style="--i:2"><h3>Créditos de IA / bot</h3><p>Entram na <b>mensalidade do bot</b>. Faça a conta da margem antes de fechar.</p></div>
+      </div>
+
+      <!-- ============ MONTAR O PACOTE ============ -->
+      <div class="sec-titulo reveal"><span class="sq"></span><h2>Como montar o pacote</h2><span class="hint">o pulo do gato</span></div>
+      <div class="grade">
+        <div class="item tip reveal" style="--i:0"><h3>Apresente 3 opções</h3><p>Essencial, completo e premium. A do meio vira a escolha óbvia e <b>sobe seu ticket</b>.</p></div>
+        <div class="item tip reveal" style="--i:1"><h3>Site "de graça" que puxa serviço</h3><p>Pra cliente com potencial, dê o site e cobre <b>bot + manutenção + domínio</b>. Troca venda única por recorrência.</p></div>
+        <div class="item tip reveal" style="--i:2"><h3>Primeiro case, preço de case</h3><p>Cobre mais barato os primeiros, mas <b>cobre algo</b>. Em troca, use como portfólio e peça indicação.</p></div>
+        <div class="item tip reveal" style="--i:3"><h3>Valor antes do preço</h3><p>Só fale de dinheiro depois que o cliente viu a prévia e demonstrou interesse. Preço cedo demais mata a venda.</p></div>
+      </div>
+
+      <!-- ============ ERROS ============ -->
+      <div class="sec-titulo reveal"><span class="sq"></span><h2>Os 4 erros que te fazem perder dinheiro</h2></div>
+      <div class="grade">
+        <div class="item err reveal" style="--i:0"><h3>Cobrar barato demais</h3><p>Queima o mercado e te deixa sem fôlego. Barato atrai cliente ruim.</p></div>
+        <div class="item err reveal" style="--i:1"><h3>Não cobrar manutenção</h3><p>Você entrega e some da receita. A recorrência é o que sustenta.</p></div>
+        <div class="item err reveal" style="--i:2"><h3>Não cobrar fora do escopo</h3><p>Todo "só mais uma coisinha" vira orçamento à parte. Deixe isso no contrato.</p></div>
+        <div class="item err reveal" style="--i:3"><h3>Falar preço antes do valor</h3><p>Ancore no que o cliente ganha (mais clientes, aparecer no Google) antes do número.</p></div>
+      </div>
+
+      <p class="disc reveal"><b>Importante:</b> estas faixas são ponto de partida, não tabela oficial. Variam pela sua região, pela complexidade e pelo seu momento. Ajuste pra sua realidade e vá subindo o preço conforme monta portfólio e ganha confiança.</p>
+
+      <footer class="rod">
+        <strong>Arsenal Dev em Dobro &middot; Consultoria Freela.</strong> Combine com o <a href="../08-BRIEFING/index.html">briefing</a> pra entender a dor antes de precificar, use os <a href="../06-SCRIPTS-VENDA/index.html">scripts de venda</a> pra apresentar o preço e feche seguro com o <a href="../05-CONTRATO/index.html">modelo de contrato</a>. Padrão de marca: fonte Ubuntu, copy sem travessão.
+      </footer>
+
+    </div>
+  </div>
+
+  <script src="../_lib/jszip.min.js"></script>
+  <script src="../_lib/baixar-zip.js"></script>
+  <script>
+    (function(){
+      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var alvos = document.querySelectorAll('.reveal');
+      function mostrarTodos(){ for(var i=0;i<alvos.length;i++) alvos[i].classList.add('visivel'); }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.body.classList.add('carregado'); }); });
+      if(reduz || !('IntersectionObserver' in window)){
+        mostrarTodos();
+      }else{
+        var obs = new IntersectionObserver(function(entradas){
+          entradas.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visivel'); obs.unobserve(e.target); } });
+        }, {threshold:0.06, rootMargin:'0px 0px -3% 0px'});
+        for(var j=0;j<alvos.length;j++) obs.observe(alvos[j]);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<!--
+  BRIEFING DO CLIENTE - Consultoria Freela (Dev em Dobro)
+  Formulario de levantamento de requisitos em 9 secoes. Cada bloco tem botao
+  "Copiar" que copia as perguntas daquela secao (pra colar no Google Forms ou
+  no WhatsApp). Fonte de verdade vive aqui E em briefing-cliente.md (download).
+  Ao editar um, edite os dois.
+
+  Self-contained: depende so da fonte Ubuntu (Google Fonts) + _lib/jszip.min.js
+  + _lib/baixar-zip.js (pro botao "Baixar .zip"). Sem build, sem backend.
+  Padrao de marca: fonte Ubuntu, copy sem travessao/em-dash.
+-->
+<html lang="pt-BR" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Briefing do cliente | Consultoria Freela (Dev em Dobro)</title>
+  <meta name="description" content="Formulário pronto de levantamento de requisitos: levante tudo o que precisa antes de codar, evite o retrabalho e passe profissionalismo. 9 seções pra copiar ou virar Google Forms.">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="robots" content="noindex, nofollow">
+  <script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232bd576'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg:#0b0d10; --bg2:#0f1216;
+      --card:#14181e; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+      --text:#f3f5f8; --muted:#9aa4b0; --muted2:#6f7883;
+      --accent:#2bd576;
+      --c:#ec4899;                 /* cor do entregavel: briefing (rosa) */
+      --box-bg:#0e1620;
+      --maxw:1000px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:Ubuntu,system-ui,Segoe UI,Roboto,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    a{color:inherit;text-decoration:none}
+    svg{display:block}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+    .glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(1100px 520px at 80% -8%, rgba(236,72,153,.15), transparent 60%),radial-gradient(900px 500px at 6% -12%, rgba(43,213,118,.08), transparent 55%)}
+    .page{position:relative;z-index:1}
+
+    header.top{padding:26px 0 6px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
+    .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+    .brand small{color:var(--muted);font-weight:400;letter-spacing:.3px}
+    .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 15px;transition:border-color .25s,color .25s}
+    .voltar:hover{border-color:var(--line2);color:var(--text)}
+    .voltar svg{width:15px;height:15px}
+
+    .hero{padding:46px 0 14px}
+    .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:.78rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--c);border:1px solid var(--line2);border-radius:999px;padding:7px 15px;margin-bottom:22px}
+    .eyebrow .pin{width:6px;height:6px;border-radius:50%;background:var(--c)}
+    h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.08;margin:0 0 18px;font-weight:700;letter-spacing:-.5px;max-width:20ch}
+    h1 .hl{color:var(--c)}
+    .lead{font-size:clamp(1.02rem,1.7vw,1.18rem);color:var(--muted);max-width:64ch;margin:0}
+    .lead b{color:var(--text);font-weight:500}
+
+    .como{margin:30px 0 4px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(236,72,153,.07),rgba(236,72,153,.012))}
+    .como h4{margin:0 0 12px;font-size:1rem;font-weight:500;display:flex;align-items:center;gap:9px}
+    .como h4 .sq{width:9px;height:9px;border-radius:2px;background:var(--c)}
+    .como ol{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:7px}
+    .como li{font-size:.94rem}
+    .como li b{color:var(--text);font-weight:500}
+
+    .acoes{display:flex;flex-wrap:wrap;gap:12px;margin:26px 0 6px;align-items:center}
+    .btn{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-family:inherit;font-size:.92rem;font-weight:500;border-radius:12px;padding:11px 16px;min-height:44px;transition:transform .15s,background .25s,border-color .25s,color .25s,box-shadow .25s}
+    .btn svg{width:16px;height:16px;flex:0 0 auto}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+    .btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line2)}
+    .btn-ghost:hover{border-color:var(--c)}
+    .btn-ghost[disabled]{opacity:.7;cursor:progress}
+
+    /* blocos do briefing */
+    .blocos{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:18px;margin:34px 0 0}
+    .bloco{display:flex;flex-direction:column;position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;padding:20px 20px;transition:border-color .3s,box-shadow .3s}
+    .bloco::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--c);opacity:.85}
+    .bloco:hover{border-color:var(--line2);box-shadow:0 16px 40px -24px rgba(0,0,0,.7)}
+    .bloco-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .bloco-id{display:flex;align-items:center;gap:10px;min-width:0}
+    .bloco-id .num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9px;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c);font-weight:700;font-size:.95rem;flex:0 0 auto}
+    .bloco-id h3{margin:0;font-size:1.05rem;font-weight:500;line-height:1.25}
+    .conteudo{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+    .conteudo li{font-size:.92rem;color:var(--muted);padding-left:16px;position:relative}
+    .conteudo li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%;background:color-mix(in srgb,var(--c) 55%,transparent)}
+    .conteudo li b{color:var(--text);font-weight:500}
+
+    .copy{display:inline-flex;align-items:center;gap:7px;cursor:pointer;flex:0 0 auto;font-family:inherit;font-size:.82rem;font-weight:500;color:var(--text);line-height:1;background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:10px;padding:8px 12px;min-height:36px;transition:background .22s,border-color .22s,color .22s,transform .12s}
+    .copy svg{width:15px;height:15px;flex:0 0 auto}
+    .copy:hover{background:color-mix(in srgb,var(--c) 16%,transparent);border-color:var(--c)}
+    .copy:active{transform:translateY(1px)}
+    .copy:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+    .copy.ok{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+    .copy.err{border-color:#ef4444;color:#fca5a5}
+
+    footer.rod{border-top:1px solid var(--line);margin-top:52px;padding:26px 0 44px;color:var(--muted2);font-size:.86rem}
+    footer.rod strong{color:var(--muted);font-weight:500}
+    footer.rod a{color:var(--c);text-decoration:underline;text-underline-offset:2px}
+
+    html.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .55s cubic-bezier(0.16,1,0.3,1),transform .55s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 45ms)}
+    html.js .reveal.visivel{opacity:1;transform:none}
+    html.js .hero .anima{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 85ms)}
+    html.js body.carregado .hero .anima{opacity:1;transform:none}
+    @media (prefers-reduced-motion: reduce){
+      html.js .reveal,html.js .hero .anima{opacity:1 !important;transform:none !important;transition:none !important}
+      html{scroll-behavior:auto}
+    }
+    @media (max-width:620px){ .hero{padding:34px 0 12px} .blocos{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="page">
+    <div class="wrap">
+
+      <header class="top">
+        <div class="brand"><span class="dot"></span> DEV EM DOBRO <small>&nbsp;/ Consultoria Freela</small></div>
+        <a class="voltar" href="/entregaveis" target="_top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Voltar aos entregáveis
+        </a>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow anima" style="--i:0"><span class="pin"></span> Briefing do cliente</span>
+        <h1 class="anima" style="--i:1">Levante tudo <span class="hl">antes de codar</span>.</h1>
+        <p class="lead anima" style="--i:2">O formulário que evita o pior pesadelo do freela: entregar e ouvir "não era bem isso". Levanta tudo o que você precisa antes de abrir o editor, e ainda <b>passa profissionalismo</b> pro cliente. 9 seções pra copiar, mandar no WhatsApp ou virar um Google Forms.</p>
+
+        <div class="como anima" style="--i:3">
+          <h4><span class="sq"></span> 3 formas de usar</h4>
+          <ol>
+            <li><b>Como Google Forms:</b> jogue as perguntas num formulário e mande o link. O cliente responde no tempo dele, você recebe tudo organizado.</li>
+            <li><b>Como checklist na conversa:</b> vá passando pelas seções na call ou no WhatsApp e anotando.</li>
+            <li><b>Como documento de escopo:</b> depois de preenchido, vira o registro do que foi combinado. Fim do "isso não estava incluído?".</li>
+          </ol>
+        </div>
+
+        <div class="acoes anima" style="--i:4">
+          <button class="btn btn-ghost dl" type="button"
+                  data-zip-base=""
+                  data-zip-files="briefing-cliente.md,_GUIA-como-usar.md"
+                  data-zip-name="briefing-cliente-devemdobro.zip"
+                  data-zip-folder="briefing-cliente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            <span class="dl-txt">Baixar tudo em .zip</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="blocos">
+
+        <article class="bloco reveal" style="--i:0">
+          <div class="bloco-top">
+            <div class="bloco-id"><span class="num">1</span><h3>Sobre o negócio</h3></div>
+            <button class="copy" type="button" aria-label="Copiar seção"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+          </div>
+          <ul class="conteudo">
+            <li><b>Nome do negócio</b></li>
+            <li><b>Ramo / segmento</b> (ex.: barbearia, clínica, contabilidade)</li>
+            <li><b>Cidade / região de atuação</b></li>
+            <li><b>Há quanto tempo existe</b></li>
+            <li><b>O que faz o negócio ser diferente</b> dos concorrentes</li>
+            <li><b>Uma frase que resume o negócio</b>, como o dono descreveria</li>
+          </ul>
+        </article>
+
+        <article class="bloco reveal" style="--i:1">
+          <div class="bloco-top">
+            <div class="bloco-id"><span class="num">2</span><h3>Objetivo do projeto</h3></div>
+            <button class="copy" type="button" aria-label="Copiar seção"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+          </div>
+          <ul class="conteudo">
+            <li><b>O que você precisa?</b> site novo, reforma, landing page, bot de WhatsApp, sistema ou outro</li>
+            <li><b>Qual problema isso resolve</b> pra você (a dor real)</li>
+            <li><b>Como você mede que deu certo</b> (mais orçamentos, agendamentos, aparecer no Google)</li>
+          </ul>
+        </article>
+
+        <article class="bloco reveal" style="--i:2">
+          <div class="bloco-top">
+            <div class="bloco-id"><span class="num">3</span><h3>Público e concorrência</h3></div>
+            <button class="copy" type="button" aria-label="Copiar seção"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+          </div>
+          <ul class="conteudo">
+            <li><b>Quem é o cliente ideal</b> do negócio</li>
+            <li><b>Como as pessoas chegam até você hoje</b> (WhatsApp, Instagram, indicação, Google)</li>
+            <li><b>2 ou 3 concorrentes ou referências</b> que você gosta (links)</li>
+          </ul>
+        </article>
+
+        <article class="bloco reveal" style="--i:3">
+          <div class="bloco-top">
+            <div class="bloco-id"><span class="num">4</span><h3>O que já existe (materiais)</h3></div>
+            <button class="copy" type="button" aria-label="Copiar seção"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+          </div>
+          <ul class="conteudo">
+            <li><b>Já tem site?</b> Qual o link</li>
+            <li><b>Domínio próprio?</b> Qual</li>
+            <li><b>Logo, fotos e textos</b> prontos pra enviar</li>
+            <li><b>Redes sociais</b> (Instagram, Facebook)</li>
+            <li><b>Planilhas ou sistema</b> que já usa hoje</li>
+          </ul>
+        </article>
+
+        <article class="bloco reveal" style="--i:4">
+          <div class="bloco-top">
+            <div class="bloco-id"><span class="num">5</span><h3>Conteúdo e páginas</h3></div>
+            <button class="copy" type="button" aria-label="Copiar seção"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+          </div>
+          <ul class="conteudo">
+            <li><b>Principais serviços ou produtos</b> a destacar (3 a 5)</li>
+            <li><b>Seções necessárias:</b> início, sobre, serviços, galeria, depoimentos, preços, contato, agendamento</li>
+            <li><b>Ação principal do visitante:</b> chamar no WhatsApp, agendar, ligar, comprar</li>
+            <li><b>Promoção, data ou temporada</b> pra usar de gancho</li>
+          </ul>
+        </article>
+
+        <article class="bloco reveal" style="--i:5">
+          <div class="bloco-top">
+            <div class="bloco-id"><span class="num">6</span><h3>Identidade visual</h3></div>
+            <button class="copy" type="button" aria-label="Copiar seção"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+          </div>
+          <ul class="conteudo">
+            <li><b>Cores da marca</b> (se tiver)</li>
+            <li><b>Estilo que combina:</b> moderno, elegante, divertido, minimalista, sofisticado</li>
+            <li><b>Sites que acha bonitos</b> (referências, links)</li>
+            <li><b>Algo que NÃO gosta</b> e quer evitar</li>
+          </ul>
+        </article>
+
+        <article class="bloco reveal" style="--i:6">
+          <div class="bloco-top">
+            <div class="bloco-id"><span class="num">7</span><h3>Funcionalidades e integrações</h3></div>
+            <button class="copy" type="button" aria-label="Copiar seção"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+          </div>
+          <ul class="conteudo">
+            <li><b>Botão de WhatsApp</b></li>
+            <li><b>Agendamento online</b></li>
+            <li><b>Área de login / painel administrativo</b></li>
+            <li><b>Pagamento online</b></li>
+            <li><b>Agente (bot) de atendimento</b> no WhatsApp</li>
+            <li><b>Integração com sistema atual</b> (agenda, CRM, planilha)</li>
+          </ul>
+        </article>
+
+        <article class="bloco reveal" style="--i:7">
+          <div class="bloco-top">
+            <div class="bloco-id"><span class="num">8</span><h3>Prazo e investimento</h3></div>
+            <button class="copy" type="button" aria-label="Copiar seção"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+          </div>
+          <ul class="conteudo">
+            <li><b>Data ou evento</b> que serve de prazo</li>
+            <li><b>Faixa de investimento</b> que o cliente tem em mente</li>
+            <li><b>Forma de pagamento preferida:</b> Pix à vista, Pix parcelado, cartão</li>
+          </ul>
+        </article>
+
+        <article class="bloco reveal" style="--i:8">
+          <div class="bloco-top">
+            <div class="bloco-id"><span class="num">9</span><h3>Contato e aprovação</h3></div>
+            <button class="copy" type="button" aria-label="Copiar seção"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span class="ct">Copiar</span></button>
+          </div>
+          <ul class="conteudo">
+            <li><b>Responsável pelo projeto</b> (quem decide)</li>
+            <li><b>Melhor forma e horário</b> de contato</li>
+            <li><b>Quem aprova</b> o resultado final</li>
+          </ul>
+        </article>
+
+      </section>
+
+      <footer class="rod">
+        <strong>Arsenal Dev em Dobro &middot; Consultoria Freela.</strong> Para site simples, use só as seções 1, 4, 5 e 6. Enquanto o cliente responde, já adiante o mockup ou escolha o <a href="../01-SITES-PRONTOS/index.html">template</a>. Depois de fechado, feche seguro com o <a href="../05-CONTRATO/index.html">modelo de contrato</a>. Padrão de marca: fonte Ubuntu, copy sem travessão.
+      </footer>
+
+    </div>
+  </div>
+
+  <script src="../_lib/jszip.min.js"></script>
+  <script src="../_lib/baixar-zip.js"></script>
+  <script>
+    (function(){
+      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var alvos = document.querySelectorAll('.reveal');
+      function mostrarTodos(){ for(var i=0;i<alvos.length;i++) alvos[i].classList.add('visivel'); }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.body.classList.add('carregado'); }); });
+      if(reduz || !('IntersectionObserver' in window)){
+        mostrarTodos();
+      }else{
+        var obs = new IntersectionObserver(function(entradas){
+          entradas.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visivel'); obs.unobserve(e.target); } });
+        }, {threshold:0.08, rootMargin:'0px 0px -4% 0px'});
+        for(var j=0;j<alvos.length;j++) obs.observe(alvos[j]);
+      }
+
+      /* ---------- copiar secao ---------- */
+      function copiar(texto){
+        if(navigator.clipboard && navigator.clipboard.writeText){ return navigator.clipboard.writeText(texto); }
+        return new Promise(function(res, rej){
+          try{
+            var ta = document.createElement('textarea');
+            ta.value = texto; ta.setAttribute('readonly','');
+            ta.style.position = 'fixed'; ta.style.left = '-9999px';
+            document.body.appendChild(ta); ta.select();
+            var ok = document.execCommand('copy'); ta.remove();
+            ok ? res() : rej(new Error('execCommand falhou'));
+          }catch(e){ rej(e); }
+        });
+      }
+      function textoDoBloco(card){
+        var titulo = card.querySelector('h3'); var itens = card.querySelectorAll('.conteudo li');
+        var linhas = [];
+        if(titulo) linhas.push(titulo.textContent.trim());
+        for(var i=0;i<itens.length;i++){
+          var t = (itens[i].innerText != null ? itens[i].innerText : itens[i].textContent).replace(/\s+/g,' ').trim();
+          if(t) linhas.push('- ' + t);
+        }
+        return linhas.join('\n');
+      }
+      function flash(btn, ok){
+        var ct = btn.querySelector('.ct'); var orig = ct ? ct.textContent : '';
+        btn.classList.remove('ok','err'); btn.classList.add(ok ? 'ok' : 'err');
+        if(ct) ct.textContent = ok ? 'Copiado ✓' : 'Tente de novo';
+        setTimeout(function(){ btn.classList.remove('ok','err'); if(ct) ct.textContent = orig || 'Copiar'; }, 2100);
+      }
+      document.addEventListener('click', function(ev){
+        var btn = ev.target.closest ? ev.target.closest('.copy') : null;
+        if(!btn) return;
+        var card = btn.closest('.bloco');
+        if(!card){ flash(btn, false); return; }
+        var texto = textoDoBloco(card);
+        if(!texto){ flash(btn, false); return; }
+        btn.disabled = true;
+        copiar(texto).then(function(){ flash(btn, true); }, function(){ flash(btn, false); }).then(function(){ btn.disabled = false; });
+      });
+    })();
+  </script>
+</body>
+</html>

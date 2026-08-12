@@ -9,10 +9,11 @@
 
 ## Usuário
 Cada **aluno** (freelancer dev) tem a sua própria conta no app hospedado. O
-sistema é **multi-tenant**: o aluno faz **login** e vê só os seus dados, usando
-as **próprias chaves de API** (modelo BYOK — *bring your own key*). Assim o custo
-de API é do aluno; o nosso fica só em hospedagem + banco. *(Na Fase 1 era
-ferramenta interna de um operador só — ver nota acima.)*
+sistema é **multi-tenant**: o aluno faz **login** e vê só os seus dados. Por
+padrão usa as **chaves compartilhadas da Orion** (sem precisar de conta Google/
+OpenAI), com **limites diários** anti-abuso ([F018](02-features/F018-limites-diarios.md)).
+O modo **BYOK** (*bring your own key*) permanece opcional em `/configuracao`.
+*(Na Fase 1 era ferramenta interna de um operador só — ver nota acima.)*
 
 ## Problema
 Prospecção manual via boca-a-boca, indicação e busca aleatória em mapa consome
@@ -44,9 +45,9 @@ de venda *depois* da resposta — ver [domain model](01-domain-model.md).)
   (envio segue manual). Dos alunos, há PII de login e as chaves de API: **cifra
   das chaves em repouso**, **isolamento por usuário** e **Termos de Uso +
   Política de Privacidade** deixam de ser opcionais.
-- **Custo / BYOK**: cada aluno usa as próprias chaves → **custo de API é dele**.
-  O nosso custo é o recurso **compartilhado** (hospedagem + banco), então há
-  **limites por aluno** anti-abuso (ver [07](07-lancamento-para-alunos.md)).
+- **Custo / chaves**: modo **Orion** (padrão) — custo de API nas chaves do
+  servidor, com **limites diários** por aluno (F018). Modo **BYOK** — custo
+  de API do aluno, sem cotas F018. Hospedagem + banco continuam compartilhados.
 - **Multi-tenant hospedado**: login obrigatório e toda query escopada por
   `user_id` (isolamento testado). Deixou de ser "ferramenta interna sem auth".
 - **Tempo**: operações síncronas de até ~30s são aceitáveis (sem workers na

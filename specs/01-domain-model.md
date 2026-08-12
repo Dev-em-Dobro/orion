@@ -95,7 +95,10 @@ User (auth) 1 ─── N Lead
 User (auth) 1 ─── N Diagnóstico
 User (auth) 1 ─── N Dor
 User (auth) 1 ─── N Outreach
-User (auth) 1 ─── 1 UserApiKeys (BYOK, infra — [F016](02-features/F016-configuracao-de-chaves.md))
+User (auth) 1 ─── 1 UserApiKeys (BYOK / modo Orion — [F016](02-features/F016-configuracao-de-chaves.md), [F018](02-features/F018-limites-diarios.md))
+User (auth) 1 ─── N DailyUsage (cotas diárias — [F018](02-features/F018-limites-diarios.md))
+User (auth) — `purchase_email`, `purchase_verified_at`, `purchase_product_id` ([F019.1](02-features/F019.1-ativacao-acesso.md))
+HublaEntitlement — e-mails autorizados via webhook ([F019](02-features/F019-webhook-hubla.md))
 Lead 1 ─── N Diagnóstico
 Lead 1 ─── N Dor
 Lead 1 ─── N Outreach
@@ -103,8 +106,9 @@ Lead 1 ─── N Outreach
 
 Toda entidade de domínio acima é escopada por `user_id` ([F015](02-features/F015-multi-tenant.md)).
 `User` é infra de auth ([F014](02-features/F014-autenticacao.md)), não linguagem de negócio.
-`UserApiKeys` guarda as chaves do aluno **cifradas** ([ADR-009](04-decisions/ADR-009-cifra-chaves-byok.md));
-não é linguagem de negócio.
+`UserApiKeys` guarda as chaves do aluno **cifradas** ([ADR-009](04-decisions/ADR-009-cifra-chaves-byok.md))
+e o `key_mode` (`orion` | `byok`). `DailyUsage` contabiliza uso diário por
+operação no modo Orion; não é linguagem de negócio.
 
 ---
 

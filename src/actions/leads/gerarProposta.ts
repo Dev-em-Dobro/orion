@@ -7,6 +7,7 @@
 // (registrarDesfecho, F006/F010).
 
 import { createLlmForUser } from "@/lib/llm";
+import { consumirCota, verificarCota } from "@/lib/limites";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import { detectarDores, textosDasDores } from "@/lib/dores";
 import { servicosRecomendados } from "@/lib/proposta/servicos";
@@ -45,6 +46,7 @@ export async function gerarPropostaAction(
 
   try {
     const { userId } = await requireTenant();
+    await verificarCota(userId, "proposta");
     const llm = await createLlmForUser(userId);
     const lead = await prisma.lead.findFirst({
       where: { id: parsed.data.lead_id, user_id: userId },
@@ -96,6 +98,8 @@ export async function gerarPropostaAction(
         mensagem: "Falha ao gerar a Proposta. Tente novamente.",
       };
     }
+
+    await consumirCota(userId, "proposta");
 
     return {
       kind: "ok",

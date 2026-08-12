@@ -14,6 +14,7 @@ import {
   OutreachError,
 } from "@/lib/outreach/gerarOutreach";
 import { createLlmForUser } from "@/lib/llm";
+import { consumirCota, verificarCota } from "@/lib/limites";
 import type { ContextoLead } from "@/lib/outreach/prompt";
 import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
 
@@ -41,6 +42,7 @@ export async function gerarOutreachAction(
 
   try {
     const { userId } = await requireTenant();
+    await verificarCota(userId, "outreach");
     const llm = await createLlmForUser(userId);
     const lead = await prisma.lead.findFirst({
       where: { id: parsed.data.lead_id, user_id: userId },
@@ -97,6 +99,7 @@ export async function gerarOutreachAction(
     });
 
     revalidatePath("/leads");
+    await consumirCota(userId, "outreach");
 
     return {
       kind: "ok",

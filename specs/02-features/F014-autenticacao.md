@@ -46,6 +46,10 @@ Gerados pelo Better Auth com adapter Prisma: `User`, `Session`, `Account`,
 - [x] **AC2** — Login com Google cria `User`+`Session` na 1ª vez e reusa nas
       seguintes (mesmo `User` pelo e-mail/Account).
 - [x] **AC3** — Magic link: informar e-mail dispara um e-mail com link válido;
+      clicar autentica. `errorCallbackURL` **não** aninha o `callbackUrl`
+      (Better Auth faz `decodeURIComponent` de novo no verify → dois `?` →
+      `INVALID_CALLBACK_URL`). Erros usam `/login?error=…` simples.
+      `callbackURL` pós-sucesso pode manter path+query (`/leads?site=…`).
       abrir o link autentica e abre sessão. Link expirado/reusado → erro claro.
 - [x] **AC4** — `requireUser()` devolve o usuário logado nas Server Actions e
       lança (tratado como erro amigável) quando não há sessão.

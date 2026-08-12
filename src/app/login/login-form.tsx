@@ -5,6 +5,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
+import { sanitizarCallbackUrl } from "@/lib/auth/callback-url";
 
 type Estado =
   | { kind: "idle" }
@@ -18,6 +19,8 @@ function mensagemErroCallback(code: string | null): string | null {
     INVALID_TOKEN: "Link inválido ou já usado. Solicite um novo.",
     EXPIRED_TOKEN: "Link expirado. Solicite um novo pelo e-mail.",
     TOKEN_EXPIRED: "Link expirado. Solicite um novo pelo e-mail.",
+    INVALID_CALLBACK_URL:
+      "Link de retorno inválido. Abra /login e solicite um novo acesso.",
   };
   return (
     mapa[code] ??
@@ -27,7 +30,10 @@ function mensagemErroCallback(code: string | null): string | null {
 
 export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  // Better Auth faz decodeURIComponent de novo no verify: NÃO aninhar
+  // callbackUrl dentro de errorCallbackURL (vira `/login?callbackUrl=/leads?…`
+  // com dois `?` → INVALID_CALLBACK_URL).
+  const callbackUrl = sanitizarCallbackUrl(searchParams.get("callbackUrl"));
   const erroCallback = useMemo(
     () => mensagemErroCallback(searchParams.get("error")),
     [searchParams],
@@ -45,7 +51,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
     const { error } = await authClient.signIn.social({
       provider: "google",
       callbackURL: callbackUrl,
-      errorCallbackURL: `/login?error=oauth&callbackUrl=${encodeURIComponent(callbackUrl)}`,
+      errorCallbackURL: "/login?error=oauth",
     });
     if (error) {
       setEstado({
@@ -67,7 +73,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
     const { error } = await authClient.signIn.magicLink({
       email: destino,
       callbackURL: callbackUrl,
-      errorCallbackURL: `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`,
+      errorCallbackURL: "/login?error=magic_link",
     });
 
     if (error) {

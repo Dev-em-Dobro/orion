@@ -64,8 +64,9 @@ avaliações** colocam cada busca na faixa **Enterprise** do *Text Search*.
 Na prática:
 
 - **1.000 buscas grátis por mês.**
-- Cada busca traz **até 20 estabelecimentos** de uma vez — ou seja, 1.000
-  buscas podem render até ~20.000 estabelecimentos/mês, de graça.
+- Cada request traz **até 20** estabelecimentos; o Orion **pagina** com
+  `nextPageToken` (até ~100 por coleta). 1.000 buscas no free tier ainda
+  cobrem bem o uso típico de alunos.
 - Passou de 1.000 buscas no mês, o custo é da ordem de **US$35 por 1.000
   buscas** adicionais. Confira o valor exato atualizado nos links do fim.
 

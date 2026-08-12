@@ -15,6 +15,8 @@ import {
   type VisaoChave,
 } from "@/lib/chaves";
 import { LABEL_LLM_PROVIDER, salvarProviderLlm } from "@/lib/llm";
+import { LABEL_KEY_MODE, salvarModoChave } from "@/lib/chaves";
+import type { KeyMode } from "@prisma/client";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 
 const tipoSchema = z.enum(TIPOS_CHAVE);
@@ -116,6 +118,37 @@ export async function testarChaveAction(
 }
 
 const providerSchema = z.enum(["anthropic", "openai", "gemini"]);
+const modoSchema = z.enum(["orion", "byok"]);
+
+export async function salvarModoChaveAction(
+  _prev: ChaveActionState,
+  formData: FormData,
+): Promise<ChaveActionState> {
+  const parsed = modoSchema.safeParse(formData.get("modo"));
+  if (!parsed.success) {
+    return { kind: "erro", mensagem: "Modo de chave inválido" };
+  }
+
+  try {
+    const { userId } = await requireTenant();
+    const modo = await salvarModoChave(userId, parsed.data as KeyMode);
+    revalidatePath("/configuracao");
+    revalidatePath("/");
+    revalidatePath("/leads");
+    revalidatePath("/treino");
+    return {
+      kind: "ok",
+      mensagem: `Modo ativo: ${LABEL_KEY_MODE[modo]}`,
+    };
+  } catch (e) {
+    const escopo = mensagemEscopo(e);
+    if (escopo) return { kind: "erro", mensagem: escopo };
+    return {
+      kind: "erro",
+      mensagem: e instanceof Error ? e.message : "Falha ao salvar modo",
+    };
+  }
+}
 
 export async function salvarProviderLlmAction(
   _prev: ChaveActionState,

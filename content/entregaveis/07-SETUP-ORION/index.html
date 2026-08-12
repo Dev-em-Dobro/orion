@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<!--
+  SETUP DO ORION - Consultoria Freela (Dev em Dobro)
+  Guia passo a passo pra configurar a chave de API do Google que o Orion usa
+  (Places API New + PageSpeed Insights), com FAQ do medo do cartao e os erros
+  mais comuns da turma. Fonte de verdade da pagina vive aqui E em
+  _GUIA-configurar-orion.md (versao pra download). Ao editar um, edite os dois.
+
+  Self-contained: depende so da fonte Ubuntu (Google Fonts) + _lib/jszip.min.js
+  + _lib/baixar-zip.js (pro botao "Baixar .zip"). Sem build, sem backend.
+  Padrao de marca: fonte Ubuntu, copy sem travessao/em-dash.
+-->
+<html lang="pt-BR" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurar o Orion | Consultoria Freela (Dev em Dobro)</title>
+  <meta name="description" content="Passo a passo pra configurar a chave de API do Google que o Orion usa (Places API e PageSpeed Insights). Com o medo do cartão de crédito resolvido e a solução dos erros mais comuns.">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="robots" content="noindex, nofollow">
+  <script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232bd576'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg:#0b0d10; --bg2:#0f1216;
+      --card:#14181e; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+      --text:#f3f5f8; --muted:#9aa4b0; --muted2:#6f7883;
+      --accent:#2bd576;
+      --c:#06b6d4;                 /* cor do entregavel: setup do orion (ciano) */
+      --box-bg:#0e1620;
+      --maxw:960px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:Ubuntu,system-ui,Segoe UI,Roboto,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    a{color:inherit;text-decoration:none}
+    svg{display:block}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+    .glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(1100px 520px at 80% -8%, rgba(6,182,212,.15), transparent 60%),radial-gradient(900px 500px at 6% -12%, rgba(43,213,118,.08), transparent 55%)}
+    .page{position:relative;z-index:1}
+
+    header.top{padding:26px 0 6px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
+    .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+    .brand small{color:var(--muted);font-weight:400;letter-spacing:.3px}
+    .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 15px;transition:border-color .25s,color .25s}
+    .voltar:hover{border-color:var(--line2);color:var(--text)}
+    .voltar svg{width:15px;height:15px}
+
+    .hero{padding:46px 0 14px}
+    .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:.78rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--c);border:1px solid var(--line2);border-radius:999px;padding:7px 15px;margin-bottom:22px}
+    .eyebrow .pin{width:6px;height:6px;border-radius:50%;background:var(--c)}
+    h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.08;margin:0 0 18px;font-weight:700;letter-spacing:-.5px;max-width:20ch}
+    h1 .hl{color:var(--c)}
+    .lead{font-size:clamp(1.02rem,1.7vw,1.18rem);color:var(--muted);max-width:64ch;margin:0}
+    .lead b{color:var(--text);font-weight:500}
+
+    /* callout de destaque (medo do cartao) */
+    .callout{margin:30px 0 4px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(6,182,212,.08),rgba(6,182,212,.015))}
+    .callout h4{margin:0 0 12px;font-size:1.05rem;font-weight:500;display:flex;align-items:center;gap:10px}
+    .callout h4 .sq{width:9px;height:9px;border-radius:2px;background:var(--c)}
+    .callout ul{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:8px}
+    .callout li{font-size:.95rem}
+    .callout li b{color:var(--text);font-weight:500}
+    .callout .fecho{margin:14px 0 0;font-size:.95rem;color:var(--text);border-left:3px solid var(--c);padding-left:14px}
+
+    .acoes{display:flex;flex-wrap:wrap;gap:12px;margin:26px 0 6px;align-items:center}
+    .btn{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-family:inherit;font-size:.92rem;font-weight:500;border-radius:12px;padding:11px 16px;min-height:44px;text-decoration:none;transition:transform .15s,background .25s,border-color .25s,color .25s,box-shadow .25s}
+    .btn svg{width:16px;height:16px;flex:0 0 auto}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+    .btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line2)}
+    .btn-ghost:hover{border-color:var(--c)}
+    .btn-solid{background:var(--c);color:#04222a;border:1px solid var(--c);font-weight:700}
+    .btn-solid:hover{box-shadow:0 12px 30px -12px rgba(6,182,212,.7)}
+    .btn-ghost[disabled]{opacity:.7;cursor:progress}
+
+    /* passos */
+    .sec-titulo{display:flex;align-items:center;gap:12px;margin:48px 0 8px}
+    .sec-titulo h2{font-size:1.4rem;margin:0;font-weight:500;letter-spacing:-.2px}
+    .sec-titulo .sq{width:10px;height:10px;border-radius:3px;background:var(--c)}
+    .passos{display:grid;gap:14px;margin:22px 0 0;counter-reset:p}
+    .passo{position:relative;display:grid;grid-template-columns:44px 1fr;gap:16px;align-items:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;transition:border-color .3s,box-shadow .3s}
+    .passo::before{counter-increment:p;content:counter(p);display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--c) 15%,transparent);color:var(--c);font-weight:700;font-size:1.1rem}
+    .passo:hover{border-color:var(--line2);box-shadow:0 16px 40px -24px rgba(0,0,0,.7)}
+    .passo h3{margin:0 0 5px;font-size:1.05rem;font-weight:500}
+    .passo p{margin:0;color:var(--muted);font-size:.95rem}
+    .passo p b{color:var(--text);font-weight:500}
+    .passo a.lnk{color:var(--c);text-decoration:underline;text-underline-offset:2px;word-break:break-all}
+    .passo code{font-family:ui-monospace,Consolas,monospace;font-size:.85em;background:color-mix(in srgb,var(--c) 16%,transparent);padding:.12em .42em;border-radius:5px;color:#a9edff}
+    .passo .nota{margin-top:9px;font-size:.88rem;color:var(--muted2);border-left:3px solid var(--line2);padding-left:12px}
+
+    /* erros */
+    .erros{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin:22px 0 0}
+    .erro{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;position:relative;overflow:hidden}
+    .erro::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:#ef4444;opacity:.7}
+    .erro h3{margin:0 0 8px;font-size:.98rem;font-weight:500;color:#fca5a5;display:flex;gap:8px;align-items:flex-start}
+    .erro h3 svg{width:16px;height:16px;flex:0 0 auto;margin-top:3px}
+    .erro p{margin:0;color:var(--muted);font-size:.92rem}
+    .erro p b{color:var(--text);font-weight:500}
+
+    footer.rod{border-top:1px solid var(--line);margin-top:52px;padding:26px 0 44px;color:var(--muted2);font-size:.86rem}
+    footer.rod strong{color:var(--muted);font-weight:500}
+    footer.rod a{color:var(--c);text-decoration:underline;text-underline-offset:2px}
+
+    html.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .55s cubic-bezier(0.16,1,0.3,1),transform .55s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 45ms)}
+    html.js .reveal.visivel{opacity:1;transform:none}
+    html.js .hero .anima{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 85ms)}
+    html.js body.carregado .hero .anima{opacity:1;transform:none}
+    @media (prefers-reduced-motion: reduce){
+      html.js .reveal,html.js .hero .anima{opacity:1 !important;transform:none !important;transition:none !important}
+      html{scroll-behavior:auto}
+    }
+    @media (max-width:620px){
+      .hero{padding:34px 0 12px}
+      .passo{grid-template-columns:1fr}
+      .passo::before{margin-bottom:2px}
+    }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="page">
+    <div class="wrap">
+
+      <header class="top">
+        <div class="brand"><span class="dot"></span> DEV EM DOBRO <small>&nbsp;/ Consultoria Freela</small></div>
+        <a class="voltar" href="/entregaveis" target="_top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Voltar aos entregáveis
+        </a>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow anima" style="--i:0"><span class="pin"></span> Setup do Orion</span>
+        <h1 class="anima" style="--i:1">Configure o Orion <span class="hl">sem travar</span>.</h1>
+        <p class="lead anima" style="--i:2">O Orion precisa de uma <b>chave de API do Google</b> pra buscar seus leads e diagnosticar sites lentos. Leva uns 5 minutos e é de graça pro uso da Consultoria. Aqui está o passo a passo, o <b>medo do cartão resolvido</b> e a solução dos erros que mais pegam a turma.</p>
+
+        <div class="callout anima" style="--i:3">
+          <h4><span class="sq"></span> O medo do cartão de crédito, resolvido</h4>
+          <ul>
+            <li>O Google <b>pede um cartão</b> só pra ativar o faturamento da conta. É padrão, não é golpe.</li>
+            <li>Ele <b>não cobra na hora</b>. Você ganha um crédito de cortesia e ainda tem uma <b>cota grátis todo mês</b>.</li>
+            <li>O uso do Orion fica <b>tranquilamente dentro do grátis</b>. Você não faz nem perto de mil consultas por mês. Na prática, não paga nada.</li>
+            <li>Não tem cartão de crédito? Funciona com <b>débito</b>, ou peça ao banco um <b>cartão virtual</b> com saldo zerado só pra o cadastro.</li>
+            <li>E mesmo que passasse do limite: fechou <b>um</b> cliente com a ferramenta, ela já se pagou muitas vezes.</li>
+          </ul>
+          <p class="fecho">Cadastra o cartão sem medo. É pra liberar o acesso, não pra cobrar.</p>
+        </div>
+
+        <div class="acoes anima" style="--i:4">
+          <a class="btn btn-solid" href="/" target="_top" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            Abrir o Orion
+          </a>
+          <button class="btn btn-ghost dl" type="button"
+                  data-zip-base=""
+                  data-zip-files="_GUIA-configurar-orion.md"
+                  data-zip-name="setup-orion-devemdobro.zip"
+                  data-zip-folder="setup-orion">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            <span class="dl-txt">Baixar o guia em .zip</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============ PASSO A PASSO ============ -->
+      <div class="sec-titulo reveal"><span class="sq"></span><h2>Passo a passo</h2></div>
+      <p class="lead reveal" style="max-width:66ch;font-size:1rem">A chave dá acesso a duas APIs: <b>Places API (New)</b> (busca os negócios) e <b>PageSpeed Insights</b> (diagnóstico de site lento). Faça na ordem.</p>
+
+      <div class="passos">
+
+        <div class="passo reveal" style="--i:0">
+          <div>
+            <h3>Entre no Google Cloud Console</h3>
+            <p>Acesse <a class="lnk" href="https://console.cloud.google.com" rel="noopener">console.cloud.google.com</a> e faça login com sua conta Google (seu Gmail normal já serve).</p>
+          </div>
+        </div>
+
+        <div class="passo reveal" style="--i:1">
+          <div>
+            <h3>Crie um projeto</h3>
+            <p>No topo, clique no seletor de projetos e em <b>"Novo projeto"</b>. Dê um nome (ex.: <code>orion-leads</code>), crie e selecione esse projeto.</p>
+          </div>
+        </div>
+
+        <div class="passo reveal" style="--i:2">
+          <div>
+            <h3>Ative o faturamento (billing)</h3>
+            <p>No menu, vá em <b>Faturamento</b> e vincule uma forma de pagamento (o cartão de que falamos acima). Sem isso, a busca não funciona. Lembre: é só pra liberar, não cobra.</p>
+          </div>
+        </div>
+
+        <div class="passo reveal" style="--i:3">
+          <div>
+            <h3>Ative as 2 APIs que o Orion usa</h3>
+            <p>Com o projeto certo selecionado, abra cada link e clique em <b>"Ativar"</b>:</p>
+            <p style="margin-top:8px">&bull; <b>Places API (New):</b> <a class="lnk" href="https://console.cloud.google.com/apis/library/places.googleapis.com" rel="noopener">console.cloud.google.com/apis/library/places.googleapis.com</a><br>
+            &bull; <b>PageSpeed Insights API:</b> <a class="lnk" href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" rel="noopener">console.cloud.google.com/apis/library/pagespeedonline.googleapis.com</a></p>
+            <p class="nota">É a Places API <b>(New)</b>, a versão nova. Ative exatamente essa.</p>
+          </div>
+        </div>
+
+        <div class="passo reveal" style="--i:4">
+          <div>
+            <h3>Crie a chave de API</h3>
+            <p>Vá em <b>APIs e serviços &rsaquo; Credenciais &rsaquo; Criar credenciais &rsaquo; Chave de API</b>. O Google gera um código comprido: essa é a sua chave. <b>Copie e guarde.</b></p>
+          </div>
+        </div>
+
+        <div class="passo reveal" style="--i:5">
+          <div>
+            <h3>(Opcional) Restrinja a chave com cuidado</h3>
+            <p>Se quiser restringir, em <b>Restrições de API</b> marque <b>as duas</b>: Places API (New) e PageSpeed Insights. Se esquecer uma, o Orion quebra.</p>
+            <p class="nota">Na dúvida, deixe sem restrição pra testar, e restrinja depois que estiver funcionando.</p>
+          </div>
+        </div>
+
+        <div class="passo reveal" style="--i:6">
+          <div>
+            <h3>Cole no Orion e teste</h3>
+            <p>Abra o Orion, vá na configuração da chave, cole e clique em <b>testar</b>. Passou? Já pode buscar seus primeiros leads e sair da aula com abordagens enviadas.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============ ERROS COMUNS ============ -->
+      <div class="sec-titulo reveal"><span class="sq"></span><h2>Deu erro? Os 4 mais comuns</h2></div>
+      <div class="erros">
+
+        <div class="erro reveal" style="--i:0">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg> "Serviço negado" / REQUEST_DENIED</h3>
+          <p>A API não foi ativada, ou o faturamento não está ligado. Confirme os passos <b>3 e 4</b> (as duas APIs ativadas + faturamento vinculado), espere 2 ou 3 minutos e teste de novo.</p>
+        </div>
+
+        <div class="erro reveal" style="--i:1">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg> A chave nova não funciona na hora</h3>
+          <p>A ativação leva alguns minutos pra propagar no Google. <b>Espere um pouco e teste de novo.</b> Muita gente resolveu só tentando pela segunda vez.</p>
+        </div>
+
+        <div class="erro reveal" style="--i:2">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg> Continua dando erro de permissão</h3>
+          <p>Confira se ativou a <b>Places API (New)</b> (a nova), e não a antiga. Ative a nova e teste de novo.</p>
+        </div>
+
+        <div class="erro reveal" style="--i:3">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg> Restrições bloqueando</h3>
+          <p>Se você restringiu a chave, garanta que <b>as duas APIs</b> estão nas permitidas. Se restringiu por site/IP, remova a restrição pra testar.</p>
+        </div>
+
+      </div>
+
+      <p class="lead reveal" style="max-width:66ch;font-size:1rem;margin-top:26px">Ainda travou? Manda um print do erro no grupo. A gente destrava rápido.</p>
+
+      <footer class="rod">
+        <strong>Arsenal Dev em Dobro &middot; Consultoria Freela.</strong> Depois de configurar, comece o dia pelo <a href="/entregaveis" target="_top">Orion</a>: prospecte ~100 leads e combine com os <a href="../06-SCRIPTS-VENDA/index.html">scripts de venda</a> pra já sair abordando. Padrão de marca: fonte Ubuntu, copy sem travessão.
+      </footer>
+
+    </div>
+  </div>
+
+  <script src="../_lib/jszip.min.js"></script>
+  <script src="../_lib/baixar-zip.js"></script>
+  <script>
+    (function(){
+      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var alvos = document.querySelectorAll('.reveal');
+      function mostrarTodos(){ for(var i=0;i<alvos.length;i++) alvos[i].classList.add('visivel'); }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.body.classList.add('carregado'); }); });
+      if(reduz || !('IntersectionObserver' in window)){
+        mostrarTodos();
+      }else{
+        var obs = new IntersectionObserver(function(entradas){
+          entradas.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visivel'); obs.unobserve(e.target); } });
+        }, {threshold:0.08, rootMargin:'0px 0px -4% 0px'});
+        for(var j=0;j<alvos.length;j++) obs.observe(alvos[j]);
+      }
+    })();
+  </script>
+</body>
+</html>

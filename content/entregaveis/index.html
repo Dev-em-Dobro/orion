@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<!--
+  CENTRAL DE ENTREGAVEIS - Consultoria Freela (Dev em Dobro)
+  Pagina-hub que reune TUDO que o aluno recebe. Cada card abre o entregavel.
+  Self-contained: so depende da fonte Ubuntu (Google Fonts). Sem build, sem dependencia.
+
+  COMO MANTER:
+  - Disponivel agora  -> cards <a class="card"> na grade .grade-now
+  - Orion Lead Hunter -> secao .orion (TROCAR o href do botao pelo link real quando existir)
+  - Em breve          -> cards <div class="card soon"> na grade .grade-soon
+  Padrao de marca: fonte Ubuntu, copy sem travessao/em-dash.
+-->
+<html lang="pt-BR" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Central de Entregáveis | Consultoria Freela (Dev em Dobro)</title>
+  <meta name="description" content="Tudo o que você recebe na Consultoria Freela num lugar só: sites prontos, biblioteca de prompts, agentes de WhatsApp, portfólio e a máquina de prospecção Orion.">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="robots" content="noindex, nofollow">
+  <script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232bd576'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg:#0b0d10; --bg2:#0f1216;
+      --card:#14181e; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+      --text:#f3f5f8; --muted:#9aa4b0; --muted2:#6f7883;
+      --accent:#2bd576; --accent-esc:#1fae5f;
+      --maxw:1180px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:Ubuntu,system-ui,Segoe UI,Roboto,sans-serif;
+      line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    svg{display:block}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+    /* fundo com brilho suave no topo */
+    .glow{
+      position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:
+        radial-gradient(1100px 520px at 78% -8%, rgba(43,213,118,.16), transparent 60%),
+        radial-gradient(900px 500px at 8% -12%, rgba(56,120,255,.10), transparent 55%);
+    }
+    .page{position:relative;z-index:1}
+
+    /* topo */
+    header.top{padding:26px 0 6px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
+    .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+    .brand small{color:var(--muted);font-weight:400;letter-spacing:.3px}
+
+    /* hero */
+    .hero{padding:52px 0 26px}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:9px;
+      font-size:.78rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;
+      color:var(--accent);
+      border:1px solid var(--line2);border-radius:999px;padding:7px 15px;margin-bottom:22px;
+    }
+    .eyebrow .pin{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+    h1{
+      font-size:clamp(2.1rem,5.4vw,3.6rem);line-height:1.08;margin:0 0 18px;font-weight:700;
+      letter-spacing:-.5px;max-width:18ch;
+    }
+    h1 .hl{color:var(--accent)}
+    .lead{font-size:clamp(1.02rem,1.7vw,1.2rem);color:var(--muted);max-width:62ch;margin:0}
+    .stats{display:flex;flex-wrap:wrap;gap:14px 34px;margin-top:30px}
+    .stat b{display:block;font-size:1.7rem;line-height:1;color:var(--text)}
+    .stat span{color:var(--muted2);font-size:.9rem}
+
+    /* titulo de secao */
+    .sec-titulo{
+      display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+      margin:48px 0 20px;flex-wrap:wrap;
+    }
+    .sec-titulo h2{font-size:1.35rem;margin:0;font-weight:500}
+    .sec-titulo .hint{color:var(--muted2);font-size:.92rem}
+
+    /* grade de cards */
+    .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+    .card{
+      display:flex;flex-direction:column;position:relative;
+      background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;
+      padding:24px 22px 22px;min-height:210px;
+      transition:transform .35s cubic-bezier(0.16,1,0.3,1),border-color .35s,box-shadow .35s;
+      will-change:transform;
+    }
+    .card::before{
+      content:"";position:absolute;top:0;left:0;right:0;height:3px;z-index:2;
+      background:var(--c,var(--accent));opacity:.9;
+    }
+    .ico{
+      width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      background:color-mix(in srgb, var(--c,var(--accent)) 16%, transparent);
+      color:var(--c,var(--accent));margin-bottom:16px;flex:0 0 auto;
+    }
+    .ico svg{width:24px;height:24px}
+    .kicker{display:flex;align-items:center;gap:8px;font-size:.74rem;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted2);margin-bottom:9px}
+    .kicker .sq{width:8px;height:8px;border-radius:2px;background:var(--c,var(--accent))}
+    .card h3{font-size:1.2rem;margin:0 0 7px;font-weight:500}
+    .card p{margin:0 0 18px;color:var(--muted);font-size:.94rem;flex:1}
+    .ver{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;font-weight:500;color:var(--text)}
+    .ver .arw{transition:transform .3s}
+    a.card:hover{transform:translateY(-6px);border-color:var(--line2);box-shadow:0 18px 44px -20px rgba(0,0,0,.75)}
+    a.card:hover .ver{color:var(--c,var(--accent))}
+    a.card:hover .ver .arw{transform:translateX(4px)}
+    a.card:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+
+    /* card com acoes (ex.: portfolio): mesmo hover do card-link, mas com botao de download */
+    .card--actions:hover{transform:translateY(-6px);border-color:var(--line2);box-shadow:0 18px 44px -20px rgba(0,0,0,.75)}
+    .card--actions:hover .ver{color:var(--c,var(--accent))}
+    .card--actions:hover .ver .arw{transform:translateX(4px)}
+    .card-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto}
+    .card-actions .ver{margin:0}
+    .ver:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:5px}
+    .dl{
+      display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+      font-family:inherit;font-size:.82rem;font-weight:500;color:var(--text);line-height:1;
+      background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:10px;
+      padding:9px 13px;min-height:38px;
+      transition:background .25s,border-color .25s,color .25s,transform .15s;
+    }
+    .dl svg{width:15px;height:15px;flex:0 0 auto}
+    .dl:hover{background:color-mix(in srgb, var(--c,var(--accent)) 18%, transparent);border-color:var(--c,var(--accent))}
+    .dl:active{transform:translateY(1px)}
+    .dl:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+    .dl[disabled]{opacity:.65;cursor:progress}
+    .dl.ok{border-color:var(--accent);color:var(--accent)}
+    .dl.err{border-color:#ef4444;color:#ef4444}
+    .tag{
+      position:absolute;top:16px;right:16px;font-size:.68rem;font-weight:500;letter-spacing:.6px;
+      text-transform:uppercase;padding:4px 10px;border-radius:999px;
+      background:color-mix(in srgb, var(--c,var(--accent)) 18%, transparent);color:var(--c,var(--accent));
+    }
+
+    /* em breve */
+    .card.soon{opacity:.62;cursor:default}
+    .card.soon::before{opacity:.4}
+    .card.soon .ico{background:rgba(255,255,255,.05);color:var(--muted2)}
+    .card.soon .tag{background:rgba(255,255,255,.07);color:var(--muted)}
+    .card.soon .ver{color:var(--muted2)}
+
+    /* secao Orion (destaque) */
+    .orion{
+      margin-top:22px;padding:34px 32px;border:1px solid var(--line2);border-radius:22px;
+      background:
+        radial-gradient(700px 300px at 88% -30%, rgba(43,213,118,.18), transparent 62%),
+        linear-gradient(180deg, rgba(43,213,118,.08), rgba(43,213,118,.015));
+      display:grid;grid-template-columns:1.5fr 1fr;gap:30px;align-items:center;
+    }
+    .orion .ico{width:54px;height:54px;background:rgba(43,213,118,.16);color:var(--accent)}
+    .orion .ico svg{width:28px;height:28px}
+    .orion h3{margin:0 0 10px;font-size:clamp(1.4rem,2.6vw,1.9rem);font-weight:700;letter-spacing:-.3px}
+    .orion p{margin:0 0 4px;color:var(--muted);max-width:52ch}
+    .orion ul{margin:14px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px 10px}
+    .orion li{font-size:.82rem;color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+    .orion-cta{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+    .btn{
+      display:inline-flex;align-items:center;gap:10px;
+      background:var(--accent);color:#06210f;font-weight:700;
+      padding:15px 26px;border-radius:13px;font-size:1.02rem;min-height:48px;
+      transition:transform .25s,box-shadow .25s;
+    }
+    .btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px -12px rgba(43,213,118,.6)}
+    .btn svg{width:18px;height:18px}
+    .orion-nota{font-size:.82rem;color:var(--muted2);max-width:34ch}
+
+    footer.rod{border-top:1px solid var(--line);margin-top:48px;padding:26px 0 44px;color:var(--muted2);font-size:.86rem}
+    footer.rod strong{color:var(--muted);font-weight:500}
+
+    /* animacao de entrada */
+    html.js .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 70ms)}
+    html.js .reveal.visivel{opacity:1;transform:none}
+    html.js .hero .anima{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 90ms)}
+    html.js body.carregado .hero .anima{opacity:1;transform:none}
+
+    @media (prefers-reduced-motion: reduce){
+      html.js .reveal,html.js .hero .anima{opacity:1 !important;transform:none !important;transition:none !important}
+      .card,.ver .arw,.btn{transition:none !important}
+    }
+    @media (max-width:760px){
+      .orion{grid-template-columns:1fr;padding:28px 24px}
+    }
+    @media (max-width:560px){
+      .hero{padding:38px 0 22px}
+    }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="page">
+    <div class="wrap">
+
+      <header class="top">
+        <div class="brand"><span class="dot"></span> DEV EM DOBRO <small>&nbsp;/ Consultoria Freela</small></div>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow anima" style="--i:0"><span class="pin"></span> Central de entregáveis</span>
+        <h1 class="anima" style="--i:1">Tudo o que você recebe, <span class="hl">num lugar só</span>.</h1>
+        <p class="lead anima" style="--i:2">Seu arsenal completo da Consultoria Freela: sites prontos pra entregar, prompts que geram qualquer outro, seu portfólio, scripts de venda pra cada etapa e a máquina de prospecção. Comece pela máquina de leads, escolha um site e chegue no cliente com resultado na mão e a mensagem certa.</p>
+        <div class="stats anima" style="--i:3">
+          <div class="stat"><b>8</b><span>kits prontos pra usar</span></div>
+          <div class="stat"><b>27</b><span>scripts de venda prontos</span></div>
+          <div class="stat"><b>1</b><span>máquina de prospecção</span></div>
+          <div class="stat"><b>+3</b><span>chegando nas próximas semanas</span></div>
+        </div>
+      </section>
+
+      <!-- ============ DISPONIVEL AGORA ============ -->
+      <div class="sec-titulo reveal" style="--i:0">
+        <h2>Disponível agora</h2>
+        <span class="hint">clique pra abrir cada entregável</span>
+      </div>
+
+      <section class="grade">
+
+        <a class="card reveal" style="--c:#2bd576;--i:0" href="01-SITES-PRONTOS/index.html">
+          <span class="tag">12 templates</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="15" rx="2"/><path d="M3 9h18"/><circle cx="6" cy="6.5" r=".6" fill="currentColor" stroke="none"/><circle cx="8.2" cy="6.5" r=".6" fill="currentColor" stroke="none"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Sites prontos</div>
+          <h3>Arsenal de sites</h3>
+          <p>12 sites completos por nicho (odonto, advocacia, barbearia, academia e mais). Abre, troca os dados do cliente e publica em minutos.</p>
+          <span class="ver">Ver a galeria <span class="arw">&rarr;</span></span>
+        </a>
+
+        <a class="card reveal" style="--c:#8b5cf6;--i:1" href="02-PROMPTS/index.html">
+          <span class="tag">5 prompts</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><path d="M18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Biblioteca de prompts</div>
+          <h3>Gere qualquer site</h3>
+          <p>O nicho do cliente não está na galeria? O prompt-mestre gera um site novo do zero, no mesmo padrão. Mais 4 prompts de apoio (copy, captura, performance).</p>
+          <span class="ver">Abrir a biblioteca <span class="arw">&rarr;</span></span>
+        </a>
+
+        <article class="card card--actions reveal" style="--c:#f5b301;--i:3">
+          <span class="tag">seu cartão</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Portfólio</div>
+          <h3>Seu portfólio pronto</h3>
+          <p>Página pronta pra você mostrar nas abordagens e passar autoridade. Troca nome, cidade e WhatsApp, publica no GitHub Pages e já chega com prova.</p>
+          <div class="card-actions">
+            <a class="ver" href="04-PORTFOLIO/index.html">Abrir o portfólio <span class="arw">&rarr;</span></a>
+            <button class="dl" type="button" data-zip-base="04-PORTFOLIO/" data-zip-files="index.html,_GUIA-personalizar.md,_GUIA-publicar-github-pages.md" data-zip-name="meu-portfolio.zip" data-zip-folder="meu-portfolio">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              <span class="dl-txt">Baixar .zip</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="card card--actions reveal" style="--c:#3b82f6;--i:4">
+          <span class="tag">te protege</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Modelo de contrato</div>
+          <h3>Feche o freela seguro</h3>
+          <p>Contrato pronto pra projetos simples: sinal de 30% pra começar, 60 dias de garantia grátis e tudo fora do escopo cobrado à parte. Preencha, gere o PDF e assine.</p>
+          <div class="card-actions">
+            <a class="ver" href="05-CONTRATO/index.html">Abrir o contrato <span class="arw">&rarr;</span></a>
+            <button class="dl" type="button" data-zip-base="05-CONTRATO/" data-zip-files="contrato-desenvolvimento.md,_GUIA-como-usar.md" data-zip-name="contrato-freela-devemdobro.zip" data-zip-folder="contrato-freela">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              <span class="dl-txt">Baixar .zip</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="card card--actions reveal" style="--c:#f97316;--i:5">
+          <span class="tag">27 scripts</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Scripts de venda</div>
+          <h3>Nunca mais trave</h3>
+          <p>Do primeiro "oi" ao contrato assinado: abertura pra lista quente e fria, follow-up, diagnóstico, preço, quebra de objeção e fechamento. Copia, troca os dados e manda.</p>
+          <div class="card-actions">
+            <a class="ver" href="06-SCRIPTS-VENDA/index.html">Abrir os scripts <span class="arw">&rarr;</span></a>
+            <button class="dl" type="button" data-zip-base="06-SCRIPTS-VENDA/" data-zip-files="scripts-de-venda.md,_GUIA-como-usar.md" data-zip-name="scripts-de-venda-devemdobro.zip" data-zip-folder="scripts-de-venda">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              <span class="dl-txt">Baixar .zip</span>
+            </button>
+          </div>
+        </article>
+
+        <a class="card reveal" style="--c:#06b6d4;--i:6" href="07-SETUP-ORION/index.html">
+          <span class="tag">passo a passo</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Setup do Orion</div>
+          <h3>Configure o Orion</h3>
+          <p>O guia que destrava a chave de API do Google (Places e PageSpeed). Com o medo do cartão resolvido e a solução dos erros que mais pegam a turma.</p>
+          <span class="ver">Abrir o guia <span class="arw">&rarr;</span></span>
+        </a>
+
+        <article class="card card--actions reveal" style="--c:#ec4899;--i:7">
+          <span class="tag">9 seções</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Briefing do cliente</div>
+          <h3>Levante tudo antes de codar</h3>
+          <p>O formulário que evita o "não era bem isso". Levanta tudo o que você precisa antes de abrir o editor e vira Google Forms num clique. Fim do retrabalho.</p>
+          <div class="card-actions">
+            <a class="ver" href="08-BRIEFING/index.html">Abrir o briefing <span class="arw">&rarr;</span></a>
+            <button class="dl" type="button" data-zip-base="08-BRIEFING/" data-zip-files="briefing-cliente.md,_GUIA-como-usar.md" data-zip-name="briefing-cliente-devemdobro.zip" data-zip-folder="briefing-cliente">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              <span class="dl-txt">Baixar .zip</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="card card--actions reveal" style="--c:#84cc16;--i:8">
+          <span class="tag">tabela + guia</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9a2.5 2.5 0 0 0-2.3-1.5h-1a2.2 2.2 0 0 0 0 4.4h1a2.2 2.2 0 0 1 0 4.4h-1A2.5 2.5 0 0 1 9.2 15"/><path d="M12 6v1.5M12 16.5V18"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Precificação</div>
+          <h3>Quanto cobrar</h3>
+          <p>Pare de chutar preço. Faixas de referência pra site, landing, bot e manutenção mensal, mais os erros que fazem você se vender barato.</p>
+          <div class="card-actions">
+            <a class="ver" href="09-PRECIFICACAO/index.html">Ver a tabela <span class="arw">&rarr;</span></a>
+            <button class="dl" type="button" data-zip-base="09-PRECIFICACAO/" data-zip-files="tabela-precificacao.md,_GUIA-como-precificar.md" data-zip-name="precificacao-devemdobro.zip" data-zip-folder="precificacao">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              <span class="dl-txt">Baixar .zip</span>
+            </button>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- ============ ORION - LEAD HUNTER ============ -->
+      <div class="sec-titulo reveal" style="--i:0">
+        <h2>A máquina de prospecção</h2>
+        <span class="hint">comece o dia por aqui</span>
+      </div>
+
+      <section class="orion reveal" style="--i:0">
+        <div>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="2.5"/></svg>
+          </div>
+          <h3>Orion &middot; Lead Hunter</h3>
+          <p>A máquina que faz o trabalho chato de garimpar cliente por você. Busca negócios por termo e localização, mostra quem tem site quebrado (ou nenhum) e entrega uma lista de leads pra você abordar com a mensagem já pronta.</p>
+          <ul>
+            <li>Busca por termo + cidade</li>
+            <li>Score de prioridade</li>
+            <li>Telefone e WhatsApp</li>
+            <li>Diagnóstico de site lento</li>
+            <li>Gerar mensagem de abordagem</li>
+          </ul>
+        </div>
+        <div class="orion-cta">
+          <!-- TODO: trocar o href "#" pelo link real do Orion quando o acesso do aluno estiver definido (login/convite). -->
+          <a class="btn" href="/" target="_top" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            Abrir o Orion
+          </a>
+          <span class="orion-nota">O acesso é liberado no Kickoff (login por convite). Prospecte ~100 leads e saia da primeira aula com abordagens enviadas.</span>
+        </div>
+      </section>
+
+      <!-- ============ EM BREVE ============ -->
+      <div class="sec-titulo reveal" style="--i:0">
+        <h2>Em breve</h2>
+        <span class="hint">liberado nas próximas consultorias</span>
+      </div>
+
+      <section class="grade">
+
+        <div class="card soon reveal" style="--c:#38bdf8;--i:0" aria-disabled="true">
+          <span class="tag">Em breve</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Sistema</div>
+          <h3>Modelo de CRM</h3>
+          <p>O CRM que você usa e revende: leads e clientes organizados, com o agente de WhatsApp caindo direto nele. A porta pra recorrência mensal.</p>
+          <span class="ver">Chegando &middot; Consultoria 4</span>
+        </div>
+
+        <div class="card soon reveal" style="--c:#f472b6;--i:1" aria-disabled="true">
+          <span class="tag">Em breve</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Sistema</div>
+          <h3>Modelo de CMS</h3>
+          <p>O painel pra o cliente mesmo editar textos, fotos e cardápio do site sem te chamar. Vira serviço e trava a recorrência.</p>
+          <span class="ver">Chegando &middot; Consultoria 4</span>
+        </div>
+
+        <div class="card soon reveal" style="--c:#22d3a6;--i:2" aria-disabled="true">
+          <span class="tag">Em breve</span>
+          <div class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none"/></svg>
+          </div>
+          <div class="kicker"><span class="sq"></span> Tutorial</div>
+          <h3>Agentes no WhatsApp</h3>
+          <p>Passo a passo pra configurar o agente do zero e conectar no WhatsApp do cliente: da criação no GPT Maker até o número atendendo sozinho.</p>
+          <span class="ver">Chegando &middot; Consultoria 3</span>
+        </div>
+
+      </section>
+
+      <footer class="rod">
+        <strong>Arsenal Dev em Dobro &middot; Consultoria Freela.</strong> Os textos, preços e fotos dos templates são exemplos (PLACEHOLDER): troque pelos dados reais do cliente antes de publicar. Padrão de marca: fonte Ubuntu, copy sem travessão.
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- download de kits em .zip (JSZip vendorado + helper compartilhado) -->
+  <script src="_lib/jszip.min.js"></script>
+  <script src="_lib/baixar-zip.js"></script>
+
+  <script>
+    (function(){
+      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var alvos = document.querySelectorAll('.reveal');
+      function mostrarTodos(){ for(var i=0;i<alvos.length;i++) alvos[i].classList.add('visivel'); }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.body.classList.add('carregado'); }); });
+      if(reduz || !('IntersectionObserver' in window)){ mostrarTodos(); return; }
+      var obs = new IntersectionObserver(function(entradas){
+        entradas.forEach(function(e){
+          if(e.isIntersecting){ e.target.classList.add('visivel'); obs.unobserve(e.target); }
+        });
+      }, {threshold:0.14, rootMargin:'0px 0px -8% 0px'});
+      for(var i=0;i<alvos.length;i++) obs.observe(alvos[i]);
+    })();
+  </script>
+</body>
+</html>

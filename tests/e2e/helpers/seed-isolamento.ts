@@ -34,11 +34,36 @@ async function upsertAluno(params: {
         name: params.name,
         email: params.email,
         emailVerified: true,
+        purchaseEmail: params.email,
+        purchaseVerifiedAt: new Date(),
+        purchaseProductId: process.env.HUBLA_PRODUCT_ID ?? "e2e-product",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     });
+  } else {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        purchaseEmail: params.email,
+        purchaseVerifiedAt: new Date(),
+        purchaseProductId: process.env.HUBLA_PRODUCT_ID ?? "e2e-product",
+      },
+    });
   }
+
+  const productId = process.env.HUBLA_PRODUCT_ID ?? "e2e-product";
+  await prisma.hublaEntitlement.upsert({
+    where: {
+      email_product_id: { email: params.email, product_id: productId },
+    },
+    create: {
+      email: params.email,
+      product_id: productId,
+      status: "ativo",
+    },
+    update: { status: "ativo", revoked_at: null },
+  });
 
   await prisma.session.deleteMany({ where: { userId } });
   await prisma.lead.deleteMany({ where: { user_id: userId } });
@@ -88,9 +113,13 @@ export async function seedIsolamento(): Promise<IsolamentoSeed> {
 }
 
 export async function limparSeed(seed: IsolamentoSeed): Promise<void> {
+  const productId = process.env.HUBLA_PRODUCT_ID ?? "e2e-product";
   for (const u of [seed.alunoA, seed.alunoB]) {
     await prisma.session.deleteMany({ where: { userId: u.id } });
     await prisma.lead.deleteMany({ where: { user_id: u.id } });
+    await prisma.hublaEntitlement.deleteMany({
+      where: { email: u.email, product_id: productId },
+    });
     await prisma.user.deleteMany({ where: { id: u.id } });
   }
 }

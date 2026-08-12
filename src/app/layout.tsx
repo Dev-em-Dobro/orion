@@ -4,6 +4,8 @@ import { AppShell } from "@/components/app-shell";
 import { NOME_PRODUTO } from "@/lib/produto";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 const firaSans = Fira_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],

@@ -19,6 +19,10 @@ const { prismaMock } = vi.hoisted(() => ({
 
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
 
+vi.mock("@/lib/chaves/modo", () => ({
+  obterModoChave: vi.fn().mockResolvedValue("byok"),
+}));
+
 vi.mock("@/lib/places/textSearch", () => ({
   textSearch: vi.fn().mockResolvedValue([{ id: "1", nome: "X" }]),
 }));

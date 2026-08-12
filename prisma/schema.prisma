@@ -131,11 +131,26 @@ enum LlmProvider {
   gemini
 }
 
+enum KeyMode {
+  orion
+  byok
+}
+
+enum QuotaOperacao {
+  coleta
+  proposta
+  outreach
+  simulador_msg
+}
+
 model UserApiKeys {
   id         String   @id @default(cuid())
   user_id    String   @unique
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  // F018 — Orion (chaves do servidor) ou BYOK (chaves do aluno).
+  key_mode KeyMode @default(orion)
 
   // Provedor de IA ativo nas features (F017). Default Anthropic.
   llm_provider LlmProvider @default(anthropic)
@@ -197,6 +212,12 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  // F019.1 — cache de compra Hubla verificada (Builders Club).
+  purchaseEmail       String?
+  purchaseVerifiedAt  DateTime?
+  purchaseProductId   String?
+
   sessions      Session[]
   accounts      Account[]
 
@@ -205,9 +226,58 @@ model User {
   dores          Dor[]
   outreaches     Outreach[]
   apiKeys        UserApiKeys?
+  dailyUsages    DailyUsage[]
 
   @@unique([email])
   @@map("user")
+}
+
+model DailyUsage {
+  id        String         @id @default(cuid())
+  user_id   String
+  data      DateTime       @db.Date
+  operacao  QuotaOperacao
+  contador  Int            @default(0)
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, data, operacao])
+  @@index([user_id, data])
+  @@map("daily_usage")
+}
+
+// F019 — entitlements Hubla (webhook) + idempotência de entrega.
+enum HublaEntitlementStatus {
+  ativo
+  revogado
+}
+
+model HublaEntitlement {
+  id               String                  @id @default(cuid())
+  email            String
+  product_id       String
+  status           HublaEntitlementStatus  @default(ativo)
+  hubla_user_id    String?
+  subscription_id  String?
+  granted_at       DateTime                @default(now())
+  revoked_at       DateTime?
+  created_at       DateTime                @default(now())
+  updated_at       DateTime                @updatedAt
+
+  @@unique([email, product_id])
+  @@index([email])
+  @@index([status])
+  @@map("hubla_entitlement")
+}
+
+model HublaWebhookDelivery {
+  idempotency_key String   @id
+  event_type      String
+  processed_at    DateTime @default(now())
+
+  @@map("hubla_webhook_delivery")
 }
 
 model Session {

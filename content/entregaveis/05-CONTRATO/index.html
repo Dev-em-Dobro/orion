@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<!--
+  MODELO DE CONTRATO - Consultoria Freela (Dev em Dobro)
+  Leitor do contrato de desenvolvimento. Carrega o .md ao vivo (fonte unica de verdade,
+  o mesmo arquivo que vai pra Hubla) e renderiza formatado, com:
+    - "Copiar contrato" (texto inteiro pra colar no Docs/Word)
+    - "Imprimir / Salvar PDF" (window.print + folha de estilo de impressao limpa)
+    - "Baixar .zip" (contrato + guia, via _lib/baixar-zip.js)
+  Self-contained: depende so da fonte Ubuntu + _lib/marked.min.js + _lib/jszip.min.js.
+
+  COMO MANTER:
+  - O texto do contrato vive em contrato-desenvolvimento.md (edite la, nao aqui).
+  - O guia rapido vive em _GUIA-como-usar.md.
+  Padrao de marca: fonte Ubuntu, copy sem travessao/em-dash.
+-->
+<html lang="pt-BR" class="no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modelo de contrato | Consultoria Freela (Dev em Dobro)</title>
+  <meta name="description" content="Modelo de contrato de desenvolvimento de software pronto pra usar: sinal de 30%, 60 dias de manutenção grátis e tudo fora do escopo cobrado à parte. Preencha, gere o PDF e feche seu freela com segurança.">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="robots" content="noindex, nofollow">
+  <script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232bd576'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg:#0b0d10; --bg2:#0f1216;
+      --card:#14181e; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+      --text:#f3f5f8; --muted:#9aa4b0; --muted2:#6f7883;
+      --accent:#2bd576;
+      --c:#3b82f6;                 /* cor do entregavel: contrato (azul) */
+      --code-bg:#0c0f13;
+      --maxw:960px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    body{
+      background:var(--bg);color:var(--text);
+      font-family:Ubuntu,system-ui,Segoe UI,Roboto,sans-serif;line-height:1.6;
+      -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    svg{display:block}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+    .glow{
+      position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:
+        radial-gradient(1100px 520px at 80% -8%, rgba(59,130,246,.14), transparent 60%),
+        radial-gradient(900px 500px at 6% -12%, rgba(43,213,118,.10), transparent 55%);
+    }
+    .page{position:relative;z-index:1}
+
+    /* topo + breadcrumb */
+    header.top{padding:26px 0 6px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px}
+    .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent)}
+    .brand small{color:var(--muted);font-weight:400;letter-spacing:.3px}
+    .voltar{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 15px;transition:border-color .25s,color .25s}
+    .voltar:hover{border-color:var(--line2);color:var(--text)}
+    .voltar svg{width:15px;height:15px}
+
+    /* hero */
+    .hero{padding:46px 0 18px}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:9px;font-size:.78rem;font-weight:500;letter-spacing:2px;
+      text-transform:uppercase;color:var(--c);border:1px solid var(--line2);border-radius:999px;
+      padding:7px 15px;margin-bottom:22px;
+    }
+    .eyebrow .pin{width:6px;height:6px;border-radius:50%;background:var(--c)}
+    h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.08;margin:0 0 18px;font-weight:700;letter-spacing:-.5px;max-width:18ch}
+    h1 .hl{color:var(--c)}
+    .lead{font-size:clamp(1.02rem,1.7vw,1.18rem);color:var(--muted);max-width:64ch;margin:0}
+
+    /* destaques do contrato */
+    .destaques{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:32px 0 6px}
+    .dst{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+    .dst .ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c);margin-bottom:12px}
+    .dst .ic svg{width:20px;height:20px}
+    .dst h4{margin:0 0 5px;font-size:1rem;font-weight:500}
+    .dst p{margin:0;color:var(--muted);font-size:.9rem}
+    .dst b{color:var(--text);font-weight:700}
+
+    /* como usar */
+    .como{margin:26px 0 4px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(59,130,246,.07),rgba(59,130,246,.01))}
+    .como h4{margin:0 0 12px;font-size:1rem;font-weight:500;display:flex;align-items:center;gap:9px}
+    .como h4 .sq{width:9px;height:9px;border-radius:2px;background:var(--c)}
+    .como ol{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:7px}
+    .como li{font-size:.94rem}
+    .como li b{color:var(--text);font-weight:500}
+
+    /* barra de acoes */
+    .acoes{display:flex;flex-wrap:wrap;gap:12px;margin:34px 0 10px;align-items:center}
+    .btn{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-family:inherit;font-size:.95rem;font-weight:500;border-radius:12px;padding:12px 18px;min-height:46px;transition:transform .15s,background .25s,border-color .25s,color .25s,box-shadow .25s}
+    .btn svg{width:17px;height:17px;flex:0 0 auto}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+    .btn-primario{background:var(--c);color:#04122e;border:1px solid transparent;font-weight:700}
+    .btn-primario:hover{box-shadow:0 14px 30px -14px var(--c)}
+    .btn-primario.ok{background:#0f2a18;color:var(--accent);border-color:var(--accent)}
+    .btn-primario.err{background:#2a1414;color:#fca5a5;border-color:#ef4444}
+    .btn-primario[disabled]{opacity:.7;cursor:progress}
+    .btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line2)}
+    .btn-ghost:hover{border-color:var(--c)}
+    .btn-ghost.ok{border-color:var(--accent);color:var(--accent)}
+    .btn-ghost.err{border-color:#ef4444;color:#fca5a5}
+    .btn-ghost[disabled]{opacity:.7;cursor:progress}
+
+    /* documento do contrato */
+    .doc-wrap{margin:14px 0 0;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);position:relative}
+    .doc-wrap::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--c);opacity:.9;z-index:1}
+    .doc-top{display:flex;align-items:center;gap:10px;padding:16px 22px;border-bottom:1px solid var(--line);color:var(--muted2);font-size:.78rem;letter-spacing:1.3px;text-transform:uppercase}
+    .doc-top .sq{width:8px;height:8px;border-radius:2px;background:var(--c)}
+    #contrato-doc{padding:10px 30px 34px}
+
+    .prose{color:var(--text)}
+    .prose>*:first-child{margin-top:16px}
+    .prose h1{font-size:1.6rem;font-weight:700;margin:22px 0 10px;letter-spacing:-.3px;line-height:1.2}
+    .prose h2{font-size:1.16rem;font-weight:700;margin:30px 0 10px;padding-top:16px;border-top:1px solid var(--line);color:var(--text)}
+    .prose h2:first-of-type{border-top:none;padding-top:0}
+    .prose h3{font-size:1.02rem;font-weight:500;margin:22px 0 8px;color:var(--text)}
+    .prose p{margin:0 0 12px;color:var(--muted)}
+    .prose strong{color:var(--text);font-weight:700}
+    .prose a{color:var(--c);text-decoration:underline;text-underline-offset:2px}
+    .prose ul,.prose ol{margin:0 0 14px;padding-left:22px;color:var(--muted)}
+    .prose li{margin:5px 0}
+    .prose blockquote{margin:0 0 18px;padding:14px 18px;border-left:3px solid var(--c);background:rgba(59,130,246,.06);border-radius:0 10px 10px 0}
+    .prose blockquote p{margin:0 0 6px;color:var(--muted)}
+    .prose blockquote p:last-child{margin:0}
+    .prose code{font-family:"Ubuntu Mono",ui-monospace,Consolas,monospace;font-size:.9em;background:color-mix(in srgb,var(--c) 15%,transparent);padding:.12em .42em;border-radius:5px;color:#dbe6ff}
+    .prose hr{border:none;border-top:1px solid var(--line);margin:26px 0}
+    .prose .carregando,.prose .erro{color:var(--muted2);font-style:italic}
+
+    /* nota de ajuda (so na tela, some na impressao) */
+    .prose blockquote.nao-imprimir{background:rgba(255,255,255,.03);border-left-color:var(--muted2)}
+
+    footer.rod{border-top:1px solid var(--line);margin-top:40px;padding:26px 0 44px;color:var(--muted2);font-size:.86rem}
+    footer.rod strong{color:var(--muted);font-weight:500}
+
+    /* animacao de entrada */
+    html.js .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 60ms)}
+    html.js .reveal.visivel{opacity:1;transform:none}
+    html.js .hero .anima{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1);transition-delay:calc(var(--i,0) * 85ms)}
+    html.js body.carregado .hero .anima{opacity:1;transform:none}
+    @media (prefers-reduced-motion: reduce){
+      html.js .reveal,html.js .hero .anima{opacity:1 !important;transform:none !important;transition:none !important}
+      .btn,.voltar{transition:none !important}
+    }
+    @media (max-width:620px){
+      #contrato-doc{padding:6px 18px 26px}
+      .hero{padding:34px 0 16px}
+    }
+
+    /* ============ IMPRESSAO / PDF ============ */
+    @media print{
+      @page{margin:18mm 16mm}
+      html,body{background:#fff !important;color:#000 !important}
+      .glow,header.top,.hero,.destaques,.como,.acoes,footer.rod,.doc-top,.doc-wrap::before{display:none !important}
+      .page,.wrap{max-width:none;margin:0;padding:0}
+      .doc-wrap{border:none;border-radius:0;background:#fff}
+      #contrato-doc{padding:0}
+      .prose{color:#000;font-size:11pt;line-height:1.5}
+      .prose h1{font-size:16pt;color:#000;text-align:center;margin:0 0 6px}
+      .prose h2{font-size:12.5pt;color:#000;border-top:none;padding-top:10px;margin-top:16px;page-break-after:avoid}
+      .prose h3{font-size:11.5pt;color:#000;page-break-after:avoid}
+      .prose p,.prose li{color:#111}
+      .prose strong{color:#000}
+      .prose a{color:#000;text-decoration:none}
+      .prose code{background:#f0f0f0;color:#000;border:1px solid #ddd}
+      .prose hr{border-top:1px solid #bbb;margin:16px 0}
+      .prose blockquote{background:#f6f6f6;border-left:3px solid #888;color:#222;page-break-inside:avoid}
+      .prose blockquote.nao-imprimir{display:none !important}
+      .prose h1,.prose h2,.prose h3{break-after:avoid}
+      .prose ul,.prose ol,.prose blockquote,.prose table{break-inside:avoid}
+    }
+  </style>
+</head>
+<body>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="page">
+    <div class="wrap">
+
+      <header class="top">
+        <div class="brand"><span class="dot"></span> DEV EM DOBRO <small>&nbsp;/ Consultoria Freela</small></div>
+        <a class="voltar" href="/entregaveis" target="_top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          Voltar aos entregáveis
+        </a>
+      </header>
+
+      <section class="hero">
+        <span class="eyebrow anima" style="--i:0"><span class="pin"></span> Modelo de contrato</span>
+        <h1 class="anima" style="--i:1">Feche o freela <span class="hl">com segurança</span>.</h1>
+        <p class="lead anima" style="--i:2">Um contrato simples resolve quase todo problema com cliente: atraso de pagamento, "só mais uma coisinha" e desistência no meio do caminho. Preencha os campos, gere o PDF e assine. Feito para projetos simples de desenvolvimento, já com o combinado que te protege.</p>
+
+        <div class="destaques anima" style="--i:3">
+          <div class="dst">
+            <div class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M3 11h18"/><path d="M7 15h4"/></svg></div>
+            <h4>Sinal de 30%</h4>
+            <p><b>Pago na assinatura.</b> Sinal na conta, projeto começa. Você não trabalha na esperança.</p>
+          </div>
+          <div class="dst">
+            <div class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 4.4-3 7.7-7 9-4-1.3-7-4.6-7-9V7l7-4z"/><path d="M9 12l2 2 4-4"/></svg></div>
+            <h4>60 dias de garantia</h4>
+            <p><b>Manutenção corretiva grátis.</b> Corrige bug do que foi entregue. Depois disso, é cobrado.</p>
+          </div>
+          <div class="dst">
+            <div class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+            <h4>Fora do escopo, cobra</h4>
+            <p><b>Pedido novo, orçamento novo.</b> Tudo que não está no Anexo I é serviço à parte.</p>
+          </div>
+          <div class="dst">
+            <div class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div>
+            <h4>Aceite automático</h4>
+            <p><b>Cliente sumiu?</b> Passado o prazo de revisão, a entrega é dada como aprovada.</p>
+          </div>
+        </div>
+
+        <div class="como anima" style="--i:4">
+          <h4><span class="sq"></span> Como usar em 5 passos</h4>
+          <ol>
+            <li><b>Preencha</b> tudo que está entre <code>[COLCHETES]</code> com os dados reais.</li>
+            <li><b>Capriche no Anexo I:</b> é onde você define o que entra e o que fica de fora.</li>
+            <li><b>Gere o PDF</b> no botão abaixo, ou copie o texto e cole no Google Docs / Word.</li>
+            <li><b>Assine</b> nas duas vias (ou por app: Gov.br, Autentique, Clicksign). Assinatura digital vale.</li>
+            <li><b>Cobre o sinal de 30% antes de começar.</b> Sinal pago = projeto começa.</li>
+          </ol>
+        </div>
+      </section>
+
+      <div class="acoes reveal" style="--i:0">
+        <button class="btn btn-primario" type="button" id="btn-imprimir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7" rx="1"/></svg>
+          <span class="t">Imprimir / Salvar PDF</span>
+        </button>
+        <button class="btn btn-ghost" type="button" id="btn-copiar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          <span class="t">Copiar contrato</span>
+        </button>
+        <button class="btn btn-ghost dl" type="button"
+                data-zip-base=""
+                data-zip-files="contrato-desenvolvimento.md,_GUIA-como-usar.md"
+                data-zip-name="contrato-freela-devemdobro.zip"
+                data-zip-folder="contrato-freela">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          <span class="dl-txt">Baixar .zip</span>
+        </button>
+      </div>
+
+      <main class="doc-wrap reveal" style="--i:1">
+        <div class="doc-top"><span class="sq"></span> Contrato &middot; pronto pra preencher</div>
+        <div id="contrato-doc">
+          <div class="prose" data-prose><p class="carregando">Carregando o contrato…</p></div>
+        </div>
+      </main>
+
+      <footer class="rod">
+        <strong>Arsenal Dev em Dobro &middot; Consultoria Freela.</strong> Este é um modelo de referência para projetos simples e não substitui a orientação de um advogado. Para projetos grandes ou valores altos, peça a um profissional do Direito para revisar. Padrão de marca: fonte Ubuntu, copy sem travessão.
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- renderer de markdown + compactador de zip (vendorados) -->
+  <script src="../_lib/marked.min.js"></script>
+  <script src="../_lib/jszip.min.js"></script>
+  <script src="../_lib/baixar-zip.js"></script>
+
+  <script>
+    (function(){
+      var ARQ = 'contrato-desenvolvimento.md';
+
+      /* ---------- animacao de entrada ---------- */
+      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var alvos = document.querySelectorAll('.reveal');
+      function mostrarTodos(){ for(var i=0;i<alvos.length;i++) alvos[i].classList.add('visivel'); }
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.body.classList.add('carregado'); }); });
+      if(reduz || !('IntersectionObserver' in window)){
+        mostrarTodos();
+      }else{
+        var obs = new IntersectionObserver(function(entradas){
+          entradas.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visivel'); obs.unobserve(e.target); } });
+        }, {threshold:0.10, rootMargin:'0px 0px -4% 0px'});
+        for(var j=0;j<alvos.length;j++) obs.observe(alvos[j]);
+      }
+
+      /* ---------- carregar e renderizar o contrato ---------- */
+      var textoBruto = null;
+      var prose = document.querySelector('[data-prose]');
+
+      function copiar(texto){
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          return navigator.clipboard.writeText(texto);
+        }
+        return new Promise(function(res, rej){
+          try{
+            var ta = document.createElement('textarea');
+            ta.value = texto; ta.setAttribute('readonly','');
+            ta.style.position = 'fixed'; ta.style.left = '-9999px';
+            document.body.appendChild(ta); ta.select();
+            var ok = document.execCommand('copy'); ta.remove();
+            ok ? res() : rej(new Error('execCommand falhou'));
+          }catch(e){ rej(e); }
+        });
+      }
+      function flash(btn, ok, rotuloOk, rotuloErr){
+        var t = btn.querySelector('.t'); var orig = t ? t.textContent : '';
+        btn.classList.remove('ok','err'); btn.classList.add(ok ? 'ok' : 'err');
+        if(t) t.textContent = ok ? (rotuloOk || 'Copiado ✓') : (rotuloErr || 'Copie manualmente');
+        setTimeout(function(){ btn.classList.remove('ok','err'); if(t) t.textContent = orig; }, 2300);
+      }
+
+      fetch(ARQ, {cache:'no-store'})
+        .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(function(md){
+          textoBruto = md;
+          if(window.marked && marked.parse){
+            prose.innerHTML = marked.parse(md);
+            // a 1a nota ("como preencher") e ajuda de tela: some na impressao
+            var bq = prose.querySelector('blockquote');
+            if(bq) bq.classList.add('nao-imprimir');
+          }else{
+            var pre = document.createElement('pre'); var code = document.createElement('code');
+            code.textContent = md; pre.appendChild(code); prose.innerHTML=''; prose.appendChild(pre);
+          }
+        })
+        .catch(function(err){
+          console.error('[contrato]', err);
+          prose.innerHTML = '<p class="erro">Não consegui carregar o contrato. Atualize a página ou baixe o .zip.</p>';
+        });
+
+      /* ---------- acoes ---------- */
+      document.getElementById('btn-imprimir').addEventListener('click', function(){ window.print(); });
+
+      document.getElementById('btn-copiar').addEventListener('click', function(){
+        var btn = this;
+        var texto = textoBruto || (prose ? prose.innerText : '');
+        if(!texto){ flash(btn, false); return; }
+        btn.disabled = true;
+        copiar(texto).then(
+          function(){ flash(btn, true, 'Copiado ✓'); },
+          function(){ flash(btn, false); }
+        ).then(function(){ btn.disabled = false; });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -16,7 +16,7 @@ Doc oficial: https://developers.google.com/maps/documentation/places/web-service
 ```
 Content-Type: application/json
 X-Goog-Api-Key: <chave>
-X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.primaryType,places.types,places.rating,places.userRatingCount
+X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.primaryType,places.types,places.rating,places.userRatingCount,nextPageToken
 ```
 
 > `places.rating` e `places.userRatingCount` (adicionados na F003 como sinal
@@ -43,9 +43,14 @@ X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.na
   "textQuery": "barbearia em Curitiba PR",
   "languageCode": "pt-BR",
   "regionCode": "BR",
-  "maxResultCount": 20
+  "maxResultCount": 20,
+  "pageToken": "<opcional — próxima página>"
 }
 ```
+
+`maxResultCount` máximo da API é **20** por request. Para trazer mais
+estabelecimentos, a lib segue `nextPageToken` (até
+`PLACES_MAX_PAGES` em `textSearch.ts`).
 
 ### Resposta (sucesso 200)
 ```json
@@ -62,9 +67,12 @@ X-Goog-FieldMask: places.id,places.displayName,places.formattedAddress,places.na
       "rating": 4.7,
       "userRatingCount": 128
     }
-  ]
+  ],
+  "nextPageToken": "..."
 }
 ```
+
+Incluir `nextPageToken` no `X-Goog-FieldMask` (campo de topo, não sob `places.`).
 
 Campos `nationalPhoneNumber` e `websiteUri` podem estar **ausentes**
 (não vêm como `null`, simplesmente não aparecem no objeto).
@@ -112,7 +120,10 @@ A Server Action consome esse tipo, **não** o JSON cru do Google.
   re-diagnósticos de Leads antigos; se isso virar caso real, adicionar
   aqui por spec.
 - **Nearby Search** (`places:searchNearby`) — não usado na F001.
-- **Paginação** (`pageToken`) — não usado na F001.
 - **Reviews** (`reviews` no Place Details) — possível insumo da Dor
   `SEM_RESPOSTA_REVIEWS`; exigirá atualização deste contrato (FieldMask
   e SKU próprios).
+
+## Paginação
+Usada na F001: `textSearch` itera `nextPageToken` até esgotar ou atingir
+o teto `PLACES_MAX_PAGES` (custo/latência na coleta síncrona Orion).

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  TROCAR: pontos de troca rapida deste template (barbearia)
+  1.  NOME do negocio: busque "Barbearia Norte"
+      (title, meta description, Open Graph, topo, sobre, rodape,
+      aria-label do botao flutuante e a mensagem do ?text=)
+  2.  WHATSAPP: busque "5531999990003" e troque em TODOS os
+      links wa.me, inclusive a mensagem pronta no ?text=
+  3.  COR da marca: variavel - -cor-marca no :root
+      (e as variantes - -cor-marca-clara e - -cor-marca-escura)
+  4.  HEADLINE: o h1 do hero e a linha de apoio logo abaixo
+  5.  SERVICOS E PRECOS: cards da secao #servicos,
+      trocar cada [PLACEHOLDER: R$]
+  6.  HORARIOS: tabela da secao #local,
+      trocar cada [PLACEHOLDER: horario]
+  7.  ENDERECO e link do Google Maps: secao #local e rodape
+  8.  FOTOS: blocos [PLACEHOLDER: foto ...] da galeria
+  9.  DEPOIMENTOS: os 3 [PLACEHOLDER: trocar por depoimento real]
+      e os 3 [PLACEHOLDER: nome do cliente]
+  10. TITLE e META DESCRIPTION: servico + cidade do cliente
+  11. RODAPE: Instagram e CNPJ (placeholders)
+  Obs: nos itens acima as variaveis CSS aparecem com espaco
+  entre os tracos so por causa da sintaxe de comentario HTML.
+  No CSS elas sao dois tracos seguidos, sem espaco.
+  ============================================================
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barbearia Norte | Corte e barba com hora marcada na Savassi, Belo Horizonte</title>
+  <meta name="description" content="Corte e barba com hora marcada na Savassi, Belo Horizonte. Agende pelo WhatsApp, chegue no horário certo e saia com o visual em dia, sem fila.">
+  <meta property="og:title" content="Barbearia Norte | Corte e barba com hora marcada na Savassi">
+  <meta property="og:description" content="Agende pelo WhatsApp e chegue direto pra cadeira. Corte, barba e combo na Savassi, Belo Horizonte.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta name="theme-color" content="#B45309">
+  <!-- Fallback sem JS: marca o html como "js" o quanto antes; o estado escondido da animação só vale sob html.js -->
+  <script>document.documentElement.className+=" js";</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cor-marca: #B45309;        /* ambar da marca */
+      --cor-marca-escura: #8a3f06; /* hover e gradientes */
+      --cor-marca-clara: #F59E0B;  /* acento sobre fundo escuro (contraste AA) */
+      --cor-marca-texto: #92400e;  /* ambar escuro para texto pequeno em fundo claro (AA) */
+      --fundo-escuro: #141414;     /* fundo do hero */
+      --fundo-alt: #faf6ef;        /* fundo alternado das secoes */
+      --texto: #1a1a1a;
+      --texto-suave: #4d4d4d;      /* secundario em fundo claro (AA) */
+      --texto-claro: #f5f5f4;      /* texto principal no hero */
+      --texto-claro-suave: #cfcfcf;/* secundario no hero (AA) */
+      --borda: #e8e1d5;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition: none !important; }
+    }
+
+    body {
+      font-family: 'Ubuntu', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      color: var(--texto);
+      background: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: min(1120px, 100% - 40px);
+      margin-inline: auto;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--cor-marca);
+      outline-offset: 3px;
+    }
+    .hero :focus-visible { outline-color: var(--cor-marca-clara); }
+    .zap-flutuante:focus-visible { outline-color: var(--texto); }
+
+    /* ============================================================
+       ANIMAÇÃO DE ENTRADA
+       - Anima SÓ transform e opacity (roda a 60fps, sem layout shift).
+       - Estado escondido só existe sob html.js: sem JS, nada fica invisível.
+       - Blocos abaixo do hero recebem a classe "visivel" via IntersectionObserver.
+       - Hero anima no load (classe "carregado" no body via JS).
+       - Stagger por --i (índice do item na seção), 80ms entre itens.
+       ============================================================ */
+    html.js .anima {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .6s cubic-bezier(0.16, 1, 0.3, 1), transform .6s cubic-bezier(0.16, 1, 0.3, 1);
+      transition-delay: calc(var(--i, 0) * 80ms);
+      will-change: opacity, transform;
+    }
+    html.js .anima.visivel {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Hero: parte de um estado já pintado e legível; anima no load, não segura o LCP */
+    html.js .hero .anima {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity .55s cubic-bezier(0.16, 1, 0.3, 1), transform .55s cubic-bezier(0.16, 1, 0.3, 1);
+      transition-delay: calc(var(--i, 0) * 90ms);
+    }
+    html.js body.carregado .hero .anima {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Desliga TODA animação para quem pediu menos movimento: tudo estático e visível */
+    @media (prefers-reduced-motion: reduce) {
+      html.js .anima,
+      html.js .hero .anima,
+      html.js body.carregado .hero .anima {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+    }
+
+    /* ---------- Botoes (area de toque minima 44px) ---------- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 12px 26px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20, 20, 20, .18); }
+    @media (prefers-reduced-motion: reduce) { .btn:hover { transform: none; box-shadow: none; } }
+    .btn-marca { background: var(--cor-marca); color: #fff; }
+    .btn-marca:hover { background: var(--cor-marca-escura); }
+    .btn-contorno {
+      border: 2px solid rgba(255, 255, 255, .85);
+      color: var(--texto-claro);
+      background: transparent;
+    }
+    .btn-contorno:hover {
+      border-color: var(--cor-marca-clara);
+      color: var(--cor-marca-clara);
+    }
+    .btn-borda {
+      border: 2px solid var(--cor-marca);
+      color: var(--cor-marca-texto);
+      background: #fff;
+    }
+    .btn-borda:hover { background: var(--fundo-alt); }
+
+    /* ---------- Topo ---------- */
+    .topo {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, .97);
+      border-bottom: 1px solid var(--borda);
+    }
+    .topo-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      color: var(--texto);
+      text-decoration: none;
+    }
+    .logo span { color: var(--cor-marca); }
+    @media (max-width: 440px) {
+      .topo .btn { padding: 10px 14px; font-size: .92rem; }
+      .logo { font-size: 1.05rem; }
+    }
+
+    /* ---------- Hero (excecao de layout: fundo escuro, vibe barbearia) ---------- */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: var(--fundo-escuro);
+      color: var(--texto-claro);
+      padding: 72px 0 64px;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(620px 340px at 82% 0%, rgba(245, 158, 11, .16), transparent 70%);
+      pointer-events: none;
+    }
+    .hero .container { position: relative; }
+    .hero-kicker {
+      color: var(--cor-marca-clara);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      font-size: .85rem;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .01em;
+      max-width: 800px;
+    }
+    h1 .destaque { color: var(--cor-marca-clara); }
+    .hero-apoio {
+      margin: 20px 0 30px;
+      font-size: 1.15rem;
+      color: var(--texto-claro-suave);
+      max-width: 580px;
+    }
+    .hero-ctas { display: flex; flex-wrap: wrap; gap: 14px; }
+    @media (max-width: 480px) {
+      .hero-ctas .btn { width: 100%; }
+    }
+    .hero-provas {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 28px;
+      margin-top: 38px;
+    }
+    .hero-provas li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--texto-claro-suave);
+      font-size: .95rem;
+    }
+    .hero-provas svg { color: var(--cor-marca-clara); flex-shrink: 0; }
+
+    /* ---------- Secoes ---------- */
+    .secao { padding: 48px 0; }
+    @media (min-width: 768px) { .secao { padding: 80px 0; } }
+    .secao-alt { background: var(--fundo-alt); }
+    .kicker {
+      color: var(--cor-marca-texto);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      font-size: .85rem;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: clamp(1.6rem, 3.2vw, 2.25rem);
+      line-height: 1.2;
+      font-weight: 700;
+      margin-bottom: 14px;
+      max-width: 680px;
+    }
+    .secao-intro {
+      color: var(--texto-suave);
+      max-width: 620px;
+      margin-bottom: 36px;
+    }
+
+    /* ---------- Servicos e precos ---------- */
+    .grid-servicos {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      margin-bottom: 34px;
+    }
+    .card {
+      position: relative;
+      background: #fff;
+      border: 1px solid var(--borda);
+      border-radius: 10px;
+      padding: 28px 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20, 20, 20, .08); }
+    @media (prefers-reduced-motion: reduce) { .card:hover { transform: none; box-shadow: none; } }
+    .card-destaque { border: 2px solid var(--cor-marca); }
+    .badge {
+      position: absolute;
+      top: -13px;
+      left: 20px;
+      background: var(--cor-marca);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+    .icone {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: #f7e8d7;
+      color: var(--cor-marca-texto);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card h3 { font-size: 1.2rem; }
+    .card .beneficio {
+      color: var(--texto-suave);
+      font-size: .97rem;
+      flex-grow: 1;
+    }
+    .preco {
+      color: var(--cor-marca-texto);
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    /* ---------- Galeria ---------- */
+    .grid-galeria {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+    .foto-ph {
+      aspect-ratio: 4 / 3;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--cor-marca) 0%, var(--cor-marca-escura) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      text-align: center;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    /* ---------- Depoimentos ---------- */
+    .grid-depoimentos {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    .depoimento {
+      background: var(--fundo-alt);
+      border: 1px solid var(--borda);
+      border-radius: 10px;
+      padding: 26px 22px;
+    }
+    .depoimento .aspas {
+      color: var(--cor-marca);
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .depoimento blockquote p { color: var(--texto-suave); }
+    .depoimento cite {
+      display: block;
+      margin-top: 14px;
+      font-style: normal;
+      font-weight: 700;
+      color: var(--texto);
+    }
+
+    /* ---------- Sobre ---------- */
+    .sobre-texto { max-width: 720px; }
+    .sobre-texto p + p { margin-top: 14px; }
+    .ph-nota { color: var(--cor-marca-texto); font-weight: 500; }
+
+    /* ---------- Local e horarios ---------- */
+    .grid-local {
+      display: grid;
+      gap: 40px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 768px) { .grid-local { grid-template-columns: 1fr 1fr; } }
+    .grid-local h3 { font-size: 1.25rem; margin-bottom: 12px; }
+    address {
+      font-style: normal;
+      color: var(--texto-suave);
+      margin-bottom: 20px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    caption {
+      text-align: left;
+      color: var(--texto-suave);
+      font-size: .95rem;
+      padding-bottom: 10px;
+    }
+    th, td {
+      text-align: left;
+      padding: 11px 4px;
+      border-bottom: 1px solid var(--borda);
+      font-size: .98rem;
+    }
+    th[scope="row"] { font-weight: 500; color: var(--texto); }
+    td { color: var(--cor-marca-texto); font-weight: 500; }
+    .nota-horario {
+      margin-top: 18px;
+      color: var(--texto-suave);
+      font-size: .95rem;
+    }
+
+    /* ---------- Rodape ---------- */
+    .rodape {
+      background: var(--fundo-alt);
+      border-top: 1px solid var(--borda);
+      padding: 48px 0 24px;
+    }
+    .grid-rodape {
+      display: grid;
+      gap: 28px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin-bottom: 28px;
+    }
+    .rodape-titulo {
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--texto);
+    }
+    .rodape p, .rodape li, .rodape span { color: var(--texto-suave); }
+    .rodape ul { list-style: none; }
+    .rodape a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      color: var(--cor-marca-texto);
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .rodape a:hover { color: var(--cor-marca-escura); }
+    .rodape-baixo {
+      border-top: 1px solid var(--borda);
+      padding-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+      justify-content: space-between;
+      font-size: .9rem;
+    }
+
+    /* ---------- Botao flutuante de WhatsApp ---------- */
+    .zap-flutuante {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 60;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--cor-marca);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(20, 20, 20, .22);
+      transition: background-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    }
+    .zap-flutuante:hover { background: var(--cor-marca-escura); transform: translateY(-2px); box-shadow: 0 10px 24px rgba(20, 20, 20, .3); }
+    @media (prefers-reduced-motion: reduce) { .zap-flutuante:hover { transform: none; } }
+  </style>
+</head>
+<body>
+
+  <header class="topo">
+    <div class="container topo-inner">
+      <a class="logo anima" style="--i:0" href="#inicio">Barbearia <span>Norte</span></a>
+      <a class="btn btn-marca anima" style="--i:1" href="https://wa.me/5531999990003?text=Ol%C3%A1!%20Quero%20agendar%20um%20hor%C3%A1rio%20na%20Barbearia%20Norte.">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a8 8 0 0 0-6.9 12.1L4 20l4-1.1A8 8 0 1 0 12 4z"/><path d="M9.2 9.9c.5 2.2 2.7 4.4 4.9 4.9"/></svg>
+        Agendar horário
+      </a>
+    </div>
+  </header>
+
+  <main id="inicio">
+
+    <!-- Hero (excecao permitida: fundo escuro neste nicho) -->
+    <section class="hero">
+      <div class="container">
+        <p class="hero-kicker anima" style="--i:0">Barbearia na Savassi, Belo Horizonte</p>
+        <h1 class="anima" style="--i:1">Corte e barba com hora marcada, <span class="destaque">sem fila e sem espera</span></h1>
+        <p class="hero-apoio anima" style="--i:2">Feito pra quem não tem tempo a perder: você escolhe o horário no WhatsApp e a cadeira está livre quando você chega.</p>
+        <div class="hero-ctas anima" style="--i:3">
+          <a class="btn btn-marca" href="https://wa.me/5531999990003?text=Ol%C3%A1!%20Quero%20agendar%20um%20hor%C3%A1rio%20na%20Barbearia%20Norte.">Agendar pelo WhatsApp</a>
+          <a class="btn btn-contorno" href="#servicos">Ver serviços e preços</a>
+        </div>
+        <ul class="hero-provas anima" style="--i:4">
+          <li>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/></svg>
+            Atendimento no horário marcado
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M8 7.8 19 18.5"/><path d="M8 16.2 19 5.5"/></svg>
+            Corte e barba na mesma sessão
+          </li>
+          <li>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c-4-3.8-6-7-6-9.8A6 6 0 0 1 18 11.2c0 2.8-2 6-6 9.8z"/><circle cx="12" cy="11" r="2.4"/></svg>
+            Savassi, Belo Horizonte
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Servicos e precos -->
+    <section id="servicos" class="secao">
+      <div class="container">
+        <p class="kicker anima" style="--i:0">Serviços e preços</p>
+        <h2 class="anima" style="--i:1">Escolha o serviço, veja o preço, agende. Simples assim.</h2>
+        <p class="secao-intro anima" style="--i:2">Sem tabela escondida e sem surpresa na hora de pagar. O combo resolve corte e barba num horário só.</p>
+        <div class="grid-servicos">
+          <div class="card anima" style="--i:0">
+            <div class="icone">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M8 7.8 19 18.5"/><path d="M8 16.2 19 5.5"/></svg>
+            </div>
+            <h3>Corte</h3>
+            <p class="beneficio">Máquina, tesoura ou degradê, alinhado do jeito que você usa.</p>
+            <p class="preco">[PLACEHOLDER: R$]</p>
+          </div>
+          <div class="card anima" style="--i:1">
+            <div class="icone">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="9" width="9" height="6" rx="1.2"/><path d="M12.5 12h7"/><path d="M19.5 9.5v5"/></svg>
+            </div>
+            <h3>Barba</h3>
+            <p class="beneficio">Desenho e acabamento na navalha, com contorno limpo.</p>
+            <p class="preco">[PLACEHOLDER: R$]</p>
+          </div>
+          <div class="card card-destaque anima" style="--i:2">
+            <span class="badge">Combo</span>
+            <div class="icone">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="m8.5 12.2 2.4 2.4 4.6-5"/></svg>
+            </div>
+            <h3>Corte + barba</h3>
+            <p class="beneficio">Os dois serviços na mesma cadeira, num horário só. Você sai pronto.</p>
+            <p class="preco">[PLACEHOLDER: R$]</p>
+          </div>
+          <div class="card anima" style="--i:3">
+            <div class="icone">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 14c1.8-4.4 12.2-4.4 14 0"/></svg>
+            </div>
+            <h3>Sobrancelha</h3>
+            <p class="beneficio">Acabamento rápido na navalha, sem exagero.</p>
+            <p class="preco">[PLACEHOLDER: R$]</p>
+          </div>
+        </div>
+        <a class="btn btn-marca anima" style="--i:0" href="https://wa.me/5531999990003?text=Ol%C3%A1!%20Quero%20agendar%20um%20hor%C3%A1rio%20na%20Barbearia%20Norte.">Agendar corte + barba</a>
+      </div>
+    </section>
+
+    <!-- Galeria -->
+    <section class="secao secao-alt">
+      <div class="container">
+        <p class="kicker anima" style="--i:0">Galeria</p>
+        <h2 class="anima" style="--i:1">O espaço e o trabalho</h2>
+        <p class="secao-intro anima" style="--i:2">Aqui entram as fotos reais da barbearia. Os blocos abaixo já estão no tamanho certo, é só trocar.</p>
+        <div class="grid-galeria">
+          <div class="foto-ph anima" style="--i:0">[PLACEHOLDER: foto do espaço]</div>
+          <div class="foto-ph anima" style="--i:1">[PLACEHOLDER: foto de corte finalizado]</div>
+          <div class="foto-ph anima" style="--i:2">[PLACEHOLDER: foto de corte e barba]</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Depoimentos -->
+    <section class="secao">
+      <div class="container">
+        <p class="kicker anima" style="--i:0">Clientes</p>
+        <h2 class="anima" style="--i:1">O que dizem de nós</h2>
+        <div class="grid-depoimentos">
+          <div class="depoimento anima" style="--i:0">
+            <span class="aspas" aria-hidden="true">&#8220;</span>
+            <blockquote>
+              <p>[PLACEHOLDER: trocar por depoimento real]</p>
+            </blockquote>
+            <cite>[PLACEHOLDER: nome do cliente]</cite>
+          </div>
+          <div class="depoimento anima" style="--i:1">
+            <span class="aspas" aria-hidden="true">&#8220;</span>
+            <blockquote>
+              <p>[PLACEHOLDER: trocar por depoimento real]</p>
+            </blockquote>
+            <cite>[PLACEHOLDER: nome do cliente]</cite>
+          </div>
+          <div class="depoimento anima" style="--i:2">
+            <span class="aspas" aria-hidden="true">&#8220;</span>
+            <blockquote>
+              <p>[PLACEHOLDER: trocar por depoimento real]</p>
+            </blockquote>
+            <cite>[PLACEHOLDER: nome do cliente]</cite>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sobre -->
+    <section class="secao secao-alt">
+      <div class="container">
+        <p class="kicker anima" style="--i:0">Sobre</p>
+        <h2 class="anima" style="--i:1">Sobre a Barbearia Norte</h2>
+        <div class="sobre-texto">
+          <p class="anima" style="--i:2">A Barbearia Norte atende na Savassi, em Belo Horizonte, com agenda organizada direto no WhatsApp. O combinado aqui é simples: horário marcado é horário cumprido, e o corte sai do jeito que você pediu.</p>
+          <p class="ph-nota anima" style="--i:3">[PLACEHOLDER: confirmar com o cliente: história da barbearia, tempo de estrada e equipe]</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Localizacao e horarios -->
+    <section id="local" class="secao">
+      <div class="container">
+        <p class="kicker anima" style="--i:0">Onde estamos</p>
+        <h2 class="anima" style="--i:1">Localização e horários</h2>
+        <div class="grid-local">
+          <div class="anima" style="--i:0">
+            <h3>Endereço</h3>
+            <address>
+              [PLACEHOLDER: rua e número]<br>
+              Savassi, Belo Horizonte, MG
+            </address>
+            <a class="btn btn-borda" href="https://www.google.com/maps/search/?api=1&amp;query=Savassi%2C%20Belo%20Horizonte">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c-4-3.8-6-7-6-9.8A6 6 0 0 1 18 11.2c0 2.8-2 6-6 9.8z"/><circle cx="12" cy="11" r="2.4"/></svg>
+              Ver no Google Maps
+            </a>
+          </div>
+          <div class="anima" style="--i:1">
+            <h3>Horários</h3>
+            <table>
+              <caption>Funcionamento de segunda a sábado.</caption>
+              <tbody>
+                <tr><th scope="row">Segunda</th><td>[PLACEHOLDER: horário]</td></tr>
+                <tr><th scope="row">Terça</th><td>[PLACEHOLDER: horário]</td></tr>
+                <tr><th scope="row">Quarta</th><td>[PLACEHOLDER: horário]</td></tr>
+                <tr><th scope="row">Quinta</th><td>[PLACEHOLDER: horário]</td></tr>
+                <tr><th scope="row">Sexta</th><td>[PLACEHOLDER: horário]</td></tr>
+                <tr><th scope="row">Sábado</th><td>[PLACEHOLDER: horário]</td></tr>
+              </tbody>
+            </table>
+            <p class="nota-horario">Quer atendimento com calma? Dia de semana costuma ter mais horário livre. Agende no WhatsApp e garanta o seu.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="rodape">
+    <div class="container">
+      <div class="grid-rodape">
+        <div class="anima" style="--i:0">
+          <p class="rodape-titulo">Barbearia Norte</p>
+          <p>Corte e barba com hora marcada na Savassi, Belo Horizonte.</p>
+        </div>
+        <div class="anima" style="--i:1">
+          <p class="rodape-titulo">Contato</p>
+          <ul>
+            <li><a href="https://wa.me/5531999990003?text=Ol%C3%A1!%20Quero%20agendar%20um%20hor%C3%A1rio%20na%20Barbearia%20Norte.">WhatsApp: +55 31 99999-0003</a></li>
+            <li><span>Instagram: [PLACEHOLDER: @ do Instagram]</span></li>
+          </ul>
+        </div>
+        <div class="anima" style="--i:2">
+          <p class="rodape-titulo">Endereço</p>
+          <p>[PLACEHOLDER: rua e número], Savassi, Belo Horizonte, MG</p>
+          <a href="https://www.google.com/maps/search/?api=1&amp;query=Savassi%2C%20Belo%20Horizonte">Ver no Google Maps</a>
+        </div>
+      </div>
+      <div class="rodape-baixo">
+        <span>CNPJ: [PLACEHOLDER: CNPJ]</span>
+        <span>Barbearia Norte. Todos os direitos reservados.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Botao flutuante de WhatsApp (todas as telas) -->
+  <a class="zap-flutuante" href="https://wa.me/5531999990003?text=Ol%C3%A1!%20Quero%20agendar%20um%20hor%C3%A1rio%20na%20Barbearia%20Norte." aria-label="Chamar a Barbearia Norte no WhatsApp">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a8 8 0 0 0-6.9 12.1L4 20l4-1.1A8 8 0 1 0 12 4z"/><path d="M9.2 9.9c.5 2.2 2.7 4.4 4.9 4.9"/></svg>
+  </a>
+
+  <script>
+    // Animação de entrada, sem biblioteca. Só transform/opacity, zero layout shift.
+    (function(){
+      var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Hero anima no load (cascata rápida). Sem esperar scroll.
+      // requestAnimationFrame garante que o estado inicial já foi pintado antes de transitar.
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          document.body.classList.add('carregado');
+        });
+      });
+
+      // Se o usuário pediu menos movimento, mostra tudo estático e não observa nada.
+      if(reduz){
+        var todos = document.querySelectorAll('.anima');
+        for(var i=0;i<todos.length;i++){ todos[i].classList.add('visivel'); }
+        return;
+      }
+
+      // Blocos abaixo do hero: entram na viewport via IntersectionObserver.
+      var alvos = document.querySelectorAll('main .secao .anima, .rodape .anima');
+      if(!('IntersectionObserver' in window)){
+        for(var j=0;j<alvos.length;j++){ alvos[j].classList.add('visivel'); }
+        return;
+      }
+      var obs = new IntersectionObserver(function(entradas, observador){
+        entradas.forEach(function(e){
+          if(e.isIntersecting){
+            e.target.classList.add('visivel');
+            observador.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+      for(var k=0;k<alvos.length;k++){ obs.observe(alvos[k]); }
+    })();
+  </script>
+
+</body>
+</html>

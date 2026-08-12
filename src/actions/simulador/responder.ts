@@ -3,6 +3,7 @@
 // F013 — uma rodada do Simulador de Venda. Spec: F013-simulador-de-venda.md.
 
 import { createLlmForUser } from "@/lib/llm";
+import { consumirCota, verificarCota } from "@/lib/limites";
 import { entradaSchema } from "@/lib/simulador/validacao";
 import { simularTurno, SimuladorError } from "@/lib/simulador/simular";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
@@ -33,8 +34,10 @@ export async function responderTurnoAction(
   }
 
   try {
+    await verificarCota(userId, "simulador_msg");
     const llm = await createLlmForUser(userId);
     const { mensagem } = await simularTurno(cenario, historico, llm);
+    await consumirCota(userId, "simulador_msg");
     return { ok: true, mensagem };
   } catch (e) {
     const escopo = mensagemEscopo(e);

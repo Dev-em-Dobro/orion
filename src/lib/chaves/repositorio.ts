@@ -2,6 +2,7 @@
 
 import type { ChaveApiStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { obterModoChave } from "./modo";
 import { cifrar } from "@/lib/seguranca/cifra";
 import { colunasDe, lerLast4, lerStatus } from "./campos";
 import { ChaveOperacaoError } from "./erros";
@@ -34,10 +35,13 @@ export async function listarVisaoChaves(userId: string): Promise<VisaoChave[]> {
   }));
 }
 
-/** Essenciais faltando — Google + chave do provedor de IA ativo. */
+/** Essenciais faltando — Google + chave do provedor de IA ativo (só modo BYOK). */
 export async function chavesEssenciaisFaltando(
   userId: string,
 ): Promise<TipoChave[]> {
+  const modo = await obterModoChave(userId);
+  if (modo === "orion") return [];
+
   const visao = await listarVisaoChaves(userId);
   const faltando: TipoChave[] = [];
 

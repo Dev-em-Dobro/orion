@@ -3,13 +3,17 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
+import { sanitizarCallbackUrl } from "@/lib/auth/callback-url";
 
 function isProtectedPath(pathname: string): boolean {
   if (pathname === "/") return true;
   return (
     pathname.startsWith("/leads") ||
     pathname.startsWith("/treino") ||
-    pathname.startsWith("/configuracao")
+    pathname.startsWith("/configuracao") ||
+    pathname.startsWith("/conteudo") ||
+    pathname.startsWith("/entregaveis") ||
+    pathname.startsWith("/ativar-acesso")
   );
 }
 
@@ -26,8 +30,9 @@ export function middleware(request: NextRequest) {
 
   if (isProtectedPath(pathname) && !sessionCookie) {
     const loginUrl = new URL("/login", request.url);
-    const callback =
-      pathname + (request.nextUrl.search ? request.nextUrl.search : "");
+    const callback = sanitizarCallbackUrl(
+      pathname + (request.nextUrl.search ? request.nextUrl.search : ""),
+    );
     if (callback !== "/") {
       loginUrl.searchParams.set("callbackUrl", callback);
     }
@@ -43,6 +48,9 @@ export const config = {
     "/leads/:path*",
     "/treino/:path*",
     "/configuracao/:path*",
+    "/conteudo/:path*",
+    "/entregaveis/:path*",
+    "/ativar-acesso",
     "/login",
   ],
 };

@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<!-- TROCAR (pontos de troca rápida deste template):
+  1. Nome "Café do Largo": aparece no topo, no hero, na seção Sobre, no rodapé,
+     no <title>, na <meta name="description"> e nas tags og:title / og:description.
+  2. WhatsApp 5511999990004: trocar em TODOS os links wa.me deste arquivo
+     e também o texto da mensagem pronta no parâmetro ?text= de cada link.
+  3. Cor da marca: variável CSS --cor-marca no :root (uma linha só).
+  4. Headline e linha de apoio: dentro da section do hero.
+  5. Cardápio: itens e preços (todo preço está como [PLACEHOLDER: R$]).
+  6. Horários: seção Horários, cada linha com [PLACEHOLDER: horarios].
+  7. Endereço e link do Google Maps: seção Como chegar e rodapé.
+  8. Buscar "[PLACEHOLDER" no arquivo: tudo que aparecer precisa de dado real
+     do cliente (fotos, depoimentos, iFood, Instagram, CNPJ etc.).
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Café do Largo | Café da manhã e brunch em Pinheiros, São Paulo</title>
+<meta name="description" content="Café da manhã e brunch feitos na hora em Pinheiros, São Paulo. Peça pelo WhatsApp e retire sem fila no Café do Largo.">
+<meta property="og:title" content="Café do Largo | Café da manhã e brunch em Pinheiros">
+<meta property="og:description" content="Café da manhã e brunch feitos na hora em Pinheiros, São Paulo. Peça pelo WhatsApp pra retirada.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<!-- Fallback sem JS: marca o html como "js" o quanto antes; o estado escondido da animação só vale sob html.js -->
+<script>document.documentElement.className+=" js";</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cor-marca: #6F4E37;                 /* TROCAR: cor da marca do cliente */
+    --cor-marca-escura: #4A3323;
+    --cor-marca-escura: color-mix(in srgb, var(--cor-marca) 68%, #170d06);
+    --cor-marca-suave: #F3EAE1;
+    --cor-marca-suave: color-mix(in srgb, var(--cor-marca) 9%, #fffdfa);
+    --fundo: #FBF7F2;
+    --fundo-card: #FFFFFF;
+    --texto: #1A1A1A;
+    --texto-suave: #57493E;
+    --borda: #E7DCD2;
+    --rodape-fundo: #2A211A;
+    --rodape-texto: #F3EBE3;
+    --rodape-suave: #CBBBAD;
+    --raio: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  body {
+    font-family: 'Ubuntu', system-ui, sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--texto);
+    background: var(--fundo);
+  }
+
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+  section { padding: 80px 0; }
+  @media (max-width: 720px) { section { padding: 48px 0; } }
+
+  h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.15; font-weight: 700; }
+  h2 { font-size: clamp(1.5rem, 3.4vw, 2.125rem); line-height: 1.25; font-weight: 700; }
+  h3 { font-size: 1.1875rem; font-weight: 700; }
+
+  a { color: var(--cor-marca); }
+
+  :focus-visible {
+    outline: 3px solid var(--cor-marca);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  .banner :focus-visible,
+  .zap-flutuante:focus-visible,
+  .galeria-bloco:focus-visible {
+    outline-color: #FFFFFF;
+  }
+
+  .pular {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--cor-marca);
+    color: #fff;
+    padding: 12px 20px;
+    z-index: 200;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .pular:focus { left: 12px; top: 12px; }
+
+  /* ============================================================
+     ANIMAÇÃO DE ENTRADA
+     - Anima SÓ transform e opacity (roda a 60fps, sem layout shift).
+     - Estado escondido só existe sob html.js: sem JS, nada fica invisível.
+     - Blocos abaixo do hero recebem a classe "visivel" via IntersectionObserver.
+     - Hero anima no load (classe "carregado" no body via JS).
+     - Stagger por --i (índice do item na seção), 80ms entre itens.
+     ============================================================ */
+  html.js .anima {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .6s cubic-bezier(0.16,1,0.3,1), transform .6s cubic-bezier(0.16,1,0.3,1);
+    transition-delay: calc(var(--i,0) * 80ms);
+    will-change: opacity, transform;
+  }
+  html.js .anima.visivel {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  /* Hero: parte de um estado já pintado e legível; anima no load, não segura o LCP */
+  html.js .hero .anima {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity .55s cubic-bezier(0.16,1,0.3,1), transform .55s cubic-bezier(0.16,1,0.3,1);
+    transition-delay: calc(var(--i,0) * 90ms);
+  }
+  html.js body.carregado .hero .anima {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  /* Desliga TODA animação para quem pediu menos movimento: tudo estático e visível */
+  @media (prefers-reduced-motion: reduce) {
+    html.js .anima,
+    html.js .hero .anima,
+    html.js body.carregado .hero .anima {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+
+  /* ---------- Botões ---------- */
+  .botao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 12px 26px;
+    border-radius: var(--raio);
+    font-family: inherit;
+    font-size: 1.0625rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+  }
+  .botao:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26, 26, 26, 0.18); }
+  @media (prefers-reduced-motion: reduce) { .botao:hover { transform: none; box-shadow: none; } }
+  .botao-primario { background: var(--cor-marca); color: #FFFFFF; }
+  .botao-primario:hover { background: var(--cor-marca-escura); }
+  .botao-secundario {
+    background: transparent;
+    color: var(--cor-marca);
+    border-color: var(--cor-marca);
+  }
+  .botao-secundario:hover { background: var(--cor-marca-suave); }
+  .botao-claro { background: #FFFFFF; color: var(--cor-marca); }
+  .botao-claro:hover { background: var(--cor-marca-suave); }
+  .botao svg { flex-shrink: 0; }
+
+  /* ---------- Topo ---------- */
+  .topo {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(251, 247, 242, 0.96);
+    border-bottom: 1px solid var(--borda);
+    backdrop-filter: blur(6px);
+  }
+  .topo-linha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 68px;
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--texto);
+    text-decoration: none;
+  }
+  .logo svg { color: var(--cor-marca); }
+  .menu-topo { display: flex; gap: 6px; }
+  .menu-topo a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 14px;
+    color: var(--texto-suave);
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 6px;
+  }
+  .menu-topo a:hover { color: var(--cor-marca); background: var(--cor-marca-suave); }
+  .topo-cta { min-height: 44px; padding: 8px 18px; }
+  @media (max-width: 760px) {
+    .menu-topo { display: none; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    background: linear-gradient(180deg, var(--cor-marca-suave) 0%, var(--fundo) 100%);
+    padding: 96px 0;
+  }
+  @media (max-width: 720px) { .hero { padding: 56px 0; } }
+  .hero-conteudo { max-width: 680px; }
+  .hero-etiqueta {
+    display: inline-block;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--cor-marca);
+    background: #FFFFFF;
+    border: 1px solid var(--borda);
+    border-radius: 999px;
+    padding: 6px 16px;
+    margin-bottom: 20px;
+  }
+  .hero p.apoio {
+    margin-top: 18px;
+    font-size: 1.1875rem;
+    color: var(--texto-suave);
+    max-width: 540px;
+  }
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 30px;
+  }
+  .hero-nota {
+    margin-top: 16px;
+    font-size: 0.9375rem;
+    color: var(--texto-suave);
+  }
+
+  /* ---------- Cabeçalho de seção ---------- */
+  .secao-cabecalho { max-width: 640px; margin-bottom: 40px; }
+  .secao-cabecalho p { margin-top: 10px; color: var(--texto-suave); }
+
+  /* ---------- Benefícios ---------- */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--fundo-card);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 26px 24px;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26, 26, 26, 0.08); }
+  @media (prefers-reduced-motion: reduce) { .card:hover { transform: none; box-shadow: none; } }
+  .card .icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--raio);
+    background: var(--cor-marca-suave);
+    color: var(--cor-marca);
+    margin-bottom: 16px;
+  }
+  .card p { margin-top: 8px; color: var(--texto-suave); font-size: 1rem; }
+
+  /* ---------- Cardápio ---------- */
+  .cardapio { background: #FFFFFF; border-top: 1px solid var(--borda); border-bottom: 1px solid var(--borda); }
+  .cardapio-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .categoria {
+    background: var(--fundo);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 26px 24px;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .categoria:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26, 26, 26, 0.08); }
+  @media (prefers-reduced-motion: reduce) { .categoria:hover { transform: none; box-shadow: none; } }
+  .categoria-titulo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 14px;
+    margin-bottom: 6px;
+    border-bottom: 2px solid var(--cor-marca);
+    color: var(--cor-marca);
+  }
+  .categoria ul { list-style: none; }
+  .categoria li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px dotted var(--borda);
+  }
+  .categoria li:last-child { border-bottom: none; }
+  .item-nome { font-weight: 500; }
+  .item-pontos { flex: 1; border-bottom: 2px dotted var(--borda); min-width: 16px; }
+  .item-preco { font-size: 0.9375rem; color: var(--texto-suave); white-space: nowrap; }
+
+  .pedido-cta {
+    margin-top: 36px;
+    text-align: center;
+    background: var(--cor-marca-suave);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 32px 24px;
+  }
+  .pedido-cta p.chamada { font-size: 1.1875rem; font-weight: 500; margin-bottom: 18px; }
+  .pedido-cta .nota {
+    display: block;
+    margin-top: 14px;
+    font-size: 0.9375rem;
+    color: var(--texto-suave);
+  }
+
+  /* ---------- Galeria (placeholders de foto) ---------- */
+  .galeria-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .galeria-bloco {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--raio);
+    background: linear-gradient(135deg, var(--cor-marca) 0%, var(--cor-marca-escura) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .galeria-bloco:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26, 26, 26, 0.18); }
+  @media (prefers-reduced-motion: reduce) { .galeria-bloco:hover { transform: none; box-shadow: none; } }
+  .galeria-bloco span {
+    color: #FFFFFF;
+    font-weight: 500;
+    font-size: 0.9375rem;
+    border: 1px dashed rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+
+  /* ---------- Depoimentos ---------- */
+  .depoimentos { background: #FFFFFF; border-top: 1px solid var(--borda); border-bottom: 1px solid var(--borda); }
+  .depo-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .depo {
+    background: var(--fundo);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 26px 24px;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .depo:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26, 26, 26, 0.08); }
+  @media (prefers-reduced-motion: reduce) { .depo:hover { transform: none; box-shadow: none; } }
+  .depo .aspas {
+    font-size: 2.25rem;
+    line-height: 1;
+    color: var(--cor-marca);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .depo blockquote p { color: var(--texto-suave); }
+  .depo figcaption { margin-top: 14px; font-weight: 500; color: var(--texto); }
+
+  /* ---------- Sobre ---------- */
+  .sobre-conteudo { max-width: 680px; }
+  .sobre-conteudo p { margin-top: 16px; color: var(--texto-suave); }
+
+  /* ---------- Horários e local ---------- */
+  .info-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .info-card {
+    background: var(--fundo-card);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 26px 24px;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .info-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26, 26, 26, 0.08); }
+  @media (prefers-reduced-motion: reduce) { .info-card:hover { transform: none; box-shadow: none; } }
+  .info-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--cor-marca);
+    margin-bottom: 14px;
+  }
+  .horarios-lista { list-style: none; }
+  .horarios-lista li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dotted var(--borda);
+  }
+  .horarios-lista li:last-child { border-bottom: none; }
+  .horarios-lista .dia { font-weight: 500; }
+  .horarios-lista .hora { color: var(--texto-suave); text-align: right; }
+  .info-card p { color: var(--texto-suave); }
+  .info-card .nota { font-size: 0.9375rem; margin-top: 12px; }
+  .link-maps {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    margin-top: 10px;
+    font-weight: 500;
+    color: var(--cor-marca);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ---------- Banner final ---------- */
+  .banner {
+    background: linear-gradient(135deg, var(--cor-marca) 0%, var(--cor-marca-escura) 100%);
+    color: #FFFFFF;
+    text-align: center;
+  }
+  .banner p {
+    margin: 14px auto 26px;
+    max-width: 520px;
+    color: #FFFFFF;
+  }
+
+  /* ---------- Rodapé ---------- */
+  .rodape {
+    background: var(--rodape-fundo);
+    color: var(--rodape-texto);
+    padding: 56px 0 96px;
+  }
+  .rodape-grade {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 32px;
+  }
+  .rodape-marca { max-width: 320px; }
+  .rodape-marca .nome { font-size: 1.25rem; font-weight: 700; }
+  .rodape-marca p { margin-top: 8px; color: var(--rodape-suave); font-size: 1rem; }
+  .rodape-lista { list-style: none; }
+  .rodape-lista li { color: var(--rodape-suave); font-size: 1rem; }
+  .rodape-lista a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    color: var(--rodape-texto);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .rodape-lista .linha { display: flex; align-items: center; min-height: 44px; }
+  .rodape-base {
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid #453a30;
+    color: var(--rodape-suave);
+    font-size: 0.9375rem;
+  }
+
+  /* ---------- Botão flutuante de WhatsApp ---------- */
+  .zap-flutuante {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 150;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--cor-marca);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(26, 26, 26, 0.25);
+    text-decoration: none;
+    transition: background-color .2s ease, transform .2s ease, box-shadow .2s ease;
+  }
+  .zap-flutuante:hover { background: var(--cor-marca-escura); transform: translateY(-2px); box-shadow: 0 10px 24px rgba(26, 26, 26, 0.3); }
+  @media (prefers-reduced-motion: reduce) { .zap-flutuante:hover { transform: none; } }
+</style>
+</head>
+<body>
+
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+<header class="topo">
+  <div class="container topo-linha">
+    <a href="#inicio" class="logo">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M4 10h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-5z"/>
+        <path d="M16 11h2a2.5 2.5 0 0 1 0 5h-2"/>
+        <path d="M7.5 6.5c0-1 .9-1.5.9-2.5M11.5 6.5c0-1 .9-1.5.9-2.5"/>
+      </svg>
+      Café do Largo
+    </a>
+    <nav class="menu-topo" aria-label="Seções do site">
+      <a href="#cardapio">Cardápio</a>
+      <a href="#horarios">Horários</a>
+      <a href="#local">Como chegar</a>
+    </nav>
+    <a class="botao botao-primario topo-cta" href="https://wa.me/5511999990004?text=Oi!%20Vim%20pelo%20site%20do%20Caf%C3%A9%20do%20Largo%20e%20quero%20fazer%20um%20pedido%20pra%20retirada.">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+        <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.6-6.1c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.3-.6.8-.8 1-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.8-.7-1.3-1.5-1.4-1.8-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.2 1.8 2.8 4.3 3.9.6.3 1.1.4 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2 0-.1-.2-.2-.5-.3z"/>
+      </svg>
+      WhatsApp
+    </a>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- HERO -->
+  <section class="hero" id="inicio">
+    <div class="container">
+      <div class="hero-conteudo">
+        <span class="hero-etiqueta anima" style="--i:0">Café de bairro em Pinheiros, São Paulo</span>
+        <h1 class="anima" style="--i:1">Café da manhã e brunch feitos na hora, qualquer dia da semana</h1>
+        <p class="apoio anima" style="--i:2">Pra sentar sem pressa ou pedir pelo WhatsApp e retirar sem fila, no meio de Pinheiros.</p>
+        <div class="hero-ctas anima" style="--i:3">
+          <a class="botao botao-primario" href="https://wa.me/5511999990004?text=Oi!%20Vim%20pelo%20site%20do%20Caf%C3%A9%20do%20Largo%20e%20quero%20fazer%20um%20pedido%20pra%20retirada.">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.6-6.1c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.3-.6.8-.8 1-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.8-.7-1.3-1.5-1.4-1.8-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.2 1.8 2.8 4.3 3.9.6.3 1.1.4 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2 0-.1-.2-.2-.5-.3z"/>
+            </svg>
+            Pedir pelo WhatsApp
+          </a>
+          <a class="botao botao-secundario" href="#cardapio">Ver o cardápio</a>
+        </div>
+        <p class="hero-nota anima" style="--i:4">Retirada no balcão: você pede, a gente prepara e avisa quando estiver pronto.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFÍCIOS -->
+  <section id="beneficios">
+    <div class="container">
+      <div class="secao-cabecalho">
+        <h2 class="anima" style="--i:0">Por que passar no Café do Largo</h2>
+        <p class="anima" style="--i:1">Um café de bairro pra chamar de seu, aberto pra manhã de todo dia.</p>
+      </div>
+      <div class="cards">
+        <article class="card anima" style="--i:0">
+          <span class="icone">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M4 10h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-5z"/>
+              <path d="M16 11h2a2.5 2.5 0 0 1 0 5h-2"/>
+              <path d="M7.5 6.5c0-1 .9-1.5.9-2.5M11.5 6.5c0-1 .9-1.5.9-2.5"/>
+            </svg>
+          </span>
+          <h3>Café servido na hora</h3>
+          <p>Do coado da casa ao cappuccino, cada xícara sai na hora do pedido.</p>
+        </article>
+        <article class="card anima" style="--i:1">
+          <span class="icone">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M19 13.5A7.5 7.5 0 1 1 10.5 5a6 6 0 0 0 8.5 8.5z"/>
+            </svg>
+          </span>
+          <h3>Brunch de manhã inteira</h3>
+          <p>Ovos, pães e doces no mesmo cardápio, pra manhã render do jeito certo.</p>
+        </article>
+        <article class="card anima" style="--i:2">
+          <span class="icone">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="12" r="8.5"/>
+              <path d="M12 7.5V12l3 2"/>
+            </svg>
+          </span>
+          <h3>Retirada sem fila</h3>
+          <p>Peça pelo WhatsApp, a gente avisa quando estiver pronto e você só passa pra buscar.</p>
+        </article>
+        <article class="card anima" style="--i:3">
+          <span class="icone">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M12 21s-6.5-5.4-6.5-10.3a6.5 6.5 0 1 1 13 0C18.5 15.6 12 21 12 21z"/>
+              <circle cx="12" cy="10.5" r="2.2"/>
+            </svg>
+          </span>
+          <h3>No meio de Pinheiros</h3>
+          <p>Pertinho de quem mora e trabalha no bairro, fácil de chegar a pé ou de bike.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CARDÁPIO -->
+  <section class="cardapio" id="cardapio">
+    <div class="container">
+      <div class="secao-cabecalho">
+        <h2 class="anima" style="--i:0">Destaques do cardápio</h2>
+        <p class="anima" style="--i:1">Uma amostra do balcão. [PLACEHOLDER: trocar pelos itens e preços reais do cardápio]</p>
+      </div>
+      <div class="cardapio-grade">
+        <div class="categoria anima" style="--i:0">
+          <h3 class="categoria-titulo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M4 10h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-5z"/>
+              <path d="M16 11h2a2.5 2.5 0 0 1 0 5h-2"/>
+              <path d="M7.5 6.5c0-1 .9-1.5.9-2.5M11.5 6.5c0-1 .9-1.5.9-2.5"/>
+            </svg>
+            Cafés
+          </h3>
+          <ul>
+            <li><span class="item-nome">Coado da casa</span><span class="item-pontos" aria-hidden="true"></span><span class="item-preco">[PLACEHOLDER: R$]</span></li>
+            <li><span class="item-nome">Cappuccino</span><span class="item-pontos" aria-hidden="true"></span><span class="item-preco">[PLACEHOLDER: R$]</span></li>
+            <li><span class="item-nome">Latte</span><span class="item-pontos" aria-hidden="true"></span><span class="item-preco">[PLACEHOLDER: R$]</span></li>
+          </ul>
+        </div>
+        <div class="categoria anima" style="--i:1">
+          <h3 class="categoria-titulo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M19 13.5A7.5 7.5 0 1 1 10.5 5a6 6 0 0 0 8.5 8.5z"/>
+            </svg>
+            Brunch
+          </h3>
+          <ul>
+            <li><span class="item-nome">Ovos mexidos com torrada</span><span class="item-pontos" aria-hidden="true"></span><span class="item-preco">[PLACEHOLDER: R$]</span></li>
+            <li><span class="item-nome">Tapioca de queijo</span><span class="item-pontos" aria-hidden="true"></span><span class="item-preco">[PLACEHOLDER: R$]</span></li>
+            <li><span class="item-nome">Bowl de iogurte com granola</span><span class="item-pontos" aria-hidden="true"></span><span class="item-preco">[PLACEHOLDER: R$]</span></li>
+          </ul>
+        </div>
+        <div class="categoria anima" style="--i:2">
+          <h3 class="categoria-titulo">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="12" r="8.5"/>
+              <path d="M12 7.5V12l3 2"/>
+            </svg>
+            Doces
+          </h3>
+          <ul>
+            <li><span class="item-nome">Bolo de cenoura com brigadeiro</span><span class="item-pontos" aria-hidden="true"></span><span class="item-preco">[PLACEHOLDER: R$]</span></li>
+            <li><span class="item-nome">Pão de mel</span><span class="item-pontos" aria-hidden="true"></span><span class="item-preco">[PLACEHOLDER: R$]</span></li>
+            <li><span class="item-nome">Torta de banana</span><span class="item-pontos" aria-hidden="true"></span><span class="item-preco">[PLACEHOLDER: R$]</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="pedido-cta anima" style="--i:0">
+        <p class="chamada">Escolheu? Peça pelo WhatsApp pra retirada.</p>
+        <a class="botao botao-primario" href="https://wa.me/5511999990004?text=Oi!%20Vim%20pelo%20site%20do%20Caf%C3%A9%20do%20Largo%20e%20quero%20fazer%20um%20pedido%20pra%20retirada.">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.6-6.1c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.3-.6.8-.8 1-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.8-.7-1.3-1.5-1.4-1.8-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.2 1.8 2.8 4.3 3.9.6.3 1.1.4 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2 0-.1-.2-.2-.5-.3z"/>
+          </svg>
+          Pedir pra retirada
+        </a>
+        <span class="nota">[PLACEHOLDER: link do iFood, se tiver]</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALERIA (espaços reservados pra foto) -->
+  <section id="galeria">
+    <div class="container">
+      <div class="secao-cabecalho">
+        <h2 class="anima" style="--i:0">O café por dentro</h2>
+        <p class="anima" style="--i:1">Mesa perto da janela, cheiro de café passado e vitrine de doces feita no dia.</p>
+      </div>
+      <div class="galeria-grade">
+        <div class="galeria-bloco anima" style="--i:0" role="img" aria-label="Espaço reservado para foto do ambiente do café">
+          <span>[PLACEHOLDER: foto do ambiente]</span>
+        </div>
+        <div class="galeria-bloco anima" style="--i:1" role="img" aria-label="Espaço reservado para foto dos pratos do brunch">
+          <span>[PLACEHOLDER: foto dos pratos do brunch]</span>
+        </div>
+        <div class="galeria-bloco anima" style="--i:2" role="img" aria-label="Espaço reservado para foto do balcão e da vitrine de doces">
+          <span>[PLACEHOLDER: foto do balcão e da vitrine]</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEPOIMENTOS -->
+  <section class="depoimentos" id="depoimentos">
+    <div class="container">
+      <div class="secao-cabecalho">
+        <h2 class="anima" style="--i:0">Quem vem, volta</h2>
+        <p class="anima" style="--i:1">O que os clientes dizem do Café do Largo.</p>
+      </div>
+      <div class="depo-grade">
+        <figure class="depo anima" style="--i:0">
+          <span class="aspas" aria-hidden="true">&ldquo;</span>
+          <blockquote>
+            <p>[PLACEHOLDER: trocar por depoimento real]</p>
+          </blockquote>
+          <figcaption>[PLACEHOLDER: nome do cliente]</figcaption>
+        </figure>
+        <figure class="depo anima" style="--i:1">
+          <span class="aspas" aria-hidden="true">&ldquo;</span>
+          <blockquote>
+            <p>[PLACEHOLDER: trocar por depoimento real]</p>
+          </blockquote>
+          <figcaption>[PLACEHOLDER: nome do cliente]</figcaption>
+        </figure>
+        <figure class="depo anima" style="--i:2">
+          <span class="aspas" aria-hidden="true">&ldquo;</span>
+          <blockquote>
+            <p>[PLACEHOLDER: trocar por depoimento real]</p>
+          </blockquote>
+          <figcaption>[PLACEHOLDER: nome do cliente]</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOBRE -->
+  <section id="sobre">
+    <div class="container">
+      <div class="sobre-conteudo">
+        <h2 class="anima" style="--i:0">Sobre o Café do Largo</h2>
+        <p class="anima" style="--i:1">O Café do Largo é café de bairro no sentido antigo: atendimento de perto, comida feita na hora e mesa sem pressa. A ideia é simples, servir um café da manhã caprichado pra quem vive Pinheiros no dia a dia, sem esperar o fim de semana chegar.</p>
+        <p class="anima" style="--i:2">[PLACEHOLDER: acrescentar um detalhe real da história do café, confirmar com o cliente]</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HORÁRIOS E COMO CHEGAR -->
+  <section id="horarios">
+    <div class="container">
+      <div class="secao-cabecalho">
+        <h2 class="anima" style="--i:0">Horários e como chegar</h2>
+        <p class="anima" style="--i:1">Confirme o horário pelo WhatsApp antes de vir em feriado.</p>
+      </div>
+      <div class="info-grade">
+        <div class="info-card anima" style="--i:0" id="horarios-card">
+          <h3>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="12" r="8.5"/>
+              <path d="M12 7.5V12l3 2"/>
+            </svg>
+            Horários
+          </h3>
+          <ul class="horarios-lista">
+            <li><span class="dia">Segunda a sexta</span><span class="hora">[PLACEHOLDER: horários]</span></li>
+            <li><span class="dia">Sábado</span><span class="hora">[PLACEHOLDER: horários]</span></li>
+            <li><span class="dia">Domingo e feriados</span><span class="hora">[PLACEHOLDER: horários]</span></li>
+          </ul>
+        </div>
+        <div class="info-card anima" style="--i:1" id="local">
+          <h3>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M12 21s-6.5-5.4-6.5-10.3a6.5 6.5 0 1 1 13 0C18.5 15.6 12 21 12 21z"/>
+              <circle cx="12" cy="10.5" r="2.2"/>
+            </svg>
+            Como chegar
+          </h3>
+          <p>[PLACEHOLDER: endereço completo], Pinheiros, São Paulo</p>
+          <a class="link-maps" href="https://www.google.com/maps/search/?api=1&amp;query=Caf%C3%A9%20do%20Largo%20Pinheiros%20S%C3%A3o%20Paulo">Abrir no Google Maps</a>
+          <p class="nota">[PLACEHOLDER: trocar pelo link exato do Google Maps do cliente]</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BANNER FINAL -->
+  <section class="banner" id="pedido">
+    <div class="container">
+      <h2 class="anima" style="--i:0">Bateu vontade? Peça pra retirada</h2>
+      <p class="anima" style="--i:1">Chame no WhatsApp, a gente prepara e te avisa quando o pedido estiver pronto.</p>
+      <a class="botao botao-claro anima" style="--i:2" href="https://wa.me/5511999990004?text=Oi!%20Vim%20pelo%20site%20do%20Caf%C3%A9%20do%20Largo%20e%20quero%20fazer%20um%20pedido%20pra%20retirada.">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+          <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.6-6.1c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.3-.6.8-.8 1-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.8-.7-1.3-1.5-1.4-1.8-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.2 1.8 2.8 4.3 3.9.6.3 1.1.4 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2 0-.1-.2-.2-.5-.3z"/>
+        </svg>
+        Pedir pelo WhatsApp
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<!-- RODAPÉ -->
+<footer class="rodape">
+  <div class="container">
+    <div class="rodape-grade">
+      <div class="rodape-marca anima" style="--i:0">
+        <span class="nome">Café do Largo</span>
+        <p>Café da manhã e brunch em Pinheiros, São Paulo. Peça pelo WhatsApp pra retirada.</p>
+      </div>
+      <nav class="anima" style="--i:1" aria-label="Contato e redes">
+        <ul class="rodape-lista">
+          <li><a href="https://wa.me/5511999990004?text=Oi!%20Vim%20pelo%20site%20do%20Caf%C3%A9%20do%20Largo%20e%20quero%20fazer%20um%20pedido%20pra%20retirada.">WhatsApp: (11) 99999-0004</a></li>
+          <li><span class="linha">Instagram: [PLACEHOLDER: @ do café no Instagram]</span></li>
+          <li><span class="linha">[PLACEHOLDER: endereço completo], Pinheiros, São Paulo</span></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="rodape-base">
+      <p>Café do Largo. CNPJ: [PLACEHOLDER: CNPJ]. Todos os direitos reservados.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- BOTÃO FLUTUANTE DE WHATSAPP -->
+<a class="zap-flutuante" href="https://wa.me/5511999990004?text=Oi!%20Vim%20pelo%20site%20do%20Caf%C3%A9%20do%20Largo%20e%20quero%20fazer%20um%20pedido%20pra%20retirada." aria-label="Pedir pelo WhatsApp para retirada">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+    <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.6-6.1c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.3-.6.8-.8 1-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.8-.7-1.3-1.5-1.4-1.8-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.1s.9 2.4 1 2.6c.1.2 1.8 2.8 4.3 3.9.6.3 1.1.4 1.5.6.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2 0-.1-.2-.2-.5-.3z"/>
+  </svg>
+</a>
+
+<script>
+  // Animação de entrada, sem biblioteca. Só transform/opacity, zero layout shift.
+  (function(){
+    var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Hero anima no load (cascata rápida). Sem esperar scroll.
+    // requestAnimationFrame garante que o estado inicial já foi pintado antes de transitar.
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        document.body.classList.add('carregado');
+      });
+    });
+
+    // Se o usuário pediu menos movimento, mostra tudo estático e não observa nada.
+    if(reduz){
+      var todos = document.querySelectorAll('.anima');
+      for(var i=0;i<todos.length;i++){ todos[i].classList.add('visivel'); }
+      return;
+    }
+
+    // Blocos abaixo do hero: entram na viewport via IntersectionObserver.
+    var alvos = document.querySelectorAll('main section:not(.hero) .anima, .rodape .anima');
+    if(!('IntersectionObserver' in window)){
+      for(var j=0;j<alvos.length;j++){ alvos[j].classList.add('visivel'); }
+      return;
+    }
+    var obs = new IntersectionObserver(function(entradas, observador){
+      entradas.forEach(function(e){
+        if(e.isIntersecting){
+          e.target.classList.add('visivel');
+          observador.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+    for(var k=0;k<alvos.length;k++){ obs.observe(alvos[k]); }
+  })();
+</script>
+
+</body>
+</html>

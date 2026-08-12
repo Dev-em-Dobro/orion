@@ -4,10 +4,15 @@
 Implementada — 2026-07-14
 
 ## Objetivo
-Dar ao aluno um menu **`/configuracao`** onde ele cola as **próprias chaves de
-API**. Substitui o `.env` global como fonte das chaves: cada feature passa a usar
-a chave **do aluno logado**. Vantagem do BYOK — o **custo de API é do aluno**; o
-nosso fica só em hospedagem + banco.
+Dar ao aluno um menu **`/configuracao`** com duas formas de operar:
+
+1. **Modo Orion (padrão)** — usa chaves compartilhadas do servidor
+   (`ORION_GOOGLE_API_KEY`, `ORION_OPENAI_API_KEY`). O aluno **não precisa**
+   de conta Google nem OpenAI. Sujeito a [limites diários](F018-limites-diarios.md).
+2. **Modo BYOK** — o aluno cola as **próprias chaves** cifradas; custo de API é
+   dele e **sem cotas diárias** da F018.
+
+Toggle `key_mode` (`orion` | `byok`) em `UserApiKeys`.
 
 Cifra das chaves em [ADR-009](../04-decisions/ADR-009-cifra-chaves-byok.md).
 Depende de sessão ([F014](F014-autenticacao.md)) e escopo ([F015](F015-multi-tenant.md)).
@@ -18,6 +23,8 @@ Depende de sessão ([F014](F014-autenticacao.md)) e escopo ([F015](F015-multi-te
   [F017](F017-multi-provider-llm.md). A config aceita as 3 desde já.
 - **ScreenshotOne** (opcional) — necessária pro Diagnóstico UX ([F008](F008-diagnostico-ux-ia.md))
   em produção serverless ([ADR-006](../04-decisions/ADR-006-screenshot-api-externa.md)).
+  **Pausa temporária (2026-07-27):** o slot fica oculto na UI de `/configuracao`
+  enquanto o fluxo de Diagnóstico UX está fora do uso.
 
 ## Modelo (schema)
 `UserApiKeys` — por usuário, **cifrado** (ADR-009): para cada chave, `ciphertext`,
@@ -25,9 +32,10 @@ Depende de sessão ([F014](F014-autenticacao.md)) e escopo ([F015](F015-multi-te
 faltando). `user_id` FK (F015). Migração dedicada.
 
 ## Tela `/configuracao`
-- Um input por chave, com **máscara** (mostra só os últimos dígitos) e botão
-  **"testar chave"** (ping barato por provedor — ex.: Places textSearch mínimo,
-  Anthropic mensagem curta).
+- **Toggle Orion / BYOK** no topo — modo Orion é o padrão para novos alunos.
+- Modo **BYOK**: inputs por chave, com **máscara** e **"testar chave"**.
+- Modo **Orion**: seção BYOK oculta; texto explicando que as chaves são da Orion.
+- Durante a pausa da F008, o input de ScreenshotOne não é exibido na tela.
 - **Status por chave:** configurada ✓ / inválida ✗ / faltando —.
 - Nunca exibe o valor em claro nem o devolve ao client.
 

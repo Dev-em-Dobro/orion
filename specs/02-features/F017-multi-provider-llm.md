@@ -5,18 +5,24 @@ Implementada — 2026-07-15
 
 ## Objetivo
 Deixar o aluno **escolher o provedor de IA** — Anthropic, OpenAI ou Gemini —
-usando a **própria chave** ([F016](F016-configuracao-de-chaves.md)). Todas as
-features de IA (outreach, conteúdo, diagnóstico UX, proposta, objeções,
-simulador) passam a rodar pelo provedor escolhido, mantendo **structured output**
-e **visão**.
+no **modo BYOK**, usando a **própria chave** ([F016](F016-configuracao-de-chaves.md)).
+No **modo Orion** ([F018](F018-limites-diarios.md)), as features de IA usam
+**OpenAI** com `ORION_OPENAI_API_KEY` (sem escolha de provider na UI) — **não**
+usam Gemini. Chave Gemini do aluno só entra no **modo BYOK** com provider =
+Gemini.
 
 Abordagem técnica em [ADR-011](../04-decisions/ADR-011-multi-provider-llm.md):
-**fachada `src/lib/llm/` sobre o Vercel AI SDK**.
+**fachada `src/lib/llm/` sobre o Vercel AI SDK**. Todas as features mantêm
+**structured output** e **visão**.
 
 ## Escopo
 - Provider selecionável em `/configuracao` (`llm_provider` em `UserApiKeys`).
 - Default: **Anthropic**.
 - OpenAI e Gemini usam as chaves já guardadas na F016.
+- **Gemini thinking:** modelos 2.5/3.x contam tokens de raciocínio no
+  `maxOutputTokens`. A fachada desliga thinking (`thinkingBudget: 0`) em
+  gerações estruturadas e amplia o teto, senão a API devolve HTTP 200 com
+  texto vazio → erro tipo “No output generated”.
 
 ## Camada de abstração
 `LlmClient` em `src/lib/llm/`:
