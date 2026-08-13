@@ -1,8 +1,69 @@
 # F010 — Dashboard de Funil de Prospecção
 
 ## Status
-Proposta — 2026-06-20
+Proposta — 2026-06-20 · **emendada em 2026-08-13** (ver abaixo).
 
+## Emenda 2026-08-13 — o funil do Dashboard passa a ser o mesmo do kanban
+
+Havia **três** listas de estágio para a mesma coisa:
+
+| Onde | O quê |
+|------|-------|
+| `src/app/(orion)/page.tsx` | `ESTAGIOS`, array local com 9 status soltos, rótulos e cores |
+| `src/lib/funil.ts` | `ESTAGIOS_FUNIL` + `ROTULO_ESTAGIO` |
+| `src/lib/funil.ts` | `COLUNAS_FUNIL`, as 7 colunas do kanban ([F034](F034-funil-kanban.md)) |
+
+Os hexes estavam literalmente duplicados (`#8b5cf6`, `#f59e0b`, `#06b6d4`,
+`#14b8a6`, `#6366f1`, `#22c55e`, `#ef4444` nos dois arquivos), e as telas
+discordavam em três pontos: granularidade (9 barras × 7 colunas), presença de
+`novo`, e nomes (Contatado × Abordados, Ganho × Ganhos).
+
+O efeito não era estético: **os números não batiam e não dava pra reconciliar**.
+4 em `enriquecido` + 6 em `priorizado` viravam duas barras no Dashboard e um
+"Prontos 10" no kanban.
+
+O Dashboard passa a ler `COLUNAS_FUNIL`. Ele não tem mais lista própria.
+
+### `novo` sai da silhueta
+
+Lead coletado e ainda sem Diagnóstico **não é etapa de venda** — é trabalho na
+fila. Contá-lo como estágio inflava a base e transformava "trabalho não feito"
+em queda de conversão do primeiro passo, que é leitura errada.
+
+E o número já tem dono: a **Fila do dia**, nesta mesma tela logo abaixo, mostra
+"Aprofundar próximos 10 (N na espera)" — com o botão do lado. Repetir como barra
+seria a terceira cópia do mesmo dado, e a única sem ação.
+
+> **O Diagnóstico continua sendo o motor.** Ele produz as Dores, que são a
+> `necessidade` do score ([F003](F003-score-e-priorizacao.md)), o gancho concreto
+> da Abordagem ([F005](F005-abordagem-whatsapp.md)), o escopo e o preço da
+> Proposta ([F012](F012-gerador-de-proposta.md)) e a âncora das Objeções
+> ([F011](F011-assistente-de-objecoes.md)). O que mudou na
+> [F025](F025-fila-do-dia.md) é que deixou de ser um botão que o aluno aperta e
+> virou automático em lotes. Mecanismo essencial, estágio de funil não.
+
+### Clique na coluna filtra a coluna inteira
+
+`?estagio=` passa a aceitar **id de coluna** (`prontos`, `abordados`, …) além de
+status solto. Sem isso, clicar em "Prontos 10" abriria uma lista com 6 — o
+número da barra e o da lista têm que ser o mesmo.
+
+URL antiga com `?estagio=priorizado` continua valendo e continua filtrando **só**
+`priorizado`: favorito e link colado em grupo não podem mudar de significado.
+
+### Critérios de aceitação da emenda
+- [ ] **AC10** — Dashboard e `/funil` mostram os mesmos grupos, com os mesmos
+      rótulos e as mesmas cores, lidos de `COLUNAS_FUNIL`.
+- [ ] **AC11** — Para a mesma base, a contagem de cada grupo é idêntica nas
+      duas telas.
+- [ ] **AC12** — `novo` não aparece na silhueta do Dashboard.
+- [ ] **AC13** — Clicar num grupo abre `/leads` filtrada por **todos** os
+      status dele, e o total da lista bate com o número da barra.
+- [ ] **AC14** — `?estagio=<status>` (URL antiga) segue filtrando só aquele
+      status.
+- [ ] **AC15** — Nenhuma cor **de estágio** definida fora de `src/lib/funil.ts`.
+      (O verde da marca `#22c55e` no favicon e no template de e-mail é outra
+      coisa e continua onde está.)
 ## Objetivo
 Transformar a home (`/`) num **dashboard de funil read-only** que mostra, num
 relance, **onde estão os Leads** e **onde o funil vaza**. Hoje a home tem um

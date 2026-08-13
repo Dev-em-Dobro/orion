@@ -191,6 +191,34 @@ export function colunaDoStatus(status: LeadStatus): ColunaFunil | null {
   return COLUNAS_FUNIL.find((c) => c.status.includes(status)) ?? null;
 }
 
+export const COLUNA_POR_ID = new Map(COLUNAS_FUNIL.map((c) => [c.id, c]));
+
+/**
+ * F010 (revisão 2026-08-13) — silhueta do funil do Dashboard.
+ *
+ * As mesmas colunas do kanban, menos `perdidos`: perdido é vazamento lateral
+ * (sai de qualquer estágio), não um passo da cadeia. O Dashboard desenha ele
+ * separado, fora da silhueta.
+ *
+ * Existe pra o Dashboard **não** ter a própria lista de estágios. Tinha uma —
+ * 9 status soltos, com rótulos e cores copiados destes mesmos hexes — e os
+ * números das duas telas não batiam.
+ */
+export const COLUNAS_SILHUETA: ColunaFunil[] = COLUNAS_FUNIL.filter(
+  (c) => c.id !== "perdidos",
+);
+
+/** Soma a contagem por status nas colunas. */
+export function contarPorColuna(
+  porStatus: Record<LeadStatus, number>,
+  colunas: ColunaFunil[] = COLUNAS_FUNIL,
+): { coluna: ColunaFunil; total: number }[] {
+  return colunas.map((coluna) => ({
+    coluna,
+    total: coluna.status.reduce((soma, st) => soma + (porStatus[st] ?? 0), 0),
+  }));
+}
+
 /** Status que um card assume ao ser solto numa coluna. */
 export function statusAoMover(colunaId: string): LeadStatus | null {
   return COLUNAS_FUNIL.find((c) => c.id === colunaId)?.status[0] ?? null;

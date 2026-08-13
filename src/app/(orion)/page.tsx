@@ -6,7 +6,14 @@ import { FunilChart } from "@/components/funil-chart";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
-import { ESTAGIOS_EM_ABERTO, ONDE_NAO_DESCARTADO } from "@/lib/funil";
+import {
+  COLUNAS_SILHUETA,
+  COLUNA_POR_ID,
+  contarPorColuna,
+  ESTAGIOS_EM_ABERTO,
+  ESTAGIOS_FUNIL,
+  ONDE_NAO_DESCARTADO,
+} from "@/lib/funil";
 import { hrefDoEstagio } from "@/lib/leads/filtros";
 import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
 import { metaDoMes } from "@/lib/metas";
@@ -18,17 +25,16 @@ import { PraFazerAgora } from "./pra-fazer-agora";
 // Dashboard sempre reflete só os dados do aluno (F015).
 export const dynamic = "force-dynamic";
 
-const ESTAGIOS: { status: LeadStatus; label: string; cor: string }[] = [
-  { status: "novo", label: "Novo", cor: "#71717a" },
-  { status: "enriquecido", label: "Enriquecido", cor: "#0ea5e9" },
-  { status: "priorizado", label: "Priorizado", cor: "#8b5cf6" },
-  { status: "contatado", label: "Contatado", cor: "#f59e0b" },
-  { status: "respondeu", label: "Respondeu", cor: "#06b6d4" },
-  { status: "qualificado", label: "Qualificado", cor: "#14b8a6" },
-  { status: "proposta", label: "Proposta", cor: "#6366f1" },
-  { status: "ganho", label: "Ganho", cor: "#22c55e" },
-  { status: "perdido", label: "Perdido", cor: "#ef4444" },
-];
+// F010 (revisão 2026-08-13) — o Dashboard não tem mais lista própria de
+// estágios. Tinha uma, com 9 status soltos e os mesmos hexes copiados do
+// `lib/funil.ts`, e por isso as contagens não batiam com o kanban: lá
+// `enriquecido` + `priorizado` são uma coluna só ("Prontos"). Agora as duas
+// telas leem `COLUNAS_FUNIL`.
+//
+// `novo` fica fora da silhueta: Lead coletado e ainda não aprofundado não é
+// etapa de venda, é trabalho na fila — e a Fila do dia, logo abaixo nesta
+// mesma tela, já mostra quantos são com o botão de aprofundar do lado.
+const ESTAGIOS_CONTADOS: LeadStatus[] = ESTAGIOS_FUNIL;
 
 /**
  * Contagem por estágio. Era um `findMany` de **todos** os Leads do tenant só
@@ -46,7 +52,7 @@ const contarPorStatus = cache(async (): Promise<Record<LeadStatus, number>> => {
     _count: { _all: true },
   });
   const contagem = Object.fromEntries(
-    ESTAGIOS.map((e) => [e.status, 0]),
+    ESTAGIOS_CONTADOS.map((s) => [s, 0]),
   ) as Record<LeadStatus, number>;
   for (const linha of linhas) contagem[linha.status] = linha._count._all;
   return contagem;
@@ -60,19 +66,21 @@ async function PainelFunil() {
   ]);
   const semChaves = faltandoChaves.length > 0;
   const total = Object.values(porStatus).reduce((soma, n) => soma + n, 0);
-  const maxEstagio = Math.max(1, ...Object.values(porStatus));
 
-  // Silhueta: estágios de progressão, sem `perdido` (vazamento lateral).
-  const funilStages = ESTAGIOS.filter((e) => e.status !== "perdido").map(
-    (e) => ({
-      id: e.status,
-      label: e.label,
-      value: porStatus[e.status],
-      color: e.cor,
-      // Clicar no estágio abre a lista já filtrada por ele.
-      href: hrefDoEstagio(e.status),
-    }),
-  );
+  // Silhueta: as colunas do kanban, sem `perdidos` (vazamento lateral).
+  const porColuna = contarPorColuna(porStatus, COLUNAS_SILHUETA);
+  const perdidos = COLUNA_POR_ID.get("perdidos");
+  const maxEstagio = Math.max(1, ...porColuna.map((c) => c.total));
+
+  const funilStages = porColuna.map(({ coluna, total: valor }) => ({
+    id: coluna.id,
+    label: coluna.titulo,
+    value: valor,
+    color: coluna.cor,
+    // Clicar na coluna abre a lista filtrada por TODOS os status dela — senão
+    // o número da barra não bateria com o que a lista mostra.
+    href: hrefDoEstagio(coluna.id),
+  }));
 
   return (
     <section className="card">
@@ -112,7 +120,7 @@ async function PainelFunil() {
           perdido={{
             value: porStatus.perdido,
             max: maxEstagio,
-            href: hrefDoEstagio("perdido"),
+            href: hrefDoEstagio(perdidos?.id ?? "perdido"),
           }}
         />
       )}

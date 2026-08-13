@@ -11,7 +11,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ROTULO_ESTAGIO } from "@/lib/funil";
 import {
   queryDoFiltro,
   SCORE_CHIP,
@@ -93,7 +92,7 @@ export function ChipsFiltro({
   // existir um caminho de volta: sem isso o recorte fica preso na URL.
   if (filtro.estagio) {
     chips.push({
-      label: ROTULO_ESTAGIO[filtro.estagio],
+      label: filtro.estagio.rotulo,
       ativo: true,
       destino: base,
     });

@@ -7,7 +7,7 @@ import {
   whereFiltroLista,
   hrefDoEstagio,
 } from "@/lib/leads/filtros";
-import { ESTAGIOS_FUNIL } from "@/lib/funil";
+import { COLUNAS_FUNIL, ESTAGIOS_FUNIL } from "@/lib/funil";
 import { dorPrincipal } from "@/lib/dores/principal";
 import { faixaDeScore } from "@/lib/leads/faixa";
 import {
@@ -134,9 +134,32 @@ describe("faixaDeScore", () => {
 // Filtro por estágio: nasce do clique no funil do Dashboard e vira `?estagio=`.
 describe("filtro por estágio do funil", () => {
   it("aceita um estágio válido e ignora lixo", () => {
-    expect(parseFiltroLista({ estagio: "contatado" }).estagio).toBe("contatado");
+    expect(parseFiltroLista({ estagio: "contatado" }).estagio).toEqual({
+      token: "contatado",
+      status: ["contatado"],
+      rotulo: "Contatado",
+    });
     expect(parseFiltroLista({ estagio: "inventado" }).estagio).toBeNull();
     expect(parseFiltroLista({ estagio: "" }).estagio).toBeNull();
+  });
+
+  // F010 (revisão 2026-08-13) — o Dashboard passou a desenhar as colunas do
+  // kanban, e "Prontos" é `priorizado` + `enriquecido`. Sem cobrir os dois, o
+  // clique mostraria menos Leads do que o número na barra.
+  it("aceita id de coluna do kanban e cobre todos os status dela", () => {
+    expect(parseFiltroLista({ estagio: "prontos" }).estagio).toEqual({
+      token: "prontos",
+      status: ["priorizado", "enriquecido"],
+      rotulo: "Prontos",
+    });
+  });
+
+  it("URL antiga com status solto continua filtrando o que sempre filtrou", () => {
+    // Favorito, histórico, link colado num grupo: `?estagio=priorizado` não
+    // pode virar "Prontos" e passar a trazer os `enriquecido` junto.
+    const f = parseFiltroLista({ estagio: "priorizado" });
+    expect(f.estagio?.status).toEqual(["priorizado"]);
+    expect(queryDoFiltro(f)).toContain("estagio=priorizado");
   });
 
   it("não aceita `descartado` por aqui — esse caminho é o `status=descartados`", () => {
@@ -145,7 +168,12 @@ describe("filtro por estágio do funil", () => {
 
   it("o estágio escolhido vence a visão padrão de 'tudo menos descartado'", () => {
     const where = whereFiltroLista(parseFiltroLista({ estagio: "ganho" }));
-    expect(where.status).toBe("ganho");
+    expect(where.status).toEqual({ in: ["ganho"] });
+  });
+
+  it("coluna vira `in` com os dois status", () => {
+    const where = whereFiltroLista(parseFiltroLista({ estagio: "prontos" }));
+    expect(where.status).toEqual({ in: ["priorizado", "enriquecido"] });
   });
 
   it("sem estágio, segue escondendo descartado", () => {
@@ -164,13 +192,31 @@ describe("filtro por estágio do funil", () => {
 // "descartados" — o clique navegava e não filtrava nada. O link agora sai
 // daqui, e este teste é o que impede o par link/parser de divergir de novo.
 describe("hrefDoEstagio — o link do funil casa com o parser", () => {
-  it("volta pelo parse como o mesmo estágio", () => {
-    for (const estagio of ESTAGIOS_FUNIL) {
-      const href = hrefDoEstagio(estagio);
+  it("volta pelo parse como o mesmo recorte — status solto e coluna", () => {
+    const tokens = [
+      ...ESTAGIOS_FUNIL,
+      ...COLUNAS_FUNIL.map((c) => c.id),
+    ] as string[];
+    for (const token of tokens) {
+      const href = hrefDoEstagio(token);
       const params = Object.fromEntries(
         new URLSearchParams(href.split("?")[1] ?? ""),
       );
-      expect(parseFiltroLista(params).estagio, estagio).toBe(estagio);
+      expect(parseFiltroLista(params).estagio?.token, token).toBe(token);
+    }
+  });
+
+  // O número da barra é a soma dos status da coluna; o link tem que trazer
+  // exatamente esses. Se um dia entrar coluna nova sem status no filtro, é
+  // aqui que quebra — e não em produção, com o aluno vendo 10 e a lista 6.
+  it("toda coluna do kanban tem link que cobre os status dela", () => {
+    for (const coluna of COLUNAS_FUNIL) {
+      const params = Object.fromEntries(
+        new URLSearchParams(hrefDoEstagio(coluna.id).split("?")[1] ?? ""),
+      );
+      expect(parseFiltroLista(params).estagio?.status, coluna.id).toEqual(
+        coluna.status,
+      );
     }
   });
 

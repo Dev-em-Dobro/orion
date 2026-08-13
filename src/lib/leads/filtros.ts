@@ -10,8 +10,10 @@
 
 import type { LeadStatus, Prisma } from "@prisma/client";
 import {
+  COLUNA_POR_ID,
   ESTAGIOS_FUNIL,
   ONDE_NAO_DESCARTADO,
+  ROTULO_ESTAGIO,
   STATUS_DESCARTADO,
 } from "@/lib/funil";
 import { SCORE_QUALIFICADO } from "@/lib/score/score";
@@ -27,9 +29,25 @@ export type FiltroLista = {
   comTelefone: boolean;
   /** F026 — Leads sem sinal de atendimento automatizado no site. */
   semAtendimento: boolean;
-  /** Estágio do funil, vindo do clique no gráfico do Dashboard. */
-  estagio: LeadStatus | null;
+  /**
+   * Recorte do funil, vindo do clique no gráfico do Dashboard.
+   *
+   * F010 (revisão 2026-08-13): era um `LeadStatus` só. Virou conjunto porque o
+   * Dashboard passou a desenhar as **colunas** do kanban, e "Prontos" é
+   * `priorizado` + `enriquecido` — com um status só o clique mostraria menos
+   * Leads do que o número na barra.
+   */
+  estagio: RecorteEstagio | null;
   descartados: boolean;
+};
+
+export type RecorteEstagio = {
+  /** O que vai (e volta) na URL: id de coluna ou nome de status. */
+  token: string;
+  /** Status que o recorte cobre. */
+  status: LeadStatus[];
+  /** Rótulo do chip — título da coluna ou do estágio. */
+  rotulo: string;
 };
 
 export type ParamsLista = {
@@ -43,10 +61,28 @@ export type ParamsLista = {
   status?: string;
 };
 
-/** Só estágio do funil: `descartado` entra pelo `status=descartados`. */
-function parseEstagio(raw: string | undefined): LeadStatus | null {
-  const limpo = (raw ?? "").trim() as LeadStatus;
-  return ESTAGIOS_FUNIL.includes(limpo) ? limpo : null;
+/**
+ * Aceita **id de coluna** do funil (`prontos`, `abordados`, …) ou um status
+ * solto. `descartado` fica de fora: entra pelo `status=descartados`.
+ *
+ * Os dois formatos convivem porque o link do Dashboard passou a usar coluna,
+ * mas URL antiga com `?estagio=priorizado` (favorito, histórico, link colado
+ * num grupo) tem que continuar filtrando o que sempre filtrou.
+ */
+function parseEstagio(raw: string | undefined): RecorteEstagio | null {
+  const limpo = (raw ?? "").trim();
+  if (!limpo) return null;
+
+  const coluna = COLUNA_POR_ID.get(limpo);
+  if (coluna) {
+    return { token: coluna.id, status: coluna.status, rotulo: coluna.titulo };
+  }
+
+  const status = limpo as LeadStatus;
+  if (ESTAGIOS_FUNIL.includes(status)) {
+    return { token: status, status: [status], rotulo: ROTULO_ESTAGIO[status] };
+  }
+  return null;
 }
 
 export function parseFiltroLista(params: ParamsLista): FiltroLista {
@@ -82,8 +118,9 @@ export function whereFiltroLista(f: FiltroLista): Prisma.LeadWhereInput {
   return {
     ...(f.descartados ? { status: STATUS_DESCARTADO } : ONDE_NAO_DESCARTADO),
     // Depois do fragmento acima de propósito: o estágio escolhido vence a
-    // visão padrão de "tudo menos descartado".
-    ...(f.estagio ? { status: f.estagio } : {}),
+    // visão padrão de "tudo menos descartado". `in` cobre coluna (vários
+    // status) e status solto (lista de um) com o mesmo caminho.
+    ...(f.estagio ? { status: { in: f.estagio.status } } : {}),
     ...(f.categoria ? { categoria: f.categoria } : {}),
     ...(f.site ? whereFiltroSite(f.site) : {}),
     ...(f.scoreMin !== null ? { score: { gte: f.scoreMin } } : {}),
@@ -112,7 +149,7 @@ export function queryDoFiltro(
   if (f.scoreMin !== null) p.set("score", String(f.scoreMin));
   if (f.comTelefone) p.set("telefone", "1");
   if (f.semAtendimento) p.set("atendimento", "nao");
-  if (f.estagio) p.set("estagio", f.estagio);
+  if (f.estagio) p.set("estagio", f.estagio.token);
   if (f.descartados) p.set("status", "descartados");
   for (const [k, v] of Object.entries(extra)) {
     if (v !== undefined && v !== "") p.set(k, String(v));
@@ -127,7 +164,8 @@ export function queryDoFiltro(
  * primeira versão o funil apontava pra `?status=`, que aqui só significa
  * "descartados": o clique navegava e não filtrava nada, silenciosamente.
  */
-export function hrefDoEstagio(estagio: LeadStatus): string {
+export function hrefDoEstagio(token: string): string {
+  const estagio = parseEstagio(token);
   const q = queryDoFiltro({
     categoria: null,
     site: null,
