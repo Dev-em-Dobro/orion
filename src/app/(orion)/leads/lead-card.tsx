@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 import type { LeadStatus } from "@prisma/client";
+import { ROTULO_ESTAGIO } from "@/lib/funil";
 import { faixaDeScore, scoreBadge, STATUS_BADGE } from "./ui";
 
 export type LeadCardProps = {
@@ -120,20 +121,38 @@ export function LeadCard({
           </Link>
           <p className="mt-0.5 truncate text-xs text-muted">
             {lead.categoria}
-            <span className="text-zinc-600"> · {lead.tier}</span>
+            <span className="text-muted"> · {lead.tier}</span>
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {/* O `~` saiu em 2026-08-13. Era um símbolo sem legenda visível: a
+              explicação vivia só no `title`, que não existe no toque — e a
+              pergunta que ele gerava era "por que uns ficam assim?".
+
+              O que distingue agora é o estilo: confirmado vem preenchido na cor
+              da faixa e **com a palavra**; estimado vem em contorno neutro e só
+              com o número. A ausência da palavra já era o sinal — o til era
+              redundante e do lado errado (a convenção de "aproximadamente" é
+              antes do número, não depois). */}
           <span
-            className={`badge font-mono ${scoreBadge(lead.score)}`}
+            className={`badge font-mono ${scoreBadge(lead.score, lead.scoreEstimado)}`}
             title={
               lead.scoreEstimado
-                ? `Score estimado ${lead.score} — da Triagem, sem Diagnóstico ainda`
+                ? `Score ${lead.score} estimado pela Triagem — ainda sem Diagnóstico`
                 : `Score ${lead.score} — faixa ${faixaDeScore(lead.score)}`
             }
           >
             {lead.score}
-            {lead.scoreEstimado ? "~" : ` ${faixaDeScore(lead.score)}`}
+            {lead.scoreEstimado ? (
+              // Estilo não chega em leitor de tela: sem isto o badge lê só
+              // "92", indistinguível de um score confirmado.
+              <span className="sr-only">
+                {" "}
+                — estimado pela Triagem, ainda sem Diagnóstico
+              </span>
+            ) : (
+              <> {faixaDeScore(lead.score)}</>
+            )}
           </span>
           {onSelecionar && (
             <input
@@ -160,8 +179,11 @@ export function LeadCard({
           ehAgregador={lead.ehAgregador}
           agregadorTipo={lead.agregadorTipo}
         />
+        {/* Era o valor cru do enum: o aluno lia "enriquecido" e "priorizado",
+            termos internos que não descrevem nada do trabalho dele. O mapa vive
+            em `lib/funil.ts`, junto da ordem canônica do funil. */}
         <span className={`badge ${STATUS_BADGE[lead.status]}`}>
-          {lead.status}
+          {ROTULO_ESTAGIO[lead.status]}
         </span>
         <Avaliacoes nota={lead.nota} numAvaliacoes={lead.numAvaliacoes} />
         {lead.semAtendimento && (

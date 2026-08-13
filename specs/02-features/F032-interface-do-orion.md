@@ -172,6 +172,51 @@ padrão de bloqueio por plano da [F035](F035-planos-e-limites.md): item visível
 com cadeado, apontando pra `/planos`.
 
 ## Card de Lead
+
+### Badge de score: o estilo diz o quanto confiar
+
+> **Mudança de 2026-08-13.** O badge mostrava `92~` para score estimado e
+> `90 Alto` para confirmado, com a **mesma cor** nos dois — `scoreBadge()`
+> pintava só pela faixa do número.
+
+Duas coisas estavam erradas:
+
+1. **O `~` era símbolo sem legenda.** A explicação vivia só no atributo `title`,
+   que não existe no toque e é ruim para leitor de tela. Na prática o aluno via
+   um sinal em alguns cards e não em outros, e a leitura era de inconsistência,
+   não de informação. (E estava do lado errado: a convenção de "aproximadamente"
+   é **antes** do número.)
+2. **A cor mentia.** Um `92` estimado recebia o mesmo verde de um `90`
+   confirmado. A cor é uma **promessa de confiança**, e a Triagem não tem como
+   sustentá-la: ela chuta a partir de nicho e porte, sem abrir o site. Essa é a
+   única diferença que importa para decidir quem abordar, e era justamente a que
+   o visual apagava.
+
+O badge passa a comunicar as duas coisas:
+
+| Estado | Aparência | Texto |
+|---|---|---|
+| **Confirmado** (pós-Diagnóstico) | preenchido, na cor da faixa | `90 Alto` |
+| **Estimado** (Triagem) | contorno neutro, sem preenchimento | `92` |
+
+A ausência da palavra já era o sinal — o `~` era redundante. Para quem não vê o
+estilo, um `sr-only` diz "estimado pela Triagem, ainda sem Diagnóstico": estilo
+não chega em leitor de tela, e sem isso o badge leria só "92".
+
+A régua vive em `scoreBadge(score, estimado)` (`lib/leads/faixa.ts`) e vale nas
+**três** superfícies que mostram score: card, detalhe e board do funil.
+
+### Status: rótulo, não valor de enum
+O card imprimia `lead.status` cru — o aluno lia "enriquecido" e "priorizado",
+termos internos que não descrevem trabalho nenhum dele. Passa por
+`ROTULO_ESTAGIO` (`lib/funil.ts`), junto da ordem canônica do funil.
+
+> **Pendente de decisão de produto:** `priorizado` continua sendo mostrado, mas
+> desde a [F025](F025-fila-do-dia.md) ele é automático — o aluno vê um estado
+> que não executou e não controla. Ou o rótulo muda para algo que descreva o que
+> ele significa para quem trabalha ("pronto pra abordar"), ou o estágio some do
+> badge. As duas saídas mexem no domínio, então ficam fora desta emenda.
+
 Substitui a linha da tabela. Anatomia, de cima pra baixo:
 
 ```

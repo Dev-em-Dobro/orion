@@ -20,6 +20,8 @@ export type CardFunil = {
   nome: string;
   categoria: string;
   score: number;
+  /** F025 — score ainda vem da Triagem. Muda o estilo do badge, não o número. */
+  scoreEstimado: boolean;
   status: LeadStatus;
   waLink: string | null;
   /** Coluna de origem, vinda do servidor. */
@@ -147,6 +149,7 @@ export function Board({
                       <span
                         className={`badge shrink-0 font-mono ${scoreBadge(
                           card.score,
+                          card.scoreEstimado,
                         )}`}
                       >
                         {card.score}

@@ -44,6 +44,7 @@ async function Conteudo() {
         nome: true,
         categoria: true,
         score: true,
+        score_estimado: true,
         status: true,
         telefone: true,
         abordagens: {
@@ -91,6 +92,7 @@ async function Conteudo() {
       id: lead.id,
       nome: lead.nome,
       categoria: lead.categoria,
+      scoreEstimado: lead.score_estimado,
       score: lead.score,
       status: lead.status,
       coluna: coluna.id,

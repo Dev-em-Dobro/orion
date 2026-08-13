@@ -150,11 +150,23 @@ export default async function LeadByIdPage({
         <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`badge font-mono ${scoreBadge(lead.score)}`}>
-                {lead.score} {faixaDeScore(lead.score)}
+              {/* Mesma régua do card: estimado é contorno neutro e sem a
+                  palavra da faixa — a cor é promessa de confiança. */}
+              <span
+                className={`badge font-mono ${scoreBadge(lead.score, lead.score_estimado)}`}
+              >
+                {lead.score}
+                {lead.score_estimado ? (
+                  <span className="sr-only">
+                    {" "}
+                    — estimado pela Triagem, ainda sem Diagnóstico
+                  </span>
+                ) : (
+                  <> {faixaDeScore(lead.score)}</>
+                )}
               </span>
               <span className={`badge ${STATUS_BADGE[lead.status]}`}>
-                {lead.status}
+                {ROTULO_ESTAGIO[lead.status]}
               </span>
             </div>
             <h1 className="mt-2 text-2xl font-bold tracking-tight">

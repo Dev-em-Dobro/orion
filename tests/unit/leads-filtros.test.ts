@@ -9,7 +9,7 @@ import {
 } from "@/lib/leads/filtros";
 import { COLUNAS_FUNIL, ESTAGIOS_FUNIL } from "@/lib/funil";
 import { dorPrincipal } from "@/lib/dores/principal";
-import { faixaDeScore } from "@/lib/leads/faixa";
+import { faixaDeScore, scoreBadge } from "@/lib/leads/faixa";
 import {
   ORDEM_INVERSA,
   ORDEM_LISTA,
@@ -274,5 +274,31 @@ describe("campos escondidos do form de filtro", () => {
       queryDoFiltro({ ...desc, categoria: null, site: null }),
     );
     expect(escondidos.get("status")).toBe("descartados");
+  });
+});
+
+// O badge de score comunica DUAS coisas: quanto (número) e quanto se pode
+// confiar (estilo). Até 2026-08-13 comunicava só a primeira — um 92 estimado
+// recebia o mesmo verde de um 90 confirmado.
+describe("scoreBadge — estimado não usa a cor da faixa", () => {
+  it("confirmado pinta pela faixa", () => {
+    expect(scoreBadge(90)).toContain("emerald");
+    expect(scoreBadge(45)).toContain("amber");
+    expect(scoreBadge(10)).toContain("zinc");
+  });
+
+  it("estimado é contorno neutro, seja qual for o número", () => {
+    for (const n of [10, 45, 90, 100]) {
+      const classe = scoreBadge(n, true);
+      expect(classe, `score ${n}`).toContain("border");
+      // A cor é promessa de confiança: a Triagem não abre o site, então não
+      // pode prometer nada.
+      expect(classe, `score ${n}`).not.toContain("emerald");
+      expect(classe, `score ${n}`).not.toContain("amber");
+    }
+  });
+
+  it("o padrão continua sendo confirmado — chamada antiga não muda de cor", () => {
+    expect(scoreBadge(90)).toBe(scoreBadge(90, false));
   });
 });
