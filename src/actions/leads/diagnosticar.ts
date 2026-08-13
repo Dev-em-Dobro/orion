@@ -10,6 +10,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { exigirChave } from "@/lib/chaves";
+import { estornarCota, reservarCota } from "@/lib/limites";
 import { mensagemEscopo, requireLeadOwned } from "@/lib/db/scoped";
 import {
   executarDiagnostico,
@@ -35,20 +36,32 @@ export async function diagnosticarLead(
     return { kind: "erro", mensagem: "lead_id inválido" };
   }
 
+  let reservou = false;
+  let userId: string | null = null;
+
   try {
-    const { lead, userId } = await requireLeadOwned(parsed.data.lead_id);
-    // F035 — teto do plano antes da chave: no limite, não gasta API nenhuma.
-    // Re-diagnosticar um Lead que já conta não deveria barrar, então só checa
-    // F035 (2026-08-13) — o teto mensal saiu daqui: passou a ser cobrado na
-    // **coleta**, que é onde está o custo (Places). Diagnosticar usa PageSpeed,
-    // que é grátis, então limitar aqui cobrava pelo que não custa.
-    const googleKey = await exigirChave(userId, "google");
+    const { lead, userId: uid } = await requireLeadOwned(parsed.data.lead_id);
+    userId = uid;
+
+    // F035 (2026-08-13) — o teto **mensal** saiu daqui: passou a ser cobrado na
+    // coleta, que é onde está o custo (Places). Diagnosticar usa PageSpeed, que
+    // é grátis.
+    //
+    // A cota **diária** (F018), essa fica — e passou a ser reservada aqui
+    // também. Até 2026-08-13 só o lote reservava, e o botão individual só
+    // aparecia pra Lead sem Diagnóstico, então o conjunto era finito. Com o
+    // "Rediagnosticar" sempre disponível, sem isto viraria um loop de chamadas
+    // externas sem teto nenhum.
+    await reservarCota(uid, "diagnostico");
+    reservou = true;
+
+    const googleKey = await exigirChave(uid, "google");
 
     const { dados, email } = await executarDiagnostico(
       lead.website,
       googleKey,
     );
-    await persistirDiagnostico({ userId, lead, dados, email });
+    await persistirDiagnostico({ userId: uid, lead, dados, email });
 
     revalidatePath("/leads");
     revalidatePath(`/leads/${lead.id}`);
@@ -59,6 +72,11 @@ export async function diagnosticarLead(
       resumo: `Diagnóstico concluído: ${resumoDiagnostico(dados, lead.website)}.`,
     };
   } catch (e) {
+    // Diagnóstico que falhou não gastou PageSpeed: devolve a cota, senão a
+    // tentativa frustrada custa o mesmo que a bem-sucedida.
+    if (reservou && userId) {
+      await estornarCota(userId, "diagnostico").catch(() => undefined);
+    }
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };
     throw e;

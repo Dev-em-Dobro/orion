@@ -14,11 +14,14 @@ const POSICAO: Record<Colocacao, string> = {
 
 export function Ajuda({
   rotulo,
+  simbolo = "?",
   colocacao = "abaixo-esquerda",
   children,
 }: {
   /** `aria-label` do botão — descreve a dúvida que o tooltip responde. */
   rotulo: string;
+  /** `?` para dúvida; `i` para explicar o que uma ação faz antes do clique. */
+  simbolo?: "?" | "i";
   colocacao?: Colocacao;
   children: React.ReactNode;
 }) {
@@ -27,9 +30,14 @@ export function Ajuda({
       <button
         type="button"
         aria-label={rotulo}
-        className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-zinc-600 text-[10px] leading-none font-semibold text-zinc-400 transition-colors duration-200 hover:border-zinc-400 hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        /* O alvo cresce pra ~32px com padding transparente — 16px é menos da
+           metade do mínimo de 44px, e num elemento que só se explica ao ser
+           tocado. O círculo visível continua pequeno. */
+        className="-m-2 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full p-2 text-muted transition-colors duration-200 hover:text-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
-        ?
+        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] leading-none font-semibold">
+          {simbolo}
+        </span>
       </button>
       <span
         role="tooltip"

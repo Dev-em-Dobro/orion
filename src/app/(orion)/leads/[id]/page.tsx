@@ -313,16 +313,22 @@ export default async function LeadByIdPage({
                 )}
 
                 {/* "Priorizar" saiu de vez: desde a F025 o aprofundamento já
-                    recalcula o score e promove o Lead pra `priorizado` — quem
-                    chega nesta tela já está priorizado, e o botão só refazia a
-                    mesma conta. "Diagnosticar" fica só como saída pro Lead que
-                    ainda não tem Diagnóstico: sem ele a aba Proposta pediria um
-                    Diagnóstico que não haveria como rodar. */}
-                {!diagnostico && (
-                  <div className="mt-4 border-t border-border pt-3">
-                    <DiagnosticarButton leadId={lead.id} />
-                  </div>
-                )}
+                    recalcula o score e promove o Lead pra `priorizado`, e o
+                    botão só refazia a mesma conta.
+
+                    Diagnosticar, ao contrário, passou a aparecer SEMPRE. Até
+                    2026-08-13 ele era escondido quando já havia Diagnóstico
+                    (`{!diagnostico && ...}`), e com isso não existia nenhum
+                    caminho de re-diagnóstico no produto: o lote da F025 só pega
+                    `score_estimado: true`. Um Lead diagnosticado com o site
+                    fora do ar ficava congelado com a Dor errada pra sempre,
+                    mesmo depois de o site voltar. */}
+                <div className="mt-4 border-t border-border pt-3">
+                  <DiagnosticarButton
+                    leadId={lead.id}
+                    jaTemDiagnostico={Boolean(diagnostico)}
+                  />
+                </div>
               </section>
 
               {demoUrl && (
