@@ -201,13 +201,15 @@ Substitui a linha da tabela. Anatomia, de cima pra baixo:
 O card é usado em três lugares: Fila do dia (F025), lista `/leads` e resultado
 da busca (F033) — **um componente só**.
 
-### Revisão 2026-08-13 — o card diz por que, não onde
+### Revisão 2026-08-13 — o card cabe numa varredura
 
-O card acumulou dado de cadastro e perdeu o dado de decisão. Telefone e endereço
-ocupavam duas linhas inteiras e **não decidem nada na varredura**: ninguém
-escolhe qual Lead abordar pela rua em que ele fica, e o telefone só é usado
-depois de decidir — no detalhe, onde ele está. Enquanto isso a **Dor**, que é a
-razão de o Lead estar ali, tinha saído.
+O card acumulou dado de cadastro. Telefone e endereço ocupavam duas linhas
+inteiras e **não decidem nada na varredura**: ninguém escolhe qual Lead abordar
+pela rua em que ele fica, e o telefone só é usado depois de decidir — no
+detalhe, onde ele está.
+
+O card fica com o que se lê de relance: nome, score com faixa, categoria, e uma
+fila de badges (site, status, avaliações, avisos). Nada em texto corrido.
 
 O que muda:
 
@@ -216,11 +218,28 @@ O que muda:
 | Número de telefone | Não decide nada na varredura; é uso do detalhe |
 | Endereço | Idem — e gastava a linha mais larga do card |
 
-| Entra / volta | Por quê |
-|---------------|---------|
-| **Dor principal**, com destaque | É o motivo do Lead existir na fila. Voltou de onde nunca devia ter saído |
+| Dor principal, em texto corrido | Ver abaixo — tentada e retirada no mesmo dia |
+
+| Entra | Por quê |
+|-------|---------|
 | Chip **"sem telefone"** | Só quando `telefone = null`. Não é o número: é o aviso de que não dá pra ligar nem mandar WhatsApp — isso **sim** muda a decisão |
 | Chip **"abordagem enviada"** | Evita retrabalho: o aluno vê na varredura que já falou com esse |
+
+**A linha da Dor não fica no card.** Foi tentada duas vezes em 2026-08-13 e
+retirada nas duas, a segunda vez com o card já renderizado na tela. O
+raciocínio a favor era bom no papel — a Dor é o motivo de o Lead estar na fila
+— mas em texto corrido ela é a linha mais larga da caixa e, numa grade de 3–4
+colunas, empurra todo card pra altura de um parágrafo. Na prática ela repete,
+com mais tinta, o que os badges de site já dizem em duas palavras: "sem site",
+"rede social", "link-in-bio".
+
+A Dor continua viva onde decide alguma coisa: no detalhe (aba Diagnóstico), no
+prompt da Abordagem e no escopo da Proposta. Só não disputa espaço na varredura.
+
+> `LeadCardProps.dorPrincipal` saiu junto. Ficam sem leitor `temAbordagem`,
+> `waLink` e `temDiagnostico`, órfãos desde que o card perdeu os botões de ação
+> em 2026-08-13 — limpar os três encolhe o `INCLUDE_CARD`, e isso é mudança de
+> query em duas telas: fica pra uma passada própria.
 
 **Contraste no card verde da Fila do dia.** Botão e badges eram os dois pílula
 branca, então a ação primária não tinha como ganhar — virava mais uma etiqueta.
@@ -239,8 +258,8 @@ o verde da marca. A regra vale só onde a superfície é verde.
       telas onde é usado.
 - [ ] **AC13** — Lead sem telefone mostra o chip "sem telefone"; Lead com
       telefone não mostra chip nenhum de contato.
-- [ ] **AC14** — Lead com Dor detectada mostra a Dor principal em destaque;
-      sem Dor, a linha some (não inventa texto).
+- [ ] **AC14** — O card **não** mostra a Dor em texto corrido. O sinal de site
+      (sem site / rede social / link-in-bio) segue como badge.
 - [ ] **AC15** — No card verde, a ação é a **única** superfície branca sólida;
       os badges são contorno.
 

@@ -30,7 +30,6 @@ export type LeadCardProps = {
   temDiagnostico: boolean;
   /** F025 — score ainda vem da Triagem (sem Diagnóstico). */
   scoreEstimado: boolean;
-  dorPrincipal: string | null;
   temAbordagem: boolean;
   /** F026 — sem sinal de atendimento automatizado (e com telefone). */
   semAtendimento: boolean;
@@ -148,15 +147,12 @@ export function LeadCard({
         </div>
       </header>
 
-      {/* A Dor é o motivo de o Lead estar na fila — vem antes de qualquer
-          etiqueta. Saiu do card em 2026-08-13 e voltou na revisão do mesmo dia,
-          no lugar que telefone e endereço ocupavam. Sem Dor, a linha some: não
-          se inventa texto. */}
-      {lead.dorPrincipal && (
-        <p className="text-sm leading-snug font-medium text-zinc-200">
-          {lead.dorPrincipal}
-        </p>
-      )}
+      {/* A linha da Dor não fica no card. Tentada duas vezes em 2026-08-13 e
+          retirada nas duas: em texto corrido ela é a linha mais larga da caixa,
+          e numa grade de 3–4 colunas empurra o card pra altura de um parágrafo
+          só pra dizer o que os badges de site já dizem em duas palavras.
+          A Dor continua no detalhe (aba Diagnóstico) e é ela que alimenta a
+          Abordagem e a Proposta — só não disputa espaço na varredura. */}
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         <SiteBadge

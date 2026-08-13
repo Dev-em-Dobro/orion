@@ -4,7 +4,6 @@
 
 import type { Prisma } from "@prisma/client";
 import { classificarWebsite } from "@/lib/diagnostico/agregador";
-import { dorPrincipal } from "@/lib/dores/principal";
 import { rotuloCategoria } from "@/lib/nichos/catalogo";
 import { valor as calcularValor } from "@/lib/score/score";
 import { linkWhatsapp } from "@/lib/abordagem/whatsappLink";
@@ -29,7 +28,6 @@ export function paraCardProps(lead: LeadComCard, href: string): LeadCardProps {
     num_avaliacoes: lead.num_avaliacoes,
   });
   const ultimaAbordagem = lead.abordagens[0];
-  const dor = dorPrincipal(lead.dores);
 
   return {
     id: lead.id,
@@ -48,7 +46,6 @@ export function paraCardProps(lead: LeadComCard, href: string): LeadCardProps {
     ehAgregador: classif?.ehAgregador ?? false,
     agregadorTipo: classif?.ehAgregador ? classif.tipo : null,
     temDiagnostico: lead.diagnosticos.length > 0,
-    dorPrincipal: dor?.detalhes ?? null,
     temAbordagem: lead._count.abordagens > 0,
     semAtendimento: lead.dores.some(
       (d) => d.tipo === "SEM_ATENDIMENTO_AUTOMATIZADO",
