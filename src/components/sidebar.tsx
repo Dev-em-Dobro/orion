@@ -2,10 +2,18 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth/client";
 import { SKILLS_MENU } from "@/lib/skills/catalogo";
-import { temRecurso, type Plano, type Recurso } from "@/lib/planos/catalogo";
+import {
+  definicao,
+  LABEL_RECURSO,
+  planoQueAbre,
+  precoFormatado,
+  temRecurso,
+  type Plano,
+  type Recurso,
+} from "@/lib/planos/catalogo";
 import { NOME_PRODUTO_PARTES } from "@/lib/produto";
 
 function Icone({ d }: { d: React.ReactNode }) {
@@ -79,6 +87,22 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
         ),
       },
       {
+        href: "/leads",
+        label: "Leads",
+        icone: (
+          <Icone
+            d={
+              <>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </>
+            }
+          />
+        ),
+      },
+      {
         href: "/agente",
         label: "Agente",
         recurso: "agente",
@@ -125,16 +149,15 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
         ),
       },
       {
-        href: "/leads",
-        label: "Leads",
+        href: "/ranking",
+        label: "Ranking",
         icone: (
           <Icone
             d={
               <>
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                <path d="M8 21h8M12 17v4" />
+                <path d="M7 4h10v5a5 5 0 0 1-10 0z" />
+                <path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3" />
               </>
             }
           />
@@ -272,37 +295,104 @@ function LogoutButton({ className }: { className?: string }) {
   );
 }
 
-function NavSpinner() {
-  return (
-    <span
-      className="ml-auto inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-zinc-500 border-t-primary"
-      aria-hidden
-    />
-  );
-}
+// O spinner por item saiu em 2026-08-13. Cada `NavLink` tinha o **próprio**
+// `useTransition`, e o pending de um não zerava quando outro começava: clicar
+// em três menus seguidos deixava três spinners girando ao mesmo tempo, nenhum
+// deles dizendo o que estava carregando. O feedback agora é o `loading.tsx` de
+// cada rota — o esqueleto da página que está chegando.
 
+// Item bloqueado era `text-zinc-600 opacity-50` — 2,3:1 antes da opacidade, e
+// ~1,6:1 depois dela. Ilegível, e a F035 quer o contrário: o recurso pago tem
+// que ser **visto** pra dar vontade de assinar. Agora usa `text-muted` (7,7:1),
+// e quem diz "fechado" é o cadeado, não o apagamento.
 function navClassName(
   compact: boolean | undefined,
   bloqueado: boolean | undefined,
   ativo: boolean,
-  pending: boolean,
 ) {
   if (compact) {
     return `inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 transition-colors duration-200 ${
       bloqueado
-        ? "cursor-pointer text-zinc-600 opacity-50"
+        ? "cursor-pointer text-muted hover:text-zinc-200"
         : ativo
           ? "bg-zinc-800/80 text-zinc-50"
           : "text-zinc-400 hover:text-zinc-200"
-    } ${pending ? "opacity-80" : ""}`;
+    }`;
   }
   return `flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition-colors duration-200 ${
     bloqueado
-      ? "cursor-pointer text-zinc-600 opacity-50 hover:bg-zinc-800/20 hover:text-zinc-500"
+      ? "cursor-pointer text-muted hover:bg-zinc-800/40 hover:text-zinc-200"
       : ativo
         ? "bg-zinc-800/80 font-medium text-zinc-50"
         : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"
-  } ${pending ? "opacity-80" : ""}`;
+  }`;
+}
+
+/** Modal do item fechado: o que é, qual plano abre, e o caminho pra assinar. */
+function ModalBloqueado({
+  recurso,
+  onFechar,
+}: {
+  recurso: Recurso;
+  onFechar: () => void;
+}) {
+  const plano = planoQueAbre(recurso);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onFechar();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onFechar]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="Fechar"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onFechar}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-bloqueado"
+        className="relative w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-2xl"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-primary">
+            <IconeCadeado />
+          </span>
+          <h2
+            id="titulo-bloqueado"
+            className="text-base font-semibold text-zinc-100"
+          >
+            {LABEL_RECURSO[recurso]}
+          </h2>
+        </div>
+
+        <p className="mt-3 text-sm text-muted">
+          {plano
+            ? `Disponível no plano ${definicao(plano).nome} — ${precoFormatado(plano)}.`
+            : "Disponível nos planos pagos."}
+        </p>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Link
+            href={`/planos?recurso=${recurso}`}
+            onClick={onFechar}
+            className="btn-primary"
+          >
+            Ver planos
+          </Link>
+          <button type="button" onClick={onFechar} className="btn-ghost">
+            Agora não
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function NavLink({
@@ -314,8 +404,7 @@ function NavLink({
   bloqueado,
   externo,
   badge,
-  destinoBloqueado = "/ativar-acesso",
-  tituloBloqueado = "Ative sua compra para acessar os materiais",
+  onBloqueado,
   onNavigate,
 }: {
   href: string;
@@ -326,26 +415,18 @@ function NavLink({
   bloqueado?: boolean;
   externo?: boolean;
   badge?: number;
-  /** Para onde o cadeado leva (compra pendente vs. plano). */
-  destinoBloqueado?: string;
-  tituloBloqueado?: string;
+  /** Clique num item fechado abre o modal em vez de navegar. */
+  onBloqueado?: () => void;
   onNavigate?: () => void;
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const destino = bloqueado ? destinoBloqueado : href;
-  const className = navClassName(compact, bloqueado, ativo, pending);
+  const className = navClassName(compact, bloqueado, ativo);
 
   const conteudo = (
     <>
       {icone ? (
         <span
           className={
-            bloqueado
-              ? "text-zinc-600"
-              : ativo || pending
-                ? "text-primary"
-                : "text-zinc-500"
+            bloqueado ? "text-muted" : ativo ? "text-primary" : "text-zinc-500"
           }
         >
           {icone}
@@ -358,15 +439,29 @@ function NavLink({
         </span>
       ) : null}
       {bloqueado ? (
-        <span className="ml-auto text-zinc-600" aria-hidden>
+        <span className="ml-auto text-muted" aria-hidden>
           <IconeCadeado />
         </span>
       ) : null}
-      {pending ? <NavSpinner /> : null}
     </>
   );
 
-  if (externo && !bloqueado) {
+  // Item fechado é `<button>`, não `<Link>`: ele não leva a lugar nenhum, abre
+  // um diálogo. Link que não navega confunde teclado e leitor de tela.
+  if (bloqueado) {
+    return (
+      <button
+        type="button"
+        onClick={() => onBloqueado?.()}
+        aria-haspopup="dialog"
+        className={`${className} w-full text-left`}
+      >
+        {conteudo}
+      </button>
+    );
+  }
+
+  if (externo) {
     return (
       <a
         href={href}
@@ -380,24 +475,11 @@ function NavLink({
     );
   }
 
+  // `<Link>` puro: é o que faz o App Router mostrar o `loading.tsx` da rota
+  // destino. Com `router.push` dentro de `startTransition`, o React segurava a
+  // tela antiga e o esqueleto não aparecia.
   return (
-    <Link
-      href={destino}
-      aria-busy={pending || undefined}
-      aria-disabled={bloqueado || undefined}
-      title={bloqueado ? tituloBloqueado : undefined}
-      onClick={(e) => {
-        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
-          return;
-        }
-        e.preventDefault();
-        onNavigate?.();
-        startTransition(() => {
-          router.push(destino);
-        });
-      }}
-      className={className}
-    >
+    <Link href={href} onClick={() => onNavigate?.()} className={className}>
       {conteudo}
     </Link>
   );
@@ -444,12 +526,14 @@ function NavGrupos({
   tarefasVencidas,
   plano,
   ativo,
+  onBloqueado,
   onNavigate,
 }: {
   tarefasVencidas: number;
   /** F035 — decide o cadeado dos itens de plano pago. */
   plano: Plano;
   ativo: (href: string) => boolean;
+  onBloqueado: (recurso: Recurso) => void;
   onNavigate?: () => void;
 }) {
   return (
@@ -475,10 +559,11 @@ function NavGrupos({
                       icone={item.icone}
                       ativo={!item.externo && !bloqueado && ativo(item.href)}
                       bloqueado={bloqueado}
-                      destinoBloqueado={`/planos?recurso=${item.recurso}`}
-                      tituloBloqueado="Disponível nos planos pagos"
                       externo={item.externo}
                       badge={bloqueado ? undefined : item.badge}
+                      onBloqueado={
+                        item.recurso ? () => onBloqueado(item.recurso!) : undefined
+                      }
                       onNavigate={onNavigate}
                     />
                   </li>
@@ -495,14 +580,20 @@ function NavGrupos({
 export function Sidebar({
   tarefasVencidas = 0,
   plano = "free",
+  medidor,
 }: {
   /** F031 — cobranças vencidas, no badge do item Tarefas. */
   tarefasVencidas?: number;
   /** F035 — plano do aluno, pro cadeado dos itens pagos. */
   plano?: Plano;
+  /** F035 — medidor de uso no cabeçalho do mobile (no desktop ele vive na
+   *  topbar do `AppShellClient`). */
+  medidor?: React.ReactNode;
 }) {
   const pathname = usePathname();
   const [menuAberto, setMenuAberto] = useState(false);
+  // Recurso do item fechado que o aluno clicou — abre o modal da F035.
+  const [bloqueio, setBloqueio] = useState<Recurso | null>(null);
 
   const ativo = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -511,6 +602,7 @@ export function Sidebar({
 
   useEffect(() => {
     setMenuAberto(false);
+    setBloqueio(null);
   }, [pathname]);
 
   useEffect(() => {
@@ -540,6 +632,7 @@ export function Sidebar({
             tarefasVencidas={tarefasVencidas}
             plano={plano}
             ativo={ativo}
+            onBloqueado={setBloqueio}
           />
         </nav>
         <div className="space-y-2 border-t border-border px-4 py-3">
@@ -556,9 +649,10 @@ export function Sidebar({
         </div>
       </aside>
 
-      {/* Top bar (mobile) — brand + menu; links ficam no drawer */}
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur md:hidden">
+      {/* Top bar (mobile) — brand + medidor + menu; links ficam no drawer */}
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-border bg-background/95 px-4 backdrop-blur md:hidden">
         <Brand />
+        {medidor}
         <button
           type="button"
           aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
@@ -595,6 +689,7 @@ export function Sidebar({
                 tarefasVencidas={tarefasVencidas}
                 plano={plano}
                 ativo={ativo}
+                onBloqueado={setBloqueio}
                 onNavigate={fecharMenu}
               />
             </nav>
@@ -621,6 +716,10 @@ export function Sidebar({
           </div>
         </div>
       ) : null}
+
+      {bloqueio && (
+        <ModalBloqueado recurso={bloqueio} onFechar={() => setBloqueio(null)} />
+      )}
     </>
   );
 }

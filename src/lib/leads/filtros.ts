@@ -8,8 +8,12 @@
 //
 // Puro: sem Next, sem Prisma em runtime (só o tipo).
 
-import type { Prisma } from "@prisma/client";
-import { ONDE_NAO_DESCARTADO, STATUS_DESCARTADO } from "@/lib/funil";
+import type { LeadStatus, Prisma } from "@prisma/client";
+import {
+  ESTAGIOS_FUNIL,
+  ONDE_NAO_DESCARTADO,
+  STATUS_DESCARTADO,
+} from "@/lib/funil";
 import { SCORE_QUALIFICADO } from "@/lib/score/score";
 import { parseFiltroSite, whereFiltroSite, type FiltroSite } from "./filtroSite";
 
@@ -23,6 +27,8 @@ export type FiltroLista = {
   comTelefone: boolean;
   /** F026 — Leads sem sinal de atendimento automatizado no site. */
   semAtendimento: boolean;
+  /** Estágio do funil, vindo do clique no gráfico do Dashboard. */
+  estagio: LeadStatus | null;
   descartados: boolean;
 };
 
@@ -32,8 +38,16 @@ export type ParamsLista = {
   score?: string;
   telefone?: string;
   atendimento?: string;
+  /** Estágio do funil. Param próprio: `status` já significa "descartados". */
+  estagio?: string;
   status?: string;
 };
+
+/** Só estágio do funil: `descartado` entra pelo `status=descartados`. */
+function parseEstagio(raw: string | undefined): LeadStatus | null {
+  const limpo = (raw ?? "").trim() as LeadStatus;
+  return ESTAGIOS_FUNIL.includes(limpo) ? limpo : null;
+}
 
 export function parseFiltroLista(params: ParamsLista): FiltroLista {
   const scoreBruto = Number.parseInt(params.score ?? "", 10);
@@ -46,6 +60,7 @@ export function parseFiltroLista(params: ParamsLista): FiltroLista {
         : null,
     comTelefone: params.telefone === "1",
     semAtendimento: params.atendimento === "nao",
+    estagio: parseEstagio(params.estagio),
     descartados: params.status === "descartados",
   };
 }
@@ -57,7 +72,8 @@ export function temFiltro(f: FiltroLista): boolean {
     f.site !== null ||
     f.scoreMin !== null ||
     f.comTelefone ||
-    f.semAtendimento
+    f.semAtendimento ||
+    f.estagio !== null
   );
 }
 
@@ -65,6 +81,9 @@ export function temFiltro(f: FiltroLista): boolean {
 export function whereFiltroLista(f: FiltroLista): Prisma.LeadWhereInput {
   return {
     ...(f.descartados ? { status: STATUS_DESCARTADO } : ONDE_NAO_DESCARTADO),
+    // Depois do fragmento acima de propósito: o estágio escolhido vence a
+    // visão padrão de "tudo menos descartado".
+    ...(f.estagio ? { status: f.estagio } : {}),
     ...(f.categoria ? { categoria: f.categoria } : {}),
     ...(f.site ? whereFiltroSite(f.site) : {}),
     ...(f.scoreMin !== null ? { score: { gte: f.scoreMin } } : {}),
@@ -93,6 +112,7 @@ export function queryDoFiltro(
   if (f.scoreMin !== null) p.set("score", String(f.scoreMin));
   if (f.comTelefone) p.set("telefone", "1");
   if (f.semAtendimento) p.set("atendimento", "nao");
+  if (f.estagio) p.set("estagio", f.estagio);
   if (f.descartados) p.set("status", "descartados");
   for (const [k, v] of Object.entries(extra)) {
     if (v !== undefined && v !== "") p.set(k, String(v));

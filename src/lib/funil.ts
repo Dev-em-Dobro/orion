@@ -17,6 +17,20 @@ export const ESTAGIOS_FUNIL: LeadStatus[] = [
   "perdido",
 ];
 
+/** Rótulo de exibição de cada estágio — usado no funil e nos chips da lista. */
+export const ROTULO_ESTAGIO: Record<LeadStatus, string> = {
+  novo: "Novo",
+  enriquecido: "Enriquecido",
+  priorizado: "Priorizado",
+  contatado: "Contatado",
+  respondeu: "Respondeu",
+  qualificado: "Qualificado",
+  proposta: "Proposta",
+  ganho: "Ganho",
+  perdido: "Perdido",
+  descartado: "Descartado",
+};
+
 /**
  * F024 — Lead que o aluno decidiu nunca abordar. Some da lista, do funil e
  * das cobranças, mas continua no banco (e não volta como novidade na próxima

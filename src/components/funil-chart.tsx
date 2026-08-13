@@ -2,6 +2,7 @@
 
 // F010 — funil visual estilo Bklit (anéis, hover, legenda). Sem deps extras.
 
+import Link from "next/link";
 import { useId, useState } from "react";
 
 export type FunilStage = {
@@ -10,12 +11,14 @@ export type FunilStage = {
   value: number;
   /** Cor sólida do segmento (hex). */
   color: string;
+  /** Destino ao clicar no estágio — a lista já filtrada por ele. */
+  href?: string;
 };
 
 type FunilChartProps = {
   stages: FunilStage[];
   /** Vazamento lateral (perdido), fora da silhueta. */
-  perdido?: { value: number; max: number };
+  perdido?: { value: number; max: number; href?: string };
 };
 
 function vSegmentPath(
@@ -163,6 +166,18 @@ export function FunilChart({ stages, perdido }: FunilChartProps) {
                     {stage.value}
                   </p>
                 </div>
+
+                {/* Área de clique por cima do SVG. Sobreposição em vez de
+                    embrulhar o segmento: o `<div>` de rótulo já é
+                    `pointer-events-none`, então nada disputa o clique, e a
+                    silhueta e o hover continuam intactos. */}
+                {stage.href && (
+                  <Link
+                    href={stage.href}
+                    aria-label={`Ver os ${stage.value} Lead(s) em ${stage.label}`}
+                    className="absolute inset-0 cursor-pointer rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  />
+                )}
               </div>
             );
           })}
@@ -173,29 +188,47 @@ export function FunilChart({ stages, perdido }: FunilChartProps) {
       <ul className="mt-5 flex flex-wrap gap-2">
         {stages.map((stage, i) => {
           const active = hovered === null || hovered === i;
+          const classe =
+            "inline-flex items-center gap-2 rounded-full border border-border/80 bg-zinc-900/50 px-2.5 py-1 text-xs text-zinc-300 transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-800/80";
+          const estilo = {
+            opacity: active ? 1 : 0.4,
+            boxShadow:
+              hovered === i ? `0 0 0 1px ${stage.color}55` : undefined,
+          };
+          const eventos = {
+            onMouseEnter: () => setHovered(i),
+            onMouseLeave: () => setHovered(null),
+            onFocus: () => setHovered(i),
+            onBlur: () => setHovered(null),
+          };
+          const conteudo = (
+            <>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: stage.color }}
+                aria-hidden
+              />
+              <span>{stage.label}</span>
+              <span className="font-mono text-zinc-400">{stage.value}</span>
+            </>
+          );
+
           return (
             <li key={`leg-${stage.id}`}>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-zinc-900/50 px-2.5 py-1 text-xs text-zinc-300 transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-800/80"
-                style={{
-                  opacity: active ? 1 : 0.4,
-                  boxShadow:
-                    hovered === i ? `0 0 0 1px ${stage.color}55` : undefined,
-                }}
-                onMouseEnter={() => setHovered(i)}
-                onMouseLeave={() => setHovered(null)}
-                onFocus={() => setHovered(i)}
-                onBlur={() => setHovered(null)}
-              >
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: stage.color }}
-                  aria-hidden
-                />
-                <span>{stage.label}</span>
-                <span className="font-mono text-zinc-400">{stage.value}</span>
-              </button>
+              {stage.href ? (
+                <Link
+                  href={stage.href}
+                  className={`${classe} cursor-pointer`}
+                  style={estilo}
+                  {...eventos}
+                >
+                  {conteudo}
+                </Link>
+              ) : (
+                <button type="button" className={classe} style={estilo} {...eventos}>
+                  {conteudo}
+                </button>
+              )}
             </li>
           );
         })}

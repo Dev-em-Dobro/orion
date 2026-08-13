@@ -26,6 +26,7 @@ describe("parseFiltroLista", () => {
       scoreMin: null,
       comTelefone: false,
       semAtendimento: false,
+      estagio: null,
       descartados: false,
     });
     expect(temFiltro(f)).toBe(false);
@@ -125,5 +126,34 @@ describe("faixaDeScore", () => {
     expect(faixaDeScore(59)).toBe("Médio");
     expect(faixaDeScore(30)).toBe("Médio");
     expect(faixaDeScore(29)).toBe("Baixo");
+  });
+});
+
+// Filtro por estágio: nasce do clique no funil do Dashboard e vira `?estagio=`.
+describe("filtro por estágio do funil", () => {
+  it("aceita um estágio válido e ignora lixo", () => {
+    expect(parseFiltroLista({ estagio: "contatado" }).estagio).toBe("contatado");
+    expect(parseFiltroLista({ estagio: "inventado" }).estagio).toBeNull();
+    expect(parseFiltroLista({ estagio: "" }).estagio).toBeNull();
+  });
+
+  it("não aceita `descartado` por aqui — esse caminho é o `status=descartados`", () => {
+    expect(parseFiltroLista({ estagio: "descartado" }).estagio).toBeNull();
+  });
+
+  it("o estágio escolhido vence a visão padrão de 'tudo menos descartado'", () => {
+    const where = whereFiltroLista(parseFiltroLista({ estagio: "ganho" }));
+    expect(where.status).toBe("ganho");
+  });
+
+  it("sem estágio, segue escondendo descartado", () => {
+    const where = whereFiltroLista(parseFiltroLista({}));
+    expect(where.status).toEqual({ not: "descartado" });
+  });
+
+  it("conta como filtro ativo e sobrevive na querystring", () => {
+    const f = parseFiltroLista({ estagio: "proposta" });
+    expect(temFiltro(f)).toBe(true);
+    expect(queryDoFiltro(f)).toContain("estagio=proposta");
   });
 });
