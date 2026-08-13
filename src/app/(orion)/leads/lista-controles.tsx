@@ -1,9 +1,6 @@
 import Link from "next/link";
-import {
-  FILTROS_SITE,
-  ROTULO_FILTRO_SITE,
-  type FiltroSite,
-} from "@/lib/leads/filtroSite";
+import { FILTROS_SITE, ROTULO_FILTRO_SITE } from "@/lib/leads/filtroSite";
+import { queryDoFiltro, type FiltroLista } from "@/lib/leads/filtros";
 import { rotuloCategoria } from "@/lib/nichos/catalogo";
 
 const PAGE_SIZE = 20;
@@ -12,31 +9,42 @@ export { PAGE_SIZE };
 
 type FiltrosListaProps = {
   categorias: string[];
-  categoriaAtual: string | null;
-  siteAtual: FiltroSite | null;
+  /** O filtro inteiro, não só os dois campos deste form — ver abaixo. */
+  filtro: FiltroLista;
 };
 
 /**
  * Form GET: categoria + tipo de site, sempre voltando à página 1.
  * Os chips rápidos (F032) vivem ao lado e compõem com este recorte.
  */
-export function FiltrosLista({
-  categorias,
-  categoriaAtual,
-  siteAtual,
-}: FiltrosListaProps) {
+export function FiltrosLista({ categorias, filtro }: FiltrosListaProps) {
+  // Um form GET manda SÓ os campos que ele tem. Enquanto este form conhecia
+  // apenas `categoria` e `site`, submeter aqui apagava silenciosamente o resto
+  // do filtro: o aluno clicava no chip "Score 60+", trocava a categoria, e o
+  // score sumia sem aviso.
+  //
+  // Os campos que este form não controla viajam escondidos — e a lista deles
+  // sai de `queryDoFiltro`, o MESMO lugar que monta os links. Filtro novo
+  // aparece aqui sozinho; não dá pra esquecer de somar.
+  const escondidos = new URLSearchParams(
+    queryDoFiltro({ ...filtro, categoria: null, site: null }),
+  );
+
   return (
     <form
       method="get"
       action="/leads"
       className="flex flex-wrap items-end gap-3"
     >
+      {[...escondidos.entries()].map(([nome, valor]) => (
+        <input key={nome} type="hidden" name={nome} value={valor} />
+      ))}
       {categorias.length > 0 && (
         <label className="flex min-w-[12rem] flex-col gap-1 text-xs text-zinc-400">
           Categoria
           <select
             name="categoria"
-            defaultValue={categoriaAtual ?? ""}
+            defaultValue={filtro.categoria ?? ""}
             className="rounded-lg border border-border bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100"
           >
             <option value="">Todas as categorias</option>
@@ -54,7 +62,7 @@ export function FiltrosLista({
         Site
         <select
           name="site"
-          defaultValue={siteAtual ?? ""}
+          defaultValue={filtro.site ?? ""}
           className="rounded-lg border border-border bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100"
         >
           <option value="">Todos</option>

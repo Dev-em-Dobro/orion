@@ -46,17 +46,20 @@ export function AjudaScore({
                 dois botões saíram: o aprofundamento faz as duas coisas. */}
             <strong className="text-zinc-100">Score</strong> — prioridade do
             Lead (0–100). Combina Valor e Necessidade. Sai{" "}
-            <strong className="text-zinc-100">estimado</strong> na busca e vira{" "}
+            <strong className="text-zinc-100">estimado</strong> na busca (com{" "}
+            <strong className="text-zinc-100">~</strong> no card) e vira{" "}
             <strong className="text-zinc-100">confirmado</strong> sozinho quando
-            o Orion aprofunda o Lead. O rótulo ao lado (ALTO/MÉDIO/BAIXO) é o
-            tier do nicho, não o score.
+            o Orion aprofunda o Lead. Aí o <strong className="text-zinc-100">~</strong>{" "}
+            dá lugar a Alto / Médio / Baixo — que são faixas{" "}
+            <strong className="text-zinc-100">do próprio score</strong>. O tier
+            do nicho é outra coisa, e aparece ao lado da categoria.
           </span>
         )}
         {(foco === "valor" || foco === "completo") && (
           <span className={`block ${foco === "completo" ? "mt-2" : ""}`}>
             <strong className="text-zinc-100">Valor</strong> — o quanto vale
-            abordar: tier da categoria + porte pelo nº de avaliações no Google
-            (calculado na hora; não exige Priorizar).
+            abordar: tier da categoria + porte pelo nº de avaliações no Google.
+            Sai pronto da busca, sem custo e sem Diagnóstico.
           </span>
         )}
         {foco === "completo" && (

@@ -179,3 +179,54 @@ describe("hrefDoEstagio — o link do funil casa com o parser", () => {
     expect(parseFiltroLista({ status: "ganho" }).estagio).toBeNull();
   });
 });
+
+// O form GET de categoria/site manda SÓ os campos que tem. Enquanto ele
+// conhecia apenas `categoria` e `site`, submeter apagava o resto do filtro em
+// silêncio: clicar no chip "Score 60+", trocar a categoria e perder o score.
+// Os campos que o form não controla viajam escondidos, e a lista deles sai
+// daqui — filtro novo entra sozinho.
+describe("campos escondidos do form de filtro", () => {
+  const cheio = parseFiltroLista({
+    categoria: "dentist",
+    site: "sem_site",
+    score: "60",
+    telefone: "1",
+    atendimento: "nao",
+    estagio: "contatado",
+  });
+
+  it("preserva tudo que não é categoria nem site", () => {
+    const escondidos = new URLSearchParams(
+      queryDoFiltro({ ...cheio, categoria: null, site: null }),
+    );
+    expect(escondidos.get("score")).toBe("60");
+    expect(escondidos.get("telefone")).toBe("1");
+    expect(escondidos.get("atendimento")).toBe("nao");
+    expect(escondidos.get("estagio")).toBe("contatado");
+    // Esses dois o form controla — não podem ir escondidos também, senão
+    // chegariam duplicados no submit.
+    expect(escondidos.has("categoria")).toBe(false);
+    expect(escondidos.has("site")).toBe(false);
+  });
+
+  it("submeter com os escondidos devolve o mesmo filtro", () => {
+    const escondidos = new URLSearchParams(
+      queryDoFiltro({ ...cheio, categoria: null, site: null }),
+    );
+    // O que o navegador enviaria: escondidos + os dois selects.
+    const enviado = {
+      ...Object.fromEntries(escondidos),
+      categoria: "dentist",
+      site: "sem_site",
+    };
+    expect(parseFiltroLista(enviado)).toEqual(cheio);
+  });
+
+  it("a visão de descartados também sobrevive ao Filtrar", () => {
+    const desc = parseFiltroLista({ status: "descartados" });
+    const escondidos = new URLSearchParams(
+      queryDoFiltro({ ...desc, categoria: null, site: null }),
+    );
+    expect(escondidos.get("status")).toBe("descartados");
+  });
+});

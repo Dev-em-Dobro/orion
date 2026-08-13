@@ -164,11 +164,7 @@ async function BlocoLista({
         {temAlgumLead && (
           <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
             <ChipsFiltro filtro={filtro} descartados={descartados} />
-            <FiltrosLista
-              categorias={categorias}
-              categoriaAtual={filtro.categoria}
-              siteAtual={filtro.site}
-            />
+            <FiltrosLista categorias={categorias} filtro={filtro} />
           </div>
         )}
 
@@ -185,9 +181,12 @@ async function BlocoLista({
 
         {!temAlgumLead && (
           <div className="mt-3">
+            {/* O texto antigo mandava "informe um termo e uma localização" —
+                instrução impossível de seguir desde a F033, que trocou o campo
+                livre por nicho em lista, estado e cidade. */}
             <EmptyState
               titulo="Nenhum Lead ainda"
-              descricao="Use o formulário acima: informe um termo (ex.: barbearia) e uma localização (ex.: Curitiba PR)."
+              descricao="Use a busca acima: escolha o nicho, o estado e a cidade. O Orion coleta, tria e diagnostica os melhores sozinho."
             />
           </div>
         )}
