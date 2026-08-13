@@ -56,7 +56,6 @@ export function AprofundarButton({
       setFeitos(total);
 
       if (
-        r.limiteAtingido ||
         r.cotaEsgotada ||
         r.restantes === 0 ||
         r.processados === 0

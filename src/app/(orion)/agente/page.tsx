@@ -5,7 +5,6 @@
 // existirem — score confirmado (F025), Dores com atendimento (F026), cobranças
 // (F031). Antes disso ele responderia sobre uma base vazia.
 
-import { UsoDiarioBanner } from "@/components/uso-diario";
 import { requireTenant } from "@/lib/db/scoped";
 import { redirectSeRecursoBloqueado } from "@/lib/planos";
 import { Chat } from "./chat";
@@ -29,7 +28,7 @@ export default async function AgentePage() {
           </p>
         </div>
         <div className="min-w-[14rem]">
-          <UsoDiarioBanner operacoes={["agente_msg"]} />
+          
         </div>
       </div>
 

@@ -4,6 +4,7 @@
 
 import { createLlmForUser } from "@/lib/llm";
 import { estornarCota, reservarCota } from "@/lib/limites";
+import { consumirMensal, verificarLimiteMensal } from "@/lib/planos";
 import { entradaSchema } from "@/lib/simulador/validacao";
 import { simularTurno, SimuladorError } from "@/lib/simulador/simular";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
@@ -35,10 +36,14 @@ export async function responderTurnoAction(
 
   let reservou = false;
   try {
+    // F035 — teto mensal do plano antes da cota diária e de qualquer
+    // chamada de IA: no limite, nada é gasto.
+    await verificarLimiteMensal(userId, "simulador_msg");
     await reservarCota(userId, "simulador_msg");
     reservou = true;
     const llm = await createLlmForUser(userId);
     const { mensagem } = await simularTurno(cenario, historico, llm);
+    await consumirMensal(userId, "simulador_msg");
     return { ok: true, mensagem };
   } catch (e) {
     if (reservou) {

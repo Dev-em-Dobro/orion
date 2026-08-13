@@ -8,6 +8,7 @@
 
 import { createLlmForUser } from "@/lib/llm";
 import { estornarCota, reservarCota } from "@/lib/limites";
+import { consumirMensal, verificarLimiteMensal } from "@/lib/planos";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import { detectarDores, textosDasDores } from "@/lib/dores";
 import { servicosRecomendados } from "@/lib/proposta/servicos";
@@ -49,6 +50,9 @@ export async function gerarPropostaAction(
 
   try {
     ({ userId } = await requireTenant());
+    // F035 — teto mensal do plano antes da cota diária e de qualquer
+    // chamada de IA: no limite, nada é gasto.
+    await verificarLimiteMensal(userId, "proposta");
     await reservarCota(userId, "proposta");
     reservou = true;
     const llm = await createLlmForUser(userId);
@@ -108,6 +112,9 @@ export async function gerarPropostaAction(
         mensagem: "Falha ao gerar a Proposta. Tente novamente.",
       };
     }
+
+    // Só depois de gerar: o teto mensal conta entrega, não tentativa.
+    await consumirMensal(userId, "proposta");
 
     return {
       kind: "ok",

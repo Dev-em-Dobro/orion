@@ -65,13 +65,34 @@ Fora do Brasil fica de fora (ver Fora do escopo): o `regionCode: "BR"` do
 contrato já assume Brasil hoje.
 
 ### Quantidade
-Botões `20 · 40 · 60` (padrão **20**), como na referência. Traduzem-se em
-páginas do Places: 1, 2 ou 3 (`PLACES_PAGE_SIZE = 20`). O teto atual
-`PLACES_MAX_PAGES = 5` continua sendo o limite duro de segurança.
 
-Isso resolve um problema real de custo: hoje **toda** coleta pagina até 5×
-(~100 estabelecimentos, SKU Enterprise), o aluno querendo ou não. Passa a ser
-escolha explícita.
+> **Mudança de 2026-08-13 — teto de 100 por busca.** Os botões passam de
+> `20 · 40 · 60` para **`20 · 60 · 100`** (padrão **20**), e **100 é o teto
+> duro**: não existe caminho que colete mais que isso de uma vez.
+
+Traduzem-se em páginas do Places (`PLACES_PAGE_SIZE = 20`):
+
+| Botão | Páginas lidas | Descartados | Custo Places |
+|-------|---------------|-------------|--------------|
+| 20 | 1 | 0 | $0,035 |
+| 60 | 3 | 0 | $0,105 |
+| 100 | 5 | 0 | $0,175 |
+
+**Os três caem em fronteira de página** — nenhum resultado pago é jogado fora.
+Foi o critério de escolha: `25 · 50 · 100` daria números mais redondos na tela,
+mas 25 pagaria 2 páginas pra entregar 25 e 50 pagaria 3 pra entregar 50, e o
+piso da busca dobraria de $0,035 pra $0,070. Como
+[11 — Custos](../11-custos-e-precificacao.md) mostra, a busca é o insumo caro do
+Orion (uma busca ≈ 4 Outreaches) e o free tier do Google são 1.000 requisições
+por mês — o piso decide quantos alunos Free cabem sem custo (~330 com 1 página,
+~165 com 2).
+
+`PLACES_MAX_PAGES = 5` deixa de ser só limite de segurança e passa a ser o teto
+efetivo da opção maior.
+
+O que a mudança original resolve continua valendo: antes da F033 **toda** coleta
+paginava 5× (~100 estabelecimentos), o aluno querendo ou não. Agora é escolha
+explícita, e o padrão é o menor.
 
 ## Montagem da consulta
 ```
@@ -96,7 +117,7 @@ assim o filtro nunca deixa o aluno sem resposta.
 ## UI
 ```
 [ Brasil ▾ ] [ PR ▾ ] [ Curitiba ▾ ] [ Bairro (opcional) ] [ Dentista ▾ ] [ Buscar ]
- Quantidade  (20)  40   60                        20 coletados · 14 sem site
+ Quantidade  (20)  60   100                       20 coletados · 14 sem site
 ```
 - Município **desabilitado** até escolher a UF ("Escolha o estado primeiro").
 - Município com busca por digitação (são até ~850 numa UF).
@@ -119,8 +140,11 @@ do `primaryType` do Places (o nicho escolhido é entrada, não campo do domínio
       município.
 - [ ] **AC4** — Nicho "Outro (digitar)" reabre o campo livre e busca sem
       `includedType` — o comportamento de hoje continua disponível.
-- [ ] **AC5** — Quantidade 20/40/60 lê no máximo 1/2/3 páginas do Places
+- [ ] **AC5** — Quantidade 20/60/100 lê no máximo 1/3/5 páginas do Places
       (verificado com fetch mockado contando chamadas).
+- [ ] **AC5b** — **100 é teto duro**: `quantidade` fora de {20, 60, 100} é
+      rejeitada no schema da busca, não só ausente na UI. Nenhum caminho coleta
+      mais de 100 numa chamada.
 - [ ] **AC6** — Busca com `includedType` sem resultado refaz **uma** vez sem o
       campo e sinaliza isso na UI.
 - [ ] **AC7** — A lista de nichos do dropdown bate 1:1 com o playbook

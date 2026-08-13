@@ -2,19 +2,31 @@
 // que é o que transforma exceção em texto de UI nas Server Actions.
 
 import { definicao, planoQueAbre, type Plano, type Recurso } from "./catalogo";
-import { LABEL_RECURSO } from "./catalogo";
+import {
+  LABEL_OPERACAO_MENSAL,
+  LABEL_RECURSO,
+  type OperacaoMensal,
+} from "./catalogo";
 
-/** Teto mensal de Leads diagnosticados atingido. */
+/**
+ * Teto **mensal** de uma operação atingido. A mensagem nomeia a operação
+ * porque desde 2026-08-13 são seis contadores diferentes: dizer só "limite do
+ * plano" deixaria o aluno sem saber o que acabou.
+ */
 export class LimiteDoPlanoError extends Error {
   constructor(
     public plano: Plano,
     public usado: number,
     public limite: number,
+    public operacao?: OperacaoMensal,
   ) {
+    const oQue = operacao
+      ? LABEL_OPERACAO_MENSAL[operacao].toLowerCase()
+      : "itens";
     super(
-      `Você diagnosticou ${usado} Leads este mês — o limite do plano ` +
-        `${definicao(plano).nome}. Sua busca e sua fila continuam ` +
-        "funcionando; para aprofundar mais Leads, veja os planos.",
+      `Você usou ${usado} de ${limite} ${oQue} este mês — o limite do plano ` +
+        `${definicao(plano).nome}. O resto do Orion continua funcionando; ` +
+        "para liberar mais, veja os planos.",
     );
     this.name = "LimiteDoPlanoError";
   }

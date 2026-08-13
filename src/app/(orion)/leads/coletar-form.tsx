@@ -7,7 +7,8 @@
 // texto livre, o Places às vezes devolve um `primaryType` fora do mapa e o
 // Lead cai em Tier BAIXO sem ninguém perceber.
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { coletarLeads, type ColetarState } from "@/actions/leads/coletar";
 import {
   GRUPOS_NICHO,
@@ -20,8 +21,119 @@ import { AprofundarButton } from "./aprofundar-button";
 
 const initial: ColetarState = { kind: "idle" };
 
-export function ColetarForm() {
+/**
+ * F035 — o aviso vem **antes** da busca. Três coisas precisam estar explícitas,
+ * porque as três custam algo: quanto sobrou, que o excedente é descartado, e
+ * que a chamada ao Google acontece do mesmo jeito. Por isso a ação em destaque
+ * é **reduzir**, não seguir.
+ */
+function DialogoCota({
+  pedido,
+  restante,
+  limite,
+  planoNome,
+  onReduzir,
+  onSeguir,
+  onFechar,
+}: {
+  pedido: number;
+  restante: number;
+  limite: number;
+  planoNome: string;
+  onReduzir: (novo: number) => void;
+  onSeguir: () => void;
+  onFechar: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onFechar();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onFechar]);
+
+  // Maior opção da busca que ainda cabe. Pode não existir (ex.: sobram 10 e a
+  // menor opção é 20) — aí só resta seguir e deixar o servidor cortar.
+  const menor = [...QUANTIDADES]
+    .filter((q) => q <= restante)
+    .sort((a, b) => b - a)[0];
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="Fechar"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onFechar}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-cota"
+        className="relative w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl"
+      >
+        <h2 id="titulo-cota" className="text-base font-semibold text-zinc-100">
+          Sua cota do mês não cobre essa busca
+        </h2>
+
+        <p className="mt-3 text-sm text-muted">
+          Você pediu <strong className="text-zinc-200">{pedido}</strong> Leads e
+          ainda pode adicionar <strong className="text-zinc-200">{restante}</strong>{" "}
+          este mês (plano {planoNome}: {limite}/mês).
+        </p>
+
+        <p className="mt-3 text-sm text-muted">
+          Se continuar, o Orion busca os {pedido} no Google, guarda os{" "}
+          {restante} de maior potencial e{" "}
+          <strong className="text-amber-300">descarta os {pedido - restante}{" "}
+          restantes</strong> — eles não ficam salvos, e a consulta ao Google é
+          cobrada do mesmo jeito.
+        </p>
+
+        <p className="mt-3 text-xs text-zinc-500">
+          Os Leads que já estão na sua lista não são afetados: busca nova sempre
+          soma, nunca substitui.
+        </p>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {menor ? (
+            <button
+              type="button"
+              onClick={() => onReduzir(menor)}
+              className="btn-primary"
+            >
+              Buscar só {menor}
+            </button>
+          ) : null}
+          <Link href="/planos" className="btn-ghost">
+            Ver planos
+          </Link>
+          <button type="button" onClick={onSeguir} className="btn-ghost">
+            Continuar assim mesmo
+          </button>
+          <button type="button" onClick={onFechar} className="btn-ghost">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ColetarForm({
+  restante,
+  limite,
+  planoNome,
+}: {
+  /** Leads novos que ainda cabem na competência (F035). */
+  restante: number;
+  limite: number;
+  planoNome: string;
+}) {
   const [state, action, pending] = useActionState(coletarLeads, initial);
+  const form = useRef<HTMLFormElement>(null);
+  // Aberto quando a quantidade escolhida não cabe na cota do mês.
+  const [avisoCota, setAvisoCota] = useState(false);
   const [uf, setUf] = useState("");
   const [municipios, setMunicipios] = useState<string[]>([]);
   const [carregandoMunicipios, setCarregando] = useState(false);
@@ -58,12 +170,31 @@ export function ColetarForm() {
       <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
         Buscar Leads
       </h2>
-      <p className="mt-1 text-xs text-muted">
-        Escolha o nicho e onde buscar. O Orion tria e diagnostica os melhores
-        sozinho.
-      </p>
 
-      <form action={action} className="mt-4 flex flex-col gap-3">
+      {restante <= 0 && (
+        <p className="alert-erro mt-4">
+          Você já usou os {limite} Leads novos do mês (plano {planoNome}). Buscar
+          agora gastaria consulta no Google sem poder salvar nada.{" "}
+          <Link href="/planos" className="underline underline-offset-2">
+            Ver planos
+          </Link>
+        </p>
+      )}
+
+      <form
+        ref={form}
+        action={action}
+        onSubmit={(e) => {
+          // O aviso vem ANTES: a chamada ao Places acontece do mesmo jeito, e
+          // o que passa da cota é descartado. Ver F035, "Confirmação antes de
+          // estourar".
+          if (quantidade > restante) {
+            e.preventDefault();
+            setAvisoCota(true);
+          }
+        }}
+        className="mt-4 flex flex-col gap-3"
+      >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex flex-col gap-1">
             <span className="text-xs text-zinc-400">Nicho</span>
@@ -164,19 +295,38 @@ export function ColetarForm() {
               </span>
             </label>
           ))}
-          <span className="text-xs text-zinc-600">
-            cada 20 = 1 consulta ao Google
+          <span className="text-xs text-muted">
+            {restante} de {limite} ainda cabem este mês
           </span>
-
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || restante <= 0}
             className="btn-primary ml-auto"
           >
             {pending ? "Buscando..." : "Buscar"}
           </button>
         </div>
       </form>
+
+      {avisoCota && (
+        <DialogoCota
+          pedido={quantidade}
+          restante={restante}
+          limite={limite}
+          planoNome={planoNome}
+          onReduzir={(novo) => {
+            setQuantidade(novo);
+            setAvisoCota(false);
+            // Espera o radio refletir o valor novo antes de submeter.
+            setTimeout(() => form.current?.requestSubmit(), 0);
+          }}
+          onSeguir={() => {
+            setAvisoCota(false);
+            setTimeout(() => form.current?.requestSubmit(), 0);
+          }}
+          onFechar={() => setAvisoCota(false)}
+        />
+      )}
 
       {state.kind === "erro" && (
         <p className="alert-erro mt-4">{state.mensagem}</p>
@@ -193,6 +343,15 @@ export function ColetarForm() {
               </>
             )}
           </p>
+          {state.foraDaCota > 0 && (
+            <p className="text-xs text-amber-300">
+              <strong>{state.foraDaCota}</strong> resultado(s) não couberam no
+              limite do mês e foram descartados — ficaram os de maior potencial.{" "}
+              <Link href="/planos" className="underline underline-offset-2">
+                Ver planos
+              </Link>
+            </p>
+          )}
           {state.ampliou && (
             <p className="text-xs text-amber-300">
               Nenhum resultado com o tipo exato — ampliamos a busca sem o

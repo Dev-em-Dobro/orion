@@ -3,7 +3,6 @@
 
 import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
-import { UsoDiarioBanner } from "@/components/uso-diario";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
@@ -59,7 +58,7 @@ export default async function TreinoPage() {
         </p>
 
         <div className="mt-4">
-          <UsoDiarioBanner operacoes={["simulador_msg"]} />
+          
         </div>
 
         <div className="mt-6">

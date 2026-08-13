@@ -4,12 +4,15 @@
 import { describe, expect, it } from "vitest";
 import {
   CATALOGO_PLANOS,
+  OPERACOES_MENSAIS,
   PLANOS,
   RECURSOS,
   asPlano,
+  limiteDaOperacao,
   limiteMensal,
   melhorPlano,
   planoQueAbre,
+  precoAlunoFormatado,
   precoFormatado,
   temRecurso,
 } from "@/lib/planos/catalogo";
@@ -19,8 +22,11 @@ import { planoDosEntitlements } from "@/lib/planos/resolver";
 import type { Plano } from "@/lib/planos/catalogo";
 
 describe("F035 — catálogo", () => {
-  it("AC1 — free é o padrão e vale 50 Leads/mês", () => {
-    expect(CATALOGO_PLANOS.free.leadsDiagnosticadosMes).toBe(50);
+  it("AC1 — free é o padrão e vale 60 Leads novos/mês", () => {
+    // 60 = 3 páginas exatas do Places e ~333 alunos dentro do free tier do
+    // Google (11 §4). Mudar isso é mudar a conta de custo.
+    expect(CATALOGO_PLANOS.free.limites.lead_novo).toBe(60);
+    expect(limiteMensal("free")).toBe(60);
     expect(melhorPlano([])).toBe("free");
   });
 
@@ -30,24 +36,38 @@ describe("F035 — catálogo", () => {
     expect(melhorPlano(["agencia", "free", "pro"])).toBe("agencia");
   });
 
-  it("AC9 — free não abre nenhum recurso pago", () => {
+  // Revisão de 2026-08-13: nada é bloqueado por plano, tudo é limitado.
+  it("todo plano abre todo recurso — o que separa é volume", () => {
     for (const r of RECURSOS) {
-      expect(temRecurso("free", r)).toBe(false);
-      expect(temRecurso("pro", r)).toBe(true);
-      expect(temRecurso("agencia", r)).toBe(true);
+      for (const p of PLANOS) expect(temRecurso(p, r)).toBe(true);
     }
   });
 
-  it("o limite cresce com o plano (senão não haveria por que subir)", () => {
-    const valores = PLANOS.map((p) => CATALOGO_PLANOS[p].leadsDiagnosticadosMes);
-    const ordenado = [...valores].sort((a, b) => a - b);
-    expect(valores).toEqual(ordenado);
-    expect(new Set(valores).size).toBe(valores.length);
+  it("o limite de TODA operação cresce com o plano", () => {
+    for (const op of OPERACOES_MENSAIS) {
+      const valores = PLANOS.map((p) => limiteDaOperacao(p, op));
+      const ordenado = [...valores].sort((a, b) => a - b);
+      expect(valores, `operação ${op}`).toEqual(ordenado);
+      expect(new Set(valores).size, `operação ${op}`).toBe(valores.length);
+    }
   });
 
-  it("planoQueAbre devolve o menor plano pago", () => {
-    expect(planoQueAbre("email")).toBe("pro");
-    expect(planoQueAbre("agente")).toBe("pro");
+  it("nenhuma operação mensal fica sem limite definido", () => {
+    for (const p of PLANOS) {
+      for (const op of OPERACOES_MENSAIS) {
+        expect(limiteDaOperacao(p, op), `${p}.${op}`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("o Agente no Free é aperitivo: 5 no mês", () => {
+    expect(limiteDaOperacao("free", "agente_msg")).toBe(5);
+    expect(limiteDaOperacao("free", "simulador_msg")).toBe(20);
+  });
+
+  it("planoQueAbre continua funcionando pra quando voltar recurso fechado", () => {
+    // Hoje o Free abre tudo, então o menor plano que abre é o próprio free.
+    expect(planoQueAbre("agente")).toBe("free");
   });
 
   it("asPlano rejeita string que não é plano", () => {
@@ -62,18 +82,22 @@ describe("F035 — catálogo", () => {
     expect(precoFormatado("pro")).toBe("R$ 39,00/mês");
     expect(precoFormatado("agencia")).toBe("R$ 97,00/mês");
   });
+
+  it("preço de aluno aplica os 20% e não existe no Free", () => {
+    expect(precoAlunoFormatado("free")).toBeNull();
+    expect(precoAlunoFormatado("pro")).toBe("R$ 31,20/mês");
+    expect(precoAlunoFormatado("agencia")).toBe("R$ 77,60/mês");
+  });
 });
 
-describe("F035 — bônus BYOK", () => {
-  it("AC5 — BYOK NÃO isenta o Free: continua 50", () => {
-    expect(limiteMensal("free", false)).toBe(50);
-    expect(limiteMensal("free", true)).toBe(50);
-  });
-
-  it("AC6 — plano pago em BYOK dobra", () => {
-    expect(limiteMensal("pro", false)).toBe(300);
-    expect(limiteMensal("pro", true)).toBe(600);
-    expect(limiteMensal("agencia", true)).toBe(3000);
+// O bônus de BYOK morreu com o fim do BYOK (F035, "Fim do BYOK"): ele existia
+// porque BYOK zerava nosso custo variável, e sem BYOK novo não há o que
+// compensar. `limiteMensal` passou a depender só do plano.
+describe("F035 — teto mensal de Leads novos", () => {
+  it("depende só do plano", () => {
+    expect(limiteMensal("free")).toBe(60);
+    expect(limiteMensal("pro")).toBe(300);
+    expect(limiteMensal("agencia")).toBe(800);
   });
 });
 
@@ -123,16 +147,26 @@ describe("F035 — competência (America/Sao_Paulo)", () => {
 
 describe("F035 — mensagens de erro", () => {
   it("LimiteDoPlanoError diz o número, o plano e o que continua funcionando", () => {
-    const e = new LimiteDoPlanoError("free", 50, 50);
-    expect(e.message).toContain("50");
+    const e = new LimiteDoPlanoError("free", 60, 60);
+    expect(e.message).toContain("60");
     expect(e.message).toContain("Free");
-    expect(e.message).toContain("busca");
+    expect(e.message).toContain("planos");
     expect(e.name).toBe("LimiteDoPlanoError");
   });
 
-  it("RecursoDoPlanoError aponta o plano que abre", () => {
+  // São seis contadores desde 2026-08-13: sem nomear a operação, o aluno não
+  // sabe o que acabou.
+  it("LimiteDoPlanoError nomeia a operação que estourou", () => {
+    const e = new LimiteDoPlanoError("free", 5, 5, "agente_msg");
+    expect(e.message.toLowerCase()).toContain("perguntas ao agente");
+  });
+
+  // Dormente desde 2026-08-13: nenhum recurso está fechado, então na prática
+  // este erro não é lançado. O teste existe pra a máquina continuar de pé —
+  // se voltar a existir recurso pago, ela volta com ele.
+  it("RecursoDoPlanoError nomeia o recurso", () => {
     const e = new RecursoDoPlanoError("tarefas", "free");
     expect(e.message).toContain("Central de Tarefas");
-    expect(e.message).toContain("Pro");
+    expect(e.name).toBe("RecursoDoPlanoError");
   });
 });

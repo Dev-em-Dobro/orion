@@ -103,6 +103,9 @@ model Lead {
   @@index([user_id, score(sort: Desc), created_at(sort: Desc)])
   // F028 — funil, fila do dia e Central de Tarefas filtram por status.
   @@index([user_id, status])
+  /// F037 — o ranking agrupa por status+data SEM escopo de usuário; sem este
+  /// índice a consulta varre a tabela inteira de todos os alunos.
+  @@index([status, status_em])
 }
 
 model Diagnostico {
@@ -312,6 +315,8 @@ model User {
   dailyUsages    DailyUsage[]
   adiamentos     TarefaAdiamento[]
   usosMensais    UsoMensal[]
+  usosMensaisOp  UsoMensalOperacao[]
+  perfilPublico  PerfilPublico?
 
   @@unique([email])
   @@map("user")
@@ -326,6 +331,9 @@ model UsoMensal {
   /// Competência "AAAA-MM" no fuso America/Sao_Paulo. Derivada da data, nunca
   /// virada por cron — a troca de mês é uma chave nova (F035 AC8).
   competencia          String
+  /// Régua da v1 (Lead que recebeu o primeiro Diagnóstico). Congelada em
+  /// 2026-08-13, quando o medidor passou a contar Lead **novo** — mantida
+  /// porque o consumo já medido foi apurado com ela.
   leads_diagnosticados Int      @default(0)
   created_at           DateTime @default(now())
   updated_at           DateTime @updatedAt
@@ -335,6 +343,36 @@ model UsoMensal {
   @@unique([user_id, competencia])
   @@index([user_id])
   @@map("uso_mensal")
+}
+
+/// F035 (2026-08-13) — teto **mensal** por operação, que é o que define o
+/// plano. Uma linha por (aluno, competência, operação), no mesmo formato do
+/// `DailyUsage`: operação nova não pede migração, só um valor no enum.
+enum OperacaoMensal {
+  /// Lead criado pela coleta. Duplicata ignorada pelo dedupe **não** conta.
+  lead_novo
+  outreach
+  proposta
+  objecoes
+  agente_msg
+  simulador_msg
+}
+
+model UsoMensalOperacao {
+  id          String         @id @default(cuid())
+  user_id     String
+  /// "AAAA-MM" em America/Sao_Paulo, igual ao `UsoMensal`.
+  competencia String
+  operacao    OperacaoMensal
+  contador    Int            @default(0)
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, competencia, operacao])
+  @@index([user_id, competencia])
+  @@map("uso_mensal_operacao")
 }
 
 model DailyUsage {
@@ -431,4 +469,22 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+/// F037 — como o Aluno aparece publicamente (o "Builder"). Sem linha = fora do
+/// ranking: o consentimento é opt-in, nunca opt-out.
+/// Spec: /specs/02-features/F037-ranking-de-builders.md
+model PerfilPublico {
+  user_id       String    @id
+  /// Aceite explícito de aparecer no Ranking de Builders.
+  ranking_optin Boolean   @default(false)
+  /// Nome de exibição escolhido pelo aluno. Nunca derivado do e-mail.
+  nome_exibicao String
+  optin_em      DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("perfil_publico")
 }

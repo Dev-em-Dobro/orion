@@ -8,6 +8,11 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
 import { estornarCota, reservarCota } from "@/lib/limites";
+import {
+  consumirMensal,
+  LimiteDoPlanoError,
+  restanteDaOperacao,
+} from "@/lib/planos";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import {
   PLACES_PAGE_SIZE,
@@ -28,6 +33,8 @@ export type ColetarState =
       ignorados: number;
       /** F025 — quantos já saíram da Triagem com score de Lead qualificado. */
       comPotencial: number;
+      /** F035 — resultados descartados por não caberem na cota do mês. */
+      foraDaCota: number;
       /** F033 — a busca com tipo veio vazia e foi refeita sem o filtro. */
       ampliou: boolean;
     }
@@ -77,6 +84,23 @@ export async function coletarLeads(
     // valor de verdade vem daqui, e é ele que entra nos closures abaixo.
     const tenant = await requireTenant();
     userId = tenant.userId;
+
+    // F035 (2026-08-13) — o teto mensal é cobrado AQUI, na coleta, que é onde
+    // está o custo (Places). Com a cota zerada nem chamamos o Google: buscar
+    // sem poder salvar nada é gastar requisição por nada.
+    const cota = await restanteDaOperacao(tenant.userId, "lead_novo");
+    if (cota.restante <= 0) {
+      return {
+        kind: "erro",
+        mensagem: new LimiteDoPlanoError(
+          cota.plano,
+          cota.limite,
+          cota.limite,
+          "lead_novo",
+        ).message,
+      };
+    }
+
     await reservarCota(tenant.userId, "coleta");
     reservou = true;
     const googleKey = await exigirChave(tenant.userId, "google");
@@ -96,9 +120,16 @@ export async function coletarLeads(
       }).score,
     }));
 
+    // F035 — grava só o que cabe na cota do mês. O corte é aqui, depois da
+    // triagem, pra sobrar o de maior potencial: ordena por score e leva os
+    // primeiros. O que ficou de fora é descartado e o retorno diz quantos.
+    const ordenados = [...triados].sort((a, b) => b.score - a.score);
+    const cabem = ordenados.slice(0, cota.restante);
+    const forfaCota = ordenados.length - cabem.length;
+
     // skipDuplicates: conflito em (user_id, place_id) é ignorado (F015).
     const { count: criados } = await prisma.lead.createMany({
-      data: triados.map(({ resultado: p, score }) => ({
+      data: cabem.map(({ resultado: p, score }) => ({
         user_id: tenant.userId,
         nome: p.nome,
         endereco: p.endereco,
@@ -114,13 +145,18 @@ export async function coletarLeads(
       skipDuplicates: true,
     });
 
+    // Consome só o que virou Lead de verdade: duplicata que o dedupe ignorou
+    // não ganhou nada pro aluno, então não pode cobrar cota (F035 AC15).
+    await consumirMensal(tenant.userId, "lead_novo", criados);
+
     revalidatePath("/leads");
     revalidatePath("/");
     return {
       kind: "ok",
       criados,
-      ignorados: resultados.length - criados,
-      comPotencial: triados.filter((t) => t.score >= SCORE_QUALIFICADO).length,
+      ignorados: cabem.length - criados,
+      foraDaCota: forfaCota,
+      comPotencial: cabem.filter((t) => t.score >= SCORE_QUALIFICADO).length,
       ampliou: resultados.ampliou === true,
     };
   } catch (e) {

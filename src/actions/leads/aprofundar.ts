@@ -14,7 +14,6 @@ import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
 import { estornarCota, reservarCota } from "@/lib/limites";
 import { QuotaExcedidaError } from "@/lib/limites/erros";
-import { LimiteDoPlanoError, usoDoPlano, verificarLimiteMensal } from "@/lib/planos";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import { executarDiagnostico } from "@/lib/diagnostico/executar";
 import { persistirDiagnostico } from "@/lib/diagnostico/persistir";
@@ -34,7 +33,6 @@ export type AprofundarState =
       cotaEsgotada: boolean;
       /** F035 — teto mensal do plano. Diferente da cota diária: não passa
        *  amanhã, passa mês que vem (ou trocando de plano). */
-      limiteAtingido: boolean;
       mensagem: string;
     }
   | { kind: "erro"; mensagem: string };
@@ -72,23 +70,18 @@ export async function aprofundarLote(
         processados: 0,
         restantes: 0,
         cotaEsgotada: false,
-        limiteAtingido: false,
         mensagem: "Nada para aprofundar.",
       };
     }
 
     let processados = 0;
     let cotaEsgotada = false;
-    let limiteAtingido = false;
 
     // Paralelo dentro do lote (o teto é o próprio tamanho do lote, então não
     // precisa de biblioteca de fila). `allSettled`: um site fora do ar não
     // pode derrubar os outros dois — site fora do ar É diagnóstico válido.
     const resultados = await Promise.allSettled(
       candidatos.map(async (lead) => {
-        // F035 — teto do plano antes da cota diária e antes de qualquer
-        // chamada externa: no limite, nada é gasto.
-        await verificarLimiteMensal(userId);
         // A reserva já incrementa: o lote roda em paralelo e dois Leads não
         // podem ler o mesmo contador antes de qualquer um escrever.
         await reservarCota(userId, "diagnostico");
@@ -110,7 +103,6 @@ export async function aprofundarLote(
     for (const r of resultados) {
       if (r.status === "fulfilled") processados += 1;
       else if (r.reason instanceof QuotaExcedidaError) cotaEsgotada = true;
-      else if (r.reason instanceof LimiteDoPlanoError) limiteAtingido = true;
     }
 
     const restantes = await prisma.lead.count({ where });
@@ -118,20 +110,17 @@ export async function aprofundarLote(
     revalidatePath("/leads");
     revalidatePath("/");
 
-    // O limite do plano é o aviso mais forte: ele não passa amanhã.
-    const uso = limiteAtingido ? await usoDoPlano(userId) : null;
-    const mensagem = uso
-      ? new LimiteDoPlanoError(uso.plano, uso.usado, uso.limite).message
-      : cotaEsgotada
-        ? "Limite diário de diagnósticos atingido. O que já foi aprofundado está salvo."
-        : `${processados} Lead(s) aprofundado(s).`;
+    // F035 (2026-08-13) — aprofundar não consome mais teto de plano: o teto é
+    // cobrado na coleta. Sobra a cota diária, que é só freio anti-loop.
+    const mensagem = cotaEsgotada
+      ? "Limite diário de diagnósticos atingido. O que já foi aprofundado está salvo."
+      : `${processados} Lead(s) aprofundado(s).`;
 
     return {
       kind: "ok",
       processados,
       restantes,
       cotaEsgotada,
-      limiteAtingido,
       mensagem,
     };
   } catch (e) {

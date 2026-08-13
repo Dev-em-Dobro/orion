@@ -8,13 +8,16 @@
 import Link from "next/link";
 import {
   CATALOGO_PLANOS,
+  LABEL_OPERACAO_MENSAL,
   LABEL_RECURSO,
+  OPERACOES_MENSAIS,
   PLANOS,
   RECURSOS,
   asPlano,
   definicao,
+  limiteDaOperacao,
+  precoAlunoFormatado,
   precoFormatado,
-  temRecurso,
   urlCheckoutPlano,
   usoDoPlano,
   type Recurso,
@@ -82,30 +85,38 @@ export default async function PlanosPage({
                 )}
               </div>
               <p className="mt-1 text-2xl font-bold">{precoFormatado(p)}</p>
+              {precoAlunoFormatado(p) && (
+                <p className="mt-0.5 text-xs text-primary">
+                  {precoAlunoFormatado(p)} para aluno do Builders Club
+                </p>
+              )}
               <p className="mt-1 text-xs text-muted">{def.resumo}</p>
 
+              {/* F035 (2026-08-13) — a tabela virou de limites, não de
+                  recursos: nada é bloqueado por plano, então listar ✓/— por
+                  feature não dizia mais nada. */}
               <ul className="mt-4 flex-1 space-y-1.5 text-sm">
-                <li>
-                  <strong>{def.leadsDiagnosticadosMes}</strong> Leads
-                  diagnosticados/mês
-                  {def.bonusByok && (
-                    <span className="text-zinc-500"> · 2× com BYOK</span>
-                  )}
-                </li>
-                <li className="text-zinc-400">
-                  Aprofunda {def.aprofundarPorBusca} por vez
-                </li>
-                <li className="text-zinc-400">Outreach por WhatsApp</li>
-                {RECURSOS.map((r) => (
-                  <li
-                    key={r}
-                    className={
-                      temRecurso(p, r) ? "text-zinc-200" : "text-zinc-600"
-                    }
-                  >
-                    {temRecurso(p, r) ? "✓" : "—"} {LABEL_RECURSO[r]}
+                {OPERACOES_MENSAIS.map((op) => (
+                  <li key={op} className="flex justify-between gap-3">
+                    <span className="text-zinc-400">
+                      {LABEL_OPERACAO_MENSAL[op]}
+                    </span>
+                    <strong className="font-mono">
+                      {limiteDaOperacao(p, op)}
+                      <span className="font-normal text-zinc-500">/mês</span>
+                    </strong>
                   </li>
                 ))}
+                <li className="flex justify-between gap-3 border-t border-border pt-1.5">
+                  <span className="text-zinc-400">Aprofunda por busca</span>
+                  <strong className="font-mono">{def.aprofundarPorBusca}</strong>
+                </li>
+                {/* Tudo liberado em todo plano — dizer isso explicitamente vale
+                    mais que uma lista de ✓ iguais nas três colunas. */}
+                <li className="pt-1 text-xs text-zinc-400">
+                  Central de Tarefas, Funil kanban, Exportar CSV, Simulador de
+                  venda e Diagnóstico automático: <strong>em todos os planos</strong>.
+                </li>
               </ul>
 
               <div className="mt-4">

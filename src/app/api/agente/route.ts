@@ -13,7 +13,10 @@ import { QuotaExcedidaError } from "@/lib/limites/erros";
 import { LlmError } from "@/lib/llm";
 import { ChaveAusenteError, ChaveOperacaoError } from "@/lib/chaves/erros";
 import { ChaveOrionIndisponivelError } from "@/lib/chaves/orion";
-import { exigirRecurso, RecursoDoPlanoError } from "@/lib/planos";
+import { RecursoDoPlanoError,
+  consumirMensal,
+  verificarLimiteMensal,
+} from "@/lib/planos";
 import { responderAgente } from "@/lib/agente/executar";
 
 export const runtime = "nodejs";
@@ -53,11 +56,12 @@ export async function POST(req: Request) {
 
   let reservou = false;
   try {
-    // F035 — o Agente é de plano pago. Gate no servidor: a página bloqueada
-    // não é o que protege o endpoint.
-    await exigirRecurso(userId, "agente");
+    // F035 (2026-08-13) — o Agente deixou de ser recurso de plano pago: o Free
+    // tem 5 perguntas/mês. O que barra agora é o teto, não o cadeado.
+    //
     // Cota antes de qualquer chamada ao provider (F018), e já reservada: só
     // contar no fim deixava duas perguntas simultâneas passarem pelo teto.
+    await verificarLimiteMensal(userId, "agente_msg");
     await reservarCota(userId, "agente_msg");
     reservou = true;
 
@@ -70,7 +74,8 @@ export async function POST(req: Request) {
     // `catch` abaixo não alcança mais nada. Quem estorna um stream que morreu
     // no meio é este handler de rejeição — pergunta que falhou não gasta cota.
     void resultado.text.then(
-      () => undefined,
+      // Pergunta respondida até o fim é o que consome o teto do mês.
+      () => consumirMensal(userId, "agente_msg").catch(() => undefined),
       () => estornarCota(userId, "agente_msg").catch(() => undefined),
     );
 

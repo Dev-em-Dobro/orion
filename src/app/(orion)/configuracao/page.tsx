@@ -1,21 +1,31 @@
 // F016 + F017 + F018 — Configuração BYOK / Orion + provedor de IA.
 
 import {
+  byokDisponivel,
   chavesEssenciaisFaltando,
   listarVisaoChaves,
   obterModoChave,
 } from "@/lib/chaves";
+import { cookies } from "next/headers";
 import { obterProviderLlm } from "@/lib/llm";
 import { requireTenant } from "@/lib/db/scoped";
+import { asTema, TEMA_COOKIE } from "@/lib/tema";
+import { obterPerfilPublico } from "@/lib/ranking";
+import { requireUser } from "@/lib/auth/require-user";
+import { PerfilPublicoForm } from "./perfil-publico-form";
 import { ChaveCard } from "./chave-card";
 import { ModoChaveForm } from "./modo-chave-form";
 import { OnboardingChaves } from "./onboarding-chaves";
 import { ProviderLlmForm } from "./provider-llm-form";
+import { TemaForm } from "./tema-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function ConfiguracaoPage() {
   const { userId } = await requireTenant();
+  const tema = asTema((await cookies()).get(TEMA_COOKIE)?.value);
+  const user = await requireUser();
+  const perfil = await obterPerfilPublico(userId, user.name ?? null);
   const [chaves, provider, faltando, modo] = await Promise.all([
     listarVisaoChaves(userId),
     obterProviderLlm(userId),
@@ -24,6 +34,10 @@ export default async function ConfiguracaoPage() {
   ]);
   const chavesVisiveis = chaves.filter((c) => c.tipo !== "screenshotone");
   const modoByok = modo === "byok";
+  // F035 — com a flag desligada, só quem JÁ está em BYOK vê o seletor de modo
+  // e os campos de chave. Para o resto, o Orion usa as chaves da plataforma e
+  // não há o que configurar.
+  const mostrarByok = byokDisponivel(modo);
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
@@ -35,8 +49,8 @@ export default async function ConfiguracaoPage() {
       </p>
 
       <div className="mt-8 space-y-4">
-        <ModoChaveForm atual={modo} />
-        {modoByok ? (
+        {mostrarByok && <ModoChaveForm atual={modo} />}
+        {mostrarByok && modoByok ? (
           <>
             <OnboardingChaves
               chaves={chaves}
@@ -62,6 +76,13 @@ export default async function ConfiguracaoPage() {
             </p>
           </section>
         )}
+
+        <PerfilPublicoForm
+          optinAtual={perfil.optin}
+          nomeAtual={perfil.nomeExibicao}
+        />
+
+        <TemaForm atual={tema} />
       </div>
 
       <p className="mt-8 text-xs text-zinc-500">
