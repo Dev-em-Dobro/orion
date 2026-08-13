@@ -1,7 +1,63 @@
 # F012 — Gerador de Proposta com Preço Sugerido
 
 ## Status
-Proposta — 2026-07-11
+Proposta — 2026-07-11 · **emendada em 2026-08-13** (ver abaixo).
+
+## Emenda 2026-08-13 — PDF pra entregar, e trava por estágio do funil
+
+Duas mudanças na aba **Proposta** do detalhe do Lead.
+
+### 1. PDF em papel timbrado, não texto no WhatsApp
+
+O "virar PDF simples" do objetivo original nunca saiu do papel: a saída era um
+bloco de texto pra colar no chat. Uma proposta colada no WhatsApp compete com
+mensagem de família — e o dono do negócio não tem o que encaminhar pro sócio.
+
+A aba passa a ter **Baixar PDF**, que abre a folha A4 no diálogo de impressão
+do navegador ("Salvar como PDF").
+
+**Decisão: impressão do navegador, não renderização no servidor.** Playwright já
+está no projeto (`src/lib/diagnostico-ux/screenshot.ts`) e um `page.pdf()`
+funcionaria na máquina do aluno — mas **quebra no deploy hospedado**, onde não
+há Chromium instalado, exatamente como o screenshot já quebra hoje. Impressão do
+navegador não tem esse problema: roda em qualquer lugar, inclusive no celular,
+custa zero de servidor e não adiciona lib nenhuma (**sem ADR**). O layout é
+CSS (`@media print` em `globals.css` + `.folha-proposta`), então a elegância
+está sob nosso controle e é revisável em PR.
+
+A folha traz: cabeçalho com a marca (`BRAND.empresa`) e o nome do Lead, data,
+resumo, escopo item a item, entregáveis, prazo, o investimento em destaque e um
+rodapé com a validade. Sem nada da interface do Orion na página impressa.
+
+### 2. A aba só libera a partir de `qualificado`
+
+Antes, bastava ter Diagnóstico. Na prática isso convidava o aluno a gastar
+geração de IA e cota montando proposta pra quem **ainda não pediu proposta** —
+o erro clássico de quem está começando: proposta é resposta a um pedido, não
+isca. Mandar preço antes da hora mata a conversa e queima o Lead.
+
+A aba passa a exigir `Lead.status` ∈ `qualificado`, `proposta`, `ganho` — os
+estágios em que o Lead **já demonstrou fit e intenção**
+([domain model](../01-domain-model.md)). Nos estágios anteriores a aba explica
+o porquê, aponta o próximo passo real (Abordagem / Objeções) e traz um **ícone
+de interrogação** com a regra escrita, no mesmo padrão do `AjudaScore` da F003.
+
+A trava é de **UI**. A Server Action não ganhou verificação de status: ela
+continua exigindo Diagnóstico e cota, e nada nela é destrutivo — travar no
+servidor só criaria um caminho de erro a mais sem proteger nada.
+
+### Critérios de aceitação da emenda
+- [ ] **AC10** — Lead em `novo`/`priorizado`/`contatado`/`respondeu` → a aba
+      Proposta **não** mostra o botão de gerar; mostra a explicação e o
+      ícone de ajuda.
+- [ ] **AC11** — Lead em `qualificado`, `proposta` ou `ganho` (e com
+      Diagnóstico) → a aba mostra o gerador normalmente.
+- [ ] **AC12** — Com a Proposta gerada, **Baixar PDF** abre o diálogo de
+      impressão com a folha A4 — sem sidebar, sem abas, sem botão nenhum do
+      Orion na página impressa.
+- [ ] **AC13** — A folha traz `BRAND.empresa`, o nome do Lead, a data, escopo,
+      entregáveis, prazo e a faixa de investimento.
+- [ ] **AC14** — Sem lib nova; nenhum ADR necessário.
 
 ## Objetivo
 Gerar, para um Lead, uma **Proposta comercial** estruturada — escopo,

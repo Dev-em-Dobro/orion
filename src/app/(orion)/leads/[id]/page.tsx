@@ -9,7 +9,11 @@ import { TenantNotFoundError, requireLeadOwned } from "@/lib/db/scoped";
 import { classificarWebsite } from "@/lib/diagnostico/agregador";
 import { ROTULO_ATENDIMENTO } from "@/lib/diagnostico/atendimento";
 import { demoUrlFor } from "@/lib/demos";
-import { ESTAGIOS_EM_ABERTO } from "@/lib/funil";
+import {
+  ESTAGIOS_EM_ABERTO,
+  podeMontarProposta,
+  ROTULO_ESTAGIO,
+} from "@/lib/funil";
 import { rotuloCategoria } from "@/lib/nichos/catalogo";
 import { ehRoteiroFalado, ROTULO_CANAL } from "@/lib/abordagem/canais";
 import {
@@ -23,6 +27,7 @@ import {
   whereAntes,
   whereDepois,
 } from "@/lib/leads/vizinhos";
+import { Ajuda } from "../ajuda";
 import { CopiarButton } from "../copiar-button";
 import { CorrigirStatusForm } from "../corrigir-status-form";
 import { DescartarButton, RestaurarButton } from "../descarte-buttons";
@@ -33,7 +38,7 @@ import { GerarPropostaButton } from "../gerar-proposta-button";
 import { MarcarEnviadaButton } from "../marcar-enviada-button";
 import { ResponderObjecaoPanel } from "../responder-objecao-panel";
 import { faixaDeScore, linkWhatsapp, scoreBadge, SimNao, STATUS_BADGE } from "../ui";
-import { Abas, parseAba } from "./abas";
+import { Abas, parseAba, type AbaId } from "./abas";
 
 export const dynamic = "force-dynamic";
 
@@ -122,6 +127,12 @@ export default async function LeadByIdPage({
       const p = new URLSearchParams(query);
       p.set("aba", aba);
       return `/leads/${vizinhoId}?${p.toString()}`;
+    };
+    /** Mesma tela, outra aba — preservando o filtro de origem. */
+    const hrefAba = (destino: AbaId) => {
+      const p = new URLSearchParams(query);
+      p.set("aba", destino);
+      return `/leads/${lead.id}?${p.toString()}`;
     };
 
     return (
@@ -497,16 +508,63 @@ export default async function LeadByIdPage({
             </div>
           )}
 
-          {aba === "objecoes" && <ResponderObjecaoPanel leadId={lead.id} />}
+          {aba === "objecoes" && (
+            <ResponderObjecaoPanel
+              leadId={lead.id}
+              nomeDoLead={lead.nome}
+              categoria={rotuloCategoria(lead.categoria)}
+            />
+          )}
 
+          {/* F012 (emenda) — a aba só abre a partir de `qualificado`: proposta
+              é resposta a um pedido, não isca. Antes disso o próximo passo é
+              Abordagem ou Objeções. */}
           {aba === "proposta" &&
-            (diagnostico ? (
-              <GerarPropostaButton leadId={lead.id} />
-            ) : (
+            (!diagnostico ? (
               <p className="text-sm text-muted">
                 A proposta usa o Diagnóstico como base — rode o Diagnóstico
                 antes.
               </p>
+            ) : !podeMontarProposta(lead.status) ? (
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                    Ainda não é hora da proposta
+                  </p>
+                  <Ajuda rotulo="Por que a Proposta ainda não está liberada?">
+                    A Proposta abre quando o Lead chega em{" "}
+                    <strong className="text-zinc-100">Qualificado</strong> — ou
+                    seja, ele respondeu <em>e</em> demonstrou fit, verba e
+                    intenção. Mandar preço antes disso costuma encerrar a
+                    conversa: vira orçamento sem contexto, e você perde pro mais
+                    barato. Quando ele pedir o orçamento, mude o status pra
+                    Qualificado e a aba libera.
+                  </Ajuda>
+                </div>
+                <p className="mt-2 text-sm text-zinc-300">
+                  Este Lead está em{" "}
+                  <span className={`badge ${STATUS_BADGE[lead.status]}`}>
+                    {ROTULO_ESTAGIO[lead.status]}
+                  </span>
+                  . Proposta é resposta a um pedido — o próximo passo aqui é a{" "}
+                  <Link
+                    href={hrefAba("abordagem")}
+                    className="text-primary hover:underline"
+                  >
+                    Abordagem
+                  </Link>{" "}
+                  ou as{" "}
+                  <Link
+                    href={hrefAba("objecoes")}
+                    className="text-primary hover:underline"
+                  >
+                    Objeções
+                  </Link>
+                  .
+                </p>
+              </div>
+            ) : (
+              <GerarPropostaButton leadId={lead.id} nomeDoLead={lead.nome} />
             ))}
         </div>
 

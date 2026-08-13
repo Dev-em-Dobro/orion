@@ -68,3 +68,6 @@ __pycache__/
 *.pyc
 
 .vercel
+
+# gstack — estado local da ferramenta (logs de browse, cache de disponibilidade).
+.gstack/

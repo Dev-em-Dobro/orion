@@ -1,18 +1,32 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import {
   gerarPropostaAction,
   type GerarPropostaState,
 } from "@/actions/leads/gerarProposta";
 import { SERVICO_LABEL } from "@/lib/proposta/servicos";
 import { faixaBRL } from "@/lib/proposta/formatar";
+import { FolhaProposta } from "./folha-proposta";
 
 const initial: GerarPropostaState = { kind: "idle" };
 
-export function GerarPropostaButton({ leadId }: { leadId: string }) {
+export function GerarPropostaButton({
+  leadId,
+  nomeDoLead,
+}: {
+  leadId: string;
+  nomeDoLead: string;
+}) {
   const [state, action, pending] = useActionState(gerarPropostaAction, initial);
   const [copiado, setCopiado] = useState(false);
+
+  // A data de emissão é carimbada quando a Proposta chega e congela ali:
+  // `new Date()` solto no render mudaria a data impressa a cada re-render.
+  const folha = useMemo(
+    () => (state.kind === "ok" ? { ...state, emitidaEm: new Date() } : null),
+    [state],
+  );
 
   async function copiar(texto: string) {
     await navigator.clipboard.writeText(texto);
@@ -83,14 +97,34 @@ export function GerarPropostaButton({ leadId }: { leadId: string }) {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => copiar(state.textoCopiavel)}
-            className="btn-ghost mt-2"
-          >
-            {copiado ? "Copiado!" : "Copiar"}
-          </button>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {/* F012 AC12 — o diálogo do navegador imprime só `.folha-proposta`;
+                o resto do app fica `visibility: hidden` no `@media print`. */}
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+            >
+              Baixar PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => copiar(state.textoCopiavel)}
+              className="btn-ghost"
+            >
+              {copiado ? "Copiado!" : "Copiar texto"}
+            </button>
+          </div>
         </div>
+      )}
+
+      {folha && (
+        <FolhaProposta
+          proposta={folha.proposta}
+          precificacao={folha.precificacao}
+          nomeDoLead={nomeDoLead}
+          emitidaEm={folha.emitidaEm}
+        />
       )}
 
       {state.kind === "erro" && (

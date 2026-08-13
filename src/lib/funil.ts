@@ -51,6 +51,23 @@ export const ESTAGIOS_EM_ABERTO: LeadStatus[] = [
   "proposta",
 ];
 
+/**
+ * F012 (emenda 2026-08-13) — estágios em que faz sentido montar Proposta.
+ *
+ * Proposta é **resposta a um pedido**, não isca: mandar preço antes de haver
+ * fit e intenção mata a conversa. Antes de `qualificado` o próximo passo é
+ * Abordagem ou Objeções, não orçamento.
+ */
+export const ESTAGIOS_COM_PROPOSTA: LeadStatus[] = [
+  "qualificado",
+  "proposta",
+  "ganho",
+];
+
+export function podeMontarProposta(status: LeadStatus): boolean {
+  return ESTAGIOS_COM_PROPOSTA.includes(status);
+}
+
 // Sub-funil de venda na ordem de progressão. `perdido` fica fora — é vazamento
 // lateral (pode sair de qualquer estágio), não um passo da cadeia de conversão.
 export const FUNIL_VENDA: LeadStatus[] = [

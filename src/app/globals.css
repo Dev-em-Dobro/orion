@@ -345,3 +345,69 @@
     }
   }
 }
+
+/* --------------------------------------------------------------------------
+   F012 (emenda 2026-08-13) — folha A4 da Proposta.
+   Spec: /specs/02-features/F012-gerador-de-proposta.md
+
+   "Baixar PDF" é o diálogo de impressão do navegador, e não Playwright no
+   servidor: `page.pdf()` exigiria Chromium no host, que o deploy hospedado não
+   tem (o screenshot da F008 já quebra por isso). Impressão do navegador roda em
+   qualquer lugar, inclusive no celular, e não custa servidor nenhum.
+
+   A folha fica escondida na tela e só existe no papel. `visibility` em vez de
+   `display` de propósito: preserva o layout do elemento, que é o que faz a
+   quebra de página se comportar.
+   -------------------------------------------------------------------------- */
+
+.folha-proposta {
+  display: none;
+}
+
+@media print {
+  /* Esconde o app inteiro sem depender de marcar cada pedaço da UI. */
+  body * {
+    visibility: hidden;
+  }
+
+  .folha-proposta,
+  .folha-proposta * {
+    visibility: visible;
+  }
+
+  .folha-proposta {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* Papel: preto no branco, e serifa no corpo do texto. */
+    color: #111827;
+    background: #ffffff;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.55;
+  }
+
+  .folha-proposta h1,
+  .folha-proposta h2,
+  .folha-proposta .fp-sans {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  .folha-proposta a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Nada de item de escopo partido no meio pela quebra de página. */
+  .fp-evitar-quebra {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @page {
+    size: A4;
+    margin: 18mm 16mm;
+  }
+}
