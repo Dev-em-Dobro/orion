@@ -53,7 +53,7 @@ export default async function ConfiguracaoPage() {
 
       <div className="mt-8 space-y-4">
         {mostrarByok && <ModoChaveForm atual={modo} />}
-        {mostrarByok && modoByok ? (
+        {mostrarByok && modoByok && (
           <>
             <OnboardingChaves
               chaves={chaves}
@@ -65,19 +65,6 @@ export default async function ConfiguracaoPage() {
               <ChaveCard key={c.tipo} inicial={c} />
             ))}
           </>
-        ) : (
-          <section className="card">
-            <h2 className="text-sm font-semibold text-zinc-100">
-              Chaves incluídas
-            </h2>
-            <p className="mt-2 text-sm text-muted">
-              Google Places (coleta) e <strong className="text-zinc-300">OpenAI</strong>{" "}
-              (Abordagem, proposta, simulador…) vêm da Orion.{" "}
-              <strong className="text-zinc-300">Gemini não entra no modo Orion</strong>
-              — para usar sua chave Gemini: ative BYOK, escolha Gemini como
-              provedor e salve/teste a chave abaixo.
-            </p>
-          </section>
         )}
 
         <PerfilPublicoForm

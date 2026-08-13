@@ -191,8 +191,10 @@ BYOK_NOVOS_ALUNOS=0   # padrão a partir de agora
 ```
 
 - Com a flag desligada, `/configuracao` **não oferece** o modo BYOK nem os
-  campos de chave. Quem tem `key_mode = "orion"` (ou nenhum registro) só vê o
-  card "Chaves incluídas".
+  campos de chave. Quem tem `key_mode = "orion"` (ou nenhum registro) não vê
+  nada sobre chaves — o subtítulo da página já diz que o modo é Orion e que há
+  limites diários; um card explicando as chaves incluídas seria ruído sobre algo
+  que o aluno não configura.
 - **Quem já configurou continua.** Aluno com `key_mode = "byok"` e chave salva
   segue funcionando e segue vendo os campos pra trocar ou remover a chave dele.
   Desligar por baixo quebraria quem depende disso hoje.
