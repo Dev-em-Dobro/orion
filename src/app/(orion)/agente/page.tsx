@@ -5,9 +5,12 @@
 // existirem — score confirmado (F025), Dores com atendimento (F026), cobranças
 // (F031). Antes disso ele responderia sobre uma base vazia.
 
+import type { Metadata } from "next";
 import { requireTenant } from "@/lib/db/scoped";
 import { redirectSeRecursoBloqueado } from "@/lib/planos";
 import { Chat } from "./chat";
+
+export const metadata: Metadata = { title: "Agente" };
 
 export const dynamic = "force-dynamic";
 

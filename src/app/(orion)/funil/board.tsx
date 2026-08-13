@@ -115,7 +115,7 @@ export function Board({
                   />
                   {def.titulo}
                 </span>
-                <span className="font-mono text-xs text-zinc-500">
+                <span className="font-mono text-xs text-muted">
                   {meta?.total ?? 0}
                 </span>
               </header>
@@ -152,7 +152,7 @@ export function Board({
                         {card.score}
                       </span>
                     </div>
-                    <p className="mt-0.5 truncate text-xs text-zinc-500">
+                    <p className="mt-0.5 truncate text-xs text-muted">
                       {card.categoria}
                     </p>
 
@@ -194,14 +194,14 @@ export function Board({
                 </Link>
               )}
               {daColuna.length === 0 && (
-                <p className="mt-3 text-center text-xs text-zinc-600">vazio</p>
+                <p className="mt-3 text-center text-xs text-muted">vazio</p>
               )}
             </section>
           );
         })}
       </div>
 
-      <p className="mt-2 text-xs text-zinc-600">
+      <p className="mt-2 text-xs text-muted">
         Arraste um card ou use o seletor dentro dele. Mover corrige o status —
         Diagnóstico, Dores e Abordagens continuam salvos.
       </p>

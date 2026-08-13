@@ -28,7 +28,7 @@ export function ExcluirDescartadosForm({ quantidade }: { quantidade: number }) {
 
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
-      <label className="text-xs text-zinc-500">
+      <label className="text-xs text-muted">
         Excluir de vez? Digite <strong className="text-zinc-300">{quantidade}</strong> para confirmar
       </label>
       <input

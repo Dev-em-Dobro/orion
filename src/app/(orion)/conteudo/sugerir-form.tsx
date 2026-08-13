@@ -49,7 +49,7 @@ export function SugerirForm() {
                   >
                     {etapa?.label ?? ideia.etapa}
                   </span>
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-muted">
                     {ideia.formato}
                   </span>
                 </div>

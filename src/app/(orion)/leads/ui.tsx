@@ -15,7 +15,7 @@ export const STATUS_BADGE: Record<LeadStatus, string> = {
   ganho: "bg-emerald-500/15 text-emerald-300",
   perdido: "bg-red-500/15 text-red-300",
   // F024 — apagado de propósito: descartado não disputa atenção na lista.
-  descartado: "bg-zinc-700/40 text-zinc-500",
+  descartado: "bg-zinc-700/40 text-muted",
 };
 
 // F032 — a lógica pura vive em `@/lib/leads/faixa` (testável sem JSX).
@@ -23,7 +23,7 @@ export { faixaDeScore, scoreBadge } from "@/lib/leads/faixa";
 
 export function SimNao({ valor }: { valor: boolean | null | undefined }) {
   if (valor === null || valor === undefined) {
-    return <span className="text-zinc-600">—</span>;
+    return <span className="text-muted">—</span>;
   }
   return valor ? (
     <span className="text-emerald-400">✓</span>

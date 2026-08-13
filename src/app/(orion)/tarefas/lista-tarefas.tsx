@@ -47,7 +47,7 @@ function ItemTarefa({ tarefa }: { tarefa: Tarefa }) {
           {tarefa.quantidade ? ` (${tarefa.quantidade})` : ""}
         </p>
         {/* A regra sempre visível: cobrança sem explicação parece arbitrária. */}
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 text-xs text-muted">
           {EXPLICACAO[tarefa.tipo]} · {haQuanto(tarefa.marco)}
         </p>
       </div>
@@ -90,7 +90,7 @@ export function ListaTarefas({ tarefas }: { tarefas: Tarefa[] }) {
               <span className={`badge ${COR_FAIXA[faixa]}`}>
                 {ROTULO_FAIXA[faixa]}
               </span>
-              <span className="text-zinc-600">{doGrupo.length}</span>
+              <span className="text-muted">{doGrupo.length}</span>
             </p>
             <ul className="mt-2 space-y-2">
               {doGrupo.map((t) => (

@@ -25,7 +25,7 @@ export default function Error({
         O erro foi registrado. Tente de novo; se persistir, avise o suporte.
       </p>
       {error.digest ? (
-        <p className="mt-3 font-mono text-xs text-zinc-600">
+        <p className="mt-3 font-mono text-xs text-muted">
           ref: {error.digest}
         </p>
       ) : null}

@@ -152,7 +152,7 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
               placeholder="ex.: dentist, restaurant, advogado…"
-              className="mt-1 w-full rounded-lg border border-border bg-zinc-900/70 p-2 text-sm text-zinc-200 placeholder:text-zinc-500"
+              className="mt-1 w-full rounded-lg border border-border bg-zinc-900/70 p-2 text-sm text-zinc-200 placeholder:text-muted"
             />
           </label>
         )}
@@ -196,7 +196,7 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
             className={`font-mono text-2xl font-bold ${notaCor(scorecard.nota_geral)}`}
           >
             {scorecard.nota_geral}
-            <span className="text-sm text-zinc-500">/10</span>
+            <span className="text-sm text-muted">/10</span>
           </span>
         </div>
 
@@ -297,7 +297,7 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
         ))}
         {pending && (
           <div className="text-left">
-            <span className="inline-block rounded-2xl bg-zinc-800/70 px-3 py-2 text-sm text-zinc-500">
+            <span className="inline-block rounded-2xl bg-zinc-800/70 px-3 py-2 text-sm text-muted">
               digitando…
             </span>
           </div>
@@ -323,7 +323,7 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
           rows={2}
           disabled={pending || limite}
           placeholder="Sua mensagem…"
-          className="flex-1 rounded-lg border border-border bg-zinc-900/70 p-2 text-sm text-zinc-200 placeholder:text-zinc-500 disabled:opacity-50"
+          className="flex-1 rounded-lg border border-border bg-zinc-900/70 p-2 text-sm text-zinc-200 placeholder:text-muted disabled:opacity-50"
         />
         <button
           type="button"
@@ -336,7 +336,7 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
       </div>
 
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-xs text-zinc-500">
+        <span className="text-xs text-muted">
           {turnosAluno} / {MAX_TURNOS} rodadas
         </span>
         <button

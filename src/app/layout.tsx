@@ -20,7 +20,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: NOME_PRODUTO,
+  // `template` faz a aba virar "Leads · Orion Lead Hunter": quem trabalha com
+  // varias abas abertas precisa distinguir a rota E saber de qual app e.
+  title: {
+    default: NOME_PRODUTO,
+    template: `%s · ${NOME_PRODUTO}`,
+  },
   description: "Motor de prospecção para alunos — Leads prontos com Dor e Abordagem",
 };
 

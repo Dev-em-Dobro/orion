@@ -40,12 +40,12 @@ export function FiltrosLista({ categorias, filtro }: FiltrosListaProps) {
         <input key={nome} type="hidden" name={nome} value={valor} />
       ))}
       {categorias.length > 0 && (
-        <label className="flex min-w-[12rem] flex-col gap-1 text-xs text-zinc-400">
+        <label className="flex min-w-[12rem] flex-col gap-1 text-xs text-muted">
           Categoria
           <select
             name="categoria"
             defaultValue={filtro.categoria ?? ""}
-            className="rounded-lg border border-border bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100"
+            className="input-base"
           >
             <option value="">Todas as categorias</option>
             {/* `value` continua o `primaryType` cru — é o que o filtro consulta
@@ -58,12 +58,12 @@ export function FiltrosLista({ categorias, filtro }: FiltrosListaProps) {
           </select>
         </label>
       )}
-      <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-zinc-400">
+      <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-muted">
         Site
         <select
           name="site"
           defaultValue={filtro.site ?? ""}
-          className="rounded-lg border border-border bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100"
+          className="input-base"
         >
           <option value="">Todos</option>
           {FILTROS_SITE.map((v) => (

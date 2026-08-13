@@ -1,6 +1,7 @@
 // F013 — página de treino (roleplay). Server component: lê Leads como
 // cenário (categoria + dores derivadas). Spec: F013-simulador-de-venda.md.
 
+import type { Metadata } from "next";
 import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
@@ -8,6 +9,8 @@ import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { detectarDores, textosDasDores } from "@/lib/dores";
 import { Simulador } from "./simulador";
+
+export const metadata: Metadata = { title: "Simulador de venda" };
 
 export const dynamic = "force-dynamic";
 

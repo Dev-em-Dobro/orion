@@ -257,7 +257,7 @@ export function FunilChart({ stages, perdido }: FunilChartProps) {
               {perdido.value}
             </span>
           </div>
-          <p className="mt-2 text-[11px] text-zinc-500">
+          <p className="mt-2 text-[11px] text-muted">
             Perdido = vazamento lateral (sai de qualquer estágio pós-contato)
           </p>
         </div>

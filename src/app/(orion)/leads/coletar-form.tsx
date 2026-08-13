@@ -90,7 +90,7 @@ function DialogoCota({
           cobrada do mesmo jeito.
         </p>
 
-        <p className="mt-3 text-xs text-zinc-500">
+        <p className="mt-3 text-xs text-muted">
           Os Leads que já estão na sua lista não são afetados: busca nova sempre
           soma, nunca substitui.
         </p>
@@ -328,6 +328,9 @@ export function ColetarForm({
         />
       )}
 
+      {/* A busca demora e o resultado chega depois; sem `aria-live` o leitor de
+          tela não anuncia nada e a pessoa não sabe se achou Lead ou deu erro. */}
+      <div role="status" aria-live="polite">
       {state.kind === "erro" && (
         <p className="alert-erro mt-4">{state.mensagem}</p>
       )}
@@ -368,6 +371,7 @@ export function ColetarForm({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

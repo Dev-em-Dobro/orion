@@ -36,7 +36,7 @@ export function OnboardingChaves({ chaves, faltando, provider }: Props) {
     {
       tipo: provider,
       dica: (
-        <span className="text-zinc-500">
+        <span className="text-muted">
           Provedor ativo: {LABEL_LLM_PROVIDER[provider]}
         </span>
       ),

@@ -35,7 +35,7 @@ export default async function AtivarAcessoPage() {
           <h1 className="text-lg font-medium text-zinc-200">
             Ative seu acesso ao Builders Club
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted">
             Confirme o e-mail usado na compra para liberar o Orion.
           </p>
         </div>
@@ -47,7 +47,7 @@ export default async function AtivarAcessoPage() {
             checkoutUrl={checkoutUrl}
           />
 
-          <div className="mt-6 space-y-2 border-t border-zinc-800 pt-4 text-xs text-zinc-500">
+          <div className="mt-6 space-y-2 border-t border-zinc-800 pt-4 text-xs text-muted">
             <p>
               Comprou agora? Aguarde alguns minutos e clique em{" "}
               <strong className="text-zinc-400">Verificar compra</strong> de

@@ -5,6 +5,7 @@
 // comparação e o link. Sem `product_id` configurado no ambiente, o botão vira
 // "em breve" em vez de um link quebrado.
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   CATALOGO_PLANOS,
@@ -23,6 +24,8 @@ import {
   type Recurso,
 } from "@/lib/planos";
 import { requireTenant } from "@/lib/db/scoped";
+
+export const metadata: Metadata = { title: "Planos" };
 
 export const dynamic = "force-dynamic";
 
@@ -47,9 +50,9 @@ export default async function PlanosPage({
     <main className="mx-auto max-w-5xl px-6 py-10">
       <h1 className="text-2xl font-bold tracking-tight">Planos</h1>
       <p className="mt-1 text-sm text-muted">
-        O que muda é <strong>quantos Leads você aprofunda por mês</strong> e as
-        ferramentas de operação do funil. Buscar e ver o score estimado é
-        ilimitado em todos os planos.
+        <strong>Nada é bloqueado por plano.</strong> Central de Tarefas, funil
+        kanban, exportar CSV, Agente e Simulador estão em todos — o que muda é{" "}
+        <strong>quanto</strong> de cada um cabe no mês.
       </p>
 
       {bloqueado && (
@@ -59,9 +62,9 @@ export default async function PlanosPage({
         </p>
       )}
 
-      <p className="mt-4 text-xs text-zinc-400">
+      <p className="mt-4 text-xs text-muted">
         Você está no plano <strong>{definicao(atual).nome}</strong> — usou{" "}
-        {uso.usado} de {uso.limite} Leads diagnosticados este mês.
+        {uso.usado} de {uso.limite} Leads novos este mês.
       </p>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -98,22 +101,22 @@ export default async function PlanosPage({
               <ul className="mt-4 flex-1 space-y-1.5 text-sm">
                 {OPERACOES_MENSAIS.map((op) => (
                   <li key={op} className="flex justify-between gap-3">
-                    <span className="text-zinc-400">
+                    <span className="text-muted">
                       {LABEL_OPERACAO_MENSAL[op]}
                     </span>
                     <strong className="font-mono">
                       {limiteDaOperacao(p, op)}
-                      <span className="font-normal text-zinc-500">/mês</span>
+                      <span className="font-normal text-muted">/mês</span>
                     </strong>
                   </li>
                 ))}
                 <li className="flex justify-between gap-3 border-t border-border pt-1.5">
-                  <span className="text-zinc-400">Aprofunda por busca</span>
+                  <span className="text-muted">Aprofunda por busca</span>
                   <strong className="font-mono">{def.aprofundarPorBusca}</strong>
                 </li>
                 {/* Tudo liberado em todo plano — dizer isso explicitamente vale
                     mais que uma lista de ✓ iguais nas três colunas. */}
-                <li className="pt-1 text-xs text-zinc-400">
+                <li className="pt-1 text-xs text-muted">
                   Central de Tarefas, Funil kanban, Exportar CSV, Simulador de
                   venda e Diagnóstico automático: <strong>em todos os planos</strong>.
                 </li>
@@ -121,7 +124,7 @@ export default async function PlanosPage({
 
               <div className="mt-4">
                 {ehAtual ? (
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-muted">
                     Plano ativo hoje.
                   </span>
                 ) : checkout ? (
@@ -129,11 +132,11 @@ export default async function PlanosPage({
                     Assinar {def.nome}
                   </a>
                 ) : p === "free" ? (
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-muted">
                     É o plano de entrada — nada a fazer.
                   </span>
                 ) : (
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-muted">
                     Checkout em breve.
                   </span>
                 )}
@@ -143,11 +146,12 @@ export default async function PlanosPage({
         })}
       </div>
 
-      <p className="mt-6 text-xs text-zinc-500">
-        O limite mensal vale também no modo BYOK: o que o Orion entrega é o Lead
-        diagnosticado e com abordagem pronta, não o repasse da API.{" "}
+      <p className="mt-6 text-xs text-muted">
+        Os limites são mensais e zeram na virada do mês (horário de Brasília). O
+        que o Orion vende é o Lead diagnosticado e com abordagem pronta, não o
+        repasse de API — as chaves são da plataforma.{" "}
         <Link href="/configuracao" className="text-primary hover:underline">
-          Ver minhas chaves
+          Ver configuração
         </Link>
       </p>
     </main>

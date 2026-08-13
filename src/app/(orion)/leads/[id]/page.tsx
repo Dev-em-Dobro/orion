@@ -67,7 +67,7 @@ function Campo({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 border-b border-border/60 py-2 last:border-0">
-      <span className="text-xs tracking-wide text-zinc-500 uppercase">
+      <span className="text-xs tracking-wide text-muted uppercase">
         {rotulo}
       </span>
       <span className="text-right text-sm text-zinc-200">{children}</span>
@@ -137,7 +137,7 @@ export default async function LeadByIdPage({
 
     return (
       <main className="mx-auto max-w-4xl px-6 py-10">
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted">
           <Link
             href={query ? `/leads?${query}` : "/leads"}
             className="hover:text-primary"
@@ -205,7 +205,7 @@ export default async function LeadByIdPage({
             <div className="space-y-6">
               <section className="rounded-xl border border-border bg-card p-4">
                 <Campo rotulo="Telefone">
-                  {lead.telefone ?? <span className="text-zinc-600">—</span>}
+                  {lead.telefone ?? <span className="text-muted">—</span>}
                 </Campo>
                 <Campo rotulo="Site">
                   {lead.website ? (
@@ -228,7 +228,7 @@ export default async function LeadByIdPage({
                 </Campo>
                 <Campo rotulo="Avaliações">
                   {lead.num_avaliacoes === null ? (
-                    <span className="text-zinc-600">—</span>
+                    <span className="text-muted">—</span>
                   ) : (
                     <span className="font-mono">
                       {lead.nota?.toFixed(1) ?? "—"} ({lead.num_avaliacoes})
@@ -274,7 +274,7 @@ export default async function LeadByIdPage({
                       >
                         {ROTULO_ATENDIMENTO[diagnostico.atendimento_automatizado]}
                         {diagnostico.atendimento_evidencia && (
-                          <span className="text-zinc-500">
+                          <span className="text-muted">
                             {" "}
                             · {diagnostico.atendimento_evidencia}
                           </span>
@@ -367,10 +367,10 @@ export default async function LeadByIdPage({
                     WhatsApp (texto)
                   </p>
                   {!lead.telefone && (
-                    <span className="text-xs text-zinc-600">sem telefone</span>
+                    <span className="text-xs text-muted">sem telefone</span>
                   )}
                 </div>
-                <p className="mt-1.5 text-xs text-zinc-500">
+                <p className="mt-1.5 text-xs text-muted">
                   Alternativa de baixo atrito — ou o follow-up de quem já ouviu
                   o áudio e não respondeu.
                 </p>
@@ -390,7 +390,7 @@ export default async function LeadByIdPage({
                   <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
                     Site de amostra deste Lead
                   </p>
-                  <p className="mt-1.5 text-xs text-zinc-500">
+                  <p className="mt-1.5 text-xs text-muted">
                     Link público — o cliente abre sem login. Já vai embutido na
                     abordagem de texto.
                   </p>
@@ -431,7 +431,7 @@ export default async function LeadByIdPage({
                         className="rounded-xl border border-border bg-card p-4"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-xs text-zinc-500">
+                          <span className="text-xs text-muted">
                             <span
                               className={falado ? "text-emerald-300" : undefined}
                             >
@@ -455,7 +455,7 @@ export default async function LeadByIdPage({
                         </div>
                         {o.assunto && (
                           <p className="mt-2 text-xs text-zinc-300">
-                            <span className="text-zinc-500">Assunto:</span>{" "}
+                            <span className="text-muted">Assunto:</span>{" "}
                             {o.assunto}
                           </p>
                         )}
@@ -573,7 +573,7 @@ export default async function LeadByIdPage({
           {lead.status === "descartado" ? (
             <>
               {lead.motivo_descarte && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted">
                   Descartado: {lead.motivo_descarte}
                 </p>
               )}

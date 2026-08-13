@@ -86,7 +86,7 @@ export function ChaveCard({ inicial }: { inicial: VisaoChave }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">{visao.label}</h2>
-          <p className="mt-1 font-mono text-xs text-zinc-500">
+          <p className="mt-1 font-mono text-xs text-muted">
             {visao.mascara ?? "nenhuma chave salva"}
           </p>
         </div>

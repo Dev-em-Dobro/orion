@@ -1,6 +1,7 @@
 // F037 — Ranking de Builders do mês.
 // Spec: /specs/02-features/F037-ranking-de-builders.md
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
@@ -11,6 +12,8 @@ import { competenciaDe, obterPerfilPublico, rankingDoMes } from "@/lib/ranking";
 import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonPulse } from "@/components/page-skeleton";
+
+export const metadata: Metadata = { title: "Ranking de Builders" };
 
 export const dynamic = "force-dynamic";
 

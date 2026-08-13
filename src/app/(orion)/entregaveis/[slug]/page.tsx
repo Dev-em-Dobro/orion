@@ -44,12 +44,12 @@ export default async function EntregavelPage({ params }: Props) {
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Link
             href="/entregaveis"
-            className="shrink-0 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+            className="shrink-0 text-sm text-muted transition-colors hover:text-zinc-300"
           >
             <span className="sm:hidden">←</span>
             <span className="hidden sm:inline">← Materiais</span>
           </Link>
-          <span className="hidden text-zinc-600 sm:inline" aria-hidden>
+          <span className="hidden text-muted sm:inline" aria-hidden>
             /
           </span>
           <h1 className="min-w-0 truncate text-sm font-semibold text-zinc-100">

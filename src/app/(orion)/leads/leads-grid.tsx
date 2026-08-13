@@ -10,6 +10,7 @@ import {
   type DescarteLoteState,
 } from "@/actions/leads/descartar";
 import { exportarLeadsCsv } from "@/actions/leads/exportarCsv";
+import { IconeCadeado } from "@/components/icones";
 import { LeadCard, type LeadCardProps } from "./lead-card";
 
 const initial: DescarteLoteState = { kind: "idle" };
@@ -32,6 +33,7 @@ export function LeadsGrid({
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [state, action, pending] = useActionState(descartarEmLote, initial);
   const [erroCsv, setErroCsv] = useState<string | null>(null);
+  const [confirmando, setConfirmando] = useState(false);
 
   // O CSV é montado no servidor (F035 AC9): aqui só disparamos o download.
   async function exportar(ids: string[]) {
@@ -80,7 +82,9 @@ export function LeadsGrid({
     <div className="@container">
       {comSelecao && (
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <label className="inline-flex items-center gap-2 text-xs text-zinc-400">
+        {/* `py-2 -my-2`: sobe o alvo de toque de 16px (o tamanho da caixa) pra
+            ~36px sem mudar o layout. O rótulo inteiro é clicável. */}
+        <label className="-my-2 inline-flex cursor-pointer items-center gap-2 py-2 text-xs text-muted">
           <input
             type="checkbox"
             checked={todosMarcados}
@@ -92,7 +96,7 @@ export function LeadsGrid({
 
         {idsSelecionados.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-muted">
               {idsSelecionados.length} selecionado(s)
             </span>
             {podeExportar ? (
@@ -104,47 +108,71 @@ export function LeadsGrid({
                 Exportar CSV
               </button>
             ) : (
-              <Link href="/planos?recurso=exportar_csv" className="btn-ghost">
-                🔒 Exportar CSV
+              <Link href="/planos?recurso=exportar_csv" className="btn-ghost gap-1.5">
+                <IconeCadeado />
+                Exportar CSV
               </Link>
             )}
-            <form
-              action={action}
-              onSubmit={(e) => {
-                if (
-                  !confirm(
-                    `Descartar ${idsSelecionados.length} Lead(s)? Dá pra restaurar depois.`,
-                  )
-                ) {
-                  e.preventDefault();
-                  return;
-                }
-                setSelecionados(new Set());
-              }}
-            >
-              <input
-                type="hidden"
-                name="lead_ids"
-                value={idsSelecionados.map((l) => l.id).join(",")}
-              />
-              <button type="submit" disabled={pending} className="btn-ghost">
-                {pending ? "Descartando…" : "Descartar selecionados"}
+            {/* Dois tempos em vez de `confirm()`: o diálogo do sistema é
+                inestilizável, some no fundo escuro e bloqueia a aba inteira. O
+                descarte individual (`descarte-buttons.tsx`) já resolvia assim
+                — aqui era o único lugar que ainda chamava o nativo. */}
+            {!confirmando ? (
+              <button
+                type="button"
+                onClick={() => setConfirmando(true)}
+                className="btn-ghost"
+              >
+                Descartar selecionados
               </button>
-            </form>
+            ) : (
+              <form
+                action={action}
+                onSubmit={() => {
+                  setConfirmando(false);
+                  setSelecionados(new Set());
+                }}
+                className="flex flex-wrap items-center gap-2"
+              >
+                <input
+                  type="hidden"
+                  name="lead_ids"
+                  value={idsSelecionados.map((l) => l.id).join(",")}
+                />
+                <span className="text-xs text-muted">
+                  Descartar {idsSelecionados.length}? Dá pra restaurar depois.
+                </span>
+                <button type="submit" disabled={pending} className="btn-ghost">
+                  {pending ? "Descartando…" : "Confirmar"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmando(false)}
+                  className="btn-ghost"
+                >
+                  Cancelar
+                </button>
+              </form>
+            )}
           </div>
         )}
       </div>
       )}
 
-      {state.kind === "erro" && (
-        <p className="mb-3 text-xs text-red-400">{state.mensagem}</p>
-      )}
-      {erroCsv && <p className="mb-3 text-xs text-red-400">{erroCsv}</p>}
-      {state.kind === "ok" && (
-        <p className="mb-3 text-xs text-zinc-400">
-          {state.descartados} Lead(s) descartado(s).
-        </p>
-      )}
+      {/* `role="status"` + `aria-live`: o resultado do descarte e do CSV chega
+          depois da ação, e sem isto leitor de tela não anuncia nada — a pessoa
+          fica sem saber se funcionou. */}
+      <div role="status" aria-live="polite">
+        {state.kind === "erro" && (
+          <p className="mb-3 text-xs text-red-400">{state.mensagem}</p>
+        )}
+        {erroCsv && <p className="mb-3 text-xs text-red-400">{erroCsv}</p>}
+        {state.kind === "ok" && (
+          <p className="mb-3 text-xs text-muted">
+            {state.descartados} Lead(s) descartado(s).
+          </p>
+        )}
+      </div>
 
       {/* F032 — breakpoint do **container**, não da viewport: `xl:grid-cols-3`
           media a janela e ignorava os 240px de sidebar, então a 1280px o grid

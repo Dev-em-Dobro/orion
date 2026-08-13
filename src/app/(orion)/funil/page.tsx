@@ -5,6 +5,7 @@
 // Aqui é a operação: mover o card corrige o status (F024), o que grava
 // `status_em` e alimenta as cobranças da F031.
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
@@ -14,6 +15,8 @@ import { linkWhatsapp } from "@/lib/abordagem/whatsappLink";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonPulse } from "@/components/page-skeleton";
 import { Board, type CardFunil, type ColunaComTotal } from "./board";
+
+export const metadata: Metadata = { title: "Funil" };
 
 export const dynamic = "force-dynamic";
 

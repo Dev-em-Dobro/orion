@@ -1,5 +1,6 @@
 // F016 + F017 + F018 — Configuração BYOK / Orion + provedor de IA.
 
+import type { Metadata } from "next";
 import {
   byokDisponivel,
   chavesEssenciaisFaltando,
@@ -18,6 +19,8 @@ import { ModoChaveForm } from "./modo-chave-form";
 import { OnboardingChaves } from "./onboarding-chaves";
 import { ProviderLlmForm } from "./provider-llm-form";
 import { TemaForm } from "./tema-form";
+
+export const metadata: Metadata = { title: "Configuração" };
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +88,7 @@ export default async function ConfiguracaoPage() {
         <TemaForm atual={tema} />
       </div>
 
-      <p className="mt-8 text-xs text-zinc-500">
+      <p className="mt-8 text-xs text-muted">
         {modoByok
           ? "Essenciais no BYOK: Google (coleta + diagnóstico) e a chave do provedor de IA ativo."
           : "Limites diários no modo Orion: 5 coletas, 5 propostas, 5 abordagens e 20 mensagens no simulador."}{" "}

@@ -50,7 +50,7 @@ export function ProviderLlmForm({
               />
               {p.label}
               {p.padrao ? (
-                <span className="text-xs text-zinc-500">(padrão)</span>
+                <span className="text-xs text-muted">(padrão)</span>
               ) : null}
             </label>
           ))}

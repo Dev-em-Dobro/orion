@@ -101,7 +101,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
             usado uma vez.
           </p>
         </div>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
           Não chegou? Confira spam/lixo eletrônico ou aguarde um minuto e
           solicite de novo.
         </p>
@@ -138,7 +138,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
             Entrar com Google
           </button>
 
-          <div className="flex items-center gap-3 text-xs text-zinc-500">
+          <div className="flex items-center gap-3 text-xs text-muted">
             <div className="h-px flex-1 bg-border" />
             ou continue com e-mail
             <div className="h-px flex-1 bg-border" />

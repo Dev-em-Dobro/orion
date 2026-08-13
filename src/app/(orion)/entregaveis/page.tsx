@@ -69,7 +69,7 @@ export default function EntregaveisPage() {
 
       {emBreve.length > 0 && (
         <section className="mt-10 space-y-3">
-          <h2 className="text-sm font-semibold text-zinc-500">Em breve</h2>
+          <h2 className="text-sm font-semibold text-muted">Em breve</h2>
           <ul className="space-y-3">
             {emBreve.map((item) => (
               <li
@@ -77,7 +77,7 @@ export default function EntregaveisPage() {
                 className="card border-zinc-800/60 opacity-60"
               >
                 <p className="font-medium text-zinc-400">{item.titulo}</p>
-                <p className="mt-1 text-sm text-zinc-500">{item.descricao}</p>
+                <p className="mt-1 text-sm text-muted">{item.descricao}</p>
               </li>
             ))}
           </ul>

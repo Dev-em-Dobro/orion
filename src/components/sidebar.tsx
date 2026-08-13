@@ -15,36 +15,7 @@ import {
   type Recurso,
 } from "@/lib/planos/catalogo";
 import { NOME_PRODUTO_PARTES } from "@/lib/produto";
-
-function Icone({ d }: { d: React.ReactNode }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-4 w-4 shrink-0"
-    >
-      {d}
-    </svg>
-  );
-}
-
-function IconeCadeado() {
-  return (
-    <Icone
-      d={
-        <>
-          <rect x="5" y="11" width="14" height="10" rx="2" />
-          <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-        </>
-      }
-    />
-  );
-}
+import { Icone, IconeCadeado } from "@/components/icones";
 
 type NavItem = {
   href: string;
@@ -301,7 +272,7 @@ function LogoutButton({ className }: { className?: string }) {
 // deles dizendo o que estava carregando. O feedback agora é o `loading.tsx` de
 // cada rota — o esqueleto da página que está chegando.
 
-// Item bloqueado era `text-zinc-600 opacity-50` — 2,3:1 antes da opacidade, e
+// Item bloqueado era `text-muted opacity-50` — 2,3:1 antes da opacidade, e
 // ~1,6:1 depois dela. Ilegível, e a F035 quer o contrário: o recurso pago tem
 // que ser **visto** pra dar vontade de assinar. Agora usa `text-muted` (7,7:1),
 // e quem diz "fechado" é o cadeado, não o apagamento.
@@ -426,7 +397,7 @@ function NavLink({
       {icone ? (
         <span
           className={
-            bloqueado ? "text-muted" : ativo ? "text-primary" : "text-zinc-500"
+            bloqueado ? "text-muted" : ativo ? "text-primary" : "text-muted"
           }
         >
           {icone}
@@ -541,7 +512,7 @@ function NavGrupos({
       {grupos(tarefasVencidas).map((grupo) => {
         return (
           <div key={grupo.titulo}>
-            <p className="px-2 text-xs font-medium tracking-wider text-zinc-500 uppercase">
+            <p className="px-2 text-xs font-medium tracking-wider text-muted uppercase">
               {grupo.titulo}
             </p>
             <ul className="mt-2 space-y-1">
@@ -637,7 +608,7 @@ export function Sidebar({
         </nav>
         <div className="space-y-2 border-t border-border px-4 py-3">
           <LogoutButton />
-          <p className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-zinc-500">
+          <p className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted">
             <Link href="/termos" className="hover:text-zinc-300">
               Termos
             </Link>
@@ -695,7 +666,7 @@ export function Sidebar({
             </nav>
             <div className="space-y-2 border-t border-border px-4 py-3">
               <LogoutButton />
-              <p className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-zinc-500">
+              <p className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted">
                 <Link
                   href="/termos"
                   className="hover:text-zinc-300"

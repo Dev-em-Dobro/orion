@@ -24,7 +24,7 @@ export default async function SkillPage({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-muted">
         <Link href="/skills" className="hover:text-primary">
           ← Skills
         </Link>
@@ -66,13 +66,13 @@ export default async function SkillPage({
             </code>{" "}
             em uma destas pastas:
             <div className="mt-2 space-y-1">
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted">
                 Pra usar em todos os projetos:
               </p>
               <code className="block rounded-lg border border-border bg-zinc-900/70 p-2 text-xs text-zinc-200">
                 ~/.claude/skills/{skill.slug}/
               </code>
-              <p className="mt-2 text-xs text-zinc-500">Só no projeto atual:</p>
+              <p className="mt-2 text-xs text-muted">Só no projeto atual:</p>
               <code className="block rounded-lg border border-border bg-zinc-900/70 p-2 text-xs text-zinc-200">
                 .claude/skills/{skill.slug}/
               </code>
@@ -104,7 +104,7 @@ export default async function SkillPage({
           <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
             Arquivos ({arquivos.length})
           </h2>
-          <ul className="mt-2 space-y-0.5 text-xs text-zinc-500">
+          <ul className="mt-2 space-y-0.5 text-xs text-muted">
             {arquivos.map((a) => (
               <li key={a}>{a}</li>
             ))}

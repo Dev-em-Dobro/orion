@@ -63,7 +63,7 @@ export function PerfilPublicoForm({
             required
             className="input-base max-w-xs"
           />
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-muted">
             É o que os outros veem. Não use e-mail.
           </span>
         </label>

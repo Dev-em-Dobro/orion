@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -27,6 +28,8 @@ import type { LeadCardProps } from "./lead-card";
 import { FiltrosLista, PAGE_SIZE, PaginacaoLeads } from "./lista-controles";
 
 // Sempre reflete o banco do aluno logado (F015) — sem cache cross-tenant.
+export const metadata: Metadata = { title: "Leads" };
+
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{
@@ -171,7 +174,7 @@ async function BlocoLista({
         <p className="text-sm text-muted">
           {total} Lead(s)
           {total > 0 && (
-            <span className="text-zinc-500">
+            <span className="text-muted">
               {" "}
               · ordenado por Score
               <AjudaScore foco="score" colocacao="abaixo-esquerda" />

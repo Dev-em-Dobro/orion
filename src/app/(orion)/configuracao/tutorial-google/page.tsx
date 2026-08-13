@@ -41,7 +41,7 @@ const PASSOS = [
 export default function TutorialGooglePage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-muted">
         <Link href="/configuracao" className="hover:text-primary">
           ← Configuração
         </Link>

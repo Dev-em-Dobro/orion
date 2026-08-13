@@ -34,7 +34,7 @@ export default function LoginPage() {
           <h1 className="text-lg font-medium text-zinc-200">
             Entre na sua conta de aluno
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted">
             {googleAuthEnabled
               ? "Google ou link por e-mail — sem senha."
               : "Link enviado por e-mail — sem senha."}
@@ -44,18 +44,18 @@ export default function LoginPage() {
         <div className="card border-zinc-800/80 shadow-[0_0_0_1px_rgba(34,197,94,0.06)]">
           <Suspense
             fallback={
-              <p className="text-sm text-zinc-500">Carregando formulário…</p>
+              <p className="text-sm text-muted">Carregando formulário…</p>
             }
           >
             <LoginForm googleEnabled={googleAuthEnabled} />
           </Suspense>
         </div>
 
-        <p className="text-center text-xs text-zinc-600">
+        <p className="text-center text-xs text-muted">
           Ao entrar, você configura as suas próprias chaves de API e prospecta
           só os seus Leads.
         </p>
-        <p className="text-center text-xs text-zinc-600">
+        <p className="text-center text-xs text-muted">
           <a href="/termos" className="hover:text-zinc-400 hover:underline">
             Termos de Uso
           </a>

@@ -114,7 +114,7 @@ export function Chat() {
           >
             {m.content ||
               (pensando ? (
-                <span className="text-zinc-500">consultando os seus dados…</span>
+                <span className="text-muted">consultando os seus dados…</span>
               ) : null)}
           </li>
         ))}

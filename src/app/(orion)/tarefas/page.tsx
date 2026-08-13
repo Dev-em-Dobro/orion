@@ -6,6 +6,7 @@
 // não puxa de volta quem sumiu. Pra isso seria job agendado + e-mail, e isso
 // exige ADR próprio.
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { EmptyState } from "@/components/empty-state";
@@ -14,6 +15,8 @@ import { requireTenant } from "@/lib/db/scoped";
 import { redirectSeRecursoBloqueado } from "@/lib/planos";
 import { tarefasDoUsuario } from "@/lib/tarefas/consultar";
 import { ListaTarefas } from "./lista-tarefas";
+
+export const metadata: Metadata = { title: "Tarefas" };
 
 export const dynamic = "force-dynamic";
 

@@ -32,9 +32,14 @@ export function AjudaScore({
       <button
         type="button"
         aria-label={aria}
-        className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-zinc-600 text-[10px] font-semibold leading-none text-zinc-400 transition-colors duration-200 hover:border-zinc-400 hover:text-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        /* O alvo era de 16px — menos da metade do mínimo de 44px, e num
+           elemento que só se explica ao ser tocado. A caixa cresce pra ~32px
+           com padding transparente; o círculo visível continua pequeno. */
+        className="-m-2 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full p-2 text-zinc-400 transition-colors duration-200 hover:text-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
-        ?
+        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] font-semibold leading-none">
+          ?
+        </span>
       </button>
       <span
         role="tooltip"
