@@ -1,7 +1,26 @@
 # F027 — Abordagem por e-mail (dentro da plataforma)
 
 ## Status
-Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase C)
+**Retirada do produto — 2026-08-13.** Foi implementada em 2026-08-10 (parte do
+[revamp do fluxo](../10-revamp-do-fluxo.md), Fase C) e removida três dias depois
+por decisão de produto ([F035](F035-planos-e-limites.md), "Saída da Abordagem
+por e-mail"). O documento fica como registro do que existiu e do que foi
+desfeito — não descreve comportamento atual.
+
+### O que foi desfeito, em ordem
+
+| Camada | O que aconteceu |
+|---|---|
+| UI | Seletor de canal, campo de e-mail, `mailto:` e aviso de texto longo saíram do detalhe do Lead |
+| Server Action | `canal` virou `z.enum(["whatsapp"])` — chamada direta com `email` é **rejeitada**, não escondida |
+| Geração | `gerarAbordagemEmail` e `prompt-email.ts` apagados |
+| Captura | A extração de e-mail do site do Lead **parou** ([ADR-016](../04-decisions/ADR-016-leitura-do-site-do-lead.md)): sem canal, coletar contato vira dado pessoal sem finalidade |
+| Banco (enum) | `Canal.email` removido, com migração que **falha de propósito** se existir Abordagem com esse canal — registro de contato feito é histórico |
+| Banco (colunas) | `Lead.email`, `Lead.email_origem` e `Abordagem.assunto` **ficaram**: apagar coluna é irreversível e o dado antigo não incomoda |
+| Legal | Termos e Política de Privacidade atualizados, com `ATUALIZADO_EM` novo |
+
+**Se um dia voltar**, o caminho mais barato é o inverso desta tabela — e o que
+custa recriar é o prompt de e-mail, não a infra.
 
 ## Objetivo
 Permitir abordar o Lead **por e-mail** sem sair do Orion: descobrir o e-mail

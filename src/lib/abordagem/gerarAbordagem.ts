@@ -10,7 +10,6 @@ import {
   type TipoAbordagem,
 } from "./prompt";
 import { removerEmojis } from "./removerEmojis";
-import { systemPromptEmail } from "./prompt-email";
 import { systemPromptLigacao } from "./prompt-ligacao";
 
 export class AbordagemError extends Error {
@@ -24,7 +23,6 @@ export class AbordagemError extends Error {
 }
 
 const schema = z.object({ mensagem: z.string() });
-const schemaEmail = z.object({ assunto: z.string(), corpo: z.string() });
 
 /** Gera a mensagem de Abordagem de WhatsApp para um Lead. */
 export async function gerarAbordagem(
@@ -71,35 +69,6 @@ export async function gerarRoteiroLigacao(
       maxTokens: 1024,
     });
     return { mensagem: removerEmojis(out.mensagem.trim()) };
-  } catch (e) {
-    if (e instanceof AbordagemError) throw e;
-    if (e instanceof LlmError) throw new AbordagemError(e.status, e.message);
-    throw e;
-  }
-}
-
-/**
- * F027 — versão e-mail: mesma disciplina de tom, saída em dois campos.
- * O assunto é o que decide se o e-mail é aberto, então vem do modelo junto com
- * o corpo, olhando a mesma Dor.
- */
-export async function gerarAbordagemEmail(
-  ctx: ContextoLead,
-  llm: LlmClient,
-  tipo: TipoAbordagem = "primeira",
-): Promise<{ assunto: string; corpo: string }> {
-  try {
-    const out = await llm.generateStructured({
-      system: systemPromptEmail(tipo),
-      prompt: montarContexto(ctx),
-      schema: schemaEmail,
-      tier: "strong",
-      maxTokens: 1536,
-    });
-    return {
-      assunto: removerEmojis(out.assunto.trim()),
-      corpo: removerEmojis(out.corpo.trim()),
-    };
   } catch (e) {
     if (e instanceof AbordagemError) throw e;
     if (e instanceof LlmError) throw new AbordagemError(e.status, e.message);

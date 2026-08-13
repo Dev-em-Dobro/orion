@@ -15,13 +15,18 @@ describe("canais", () => {
   it("só `ligacao` é roteiro falado — é o que tira o wa.me da UI (AC4)", () => {
     expect(ehRoteiroFalado("ligacao")).toBe(true);
     expect(ehRoteiroFalado("whatsapp")).toBe(false);
-    expect(ehRoteiroFalado("email")).toBe(false);
   });
 
-  it("todo canal do enum tem rótulo em PT — inclusive o legado `email`", () => {
+  it("todo canal do enum tem rótulo em PT", () => {
     expect(ROTULO_CANAL.ligacao).toBe("Ligação ou áudio");
     expect(ROTULO_CANAL.whatsapp).toBe("WhatsApp");
-    expect(ROTULO_CANAL.email).toBe("E-mail");
+  });
+
+  // `email` saiu do enum em 2026-08-13 junto com o resto da F027. Quem garante
+  // que nenhum canal fica sem rótulo é o `Record<Canal, string>` no tipo — este
+  // teste só trava a contagem, pra canal novo não entrar sem passar por aqui.
+  it("não sobrou canal órfão nem legado", () => {
+    expect(Object.keys(ROTULO_CANAL).sort()).toEqual(["ligacao", "whatsapp"]);
   });
 });
 

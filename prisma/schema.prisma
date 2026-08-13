@@ -54,11 +54,13 @@ enum Severidade {
 
 // F038 — `ligacao` e o roteiro falado: o aluno le na ligacao ou grava como
 // audio. O Orion nunca disca nem envia.
-// `email` saiu do produto na F035 e sobrevive aqui so pelos registros antigos.
+// `email` saiu do enum em 2026-08-13, junto com o resto da F027. A migracao que
+// o removeu FALHA de proposito se existir Abordagem com esse canal: registro de
+// contato feito e historico, nao lixo.
 enum Canal {
   whatsapp
+  // F038 — roteiro falado: o aluno le na ligacao ou grava como audio.
   ligacao
-  email
 }
 
 // F027 — de onde veio o e-mail do Lead. `site` = publicado pelo proprio
@@ -156,7 +158,9 @@ model Abordagem {
   user_id    String
   lead_id    String
   canal      Canal
-  // F027 — so quando canal = email.
+  /// Sobrevivente da F027 (canal e-mail, removido em 2026-08-13). Sempre
+  /// null desde entao; mantido porque apagar coluna e irreversivel e o dado
+  /// antigo nao incomoda ninguem.
   assunto    String?
   conteudo   String
   gerado_em  DateTime  @default(now())
