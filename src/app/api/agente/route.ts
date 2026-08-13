@@ -8,7 +8,7 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { requireTenant } from "@/lib/db/scoped";
 import { AuthError } from "@/lib/auth/errors";
-import { consumirCota, verificarCota } from "@/lib/limites";
+import { estornarCota, reservarCota } from "@/lib/limites";
 import { QuotaExcedidaError } from "@/lib/limites/erros";
 import { LlmError } from "@/lib/llm";
 import { ChaveAusenteError, ChaveOperacaoError } from "@/lib/chaves/erros";
@@ -51,26 +51,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ erro: "Mensagem inválida" }, { status: 400 });
   }
 
+  let reservou = false;
   try {
     // F035 — o Agente é de plano pago. Gate no servidor: a página bloqueada
     // não é o que protege o endpoint.
     await exigirRecurso(userId, "agente");
-    // Cota antes de qualquer chamada ao provider (F018).
-    await verificarCota(userId, "agente_msg");
+    // Cota antes de qualquer chamada ao provider (F018), e já reservada: só
+    // contar no fim deixava duas perguntas simultâneas passarem pelo teto.
+    await reservarCota(userId, "agente_msg");
+    reservou = true;
 
     const resultado = await responderAgente({
       userId,
       mensagens: parsed.data.mensagens,
     });
 
-    // Consome ao concluir, não ao pedir: pergunta que falhou não gasta cota.
+    // A resposta é streaming: a essa altura já devolvemos o Response e o
+    // `catch` abaixo não alcança mais nada. Quem estorna um stream que morreu
+    // no meio é este handler de rejeição — pergunta que falhou não gasta cota.
     void resultado.text.then(
-      () => consumirCota(userId, "agente_msg"),
       () => undefined,
+      () => estornarCota(userId, "agente_msg").catch(() => undefined),
     );
 
     return resultado.toTextStreamResponse();
   } catch (e) {
+    if (reservou) {
+      await estornarCota(userId, "agente_msg").catch(() => undefined);
+    }
     if (e instanceof RecursoDoPlanoError) {
       return NextResponse.json({ erro: e.message }, { status: 402 });
     }

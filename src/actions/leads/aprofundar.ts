@@ -12,7 +12,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
-import { consumirCota, verificarCota } from "@/lib/limites";
+import { estornarCota, reservarCota } from "@/lib/limites";
 import { QuotaExcedidaError } from "@/lib/limites/erros";
 import { LimiteDoPlanoError, usoDoPlano, verificarLimiteMensal } from "@/lib/planos";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
@@ -89,14 +89,21 @@ export async function aprofundarLote(
         // F035 — teto do plano antes da cota diária e antes de qualquer
         // chamada externa: no limite, nada é gasto.
         await verificarLimiteMensal(userId);
-        await verificarCota(userId, "diagnostico");
-        const { dados, email } = await executarDiagnostico(
-          lead.website,
-          googleKey,
-        );
-        await persistirDiagnostico({ userId, lead, dados, email });
-        await recalcularScore(userId, lead.id);
-        await consumirCota(userId, "diagnostico");
+        // A reserva já incrementa: o lote roda em paralelo e dois Leads não
+        // podem ler o mesmo contador antes de qualquer um escrever.
+        await reservarCota(userId, "diagnostico");
+        try {
+          const { dados, email } = await executarDiagnostico(
+            lead.website,
+            googleKey,
+          );
+          await persistirDiagnostico({ userId, lead, dados, email });
+          await recalcularScore(userId, lead.id);
+        } catch (e) {
+          // Rejeita de volta: o `allSettled` abaixo classifica por `r.reason`.
+          await estornarCota(userId, "diagnostico").catch(() => undefined);
+          throw e;
+        }
       }),
     );
 
