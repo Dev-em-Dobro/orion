@@ -216,11 +216,15 @@ export default async function DashboardPage() {
 
         {/* F032 (2026-08-13) — três perguntas, um bloco cada. "O que fazer" na
             coluna larga porque a Fila do dia renderiza o card de Lead inteiro
-            (~320px); o funil é SVG vertical de 320px fixos e é ele que cabe no
-            rail estreito. A coluna da esquerda é o primeiro ponto de leitura,
-            o que preserva a prioridade da F025. */}
-        <div className="mt-6 grid items-start gap-5 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
+            (~320px). A coluna da esquerda é o primeiro ponto de leitura, o que
+            preserva a prioridade da F025.
+
+            Meio a meio, e não 2/3 + 1/3: no rail de um terço o funil ficava
+            espremido — a silhueta passava por cima do rótulo do estágio e o
+            card inteiro virava uma coluna estreita. A Fila do dia continua
+            comportando duas colunas de card em 50%. */}
+        <div className="mt-6 grid items-start gap-5 lg:grid-cols-2">
+          <div className="space-y-6">
             <Suspense fallback={<SkeletonPulse className="h-64 w-full" />}>
               <FilaDoDia />
             </Suspense>
