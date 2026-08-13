@@ -13,38 +13,10 @@
 //   3. Só quem deu opt-in aparece nomeado.
 
 import { prisma } from "@/lib/db";
-import { competenciaDe } from "@/lib/planos/competencia";
+import { competenciaDe, intervaloDaCompetencia } from "@/lib/planos/competencia";
 import { calcularRanking, type Ranking, type VendasDoAluno } from "./calcular";
 
-export { competenciaDe };
-
-/**
- * Início e fim (exclusivo) da competência, em instantes UTC.
- *
- * O Brasil não tem horário de verão desde 2019, então o offset de São Paulo é
- * fixo em -03:00 e dá pra construir a fronteira direto. Se o DST voltar, isto
- * é o que precisa mudar — por isso está isolado numa função.
- */
-export function intervaloDaCompetencia(competencia: string): {
-  inicio: Date;
-  fim: Date;
-} {
-  const [anoBruto, mesBruto] = competencia.split("-").map(Number);
-  const ano = Number.isFinite(anoBruto) ? (anoBruto as number) : 1970;
-  const mes =
-    Number.isFinite(mesBruto) && (mesBruto as number) >= 1 && (mesBruto as number) <= 12
-      ? (mesBruto as number)
-      : 1;
-  const inicio = new Date(
-    `${String(ano).padStart(4, "0")}-${String(mes).padStart(2, "0")}-01T00:00:00-03:00`,
-  );
-  const proximoMes = mes === 12 ? 1 : mes + 1;
-  const proximoAno = mes === 12 ? ano + 1 : ano;
-  const fim = new Date(
-    `${String(proximoAno).padStart(4, "0")}-${String(proximoMes).padStart(2, "0")}-01T00:00:00-03:00`,
-  );
-  return { inicio, fim };
-}
+export { competenciaDe, intervaloDaCompetencia };
 
 /**
  * Venda que conta (F037, "Antifraude"): Lead `ganho` na competência que teve

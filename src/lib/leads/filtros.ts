@@ -119,3 +119,23 @@ export function queryDoFiltro(
   }
   return p.toString();
 }
+
+/**
+ * Link da lista filtrada por estágio — o que o funil do Dashboard usa.
+ *
+ * Existe pra o nome do parâmetro morar **no mesmo arquivo que o parseia**. Na
+ * primeira versão o funil apontava pra `?status=`, que aqui só significa
+ * "descartados": o clique navegava e não filtrava nada, silenciosamente.
+ */
+export function hrefDoEstagio(estagio: LeadStatus): string {
+  const q = queryDoFiltro({
+    categoria: null,
+    site: null,
+    scoreMin: null,
+    comTelefone: false,
+    semAtendimento: false,
+    estagio,
+    descartados: false,
+  });
+  return q ? `/leads?${q}` : "/leads";
+}

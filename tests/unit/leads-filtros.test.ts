@@ -5,7 +5,9 @@ import {
   SCORE_CHIP,
   temFiltro,
   whereFiltroLista,
+  hrefDoEstagio,
 } from "@/lib/leads/filtros";
+import { ESTAGIOS_FUNIL } from "@/lib/funil";
 import { dorPrincipal } from "@/lib/dores/principal";
 import { faixaDeScore } from "@/lib/leads/faixa";
 import {
@@ -155,5 +157,25 @@ describe("filtro por estágio do funil", () => {
     const f = parseFiltroLista({ estagio: "proposta" });
     expect(temFiltro(f)).toBe(true);
     expect(queryDoFiltro(f)).toContain("estagio=proposta");
+  });
+});
+
+// O funil do Dashboard apontava pra `?status=`, que nesta lista significa
+// "descartados" — o clique navegava e não filtrava nada. O link agora sai
+// daqui, e este teste é o que impede o par link/parser de divergir de novo.
+describe("hrefDoEstagio — o link do funil casa com o parser", () => {
+  it("volta pelo parse como o mesmo estágio", () => {
+    for (const estagio of ESTAGIOS_FUNIL) {
+      const href = hrefDoEstagio(estagio);
+      const params = Object.fromEntries(
+        new URLSearchParams(href.split("?")[1] ?? ""),
+      );
+      expect(parseFiltroLista(params).estagio, estagio).toBe(estagio);
+    }
+  });
+
+  it("não usa `status`, que já significa descartados", () => {
+    expect(hrefDoEstagio("ganho")).not.toContain("status=");
+    expect(parseFiltroLista({ status: "ganho" }).estagio).toBeNull();
   });
 });

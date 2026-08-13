@@ -7,7 +7,9 @@ import { chavesEssenciaisFaltando } from "@/lib/chaves";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { ESTAGIOS_EM_ABERTO, ONDE_NAO_DESCARTADO } from "@/lib/funil";
+import { hrefDoEstagio } from "@/lib/leads/filtros";
 import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
+import { metaDoMes } from "@/lib/metas";
 import type { LeadStatus } from "@prisma/client";
 import { SkeletonPulse } from "@/components/page-skeleton";
 import { FilaDoDia } from "./fila-do-dia";
@@ -68,7 +70,7 @@ async function PainelFunil() {
       value: porStatus[e.status],
       color: e.cor,
       // Clicar no estágio abre a lista já filtrada por ele.
-      href: `/leads?status=${e.status}`,
+      href: hrefDoEstagio(e.status),
     }),
   );
 
@@ -110,10 +112,54 @@ async function PainelFunil() {
           perdido={{
             value: porStatus.perdido,
             max: maxEstagio,
-            href: "/leads?status=perdido",
+            href: hrefDoEstagio("perdido"),
           }}
         />
       )}
+    </section>
+  );
+}
+
+/**
+ * A meta é PISO, não teto — o oposto da cota do medidor. Por isso mora aqui, no
+ * bloco de resultado, e é desenhada como conquista: barra que enche, "faltam
+ * N", e um estado de meta batida. Ver `lib/metas.ts`.
+ */
+async function MetaAbordagem() {
+  const { userId } = await requireTenant();
+  const meta = await metaDoMes(userId);
+
+  return (
+    <section className="card sm:col-span-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <p className="metric-label">Leads abordados este mês</p>
+        {meta.batida ? (
+          <span className="text-sm font-semibold text-primary">
+            meta batida 🎯
+          </span>
+        ) : (
+          <span className="text-sm text-muted">
+            faltam <strong className="font-mono text-zinc-200">{meta.restante}</strong>
+          </span>
+        )}
+      </div>
+
+      <p className="metric-value">
+        {meta.abordados}
+        <span className="text-2xl text-muted">/{meta.meta}</span>
+      </p>
+
+      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+        <div
+          className="h-full bg-primary transition-all duration-500"
+          style={{ width: `${Math.round(meta.fracao * 100)}%` }}
+        />
+      </div>
+
+      <p className="metric-nota">
+        Conta Lead com abordagem marcada como enviada. Vários follow-ups pro
+        mesmo Lead contam uma vez.
+      </p>
     </section>
   );
 }
@@ -182,10 +228,11 @@ export default async function DashboardPage() {
           </Suspense>
         </div>
 
-        {/* O que já fiz. Fraco de propósito por enquanto: a medida de esforço
-            (Leads abordados no mês) ficou fora desta rodada — ver a nota na
-            F032. */}
+        {/* O que já fiz: esforço (meta de abordagem) + resultado. */}
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <Suspense fallback={<SkeletonPulse className="h-40 w-full sm:col-span-2" />}>
+            <MetaAbordagem />
+          </Suspense>
           <Suspense
             fallback={
               <>
