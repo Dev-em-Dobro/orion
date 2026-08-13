@@ -64,6 +64,53 @@ URL antiga com `?estagio=priorizado` continua valendo e continua filtrando **só
 - [ ] **AC15** — Nenhuma cor **de estágio** definida fora de `src/lib/funil.ts`.
       (O verde da marca `#22c55e` no favicon e no template de e-mail é outra
       coisa e continua onde está.)
+
+## Emenda 2026-08-13 (b) — a faixa de resultado vira três cards, e dois são porta
+
+A faixa "o que já fiz" gastava duas linhas: **Leads abordados este mês** sozinho
+em largura cheia e, embaixo, **Ganhos** e **Em aberto** lado a lado. São três
+respostas da mesma pergunta ("como estou indo") e não havia motivo pra uma
+quebrar a linha — a meta ficava com a largura inteira da tela pra uma barra de
+progresso e uma nota de uma linha.
+
+Passam a dividir **uma** linha, em 2 : 1 : 1 (`lg:grid-cols-4` com a meta em
+`col-span-2`). Não três colunas iguais: a meta carrega barra + "faltam N" + a
+nota da regra de contagem, e em um terço da largura a nota vira três linhas e o
+"faltam N" desce pra baixo do rótulo. Abaixo de `lg` o arranjo é o de hoje —
+meta em cima, os dois embaixo.
+
+### Ganhos e Em aberto viram link; a meta não
+
+Número de funil sem porta é beco: o card diz "5 em aberto" e o aluno não tem
+como ver **quais**. Os dois passam a abrir `/leads` filtrada — o mesmo destino
+de clicar numa barra do card "Funil por estágio" logo acima, com a mesma
+promessa: o total da lista é o número que estava no card.
+
+**Leads abordados este mês continua sem link**, e isso é decisão, não
+esquecimento: esse número não é recorte de `status`. Ele conta Leads com
+**Abordagem enviada dentro da competência** (`lib/metas.ts`) — um Lead abordado
+dia 3 e ganho dia 10 conta aqui **e** está em `ganho` no funil. Qualquer
+`?estagio=` levaria a uma lista com outro total, e card cujo número não bate com
+a lista que ele abre é pior que card sem link.
+
+### `?estagio=em-aberto`
+
+"Em aberto" não é coluna do kanban — são **quatro** (`contatado`, `respondeu`,
+`qualificado`, `proposta`). O filtro da lista passa a aceitar, além de id de
+coluna e status solto, o token `em-aberto`, que resolve pra `ESTAGIOS_EM_ABERTO`
+— a mesma constante que o card usa pra somar. Número e filtro saem da mesma
+lista: não dá pra um mudar sem o outro.
+
+### Critérios de aceitação da emenda (b)
+- [ ] **AC16** — Em `lg`, os três cards de resultado ficam na mesma linha, com a
+      meta ocupando o dobro da largura de cada um dos outros dois.
+- [ ] **AC17** — Clicar em **Ganhos** abre `/leads?estagio=ganhos` e clicar em
+      **Em aberto** abre `/leads?estagio=em-aberto`; nos dois, o total da lista
+      é igual ao número mostrado no card.
+- [ ] **AC18** — `?estagio=em-aberto` filtra exatamente
+      `contatado|respondeu|qualificado|proposta`, lidos de `ESTAGIOS_EM_ABERTO`.
+- [ ] **AC19** — O card **Leads abordados este mês** não é link.
+
 ## Objetivo
 Transformar a home (`/`) num **dashboard de funil read-only** que mostra, num
 relance, **onde estão os Leads** e **onde o funil vaza**. Hoje a home tem um

@@ -11,6 +11,7 @@
 import type { LeadStatus, Prisma } from "@prisma/client";
 import {
   COLUNA_POR_ID,
+  ESTAGIOS_EM_ABERTO,
   ESTAGIOS_FUNIL,
   ONDE_NAO_DESCARTADO,
   ROTULO_ESTAGIO,
@@ -62,12 +63,30 @@ export type ParamsLista = {
 };
 
 /**
- * Aceita **id de coluna** do funil (`prontos`, `abordados`, …) ou um status
- * solto. `descartado` fica de fora: entra pelo `status=descartados`.
+ * F010 (emenda b, 2026-08-13) — recortes que **não** são coluna do kanban.
  *
- * Os dois formatos convivem porque o link do Dashboard passou a usar coluna,
- * mas URL antiga com `?estagio=priorizado` (favorito, histórico, link colado
- * num grupo) tem que continuar filtrando o que sempre filtrou.
+ * "Em aberto" atravessa quatro colunas (`contatado` → `proposta`), então não
+ * tinha token: o card do Dashboard mostrava o número e não abria nada. Os
+ * status saem de `ESTAGIOS_EM_ABERTO`, a mesma constante que o card soma —
+ * número e filtro não têm como divergir.
+ */
+export const TOKEN_EM_ABERTO = "em-aberto";
+
+const RECORTES_EXTRAS: Record<
+  string,
+  { status: LeadStatus[]; rotulo: string }
+> = {
+  [TOKEN_EM_ABERTO]: { status: ESTAGIOS_EM_ABERTO, rotulo: "Em aberto" },
+};
+
+/**
+ * Aceita **id de coluna** do funil (`prontos`, `abordados`, …), um recorte
+ * extra (`em-aberto`) ou um status solto. `descartado` fica de fora: entra pelo
+ * `status=descartados`.
+ *
+ * Os formatos convivem porque o link do Dashboard passou a usar coluna, mas URL
+ * antiga com `?estagio=priorizado` (favorito, histórico, link colado num grupo)
+ * tem que continuar filtrando o que sempre filtrou.
  */
 function parseEstagio(raw: string | undefined): RecorteEstagio | null {
   const limpo = (raw ?? "").trim();
@@ -76,6 +95,11 @@ function parseEstagio(raw: string | undefined): RecorteEstagio | null {
   const coluna = COLUNA_POR_ID.get(limpo);
   if (coluna) {
     return { token: coluna.id, status: coluna.status, rotulo: coluna.titulo };
+  }
+
+  const extra = RECORTES_EXTRAS[limpo];
+  if (extra) {
+    return { token: limpo, status: extra.status, rotulo: extra.rotulo };
   }
 
   const status = limpo as LeadStatus;

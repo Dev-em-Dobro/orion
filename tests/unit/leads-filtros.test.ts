@@ -4,10 +4,16 @@ import {
   queryDoFiltro,
   SCORE_CHIP,
   temFiltro,
+  TOKEN_EM_ABERTO,
   whereFiltroLista,
   hrefDoEstagio,
 } from "@/lib/leads/filtros";
-import { COLUNAS_FUNIL, ESTAGIOS_FUNIL, ROTULO_ESTAGIO } from "@/lib/funil";
+import {
+  COLUNAS_FUNIL,
+  ESTAGIOS_EM_ABERTO,
+  ESTAGIOS_FUNIL,
+  ROTULO_ESTAGIO,
+} from "@/lib/funil";
 import { dorPrincipal } from "@/lib/dores/principal";
 import { faixaDeScore, scoreBadge } from "@/lib/leads/faixa";
 import {
@@ -154,6 +160,35 @@ describe("filtro por estágio do funil", () => {
     });
   });
 
+  // F010 (emenda b, 2026-08-13) — "Em aberto" atravessa QUATRO colunas do
+  // kanban, então não era coluna nem status solto: o card do Dashboard mostrava
+  // o número e não abria nada.
+  it("aceita o recorte `em-aberto`, que não é coluna do kanban", () => {
+    const f = parseFiltroLista({ estagio: TOKEN_EM_ABERTO });
+    expect(f.estagio).toEqual({
+      token: TOKEN_EM_ABERTO,
+      status: ESTAGIOS_EM_ABERTO,
+      rotulo: "Em aberto",
+    });
+    expect(whereFiltroLista(f).status).toEqual({ in: ESTAGIOS_EM_ABERTO });
+    expect(temFiltro(f)).toBe(true);
+  });
+
+  // O card soma `ESTAGIOS_EM_ABERTO` e o link filtra por `ESTAGIOS_EM_ABERTO`:
+  // é a mesma lista, então o número e o total da lista não têm como divergir.
+  // Se um dia a definição de "em aberto" mudar, os dois mudam juntos.
+  it("o recorte sai da mesma constante que o card do Dashboard soma", () => {
+    expect(ESTAGIOS_EM_ABERTO).toEqual([
+      "contatado",
+      "respondeu",
+      "qualificado",
+      "proposta",
+    ]);
+    expect(
+      parseFiltroLista({ estagio: TOKEN_EM_ABERTO }).estagio?.status,
+    ).toBe(ESTAGIOS_EM_ABERTO);
+  });
+
   it("URL antiga com status solto continua filtrando o que sempre filtrou", () => {
     // Favorito, histórico, link colado num grupo: `?estagio=priorizado` não
     // pode virar "Prontos" e passar a trazer os `enriquecido` junto.
@@ -196,6 +231,7 @@ describe("hrefDoEstagio — o link do funil casa com o parser", () => {
     const tokens = [
       ...ESTAGIOS_FUNIL,
       ...COLUNAS_FUNIL.map((c) => c.id),
+      TOKEN_EM_ABERTO,
     ] as string[];
     for (const token of tokens) {
       const href = hrefDoEstagio(token);

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { cache, Suspense } from "react";
 import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
@@ -14,7 +15,7 @@ import {
   ESTAGIOS_FUNIL,
   ONDE_NAO_DESCARTADO,
 } from "@/lib/funil";
-import { hrefDoEstagio } from "@/lib/leads/filtros";
+import { hrefDoEstagio, TOKEN_EM_ABERTO } from "@/lib/leads/filtros";
 import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
 import { metaDoMes } from "@/lib/metas";
 import type { LeadStatus } from "@prisma/client";
@@ -172,6 +173,43 @@ async function MetaAbordagem() {
   );
 }
 
+/**
+ * Card de resultado que abre a lista filtrada.
+ *
+ * F010 (emenda b) — número de funil sem porta é beco: o card dizia "5 em
+ * aberto" e não havia como ver **quais**. O destino é o mesmo de clicar numa
+ * barra do funil aqui do lado, então o total da lista bate com o número daqui.
+ */
+function CardResultado({
+  rotulo,
+  valor,
+  cor,
+  nota,
+  href,
+}: {
+  rotulo: string;
+  valor: number;
+  cor: string;
+  nota: string;
+  href: string;
+}) {
+  return (
+    <Link href={href} className="card card-interativo group block">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="metric-label">{rotulo}</p>
+        <span
+          aria-hidden="true"
+          className="text-sm text-muted transition-transform duration-200 group-hover:translate-x-0.5"
+        >
+          →
+        </span>
+      </div>
+      <p className={`metric-value ${cor}`}>{valor}</p>
+      <p className="metric-nota">{nota}</p>
+    </Link>
+  );
+}
+
 async function Resultado() {
   const porStatus = await contarPorStatus();
   // Em aberto: no funil de venda e ainda sem desfecho final.
@@ -182,16 +220,22 @@ async function Resultado() {
 
   return (
     <>
-      <section className="card">
-        <p className="metric-label">Ganhos</p>
-        <p className="metric-value text-primary">{porStatus.ganho}</p>
-        <p className="metric-nota">{porStatus.perdido} perdido(s)</p>
-      </section>
-      <section className="card">
-        <p className="metric-label">Em aberto</p>
-        <p className="metric-value text-amber-300">{emAberto}</p>
-        <p className="metric-nota">contatado → proposta, sem desfecho</p>
-      </section>
+      <CardResultado
+        rotulo="Ganhos"
+        valor={porStatus.ganho}
+        cor="text-primary"
+        nota={`${porStatus.perdido} perdido(s)`}
+        // Coluna do kanban, com o status como rede: se o id da coluna sumir, o
+        // link ainda filtra `ganho` em vez de abrir a lista inteira.
+        href={hrefDoEstagio(COLUNA_POR_ID.get("ganhos")?.id ?? "ganho")}
+      />
+      <CardResultado
+        rotulo="Em aberto"
+        valor={emAberto}
+        cor="text-amber-300"
+        nota="contatado → proposta, sem desfecho"
+        href={hrefDoEstagio(TOKEN_EM_ABERTO)}
+      />
     </>
   );
 }
@@ -240,8 +284,14 @@ export default async function DashboardPage() {
           </Suspense>
         </div>
 
-        {/* O que já fiz: esforço (meta de abordagem) + resultado. */}
-        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+        {/* O que já fiz: esforço (meta de abordagem) + resultado.
+
+            F010 (emenda b, 2026-08-13) — os três na MESMA linha, em 2:1:1 e não
+            três colunas iguais: a meta carrega barra + "faltam N" + a nota da
+            regra de contagem, e em um terço da largura a nota vira três linhas e
+            o "faltam N" desce pra baixo do rótulo. Abaixo de `lg` continua meta
+            em cima, os dois embaixo. */}
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <Suspense fallback={<SkeletonPulse className="h-40 w-full sm:col-span-2" />}>
             <MetaAbordagem />
           </Suspense>
