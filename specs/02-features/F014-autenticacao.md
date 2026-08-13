@@ -62,6 +62,9 @@ Gerados pelo Better Auth com adapter Prisma: `User`, `Session`, `Account`,
       valores default. Credenciais Google (`GOOGLE_CLIENT_*`) são **opcionais**
       no boot: se ausentes, OAuth Google fica desabilitado (magic link segue);
       se presentes, o provider é habilitado sem defaults inventados.
+- [x] **AC11** ([F036](F036-endurecimento-de-seguranca.md)) — Mais de 20
+      requisições em 60s do mesmo IP a `/api/auth/*` são recusadas pelo Better
+      Auth. Chamadas server-side a `auth.api.*` seguem sem limite.
 
 ## Cookie velho (AC10 — corrigido em 2026-08-11)
 
@@ -90,6 +93,24 @@ Server Action e route handler podem.
 O gate mora no layout de `(orion)`, antes de qualquer JSX. Dentro de
 `<Suspense>` o redirect chegaria depois do shell e viraria 200 — a mesma
 armadilha de streaming documentada na [F028](F028-desempenho.md).
+
+## Rate limit (F036 — 2026-08-13)
+
+Login sem senha troca "adivinhar a senha" por "pedir muitos links". Nada limitava
+quantas vezes um IP podia disparar magic link ou bater no callback — e cada
+disparo é um e-mail enviado pela conta de e-mail transacional do projeto.
+
+Config do Better Auth: **20 requisições por 60s, por IP**, nas rotas
+`/api/auth/*`.
+
+**O que isso não cobre, e é de propósito:** o limite vive no `onRequest` do
+router HTTP do Better Auth. Chamada **server-side direta** a `auth.api.*` — que
+é o que `requireUser()` faz a cada render de página protegida — não passa por
+ali e não é limitada. Certo assim: essas chamadas já exigem cookie de sessão,
+não são superfície anônima, e limitá-las derrubaria navegação legítima.
+
+Ajuste dos números por spec. Referência pra calibrar: um login por magic link
+consome ~3 requisições (envio, verify, callback).
 
 ## Decisões de implementação
 - `src/lib/auth/` — config do Better Auth (adapter Prisma, providers) +

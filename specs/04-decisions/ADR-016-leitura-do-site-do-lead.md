@@ -44,6 +44,13 @@ Regras que fazem parte da decisão:
    evidência (≤ 120 chars) e, no máximo, **um** e-mail comercial.
 4. **Limites técnicos.** Só `content-type: text/html`, teto de 1 MB, o mesmo
    timeout de 10s de hoje. Fora disso, o sinal fica "não avaliado".
+   **Emenda de 2026-08-13 ([F036](../02-features/F036-endurecimento-de-seguranca.md)):**
+   e só **host público**. Autorizar o servidor a buscar uma URL de terceiro é
+   também autorizá-lo a buscar o que o redirect dessa URL apontar — inclusive
+   `localhost` e o endpoint de metadata da nuvem. A guarda
+   (`urlPermitidaParaFetch`) roda antes de cada salto; destino recusado vira
+   "site não resolve". Detalhe na
+   [F002](../02-features/F002-diagnostico-de-presenca-digital.md).
 5. **Só dado de contato profissional.** E-mail publicado pelo negócio para ser
    contactado. **Nunca** nome, CPF, telefone pessoal de funcionário ou qualquer
    outro dado pessoal encontrado na página.

@@ -49,6 +49,35 @@ auth + compra verificada da API de arquivos.
 Layout de `/entregaveis/*` chama `redirectSeCompraPendente()`.
 Orion principal permanece aberto sem compra.
 
+## Isolamento do material (F036 — 2026-08-13)
+
+O entregável é HTML de curso servido de dentro do Orion e exibido em iframe. O
+sandbox trazia `allow-scripts` **e** `allow-same-origin` juntos — combinação que
+anula o próprio sandbox: com a origem do app, o script do material alcança
+`localStorage`, cookies não-`httpOnly` e o DOM da página que o embute. Material
+de curso não é código hostil, mas ele é editado fora do repositório e servido
+autenticado; a diferença entre "não é hostil" e "não pode ser" é essa linha.
+
+| Camada | Antes | Depois |
+|--------|-------|--------|
+| `sandbox` do iframe | `allow-scripts allow-same-origin allow-downloads allow-popups` | `allow-scripts allow-downloads allow-popups` |
+| Resposta de `/api/entregaveis/*` | `nosniff` + `Cache-Control: private, no-store` | idem + CSP quando o `content-type` é `text/html` |
+
+```
+default-src 'self' 'unsafe-inline' data: blob:;
+connect-src 'none'; form-action 'none';
+frame-ancestors 'self'; base-uri 'none'
+```
+
+`connect-src 'none'` corta `fetch`/XHR do material; `form-action 'none'` corta
+POST pra fora; `frame-ancestors 'self'` impede embutir o material em site de
+terceiro. `'unsafe-inline'` fica: o conteúdo é HTML estático com `<style>` e
+`<script>` inline, e apertar isso exigiria reescrever o material.
+
+**O que quebra, se algum material depender:** chamada de rede a partir do
+entregável, envio de formulário e leitura de `localStorage` da origem do app.
+Material que precise disso vira caso de spec, não de exceção no header.
+
 ## Critérios de aceitação
 - [x] ~~**AC1** — Sidebar exibe grupo "Materiais" com visão geral + itens disponíveis.~~
       **Revogado em 2026-08-11**: o grupo saiu do menu. Nenhum link para
@@ -59,3 +88,6 @@ Orion principal permanece aberto sem compra.
       **Sem efeito desde 2026-08-11**: não há mais menu. `ENTREGAVEIS_MENU`
       continua no catálogo, sem consumidor.
 - [ ] **AC5** — Visão geral oferece "Baixar .zip" para portfolio, contrato e scripts-venda.
+- [x] **AC6** ([F036](F036-endurecimento-de-seguranca.md)) — O iframe do
+      entregável **não** tem `allow-same-origin`, e a resposta HTML de
+      `/api/entregaveis/*` traz `Content-Security-Policy`.

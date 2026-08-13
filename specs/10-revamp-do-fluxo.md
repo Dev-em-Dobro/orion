@@ -61,6 +61,18 @@ E uma quarta, de modelo de negócio, pedida em 2026-08-10:
 |---------|---------|
 | [F035](02-features/F035-planos-e-limites.md) — Planos e limites | Hoje o custo variável por aluno é **ilimitado**. O Free passa a ter 50 Leads diagnosticados/mês (**inclusive em BYOK**), e follow-up automatizado, e-mail, kanban e agente viram plano pago. Custos medidos e preços propostos em [11](11-custos-e-precificacao.md) |
 
+E uma quinta, que **não** foi pedida — veio de uma revisão de segurança feita em
+paralelo (branch `feature/security-hardening`) e entrou no revamp por
+cherry-pick em 2026-08-13:
+
+| Feature | Por quê |
+|---------|---------|
+| [F036](02-features/F036-endurecimento-de-seguranca.md) — Endurecimento de segurança | Sete brechas do app hospedado: cota que vazava o teto sob paralelismo ([ADR-017](04-decisions/ADR-017-reserva-atomica-de-cota.md)), SSRF no Diagnóstico, magic link sem rate limit, e-mail de compra reutilizável entre contas, webhook aceitando qualquer produto, iframe de entregável sem sandbox efetivo e helper de sessão e2e que só dependia de uma env |
+
+Ela não muda o fluxo do aluno — emenda sete specs já entregues (F002, F014,
+F015, F018, F019, F019.1, F020) e é a única desta rodada cuja **spec foi escrita
+depois do código**.
+
 ---
 
 ## 2. A ideia central do revamp

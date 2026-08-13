@@ -71,6 +71,28 @@ Pré-requisitos (nessa ordem):
 4. **Parar** qualquer `npm run dev` na porta 3000 — o Playwright sobe o
    servidor sozinho com `E2E_SESSION_HELPER=1` (sem isso o login e2e dá 404)
 
+### O helper de sessão e o que o segura (F036 — 2026-08-13)
+
+`POST /api/e2e/session` emite cookie de sessão **sem login**, pra qualquer
+`userId`. Existe só pro Playwright deste teste. A única trava era a env
+`E2E_SESSION_HELPER=1` — uma env vazada num ambiente hospedado virava emissor de
+sessão pra qualquer conta.
+
+Passa a exigir, **em conjunto**:
+
+| Condição | Se falhar |
+|----------|-----------|
+| `E2E_SESSION_HELPER === "1"` | `404` |
+| `NODE_ENV !== "production"` | `404` |
+| `VERCEL_ENV` não é `production` nem `preview` | `404` |
+| `E2E_SESSION_SECRET` definida ⇒ header `x-e2e-secret` igual | `401` |
+
+`404` e não `403`: a resposta de rota inexistente não conta que o helper existe.
+
+O segredo é **opcional** de propósito — no local, sem a env, o teste roda como
+sempre; em qualquer ambiente compartilhado, defini-la fecha a porta mesmo que as
+travas de ambiente falhem.
+
 ```bash
 npm run test:e2e:isolamento
 ```
