@@ -219,4 +219,36 @@ export const GRUPOS_NICHO: { titulo: string; tier: Tier }[] = [
 /** Escape hatch: mantém a busca livre da F001 disponível. */
 export const NICHO_OUTRO = "outro";
 
+/**
+ * `primaryType` do Places → rótulo em português.
+ *
+ * O campo `categoria` do Lead guarda o `primaryType` cru que o Google devolve
+ * (`dentist`, `beauty_salon`, `car_repair`), então a UI mostrava inglês. O mapa
+ * sai do próprio catálogo: `primaryTypes` já lista o que o Places devolve para
+ * cada nicho, e `label` é o nome que o aluno escolheu no dropdown.
+ *
+ * O primeiro nicho que reivindica um tipo ganha o rótulo — alguns tipos são
+ * compartilhados (`doctor` aparece em Dermatologista e Clínica médica), e como
+ * `NICHOS` segue a ordem do playbook, o mais específico vem antes.
+ */
+const ROTULO_POR_TIPO = new Map<string, string>();
+for (const nicho of NICHOS) {
+  for (const tipo of nicho.primaryTypes) {
+    if (!ROTULO_POR_TIPO.has(tipo)) ROTULO_POR_TIPO.set(tipo, nicho.label);
+  }
+}
+
+/**
+ * Rótulo de exibição de uma categoria. Sem correspondência no catálogo — e o
+ * Places devolve centenas de tipos — devolve o tipo cru legível
+ * (`hair_salon` → `Hair salon`): melhor que esconder o dado.
+ */
+export function rotuloCategoria(categoria: string): string {
+  const conhecido = ROTULO_POR_TIPO.get(categoria);
+  if (conhecido) return conhecido;
+  const limpo = categoria.replaceAll("_", " ").trim();
+  if (limpo.length === 0) return categoria;
+  return limpo.charAt(0).toUpperCase() + limpo.slice(1);
+}
+
 export type { Tier };

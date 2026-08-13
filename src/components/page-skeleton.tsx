@@ -31,7 +31,7 @@ export function PageSkeletonHeader({
 /** F032 — a grade de cards, usada como fallback do `<Suspense>` da lista. */
 export function GridLeadsSkeleton() {
   return (
-    <div className="mt-8" aria-busy="true" aria-label="Carregando leads">
+    <div className="@container mt-8" aria-busy="true" aria-label="Carregando leads">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
         <div className="flex gap-2">
           {Array.from({ length: 4 }, (_, i) => (
@@ -44,8 +44,10 @@ export function GridLeadsSkeleton() {
         </div>
       </div>
       <SkeletonPulse className="h-4 w-32" />
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {Array.from({ length: 6 }, (_, i) => (
+      {/* Mesmos breakpoints do `LeadsGrid`: esqueleto com outra contagem de
+          colunas é layout shift disfarçado de carregamento. */}
+      <div className="mt-3 grid gap-3 @2xl:grid-cols-2 @4xl:grid-cols-3 @7xl:grid-cols-4">
+        {Array.from({ length: 8 }, (_, i) => (
           <div
             key={i}
             className="space-y-3 rounded-xl border border-border bg-card p-4"
@@ -64,6 +66,37 @@ export function GridLeadsSkeleton() {
   );
 }
 
+
+/**
+ * Skeleton genérico de rota, usado pelos `loading.tsx` do menu. Substituiu o
+ * spinner que a sidebar mostrava por item: cada `NavLink` tinha o próprio
+ * `useTransition`, então clicar em três menus seguidos deixava três spinners
+ * girando ao mesmo tempo — nenhum deles descrevendo o que estava carregando.
+ * O feedback passa a ser a forma da página que está chegando.
+ */
+export function RotaSkeleton({
+  titulo = "medio",
+  blocos = 3,
+}: {
+  titulo?: "curto" | "medio";
+  /** Quantos retângulos de conteúdo desenhar abaixo do cabeçalho. */
+  blocos?: number;
+}) {
+  return (
+    <main
+      className="mx-auto max-w-6xl px-6 py-8"
+      aria-busy="true"
+      aria-label="Carregando"
+    >
+      <PageSkeletonHeader tituloLargo={titulo === "medio"} />
+      <div className="mt-8 space-y-4">
+        {Array.from({ length: blocos }, (_, i) => (
+          <SkeletonPulse key={i} className="h-28 w-full" />
+        ))}
+      </div>
+    </main>
+  );
+}
 
 export function TreinoSkeleton() {
   return (

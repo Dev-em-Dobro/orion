@@ -157,6 +157,171 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+   TEMA CLARO — piloto, escopado à `/leads` (2026-08-13).
+
+   Referência: sidebar escura + fundo claro + cards brancos, com **um** card
+   preenchido na cor da marca.
+
+   Como funciona sem reescrever componente: no Tailwind 4 **todo** utilitário de
+   cor resolve por variável — `.text-zinc-300 { color: var(--color-zinc-300) }`,
+   `.bg-card { background-color: var(--color-card) }`. Redefinir as variáveis
+   dentro de um escopo vira a subárvore inteira, incluindo as ~200 classes
+   `zinc` e os badges que foram afinados para fundo escuro.
+
+   Por isso a escala `zinc` aparece **invertida** abaixo: `text-zinc-100` era o
+   título quase branco e precisa virar quase preto; `bg-zinc-900` era o fundo do
+   input e vira cinza claro. Sem essa inversão, metade da tela sumiria no branco.
+--------------------------------------------------------------------------- */
+
+.tema-claro {
+  /* Controles nativos (os `<select>` de nicho, UF, categoria) herdam o esquema
+     do UA. Sem isto o dropdown abre escuro dentro da página clara. */
+  color-scheme: light;
+
+  --color-background: #f4f5f7;
+  --color-card: #ffffff;
+  --color-card-raised: #f4f4f5;
+  --color-border: #e4e4e7;
+  --color-border-strong: #a1a1aa;
+
+  --color-foreground: #18181b;
+  /* 7.7:1 sobre branco. No tema escuro o texto secundário vinha de zinc-500
+     (3.7:1) e zinc-600 (2.3:1) — os dois reprovavam. Aqui já nascem passando. */
+  --color-muted: #52525b;
+
+  /* Escala zinc invertida: claro↔escuro. */
+  --color-zinc-100: #18181b;
+  --color-zinc-200: #27272a;
+  --color-zinc-300: #3f3f46;
+  --color-zinc-400: #52525b;
+  --color-zinc-500: #52525b;
+  --color-zinc-600: #71717a;
+  --color-zinc-700: #d4d4d8;
+  --color-zinc-800: #e4e4e7;
+  --color-zinc-900: #f4f4f5;
+  --color-zinc-950: #fafafa;
+
+  /* Badges: o padrão é `bg-X-500/15` (tinta de fundo) + `text-X-300` (texto).
+     A tinta continua servindo sobre branco; o texto claro, não — cada -300/-400
+     desce para o tom -700, que passa 4.5:1 sobre a tinta. */
+  --color-red-300: #b91c1c;
+  --color-red-400: #b91c1c;
+  --color-amber-200: #92400e;
+  --color-amber-300: #b45309;
+  --color-amber-400: #b45309;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #047857;
+  --color-sky-300: #0369a1;
+  --color-violet-300: #6d28d9;
+  --color-cyan-300: #0e7490;
+  --color-teal-300: #0f766e;
+  --color-indigo-300: #4338ca;
+
+  /* Sombra de fundo claro: sem o realce interno do topo (que só existe pra
+     desenhar quina em fundo quase preto) e com preto bem mais fraco. */
+  --elev-1:
+    0 1px 2px rgb(16 24 40 / 0.06),
+    0 1px 3px rgb(16 24 40 / 0.1);
+  --elev-2:
+    0 2px 4px -2px rgb(16 24 40 / 0.06),
+    0 8px 16px -4px rgb(16 24 40 / 0.1);
+
+  /* Padrão do tema claro: **texto branco sobre fundo verde**, em toda a UI —
+     botão Buscar, chip ativo, pílula de quantidade, checkbox marcado. Troca o
+     `#03180a` do tema escuro. */
+  --color-primary-foreground: #ffffff;
+
+  /* Guarda o verde da marca **antes** de o card preenchido reescrever
+     `--color-primary` pro botão branco. `var()` dentro de custom property
+     resolve no elemento que declara, então aqui isto vira `#22c55e` de verdade
+     e desce herdado — o card não repete hex nenhum. */
+  --verde-marca: var(--color-primary);
+
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* Card preenchido no verde da marca. Na `/leads` **nenhum** card usa isto: lá
+   quase todo Lead é "Alto" e destaque que vale pra maioria não destaca
+   ninguém. Quem usa é a **Fila do dia**, onde a lista é curta (máx. 10) e a
+   pergunta é outra — ali todo card é "abordar agora", e verde é o estado, não
+   o destaque de um item. */
+.card-destaque {
+  --color-card: transparent;
+  --color-foreground: #ffffff;
+  /* Hierarquia por tamanho e peso, não por opacidade: branco a 70% sobre o
+     verde cai pra ~3:1 e o texto secundário reprovaria. */
+  --color-muted: #ffffff;
+
+  --color-zinc-100: #ffffff;
+  --color-zinc-200: #ffffff;
+  --color-zinc-300: #ffffff;
+  --color-zinc-400: #ffffff;
+  --color-zinc-500: #ffffff;
+  --color-zinc-600: #ffffff;
+
+  --color-border: rgb(255 255 255 / 0.35);
+  --color-border-strong: rgb(255 255 255 / 0.55);
+
+  /* Ação primária: pílula branca com texto verde. Verde sobre verde sumiria. */
+  --color-primary: #ffffff;
+  --color-primary-hover: rgb(255 255 255 / 0.88);
+  --color-primary-foreground: var(--verde-marca);
+
+  /* Profundidade só por **opacidade** sobre o verde da marca — nenhum hex
+     novo. Subir o segundo número escurece o card. */
+  background-image:
+    linear-gradient(160deg, rgb(0 0 0 / 0) 0%, rgb(0 0 0 / 0.14) 100%),
+    linear-gradient(var(--verde-marca), var(--verde-marca));
+  border-color: var(--verde-marca);
+  box-shadow:
+    0 2px 4px -2px rgb(5 46 22 / 0.2),
+    0 12px 24px -8px rgb(5 46 22 / 0.35);
+}
+
+/* Os badges usam `bg-<cor>-500/15` — tinta escura, feita pra fundo escuro.
+   Sobre o verde ficam encardidas, e não dá pra resolver na variável:
+   `--color-zinc-500` pinta o fundo do badge **e** o texto do endereço. Aqui o
+   seletor decide: pílula branca, texto na cor da marca — o mesmo tratamento do
+   botão. */
+.card-destaque .badge {
+  background-color: #ffffff;
+  color: var(--verde-marca);
+}
+
+/* Checkbox: `accent-color` pinta a caixa, mas **não** deixa escolher a cor do
+   tique — o navegador decide sozinho pela luminância e, no verde da marca,
+   escolhe preto. Por isso a caixa é desenhada aqui: fundo verde, tique branco,
+   o mesmo padrão do resto da UI. */
+.check-orion {
+  appearance: none;
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  border: 1px solid var(--color-border-strong);
+  background-color: var(--color-card);
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.check-orion:checked {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-6'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100%;
+}
+
+.check-orion:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 @keyframes funil-enter {
   from {
     opacity: 0;

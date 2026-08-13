@@ -4,6 +4,7 @@ import {
   ROTULO_FILTRO_SITE,
   type FiltroSite,
 } from "@/lib/leads/filtroSite";
+import { rotuloCategoria } from "@/lib/nichos/catalogo";
 
 const PAGE_SIZE = 20;
 
@@ -39,9 +40,11 @@ export function FiltrosLista({
             className="rounded-lg border border-border bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100"
           >
             <option value="">Todas as categorias</option>
+            {/* `value` continua o `primaryType` cru — é o que o filtro consulta
+                no banco. Só o rótulo é traduzido. */}
             {categorias.map((c) => (
               <option key={c} value={c}>
-                {c}
+                {rotuloCategoria(c)}
               </option>
             ))}
           </select>

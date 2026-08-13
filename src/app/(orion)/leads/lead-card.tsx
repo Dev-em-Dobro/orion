@@ -8,9 +8,6 @@
 import Link from "next/link";
 import type { LeadStatus } from "@prisma/client";
 import { faixaDeScore, scoreBadge, STATUS_BADGE } from "./ui";
-import { DescartarButton, RestaurarButton } from "./descarte-buttons";
-import { DiagnosticarButton } from "./diagnosticar-button";
-import { GerarOutreachButton } from "./gerar-outreach-button";
 
 export type LeadCardProps = {
   id: string;
@@ -77,52 +74,38 @@ function Avaliacoes({
   );
 }
 
-/**
- * Ação primária do card: o próximo passo do Lead, não um menu de tudo que dá
- * pra fazer. O resto vive no detalhe.
- */
-function AcaoPrimaria(p: LeadCardProps) {
-  if (p.status === "descartado") return <RestaurarButton leadId={p.id} />;
-  // F025 — sem Diagnóstico, o próximo passo é diagnosticar. "Priorizar" saiu:
-  // o score passa a ser recalculado sozinho a cada Diagnóstico.
-  if (!p.temDiagnostico) return <DiagnosticarButton leadId={p.id} />;
-  if (!p.temOutreach) return <GerarOutreachButton leadId={p.id} />;
-  if (!p.outreachEnviado && p.waLink) {
-    return (
-      <a
-        href={p.waLink}
-        target="_blank"
-        rel="noreferrer"
-        className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
-      >
-        Abrir no WhatsApp
-      </a>
-    );
-  }
-  return (
-    <Link href={p.href} className="btn-ghost">
-      Registrar desfecho
-    </Link>
-  );
-}
+// O card não tem mais ação primária (2026-08-13). Diagnosticar, Gerar
+// abordagem, Abrir no WhatsApp, Registrar desfecho e Restaurar viviam aqui,
+// cada Lead mostrando um botão diferente conforme o estado — três botões numa
+// caixa de ~320px, quebrando em duas linhas. Agora o card leva pro detalhe, que
+// é onde essas ações já existem todas juntas e com contexto.
 
 export function LeadCard({
   lead,
   selecionado = false,
+  destaque = false,
   onSelecionar,
 }: {
   lead: LeadCardProps;
   selecionado?: boolean;
+  /**
+   * Card preenchido no verde da marca. Decidido pela grade, não pelo Lead: na
+   * Fila do dia **todos** ficam verdes (a lista inteira é "abordar agora"), na
+   * `/leads` nenhum fica.
+   */
+  destaque?: boolean;
   /** Ausente = card sem checkbox (Fila do dia não tem ação em massa). */
   onSelecionar?: (id: string, marcado: boolean) => void;
 }) {
+  const superficie = destaque
+    ? "card-destaque"
+    : selecionado
+      ? "border-primary/60 bg-primary/5"
+      : "border-border bg-card hover:border-border-strong";
+
   return (
     <article
-      className={`flex flex-col gap-3 rounded-xl border bg-card p-4 transition-colors ${
-        selecionado
-          ? "border-primary/60 bg-primary/5"
-          : "border-border hover:border-zinc-700"
-      }`}
+      className={`flex flex-col gap-3 rounded-xl border p-4 transition-colors ${superficie}`}
     >
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -155,7 +138,7 @@ export function LeadCard({
               checked={selecionado}
               onChange={(e) => onSelecionar(lead.id, e.target.checked)}
               aria-label={`Selecionar ${lead.nome}`}
-              className="h-4 w-4 accent-emerald-500"
+              className="check-orion"
             />
           )}
         </div>
@@ -186,9 +169,8 @@ export function LeadCard({
         )}
       </div>
 
-      {lead.dorPrincipal && (
-        <p className="text-xs text-amber-300/90">⚡ {lead.dorPrincipal}</p>
-      )}
+      {/* A linha da Dor saiu do card em 2026-08-13. Ela continua no detalhe
+          (aba Diagnóstico) e alimenta o Outreach — só não aparece na varredura. */}
       {lead.motivoDescarte && (
         <p className="text-xs text-zinc-500">Descartado: {lead.motivoDescarte}</p>
       )}
@@ -197,12 +179,12 @@ export function LeadCard({
         {lead.endereco}
       </p>
 
+      {/* Um botão só. Descartar e Restaurar individuais continuam no detalhe do
+          Lead; descartar em lote segue na seleção da própria lista (F024). */}
       <footer className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-3">
-        <AcaoPrimaria {...lead} />
         <Link href={lead.href} className="btn-ghost">
-          Abrir
+          Abordar no CRM
         </Link>
-        {lead.status !== "descartado" && <DescartarButton leadId={lead.id} />}
       </footer>
     </article>
   );

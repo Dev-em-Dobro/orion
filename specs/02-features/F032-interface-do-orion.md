@@ -95,6 +95,54 @@ faixa própria de quatro colunas. Número de 30px espremido em 1/3 da largura n�
 O par funil + follow-up usa `items-start`: sem isso o card de follow-up estica
 para acompanhar a altura do funil e vira um bloco vermelho quase vazio.
 
+#### Reorganização de 2026-08-13 — três perguntas, três blocos
+
+A home tinha seis blocos empilhados (fila, cobranças, quatro métricas, funil,
+follow-up, taxas de conversão) e nenhuma leitura óbvia de *o que falta* e *o que
+já foi feito*. Passa a responder três perguntas, uma por bloco:
+
+```
+┌──────────────────────────────────┬───────────────────┐
+│ O QUE FAZER                      │ ONDE ESTÃO        │
+│  Sua fila de hoje (cards)        │  Funil por        │
+│  Pra fazer agora (cobranças)     │  estágio          │
+└──────────────────────────────────┴───────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ O QUE JÁ FIZ  ·  Ganhos · Em aberto                  │
+└──────────────────────────────────────────────────────┘
+```
+
+**Por que "o que fazer" fica na coluna larga.** A Fila do dia
+([F025](F025-fila-do-dia.md)) renderiza o **card de Lead inteiro**, o mesmo da
+`/leads` — que pede ~320px. Em 1/3 da largura vira uma pilha de 10 cards muito
+mais alta que o vizinho. Na coluna de 2/3 cabem duas colunas de card. O funil é
+SVG vertical de 320px fixos: é ele que cabe no rail estreito, não a fila.
+
+Isso também preserva a ordem de prioridade da F025 — *quem eu abordo agora*
+antes de *como está o funil* — porque a coluna larga da esquerda é o primeiro
+ponto de leitura.
+
+**O que saiu, e por quê:**
+
+| Saiu | Motivo |
+|------|--------|
+| Card **"Follow-up pendente"** | Quarta cópia do mesmo aviso: badge da sidebar + `/tarefas` + "Pra fazer agora" (que já traz `MANDAR_FOLLOWUP`) + este. Mesmo problema que a `/leads` teve ([F031](F031-central-de-tarefas.md)) |
+| **Taxas de conversão** | A própria legenda dizia "aproximação sobre o estado atual (sem histórico)". Taxa tirada de foto do momento engana: quem converteu já saiu do estágio de origem |
+| **Score médio** | Média de um número que na maioria ainda é estimativa da Triagem. Não muda decisão nenhuma |
+| **Total de Leads** | O funil ao lado já mostra a distribuição, e a soma dela é o total |
+| **"Exigem atenção"** | É a Fila do dia com outro recorte (score ≥ 60 sem Outreach enviado, contra "diagnosticado, priorizado e não abordado"). Duas listas respondendo "quem eu abordo" na mesma tela, com resultados quase iguais e ordens diferentes |
+
+> **Pendente: "o que já fiz" ainda é fraco.** Sem uma medida de esforço, o bloco
+> tem só Ganhos e Em aberto — resultado raro e trabalho em curso, nada que dê
+> noção de progresso no dia a dia. A medida natural é **Leads abordados no mês**
+> (`Outreach.enviado_em` já é persistido e já tem índice, então é consulta, não
+> infra nova). Ficou fora desta rodada por decisão do Ricardo (2026-08-13).
+> Quando entrar, precisa **não** parecer a barra de cota do plano
+> ([F035](F035-planos-e-limites.md)): cota é teto que não se quer bater, meta é
+> piso que se quer alcançar. E o número tem que conversar com a
+> [visão](../00-product-vision.md), que hoje promete "10 Leads prontos por
+> **semana**".
+
 ## Navegação (sidebar)
 
 > **Implementação (2026-08-10):** os itens **Funil**, **Tarefas**, **Agente** e
@@ -155,6 +203,18 @@ da busca (F033) — **um componente só**.
 
 ## Lista `/leads`
 - **Grid** responsivo: 1 coluna no mobile, 2 no tablet, 3–4 no desktop.
+- **Largura: a lista usa a tela.** O container era `max-w-6xl` (1152px) dentro
+  de uma sidebar de 240px — em 1920px sobravam **264px mortos de cada lado** e o
+  grid parava em 3 colunas. O container da `/leads` passa a acompanhar a
+  viewport (`px-6 lg:px-8`, sem teto), e a 4ª coluna entra em `2xl`.
+  > Largura não vale pra texto: título, subtítulo e estados vazios mantêm
+  > `max-w` próprio. Linha de 1600px é pior de ler que linha curta — o limite
+  > confortável é 65–75 caracteres.
+  >
+  > O breakpoint é **do container, não da viewport**. `xl:grid-cols-3` mede a
+  > janela e ignora os 240px de sidebar, então a 1280px o grid montava 3 colunas
+  > numa área de 1040px. Container query (`@container`, nativo no Tailwind 4 —
+  > sem lib nova, sem ADR) mede o espaço que o grid realmente tem.
 - **Chips de filtro rápido** acima do grid: `Todos · Sem site · Score 60+ ·
   Com telefone · Sem atendimento automatizado ([F026](F026-sinal-atendimento-automatizado.md)) ·
   Descartados`. Os chips **compõem** com os filtros que já existem (categoria,
@@ -163,8 +223,12 @@ da busca (F033) — **um componente só**.
 - **Seleção em massa**: checkbox por card + "Selecionar todos (da página)".
   Ações em lote na barra que aparece com a seleção: **Descartar**
   ([F024](F024-estado-do-lead-reversivel.md)) e **Exportar CSV**.
-- **Cota no topo** (barra + `N/M hoje`): o `UsoDiarioBanner` já existe; passa a
-  ficar no cabeçalho da página, como na referência.
+- **Cota: saiu do cabeçalho da página.** A F032 tinha posto `UsoDiarioBanner` e
+  `UsoMensalBanner` no topo da `/leads`, copiando a referência. Os dois blocos
+  empilhados comiam ~150px acima da dobra pra dizer `0/300` e `0/5` — e o
+  primeiro Lead só aparecia depois do formulário de busca. Desde 2026-08-13 a
+  cota vive no **medidor da topbar** ([F035](F035-planos-e-limites.md)), global
+  e compacto.
 - A **tabela some**. Quem precisa de visão densa usa o Exportar CSV.
 
 ## Detalhe do Lead `/leads/[id]`

@@ -18,6 +18,7 @@ export function LeadsGrid({
   leads,
   comSelecao = true,
   podeExportar = false,
+  destaque = false,
 }: {
   leads: LeadCardProps[];
   /** F025 — a Fila do dia mostra os mesmos cards sem ação em massa. */
@@ -25,6 +26,8 @@ export function LeadsGrid({
   /** F035 — vem do servidor. Sem o recurso, o botão fica visível com cadeado:
    *  ver é o que dá vontade de assinar; sumir não vende nada. */
   podeExportar?: boolean;
+  /** Preenche **todos** os cards no verde da marca — usado pela Fila do dia. */
+  destaque?: boolean;
 }) {
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [state, action, pending] = useActionState(descartarEmLote, initial);
@@ -70,7 +73,11 @@ export function LeadsGrid({
   }
 
   return (
-    <div>
+    // `@container` mora aqui, não na página: o grid tem que medir a largura da
+    // **própria grade**. A Fila do dia usa este componente dentro de um card do
+    // Dashboard, e sem o container aqui as queries não achavam ancestral e ela
+    // caía pra uma coluna só.
+    <div className="@container">
       {comSelecao && (
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <label className="inline-flex items-center gap-2 text-xs text-zinc-400">
@@ -78,7 +85,7 @@ export function LeadsGrid({
             type="checkbox"
             checked={todosMarcados}
             onChange={alternarTodos}
-            className="h-4 w-4 accent-emerald-500"
+            className="check-orion"
           />
           Selecionar todos (desta página)
         </label>
@@ -139,11 +146,15 @@ export function LeadsGrid({
         </p>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {/* F032 — breakpoint do **container**, não da viewport: `xl:grid-cols-3`
+          media a janela e ignorava os 240px de sidebar, então a 1280px o grid
+          montava 3 colunas numa área de 1040px. */}
+      <div className="grid gap-3 @2xl:grid-cols-2 @4xl:grid-cols-3 @7xl:grid-cols-4">
         {leads.map((lead) => (
           <LeadCard
             key={lead.id}
             lead={lead}
+            destaque={destaque}
             selecionado={selecionados.has(lead.id)}
             onSelecionar={comSelecao ? alternar : undefined}
           />

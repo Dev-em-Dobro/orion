@@ -5,6 +5,7 @@
 import type { Prisma } from "@prisma/client";
 import { classificarWebsite } from "@/lib/diagnostico/agregador";
 import { dorPrincipal } from "@/lib/dores/principal";
+import { rotuloCategoria } from "@/lib/nichos/catalogo";
 import { valor as calcularValor } from "@/lib/score/score";
 import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
 import type { LeadCardProps } from "./lead-card";
@@ -33,7 +34,9 @@ export function paraCardProps(lead: LeadComCard, href: string): LeadCardProps {
   return {
     id: lead.id,
     nome: lead.nome,
-    categoria: lead.categoria,
+    // Traduzido aqui, no servidor: mandar o catálogo inteiro de nichos pro
+    // bundle só pra rotular uma linha do card não se paga.
+    categoria: rotuloCategoria(lead.categoria),
     endereco: lead.endereco,
     telefone: lead.telefone,
     website: lead.website,

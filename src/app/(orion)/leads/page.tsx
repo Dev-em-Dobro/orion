@@ -1,13 +1,9 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
-import {
-  filaDeFollowUp,
-  limiteDaJanela,
-  whereFilaFollowUp,
-} from "@/lib/followup";
 import { STATUS_DESCARTADO } from "@/lib/funil";
 import {
   parseFiltroLista,
@@ -16,18 +12,16 @@ import {
   whereFiltroLista,
   type FiltroLista,
 } from "@/lib/leads/filtros";
+import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
 import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
 import { GridLeadsSkeleton, SkeletonPulse } from "@/components/page-skeleton";
-import { UsoDiarioBanner } from "@/components/uso-diario";
-import { UsoMensalBanner } from "@/components/uso-mensal";
 import { AjudaScore } from "./ajuda-score";
 import { ChipsFiltro } from "./chips-filtro";
 import { ColetarForm } from "./coletar-form";
 import { ExcluirDescartadosForm } from "./excluir-descartados-form";
-import { GerarOutreachButton } from "./gerar-outreach-button";
 import { INCLUDE_CARD, paraCardProps } from "./card-props";
-import { podeUsar } from "@/lib/planos";
+import { definicao, podeUsar, restanteDaOperacao } from "@/lib/planos";
 import { LeadsGrid } from "./leads-grid";
 import type { LeadCardProps } from "./lead-card";
 import { FiltrosLista, PAGE_SIZE, PaginacaoLeads } from "./lista-controles";
@@ -42,11 +36,9 @@ type SearchParams = Promise<{
   score?: string;
   telefone?: string;
   atendimento?: string;
+  estagio?: string;
   status?: string;
 }>;
-
-/** Teto de exibição do painel de follow-up (F028: a fila não cresce sem fim). */
-const FOLLOWUP_MAX = 20;
 
 /**
  * F028 (H6) — cada bloco busca os próprios dados dentro de um `<Suspense>`,
@@ -72,47 +64,23 @@ async function BlocoColeta() {
       />
     );
   }
-  return <ColetarForm />;
-}
-
-async function PainelFollowUp() {
-  const { whereUser } = await requireTenant();
-  const leads = await prisma.lead.findMany({
-    where: { ...whereUser, ...whereFilaFollowUp(limiteDaJanela()) },
-    include: {
-      outreaches: {
-        where: { enviado: true },
-        orderBy: { enviado_em: "desc" },
-        take: 1,
-      },
-    },
-    orderBy: { score: "desc" },
-    take: FOLLOWUP_MAX,
-  });
-
-  const fila = filaDeFollowUp(leads);
-  if (fila.length === 0) return null;
-
+  // F035 — a cota do mês vem do servidor: o formulário precisa dela pra avisar
+  // ANTES de gastar a consulta ao Places.
+  const cota = await restanteDaOperacao(userId, "lead_novo");
   return (
-    <div className="mt-8 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-      <p className="text-sm font-semibold text-amber-300">
-        Follow-up pendente ({fila.length})
-      </p>
-      <ul className="mt-2 space-y-2">
-        {fila.map(({ lead, dias }) => (
-          <li
-            key={lead.id}
-            className="flex flex-wrap items-center gap-2 text-sm"
-          >
-            <span className="font-medium">{lead.nome}</span>
-            <span className="text-amber-200/60">{dias}d sem resposta</span>
-            <GerarOutreachButton leadId={lead.id} tipo="followup" />
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ColetarForm
+      restante={cota.restante}
+      limite={cota.limite}
+      planoNome={definicao(cota.plano).nome}
+    />
   );
 }
+
+// F031 — o painel "Follow-up pendente" saiu daqui em 2026-08-13. Era a mesma
+// regra da Tarefa `MANDAR_FOLLOWUP` (mesma janela de 3 dias), então o mesmo
+// Lead atrasado aparecia no painel, no badge da sidebar e em `/tarefas` — com
+// três contagens diferentes na tela, porque o painel cortava em 20 e mostrava
+// o número já cortado. A cobrança agora tem um lugar só: `/tarefas`.
 
 async function BlocoLista({
   filtro,
@@ -258,6 +226,9 @@ export default async function LeadsPage({
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
+  // Tema lido no servidor: o cookie chega junto com o request, então o HTML já
+  // sai na cor certa — sem o flash de trocar de tema depois da hidratação.
+  const tema = asTema((await cookies()).get(TEMA_COOKIE)?.value);
   const filtro = parseFiltroLista(params);
   const pageRaw = Number.parseInt(params.page ?? "1", 10);
   const pageRequested =
@@ -268,35 +239,32 @@ export default async function LeadsPage({
       <Suspense fallback={null}>
         <BannerChaves />
       </Suspense>
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
-            <p className="mt-1 text-sm text-muted">
-              Busque, diagnostique e aborde. Clique no Lead para ver o
-              diagnóstico completo, a abordagem e a proposta.
-            </p>
-          </div>
-          {/* F032 — cota no topo, como na referência.
-              F035 — e o medidor do plano acima dela: é o limite que o aluno
-              esbarra primeiro. */}
-          <div className="min-w-[16rem] space-y-2">
-            <Suspense fallback={<SkeletonPulse className="h-14 w-full" />}>
-              <UsoMensalBanner />
-            </Suspense>
-            <UsoDiarioBanner operacoes={["coleta", "proposta", "outreach"]} />
-          </div>
+      {/* F032 — sem `max-w`: a lista usa a tela. O texto é que ganha teto
+          próprio (`max-w-prose`), porque linha longa demais não se lê.
+
+          O tema vem de `/configuracao` (cookie). No escuro a classe some e
+          valem os tokens do `:root`. A altura mínima desconta a topbar (h-14)
+          pra o fundo claro chegar no rodapé mesmo com pouca lista. */}
+      <main
+        className={`${classeDoTema(tema)} @container min-h-[calc(100vh-3.5rem)] px-6 py-8 lg:px-8`}
+      >
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
+          {/* Sem `max-w-prose`: o teto de 65ch quebrava a frase em duas linhas.
+              Sem `nowrap` também — no mobile ela ainda precisa quebrar. */}
+          <p className="mt-1 text-sm text-muted">
+            Busque, diagnostique e aborde. Clique no Lead para ver o diagnóstico
+            completo, a abordagem e a proposta.
+          </p>
         </div>
 
         <div className="mt-6">
-          <Suspense fallback={<SkeletonPulse className="h-24 w-full" />}>
+          {/* O esqueleto tem a altura real do formulário: reservar 24 pra um
+              bloco de ~248 empurrava a lista inteira quando ele chegava. */}
+          <Suspense fallback={<SkeletonPulse className="h-[15.5rem] w-full" />}>
             <BlocoColeta />
           </Suspense>
         </div>
-
-        <Suspense fallback={null}>
-          <PainelFollowUp />
-        </Suspense>
 
         <Suspense fallback={<GridLeadsSkeleton />}>
           <BlocoLista filtro={filtro} pageRequested={pageRequested} />

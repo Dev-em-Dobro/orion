@@ -59,7 +59,11 @@ export async function FilaDoDia() {
 
       <div className="mt-4">
         {cards.length > 0 ? (
-          <LeadsGrid leads={cards} comSelecao={false} />
+          // Verde em **todos**: aqui a lista inteira é "abordar agora", então a
+          // cor é o estado da fila, não o destaque de um item. Na `/leads` é o
+          // contrário — quase todo Lead é "Alto" e encher tudo de verde não
+          // destacaria ninguém.
+          <LeadsGrid leads={cards} comSelecao={false} destaque />
         ) : aguardandoAprofundamento > 0 ? (
           <p className="text-sm text-muted">
             Você tem {aguardandoAprofundamento} Lead(s) coletado(s) esperando
