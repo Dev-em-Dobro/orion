@@ -28,7 +28,7 @@
     "@ai-sdk/google": "^4.0.16",
     "@ai-sdk/openai": "^4.0.14",
     "@anthropic-ai/sdk": "^0.104.1",
-    "@prisma/client": "^6.1.0",
+    "@prisma/client": "^6.19.3",
     "@sentry/nextjs": "^10.65.0",
     "ai": "^7.0.28",
     "better-auth": "^1.6.23",
@@ -51,7 +51,7 @@
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.0",
     "postcss": "^8.5.0",
-    "prisma": "^6.1.0",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.10"

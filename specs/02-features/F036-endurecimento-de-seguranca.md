@@ -184,9 +184,11 @@ a porta mesmo que as duas primeiras travas falhem.
 ---
 
 ## Critérios de aceitação
-- [x] **AC1** — Duas operações com cota disparadas em paralelo no penúltimo uso
-      do dia não passam as duas pelo teto por leitura desatualizada do contador
-      (ver limitação em [ADR-017](../04-decisions/ADR-017-reserva-atomica-de-cota.md)).
+- [x] **AC1** — N operações com cota disparadas em paralelo param **no teto**,
+      inclusive quando a linha do dia ainda não existe: as excedentes recebem
+      `QuotaExcedidaError`, nenhuma recebe erro de banco, e o contador termina
+      exatamente no limite. Estornos concorrentes param em zero, nunca negativo.
+      Medições em [ADR-017](../04-decisions/ADR-017-reserva-atomica-de-cota.md).
 - [x] **AC2** — Falha da chamada paga (LLM, Places, site fora do ar) devolve a
       cota: `usado` volta ao valor anterior à tentativa.
 - [x] **AC3** — Bloqueio de plano ([F035](F035-planos-e-limites.md)) não
@@ -221,10 +223,11 @@ a porta mesmo que as duas primeiras travas falhem.
   `verificarCompraAction` junto de `CompraNaoEncontradaError`.
 
 ## Fora do escopo (F036)
-- **Cobertura de teste do que foi endurecido.** `ec4a822` mexeu em
-  `tests/unit/compra.test.ts` só pra não quebrar o mock existente. Não há teste
-  de `urlPermitidaParaFetch`, de estorno de cota, nem do gate do helper e2e —
-  são os três candidatos naturais a próxima rodada.
+- **Cobertura de teste do resto do que foi endurecido.** `ec4a822` mexeu em
+  `tests/unit/compra.test.ts` só pra não quebrar o mock existente. A cota ganhou
+  teste próprio (`tests/unit/limites.test.ts`), mas continuam sem cobertura
+  `urlPermitidaParaFetch`, a exclusividade do e-mail de compra e o gate do
+  helper e2e — os três candidatos naturais à próxima rodada.
 - Postgres RLS (segue como em [ADR-008](../04-decisions/ADR-008-multi-tenant.md),
   reavaliar pós-beta).
 - Rate limit nas Server Actions e no endpoint do Agente — o teto ali é a cota
