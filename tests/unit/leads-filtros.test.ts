@@ -7,7 +7,7 @@ import {
   whereFiltroLista,
   hrefDoEstagio,
 } from "@/lib/leads/filtros";
-import { COLUNAS_FUNIL, ESTAGIOS_FUNIL } from "@/lib/funil";
+import { COLUNAS_FUNIL, ESTAGIOS_FUNIL, ROTULO_ESTAGIO } from "@/lib/funil";
 import { dorPrincipal } from "@/lib/dores/principal";
 import { faixaDeScore, scoreBadge } from "@/lib/leads/faixa";
 import {
@@ -300,5 +300,32 @@ describe("scoreBadge — estimado não usa a cor da faixa", () => {
 
   it("o padrão continua sendo confirmado — chamada antiga não muda de cor", () => {
     expect(scoreBadge(90)).toBe(scoreBadge(90, false));
+  });
+});
+
+// `ROTULO_ESTAGIO` é o único lugar autorizado a divergir do nome do estado
+// (ver "Rótulo de exibição ≠ nome do estado" no domain model). A regra existe
+// porque havia duas fontes: o badge do card mostrava "Pronto pra abordar"
+// enquanto o dropdown de "Corrigir status" ainda dizia "Priorizado".
+describe("ROTULO_ESTAGIO — fonte única do rótulo de estágio", () => {
+  it("cobre todo estado do funil, sem buraco", () => {
+    for (const e of ESTAGIOS_FUNIL) {
+      expect(ROTULO_ESTAGIO[e], e).toBeTruthy();
+    }
+  });
+
+  it("priorizado é o único que diverge do próprio nome", () => {
+    expect(ROTULO_ESTAGIO.priorizado).toBe("Pronto pra abordar");
+    // Os demais são a capitalização do nome — divergência nova exige passar
+    // pelo domain model, não por um `label` solto numa tela.
+    const divergentes = ESTAGIOS_FUNIL.filter((e) => {
+      const capitalizado = e.charAt(0).toUpperCase() + e.slice(1);
+      return ROTULO_ESTAGIO[e] !== capitalizado;
+    });
+    expect(divergentes).toEqual(["priorizado"]);
+  });
+
+  it("o estado continua `priorizado` no domínio — só o rótulo mudou", () => {
+    expect(ESTAGIOS_FUNIL).toContain("priorizado");
   });
 });

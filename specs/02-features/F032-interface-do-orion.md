@@ -132,16 +132,31 @@ ponto de leitura.
 | **Total de Leads** | O funil ao lado já mostra a distribuição, e a soma dela é o total |
 | **"Exigem atenção"** | É a Fila do dia com outro recorte (score ≥ 60 sem Abordagem enviada, contra "diagnosticado, priorizado e não abordado"). Duas listas respondendo "quem eu abordo" na mesma tela, com resultados quase iguais e ordens diferentes |
 
-> **Pendente: "o que já fiz" ainda é fraco.** Sem uma medida de esforço, o bloco
-> tem só Ganhos e Em aberto — resultado raro e trabalho em curso, nada que dê
-> noção de progresso no dia a dia. A medida natural é **Leads abordados no mês**
-> (`Abordagem.enviado_em` já é persistido e já tem índice, então é consulta, não
-> infra nova). Ficou fora desta rodada por decisão do Ricardo (2026-08-13).
-> Quando entrar, precisa **não** parecer a barra de cota do plano
-> ([F035](F035-planos-e-limites.md)): cota é teto que não se quer bater, meta é
-> piso que se quer alcançar. E o número tem que conversar com a
-> [visão](../00-product-vision.md), que hoje promete "10 Leads prontos por
-> **semana**".
+### A medida de esforço: meta de 100 Leads abordados no mês
+
+Ganhos e Em aberto sozinhos não davam noção de progresso — resultado raro e
+trabalho em curso. Faltava **esforço**, e abordagem enviada é exatamente isso.
+
+Conta **Lead distinto** com Abordagem enviada na competência, não Abordagens:
+três follow-ups pro mesmo Lead são um Lead abordado, senão a meta premiaria
+insistência em vez de alcance. `Abordagem.enviado_em` já é persistido e já tem
+índice — é consulta, sem cron (ADR-002). Meta igual pra todo plano: objetivo de
+trabalho não é coisa que se compra.
+
+**Meta não compartilha componente nem lugar com a cota**, e isso é deliberado:
+
+| | Onde vive | O que é |
+|---|---|---|
+| Cota ([F035](F035-planos-e-limites.md)) | medidor da topbar | **teto** que não se quer bater |
+| Meta | bloco "o que já fiz" | **piso** que se quer alcançar |
+
+Duas barras "X / Y este mês" com sentidos invertidos confundiriam mais do que
+informam, então a meta é desenhada como conquista: barra que enche, "faltam N",
+estado de meta batida.
+
+> **Em aberto:** a [visão](../00-product-vision.md) promete "10 Leads prontos
+> por **semana**", que é outra unidade (prontos ≠ abordados) e outro período.
+> As duas métricas convivem hoje; se divergirem na prática, uma das duas muda.
 
 ## Navegação (sidebar)
 
@@ -154,7 +169,12 @@ Grupos, na ordem:
 
 | Grupo | Itens |
 |-------|-------|
-| Prospecção | Dashboard · Leads · **Funil** ([F034](F034-funil-kanban.md)) · **Tarefas** (badge) ([F031](F031-central-de-tarefas.md)) · **Agente** ([F029](F029-agente-orion.md)) |
+| Prospecção | Dashboard · **Funil** ([F034](F034-funil-kanban.md)) · Leads · **Agente** ([F029](F029-agente-orion.md)) · **Tarefas** (badge) ([F031](F031-central-de-tarefas.md)) · **Ranking** ([F037](F037-ranking-de-builders.md)) |
+
+> **Funil em segundo (2026-08-13).** A ordem segue a sequência de perguntas do
+> dia: *como estou* (Dashboard) → *onde cada Lead parou* (Funil) → *quem são*
+> (Leads). O kanban é onde o aluno **mexe** o funil; a lista bruta é consulta, e
+> consulta vem depois de operação.
 | Treino | Simulador de venda |
 | **Skills** | Skills ([F030](F030-menu-skills.md)) |
 | Conta | Planos ([F035](F035-planos-e-limites.md)) · Configuração |

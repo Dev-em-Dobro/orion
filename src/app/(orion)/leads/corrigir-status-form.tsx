@@ -10,20 +10,19 @@ import {
   type CorrigirStatusState,
 } from "@/actions/leads/corrigirStatus";
 
+import { ESTAGIOS_FUNIL, ROTULO_ESTAGIO } from "@/lib/funil";
+
 const initial: CorrigirStatusState = { kind: "idle" };
 
 // Ordem do funil; `descartado` fica de fora — pra isso existe o Descartar.
-const OPCOES: { valor: LeadStatus; label: string }[] = [
-  { valor: "novo", label: "Novo" },
-  { valor: "enriquecido", label: "Enriquecido" },
-  { valor: "priorizado", label: "Priorizado" },
-  { valor: "contatado", label: "Contatado" },
-  { valor: "respondeu", label: "Respondeu" },
-  { valor: "qualificado", label: "Qualificado" },
-  { valor: "proposta", label: "Proposta" },
-  { valor: "ganho", label: "Ganho" },
-  { valor: "perdido", label: "Perdido" },
-];
+//
+// Derivado de `ESTAGIOS_FUNIL` + `ROTULO_ESTAGIO`, não escrito à mão: esta
+// lista era uma segunda fonte de rótulo, e em 2026-08-13 ela fez o badge do
+// card mostrar "Pronto pra abordar" enquanto este dropdown ainda dizia
+// "Priorizado" — o mesmo estado com dois nomes na mesma tela.
+const OPCOES: { valor: LeadStatus; label: string }[] = ESTAGIOS_FUNIL.map(
+  (valor) => ({ valor, label: ROTULO_ESTAGIO[valor] }),
+);
 
 const RANK = new Map(OPCOES.map((o, i) => [o.valor, i]));
 

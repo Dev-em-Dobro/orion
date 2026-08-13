@@ -37,7 +37,8 @@ Estabelecimento coletado da Google Places API. É a unidade central de trabalho.
 - `novo` — recém-coletado, ainda sem Diagnóstico
 - `enriquecido` — Diagnóstico executado (a transição ocorre na F002;
   a detecção de Dores soma-se ao mesmo passo a partir da F004)
-- `priorizado` — score calculado, pronto pra abordagem
+- `priorizado` — score calculado, pronto pra abordagem. **Aparece na UI como
+  "Pronto pra abordar"** (ver "Rótulo de exibição" abaixo)
 - `contatado` — Abordagem enviada manualmente
 - `respondeu` — Lead respondeu (positivo ou negativo), mas ainda sem qualificação
 - `qualificado` — respondeu **e** foi qualificado na conversa: há fit, verba e
@@ -174,6 +175,29 @@ Introduzidos pelo [revamp do fluxo](10-revamp-do-fluxo.md) (Fase 3):
   estourado e uma ação primária (ex.: "abordado há 14h, sem resposta
   registrada"). Derivada do estado atual; some quando o aluno resolve
   ([F031](02-features/F031-central-de-tarefas.md)).
+
+## Rótulo de exibição ≠ nome do estado
+
+> Adotado em 2026-08-13, junto com a
+> [F032](02-features/F032-interface-do-orion.md).
+
+O `status` é o nome canônico — vale em `schema.prisma`, no código, nas queries e
+nos commits. Mas dois estados descrevem **mecânica interna**, não o trabalho de
+quem está prospectando, e por isso ganham rótulo próprio na tela:
+
+| `status` | Rótulo na UI | Por quê |
+|---|---|---|
+| `priorizado` | **Pronto pra abordar** | Desde a [F025](02-features/F025-fila-do-dia.md) o estado é **automático**: o aprofundamento calcula o score e promove sozinho. "Priorizado" descreve algo que o aluno não executou e não controla — e ainda ecoa o botão "Priorizar", que não existe mais. "Pronto pra abordar" diz o que ele deve fazer com o Lead |
+| os demais | capitalização do próprio nome | Sem divergência: `contatado` → "Contatado" |
+
+**A regra:** rótulo de exibição vive **só** em `ROTULO_ESTAGIO`
+(`src/lib/funil.ts`), e é o único lugar autorizado a divergir do nome do
+estado. Nenhuma tela escreve rótulo de estágio na mão — quem fizer isso cria o
+problema que essa mudança corrigiu, em que o badge dizia uma coisa e o dropdown
+de "Corrigir status" dizia outra para o mesmo Lead.
+
+Isso **não** abre precedente para renomear estado: `priorizado` continua sendo
+`priorizado` em código, banco e conversa técnica.
 
 ## Aluno e Builder — dois nomes, um `User`
 

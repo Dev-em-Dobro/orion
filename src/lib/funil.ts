@@ -17,11 +17,20 @@ export const ESTAGIOS_FUNIL: LeadStatus[] = [
   "perdido",
 ];
 
-/** Rótulo de exibição de cada estágio — usado no funil e nos chips da lista. */
+/**
+ * Rótulo de exibição de cada estágio. **Único lugar autorizado a divergir do
+ * nome do estado** — ver "Rótulo de exibição ≠ nome do estado" no domain model.
+ *
+ * Nenhuma tela escreve rótulo de estágio na mão: era assim que o badge do card
+ * dizia uma coisa e o dropdown de "Corrigir status" dizia outra pro mesmo Lead.
+ */
 export const ROTULO_ESTAGIO: Record<LeadStatus, string> = {
   novo: "Novo",
   enriquecido: "Enriquecido",
-  priorizado: "Priorizado",
+  // Desde a F025 este estado é automático: o aprofundamento calcula o score e
+  // promove sozinho. "Priorizado" descrevia algo que o aluno não executou e não
+  // controla — e ecoava o botão "Priorizar", que não existe mais.
+  priorizado: "Pronto pra abordar",
   contatado: "Contatado",
   respondeu: "Respondeu",
   qualificado: "Qualificado",
