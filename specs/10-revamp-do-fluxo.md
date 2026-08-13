@@ -73,6 +73,12 @@ Ela não muda o fluxo do aluno — emenda sete specs já entregues (F002, F014,
 F015, F018, F019, F019.1, F020) e é a única desta rodada cuja **spec foi escrita
 depois do código**.
 
+E uma sexta, de engajamento, pedida em 2026-08-13:
+
+| Feature | Por quê |
+|---------|---------|
+| [F037](02-features/F037-ranking-de-builders.md) — Ranking de Builders do mês | Marcar um Lead como `ganho` hoje não devolve nada ao aluno, e sem venda registrada o funil da F010 não fecha. O ranking mensal (top 3 premiado, reset todo mês) dá motivo pra registrar. **Proposta bloqueada** por duas decisões: adotar "Builder" na linguagem ubíqua e atualizar a Política de Privacidade — é a primeira leitura **cross-tenant** do produto, uma exceção deliberada à invariante da F015 |
+
 ---
 
 ## 2. A ideia central do revamp

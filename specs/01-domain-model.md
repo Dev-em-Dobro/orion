@@ -166,6 +166,28 @@ Introduzidos pelo [revamp do fluxo](10-revamp-do-fluxo.md) (Fase 3):
   registrada"). Derivada do estado atual; some quando o aluno resolve
   ([F031](02-features/F031-central-de-tarefas.md)).
 
+## Aluno e Builder — dois nomes, um `User`
+
+> Adotado em 2026-08-13, junto com a [F037](02-features/F037-ranking-de-builders.md).
+
+São **a mesma pessoa e a mesma entidade** (`User`). O que muda é quem está
+olhando:
+
+| Termo | Quando usar | Onde aparece |
+|---|---|---|
+| **Aluno** | falando da conta, dos dados, dos limites, do isolamento | schema, código, specs, UI de conta e plano |
+| **Builder** | falando da pessoa **na comunidade**, publicamente | só onde um aluno vê outro — hoje, o Ranking |
+
+A regra que resolve a ambiguidade: **se o texto é sobre o que a pessoa tem, é
+Aluno; se é sobre como ela aparece para as outras, é Builder.** "O aluno tem 60
+Leads no mês"; "o Builder está em 2º".
+
+Isto é exceção declarada à regra de sinônimo, não licença: **nenhum outro
+apelido** entra. Não existe "usuário", "membro", "player" nem "dev" como
+sinônimo de Aluno. E em `schema.prisma` e em nome de variável continua valendo
+`User`/`aluno` — `Builder` não vira nome de tabela nem de campo, só de
+apresentação.
+
 ## Glossário (linguagem ubíqua — alerta contra sinônimos)
 
 | Use                | NÃO use                                                |
@@ -184,6 +206,9 @@ Introduzidos pelo [revamp do fluxo](10-revamp-do-fluxo.md) (Fase 3):
 | **Fila do dia**    | lista de hoje, top leads, ranking                    |
 | **Tarefa**         | to-do, lembrete, alerta, notificação                 |
 | **Dor `SEM_ATENDIMENTO_AUTOMATIZADO`** | "não tem bot" (o sinal é *não detectado*, não *inexistente*) |
+| **Aluno** | usuário, membro, cliente (do Orion), dev — ver a seção acima |
+| **Builder** | player, competidor, participante; e **não** use fora do contexto público (Ranking) |
+| **Ranking de Builders** | leaderboard, placar, top; e não confundir com `score`, que é do Lead |
 
 **Regras:**
 - Em **schema Prisma**, **código TS** e **UI**, use os nomes desta tabela.
