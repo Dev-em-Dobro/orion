@@ -187,6 +187,37 @@ cada requisição curta.
 - [ ] **AC12** — `src/lib/score/triagem.ts` é função pura (sem Next, sem
       Prisma), testada com os casos da AC2.
 
+## Emenda 2026-08-13 — "Aprofundar" se explica na própria tela
+
+O botão **"Aprofundar próximos 10 (N na espera)"** é o único lugar da home onde
+o aluno aperta uma coisa cujo nome é jargão nosso. Ele não diz o que vai
+acontecer, quanto vai custar nem por que aquela fila está vazia — e a resposta
+estava só na spec.
+
+Ao lado do botão entra um **ícone de informação** que abre um balão no
+**hover** e no **foco** (teclado e toque, onde hover não existe), explicando:
+Diagnóstico dos Leads que ainda têm score da Triagem, o site é aberto e medido,
+as Dores são detectadas, o score vira confirmado e o Lead entra na fila —
+consumindo cota de `diagnostico` ([F018](F018-limites-diarios.md)).
+
+### Por que não `title=`
+
+O tooltip nativo do navegador abre ~1s depois, some sozinho, não quebra linha,
+não estiliza e **não existe no toque**. O balão é markup próprio
+(`src/components/dica.tsx`), CSS puro — `group-hover` + `group-focus-within`,
+sem estado e sem `"use client"`. **Sem lib nova, sem ADR.**
+
+O texto completo vive no `aria-label` do gatilho e o balão é `aria-hidden`:
+uma fonte só, e o leitor de tela recebe a explicação inteira sem depender de o
+balão estar aberto.
+
+### Critérios de aceitação da emenda
+- [ ] **AC13** — Ao lado de "Aprofundar próximos 10" há um ícone de informação
+      que abre a explicação no hover **e** no foco por teclado, e fecha ao sair.
+- [ ] **AC14** — O gatilho é `<button type="button">` com `aria-label`
+      carregando o texto completo; o balão não intercepta clique
+      (`pointer-events-none`) nem empurra o layout.
+
 ## Decisões de implementação
 - `src/lib/score/triagem.ts` — pura; reusa `tierDoNicho`, `valor` e
   `calcularScore` já existentes, e `classificarWebsite` (F009).

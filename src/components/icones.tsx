@@ -28,6 +28,23 @@ export function Icone({
   );
 }
 
+/** Gatilho da `Dica` (F025 emenda 2026-08-13). */
+export function IconeInfo({ className }: { className?: string }) {
+  return (
+    <Icone
+      className={className}
+      d={
+        <>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 16v-4" />
+          {/* Ponto do "i": traço de comprimento zero com ponta redonda. */}
+          <path d="M12 8h.01" />
+        </>
+      }
+    />
+  );
+}
+
 /** F035 — recurso fora do plano. Nunca 🔒. */
 export function IconeCadeado({ className }: { className?: string }) {
   return (

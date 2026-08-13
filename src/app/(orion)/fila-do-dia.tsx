@@ -6,8 +6,10 @@
 // entra gente nova.
 
 import Link from "next/link";
+import { Dica } from "@/components/dica";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
+import { APROFUNDAR_EXPLICACAO } from "@/lib/leads/aprofundamento";
 import { AprofundarButton } from "./leads/aprofundar-button";
 import { INCLUDE_CARD, paraCardProps } from "./leads/card-props";
 import { LeadsGrid } from "./leads/leads-grid";
@@ -51,9 +53,17 @@ export async function FilaDoDia() {
           </p>
         </div>
         {aguardandoAprofundamento > 0 && (
-          <AprofundarButton
-            rotulo={`Aprofundar próximos 10 (${aguardandoAprofundamento} na espera)`}
-          />
+          // "Aprofundar" é jargão nosso: o botão não diz o que vai acontecer
+          // nem que consome cota. A Dica ao lado responde no hover/foco.
+          <div className="flex items-center gap-1">
+            <AprofundarButton
+              rotulo={`Aprofundar próximos 10 (${aguardandoAprofundamento} na espera)`}
+            />
+            <Dica
+              titulo="O que é aprofundar?"
+              texto={APROFUNDAR_EXPLICACAO}
+            />
+          </div>
         )}
       </div>
 
