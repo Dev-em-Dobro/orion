@@ -340,46 +340,8 @@ export default async function LeadByIdPage({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border bg-card p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-                    E-mail
-                  </p>
-                  {lead.email ? (
-                    <span className="text-xs text-zinc-400">
-                      {lead.email}
-                      <span className="text-zinc-600">
-                        {" "}
-                        ·{" "}
-                        {lead.email_origem === "manual"
-                          ? "digitado por você"
-                          : "publicado no site do Lead"}
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="text-xs text-zinc-600">
-                      nenhum e-mail encontrado no site
-                    </span>
-                  )}
-                </div>
-                <div className="mt-2 space-y-2">
-                  <GerarOutreachButton
-                    leadId={lead.id}
-                    canal="email"
-                    temEmail={Boolean(lead.email)}
-                  />
-                  <GerarOutreachButton
-                    leadId={lead.id}
-                    canal="email"
-                    tipo="followup"
-                    temEmail={Boolean(lead.email)}
-                  />
-                </div>
-                <p className="mt-3 border-t border-border pt-2 text-xs text-zinc-600">
-                  O Orion prepara o e-mail; quem envia é o seu cliente de
-                  e-mail. Assim a resposta chega pra você.
-                </p>
-              </div>
+              {/* O canal e-mail (F027) saiu em 2026-08-13 — ver F035,
+                  "Saída do Outreach por e-mail". Abordagem é só WhatsApp. */}
 
               {outreaches.length === 0 ? (
                 <p className="text-sm text-muted">

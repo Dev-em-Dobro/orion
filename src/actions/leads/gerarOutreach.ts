@@ -3,6 +3,9 @@
 // F005 — Outreach de WhatsApp · F006 — suporte a follow-up (tipo).
 // Specs: F005-outreach-whatsapp.md e F006-follow-up-e-funil.md
 // F004 — dores persistidas (fallback: detectar do Diagnóstico se Lead antigo).
+//
+// F027 (Outreach por e-mail) saiu do produto em 2026-08-13 — ver F035, "Saída
+// do Outreach por e-mail". O canal volta a ser só WhatsApp.
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -15,32 +18,25 @@ import {
 } from "@/lib/outreach/gerarOutreach";
 import { createLlmForUser } from "@/lib/llm";
 import { estornarCota, reservarCota } from "@/lib/limites";
-import { exigirRecurso } from "@/lib/planos";
+import { consumirMensal, verificarLimiteMensal } from "@/lib/planos";
 import type { ContextoLead } from "@/lib/outreach/prompt";
 import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
-import { gerarOutreachEmail } from "@/lib/outreach/gerarOutreach";
-import { montarMailto } from "@/lib/outreach/mailto";
 
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
   tipo: z.enum(["primeira", "followup"]).default("primeira"),
-  // F027 — o canal deixou de ser fixo em whatsapp.
-  canal: z.enum(["whatsapp", "email"]).default("whatsapp"),
-  /** E-mail digitado na hora, quando o Lead não tem um capturado. */
-  email: z.string().trim().email("E-mail inválido").optional().or(z.literal("")),
+  // Enum de um valor só, de propósito: chamada direta com `canal=email` é
+  // **rejeitada aqui**, não apenas escondida na UI (F035 AC20).
+  canal: z.enum(["whatsapp"]).default("whatsapp"),
 });
 
 export type GerarOutreachState =
   | { kind: "idle" }
   | {
       kind: "ok";
-      canal: "whatsapp" | "email";
+      canal: "whatsapp";
       mensagem: string;
-      /** F027 — só no canal e-mail. */
-      assunto: string | null;
       waLink: string | null;
-      /** F027 — `mailto:` pronto, com assunto e corpo (só no canal e-mail). */
-      mailto: string | null;
       outreachId: string;
     }
   | { kind: "erro"; mensagem: string };
@@ -53,7 +49,6 @@ export async function gerarOutreachAction(
     lead_id: formData.get("lead_id"),
     tipo: formData.get("tipo") ?? undefined,
     canal: formData.get("canal") ?? undefined,
-    email: formData.get("email") ?? undefined,
   });
   if (!parsed.success) {
     return { kind: "erro", mensagem: "Input inválido" };
@@ -64,11 +59,9 @@ export async function gerarOutreachAction(
 
   try {
     ({ userId } = await requireTenant());
-    // F035 — canal e-mail é de plano pago. WhatsApp continua no Free.
-    // Antes da reserva: bloqueio de plano não pode gastar cota.
-    if (parsed.data.canal === "email") {
-      await exigirRecurso(userId, "email");
-    }
+    // F035 — teto mensal do plano antes da cota diária e de qualquer chamada
+    // de IA: no limite, nada é gasto.
+    await verificarLimiteMensal(userId, "outreach");
     await reservarCota(userId, "outreach");
     reservou = true;
     const llm = await createLlmForUser(userId);
@@ -107,31 +100,9 @@ export async function gerarOutreachAction(
       dores,
     };
 
-    const ehEmail = parsed.data.canal === "email";
-    const emailDigitado = parsed.data.email?.trim() || null;
-    const destino = emailDigitado ?? lead.email;
-
-    if (ehEmail && !destino) {
-      // Sem endereço não há e-mail — e não gastamos cota nem chamada de LLM.
-      // Com a reserva atômica, devolver a cota aqui é o que mantém a promessa.
-      await estornarCota(userId, "outreach");
-      reservou = false;
-      return {
-        kind: "erro",
-        mensagem: "Lead sem e-mail — cole um endereço ou use o WhatsApp.",
-      };
-    }
-
     let mensagem: string;
-    let assunto: string | null = null;
     try {
-      if (ehEmail) {
-        const out = await gerarOutreachEmail(ctx, llm, parsed.data.tipo);
-        assunto = out.assunto;
-        mensagem = out.corpo;
-      } else {
-        ({ mensagem } = await gerarOutreachLib(ctx, llm, parsed.data.tipo));
-      }
+      ({ mensagem } = await gerarOutreachLib(ctx, llm, parsed.data.tipo));
     } catch (e) {
       await estornarCota(userId, "outreach");
       reservou = false;
@@ -149,20 +120,15 @@ export async function gerarOutreachAction(
         user_id: userId,
         lead_id: lead.id,
         canal: parsed.data.canal,
-        assunto,
+        assunto: null,
         conteudo: mensagem,
         enviado: false,
       },
     });
 
-    // E-mail digitado na hora fica gravado como `manual` — e re-diagnóstico
-    // não o sobrescreve (F027).
-    if (ehEmail && emailDigitado && emailDigitado !== lead.email) {
-      await prisma.lead.update({
-        where: { id: lead.id },
-        data: { email: emailDigitado, email_origem: "manual" },
-      });
-    }
+    // Só depois de gravar: o teto mensal conta Outreach que existe, não
+    // tentativa. Falha antes daqui já devolveu a cota diária.
+    await consumirMensal(userId, "outreach");
 
     revalidatePath("/leads");
     revalidatePath(`/leads/${lead.id}`);
@@ -171,12 +137,7 @@ export async function gerarOutreachAction(
       kind: "ok",
       canal: parsed.data.canal,
       mensagem,
-      assunto,
-      waLink: ehEmail ? null : linkWhatsapp(lead.telefone, mensagem),
-      mailto:
-        ehEmail && destino
-          ? montarMailto(destino, assunto ?? "", mensagem)
-          : null,
+      waLink: linkWhatsapp(lead.telefone, mensagem),
       outreachId: outreach.id,
     };
   } catch (e) {

@@ -44,18 +44,20 @@ export default function PrivacidadePage() {
           </li>
           <li>
             <strong className="font-medium text-zinc-100">
-              Chaves de API (BYOK):
+              Chaves de API (apenas contas com chave própria):
             </strong>{" "}
-            valores que você cola em Configuração. São{" "}
+            por padrão o {produto} usa as chaves da plataforma e não há chave
+            sua para guardar. Contas que já haviam configurado chaves próprias
+            continuam com elas{" "}
             <strong className="font-medium text-zinc-100">
-              cifrados em repouso
+              cifradas em repouso
             </strong>{" "}
             (AES-256-GCM com chave-mestra do servidor) e{" "}
             <strong className="font-medium text-zinc-100">
-              nunca exibidos em claro
+              nunca exibidas em claro
             </strong>{" "}
             de volta na interface. Servem só para chamar os provedores em seu
-            nome.
+            nome, e você pode removê-las quando quiser.
           </li>
           <li>
             <strong className="font-medium text-zinc-100">
@@ -67,6 +69,38 @@ export default function PrivacidadePage() {
             </strong>{" "}
             (ex.: Google Places, PageSpeed) e resultados gerados pelo app
             (scores, textos de Outreach, etc.), sempre isolados à sua conta.
+          </li>
+          <li>
+            <strong className="font-medium text-zinc-100">
+              Ranking de Builders (só com o seu aceite):
+            </strong>{" "}
+            se — e somente se — você aceitar participar, o{" "}
+            <strong className="font-medium text-zinc-100">
+              nome de exibição que você escolher
+            </strong>{" "}
+            e o seu{" "}
+            <strong className="font-medium text-zinc-100">
+              número de vendas registradas no mês
+            </strong>{" "}
+            ficam visíveis para os outros alunos. Mais nada: nenhum Lead, nome
+            de cliente, cidade, nicho, valor ou contato aparece para terceiros.
+            A base legal é o{" "}
+            <strong className="font-medium text-zinc-100">consentimento</strong>{" "}
+            (LGPD, art. 7º, I), que você pode revogar a qualquer momento em
+            Configuração — ao revogar, você sai do ranking do mês corrente e
+            dos meses anteriores imediatamente. Quem não aceita continua vendo
+            o ranking e a própria posição, sem aparecer para ninguém.
+          </li>
+          <li>
+            <strong className="font-medium text-zinc-100">
+              O que deixamos de coletar:
+            </strong>{" "}
+            o {produto} <strong className="font-medium text-zinc-100">não</strong>{" "}
+            extrai mais endereços de e-mail do site do Lead. O canal de
+            abordagem por e-mail foi retirado do produto, e coletar contato sem
+            finalidade de uso seria tratamento desnecessário. Endereços
+            capturados antes dessa mudança permanecem apenas na sua conta e
+            podem ser apagados junto com o Lead.
           </li>
           <li>
             <strong className="font-medium text-zinc-100">Uso técnico:</strong>{" "}
@@ -101,11 +135,11 @@ export default function PrivacidadePage() {
         </h2>
         <p>
           Compartilhamos dados com subprocessadores necessários ao serviço,
-          por exemplo: hospedagem (ex.: Vercel), banco (ex.: Neon), e-mail
-          transacional do magic link, e os provedores de API{" "}
-          <em>que você escolheu</em> (Google, Anthropic, OpenAI, Google AI,
-          ScreenshotOne), quando você dispara uma ação que usa a chave
-          correspondente. Não vendemos dados pessoais.
+          por exemplo: hospedagem (ex.: Vercel), banco (ex.: Neon), o e-mail
+          transacional que entrega o seu link de acesso, e os provedores de API
+          usados pelas features (Google Places, PageSpeed e o provedor de IA),
+          quando você dispara uma ação que precisa deles. Não vendemos dados
+          pessoais.
         </p>
       </section>
 

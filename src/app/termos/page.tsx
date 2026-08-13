@@ -34,11 +34,18 @@ export default function TermosPage() {
           digital; (c) priorizar Leads; (d) gerar textos de Outreach e
           conteúdos auxiliares via modelos de IA, usando as{" "}
           <strong className="font-medium text-zinc-100">
-            suas próprias chaves de API
-          </strong>{" "}
-          (modelo BYOK). O envio de mensagens a terceiros continua{" "}
-          <strong className="font-medium text-zinc-100">manual</strong> — o
-          app não dispara WhatsApp/e-mail em nome do Lead.
+            chaves de API da plataforma
+          </strong>
+          , dentro dos limites do seu plano. Contas que já haviam configurado
+          chaves próprias continuam podendo usá-las.
+        </p>
+        <p>
+          O único canal de abordagem é o{" "}
+          <strong className="font-medium text-zinc-100">WhatsApp</strong>, e o
+          envio a terceiros é{" "}
+          <strong className="font-medium text-zinc-100">manual</strong>: o app
+          prepara o texto e você envia pelo seu próprio aplicativo. O {produto}{" "}
+          não dispara mensagem em nome do Lead nem opera servidor de envio.
         </p>
       </section>
 
@@ -52,10 +59,14 @@ export default function TermosPage() {
             e/ou magic link).
           </li>
           <li>
-            Você é responsável pelas chaves de API que cola no app, pelos
-            custos cobrados pelos provedores (Google, Anthropic, OpenAI,
-            Gemini, ScreenshotOne etc.) e pelo uso conforme os termos desses
-            provedores.
+            O uso das APIs de terceiros (Google, provedores de IA) está
+            incluído no seu plano, dentro dos limites publicados em{" "}
+            <a href="/planos" className="text-primary hover:underline">
+              Planos
+            </a>
+            . Se você optou por usar chaves próprias, é responsável por elas,
+            pelos custos cobrados pelos provedores e pelo uso conforme os
+            termos deles.
           </li>
           <li>
             Você não deve usar o serviço para spam, assédio, fraude ou qualquer

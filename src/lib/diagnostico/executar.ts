@@ -9,7 +9,6 @@ import type { AtendimentoAutomatizado } from "@prisma/client";
 import { classificarWebsite } from "./agregador";
 import { detectarAtendimento } from "./atendimento";
 import { verificarSite } from "./verificarSite";
-import { extrairEmail } from "@/lib/leads/extrairEmail";
 import { performanceMobile } from "@/lib/pagespeed/performanceMobile";
 
 /** F027 — sai junto do Diagnóstico, mas mora no Lead, não no Diagnóstico. */
@@ -91,8 +90,11 @@ export async function executarDiagnostico(
       atendimento_automatizado: atendimento.classificacao,
       atendimento_evidencia: atendimento.evidencia,
     },
-    // F027 — mesmo HTML, nenhuma requisição a mais.
-    email: extrairEmail(site.html, website),
+    // F027 saiu do produto em 2026-08-13 (F035): sem canal de e-mail, capturar
+    // endereço de contato do Lead vira coleta de dado pessoal **sem
+    // finalidade** — exatamente o que a LGPD não admite. A extração parou; o
+    // helper (`lib/leads/extrairEmail.ts`) fica pra quando/se o canal voltar.
+    email: null,
   };
 }
 

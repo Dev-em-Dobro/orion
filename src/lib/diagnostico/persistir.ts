@@ -5,7 +5,6 @@ import type { Lead } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { detectarDores, substituirDoresDoLead } from "@/lib/dores";
 import { mudarStatus } from "@/lib/leads/status";
-import { contarLeadDiagnosticado } from "@/lib/planos/medidor";
 import type { DadosDiagnostico } from "./executar";
 
 type Args = {
@@ -45,7 +44,6 @@ export async function persistirDiagnostico({
   await prisma.$transaction(async (tx) => {
     // F035 — conta antes de criar: depois do create, todo Lead teria "um
     // Diagnóstico anterior" e o medidor nunca incrementaria.
-    await contarLeadDiagnosticado(tx, userId, lead.id);
 
     await tx.diagnostico.create({
       data: { user_id: userId, lead_id: lead.id, ...dados },
