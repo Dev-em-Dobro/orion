@@ -52,8 +52,12 @@ enum Severidade {
   ALTA
 }
 
+// F038 — `ligacao` e o roteiro falado: o aluno le na ligacao ou grava como
+// audio. O Orion nunca disca nem envia.
+// `email` saiu do produto na F035 e sobrevive aqui so pelos registros antigos.
 enum Canal {
   whatsapp
+  ligacao
   email
 }
 

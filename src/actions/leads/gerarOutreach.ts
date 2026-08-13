@@ -5,15 +5,21 @@
 // F004 — dores persistidas (fallback: detectar do Diagnóstico se Lead antigo).
 //
 // F027 (Outreach por e-mail) saiu do produto em 2026-08-13 — ver F035, "Saída
-// do Outreach por e-mail". O canal volta a ser só WhatsApp.
+// do Outreach por e-mail".
+//
+// F038 — o canal `ligacao` (roteiro falado) entra aqui, e não numa Action
+// própria: mesma Dor, mesmo Diagnóstico exigido, mesma cota. Só o system prompt
+// e o `wa.me` mudam.
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
+import { demoUrlFor } from "@/lib/demos";
 import { detectarDores, textosDasDores } from "@/lib/dores";
 import {
   gerarOutreach as gerarOutreachLib,
+  gerarRoteiroLigacao,
   OutreachError,
 } from "@/lib/outreach/gerarOutreach";
 import { createLlmForUser } from "@/lib/llm";
@@ -25,17 +31,21 @@ import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
   tipo: z.enum(["primeira", "followup"]).default("primeira"),
-  // Enum de um valor só, de propósito: chamada direta com `canal=email` é
-  // **rejeitada aqui**, não apenas escondida na UI (F035 AC20).
-  canal: z.enum(["whatsapp"]).default("whatsapp"),
+  // `email` fica **de fora do enum** de propósito: chamada direta com
+  // `canal=email` é rejeitada aqui, não apenas escondida na UI (F035 AC20).
+  // `ligacao` entra na F038.
+  canal: z.enum(["whatsapp", "ligacao"]).default("whatsapp"),
 });
+
+export type CanalGeravel = "whatsapp" | "ligacao";
 
 export type GerarOutreachState =
   | { kind: "idle" }
   | {
       kind: "ok";
-      canal: "whatsapp";
+      canal: CanalGeravel;
       mensagem: string;
+      /** F038 — sempre `null` no canal `ligacao`: roteiro não se envia. */
       waLink: string | null;
       outreachId: string;
     }
@@ -93,16 +103,24 @@ export async function gerarOutreachAction(
         ? textosDasDores(lead.dores)
         : textosDasDores(detectarDores(diag, lead.website));
 
+    const ehLigacao = parsed.data.canal === "ligacao";
+
     const ctx: ContextoLead = {
       nome: lead.nome,
       categoria: lead.categoria,
       endereco: lead.endereco,
       dores,
+      // F038 — o site de amostra é servido fora do Orion (`DEMOS_BASE_URL`), sem
+      // login: o dono do negócio abre o link direto. `null` quando não há demo,
+      // e aí o prompt não cita nada.
+      demoUrl: demoUrlFor(lead.place_id),
     };
 
     let mensagem: string;
     try {
-      ({ mensagem } = await gerarOutreachLib(ctx, llm, parsed.data.tipo));
+      ({ mensagem } = ehLigacao
+        ? await gerarRoteiroLigacao(ctx, llm, parsed.data.tipo)
+        : await gerarOutreachLib(ctx, llm, parsed.data.tipo));
     } catch (e) {
       await estornarCota(userId, "outreach");
       reservou = false;
@@ -137,7 +155,9 @@ export async function gerarOutreachAction(
       kind: "ok",
       canal: parsed.data.canal,
       mensagem,
-      waLink: linkWhatsapp(lead.telefone, mensagem),
+      // F038 AC4 — roteiro é pra falar. Pré-preencher o WhatsApp com ele seria
+      // a ação errada oferecida com destaque.
+      waLink: ehLigacao ? null : linkWhatsapp(lead.telefone, mensagem),
       outreachId: outreach.id,
     };
   } catch (e) {

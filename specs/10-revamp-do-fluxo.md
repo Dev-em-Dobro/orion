@@ -79,6 +79,12 @@ E uma sexta, de engajamento, pedida em 2026-08-13:
 |---------|---------|
 | [F037](02-features/F037-ranking-de-builders.md) — Ranking de Builders do mês | Marcar um Lead como `ganho` hoje não devolve nada ao aluno, e sem venda registrada o funil da F010 não fecha. O ranking mensal (top 3 premiado, reset todo mês) dá motivo pra registrar. **Proposta bloqueada** por duas decisões: adotar "Builder" na linguagem ubíqua e atualizar a Política de Privacidade — é a primeira leitura **cross-tenant** do produto, uma exceção deliberada à invariante da F015 |
 
+E uma sétima, de canal, pedida em 2026-08-13:
+
+| Feature | Por quê |
+|---------|---------|
+| [F038](02-features/F038-abordagem-por-voz.md) — Abordagem por voz | Desde a F035 a única saída do Orion é texto frio no WhatsApp — o canal mais fácil de ignorar. A F038 gera o **roteiro falado** (ligação ou áudio) da mesma Dor, e a aba Abordagem passa a recomendá-lo acima do texto. Canal novo (`Canal.ligacao`), nenhuma lib nova, nenhum ADR: o Orion escreve o roteiro, quem liga é o aluno |
+
 ---
 
 ## 2. A ideia central do revamp

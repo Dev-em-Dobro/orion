@@ -90,15 +90,17 @@ ter várias Dores. É o que justifica o outreach.
 | `detalhes`   | string                                                                                                | Texto curto explicando a Dor |
 
 ### Outreach
-Mensagem de abordagem gerada via Claude API pra um Lead. Pode haver várias
-Outreaches por Lead (canais diferentes, reescritas, etc.).
+Abordagem gerada via Claude API pra um Lead. Pode haver várias Outreaches por
+Lead (canais diferentes, reescritas, etc.). Nem toda Outreach é uma *mensagem*:
+no canal `ligacao` o `conteudo` é um **roteiro pra falar**, não um texto pra
+enviar ([F038](02-features/F038-abordagem-por-voz.md)).
 
 | Campo        | Tipo                            | Notas |
 |--------------|---------------------------------|-------|
 | `id`         | string                          | PK |
 | `lead_id`    | string                          | FK → Lead |
 | `user_id`    | string                          | FK → User (auth). Isolamento multi-tenant ([F015](02-features/F015-multi-tenant.md)) |
-| `canal`      | enum: `whatsapp` \| `email`     | Canal-alvo (o canal `email` é ligado pela [F027](02-features/F027-outreach-por-email.md)) |
+| `canal`      | enum: `whatsapp` \| `ligacao` \| `email` | Canal-alvo. `ligacao` é o **roteiro falado** da [F038](02-features/F038-abordagem-por-voz.md) — o aluno lê na ligação ou grava como áudio; o Orion nunca disca nem envia. `email` saiu do produto na [F035](02-features/F035-planos-e-limites.md) e o valor sobrevive só pelos registros antigos |
 | `assunto`    | string \| null                  | Assunto — só quando `canal = email` ([F027](02-features/F027-outreach-por-email.md)) |
 | `conteudo`   | text                            | Texto final da mensagem (no e-mail, o corpo) |
 | `gerado_em`  | datetime                        | |

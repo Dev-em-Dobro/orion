@@ -6,11 +6,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { TenantNotFoundError, requireLeadOwned } from "@/lib/db/scoped";
-import { valor as calcularValor } from "@/lib/score/score";
 import { classificarWebsite } from "@/lib/diagnostico/agregador";
 import { ROTULO_ATENDIMENTO } from "@/lib/diagnostico/atendimento";
 import { demoUrlFor } from "@/lib/demos";
 import { ESTAGIOS_EM_ABERTO } from "@/lib/funil";
+import { rotuloCategoria } from "@/lib/nichos/catalogo";
+import { ehRoteiroFalado, ROTULO_CANAL } from "@/lib/outreach/canais";
 import {
   parseFiltroLista,
   queryDoFiltro,
@@ -22,6 +23,7 @@ import {
   whereAntes,
   whereDepois,
 } from "@/lib/leads/vizinhos";
+import { CopiarButton } from "../copiar-button";
 import { CorrigirStatusForm } from "../corrigir-status-form";
 import { DescartarButton, RestaurarButton } from "../descarte-buttons";
 import { DesfechoButtons } from "../desfecho-buttons";
@@ -29,7 +31,6 @@ import { DiagnosticarButton } from "../diagnosticar-button";
 import { GerarOutreachButton } from "../gerar-outreach-button";
 import { GerarPropostaButton } from "../gerar-proposta-button";
 import { MarcarEnviadaButton } from "../marcar-enviada-button";
-import { PriorizarButton } from "../priorizar-button";
 import { ResponderObjecaoPanel } from "../responder-objecao-panel";
 import { faixaDeScore, linkWhatsapp, scoreBadge, SimNao, STATUS_BADGE } from "../ui";
 import { Abas, parseAba } from "./abas";
@@ -116,10 +117,6 @@ export default async function LeadByIdPage({
       ]);
 
     const classif = lead.website ? classificarWebsite(lead.website) : null;
-    const { valor, tier } = calcularValor({
-      categoria: lead.categoria,
-      num_avaliacoes: lead.num_avaliacoes,
-    });
     const demoUrl = demoUrlFor(lead.place_id);
     const hrefVizinho = (vizinhoId: string) => {
       const p = new URLSearchParams(query);
@@ -152,8 +149,11 @@ export default async function LeadByIdPage({
             <h1 className="mt-2 text-2xl font-bold tracking-tight">
               {lead.nome}
             </h1>
+            {/* Categoria em PT (o Places devolve `veterinary_care`). O tier e o
+                Valor saíram: são entrada do score, e o score já está no badge
+                acima — repetir a fórmula ao lado do resultado não decide nada. */}
             <p className="mt-1 text-sm text-muted">
-              {lead.categoria} · {tier} · Valor {valor}
+              {rotuloCategoria(lead.categoria)}
             </p>
           </div>
 
@@ -245,11 +245,10 @@ export default async function LeadByIdPage({
                     <Campo rotulo="HTTPS">
                       <SimNao valor={diagnostico.tem_https} />
                     </Campo>
-                    <Campo rotulo="Performance mobile">
-                      <span className="font-mono">
-                        {diagnostico.performance_mobile ?? "—"}
-                      </span>
-                    </Campo>
+                    {/* "Performance mobile" saiu: a nota crua do PageSpeed não
+                        dizia o que fazer. O mesmo fato chega como Dor logo
+                        abaixo ("site muito lento no celular"), que é acionável,
+                        e continua pesando no score via `necessidade`. */}
                     <Campo rotulo="Atendimento automatizado">
                       <span
                         title="Verificamos só o site público do negócio. Não enviamos mensagem para o WhatsApp dele."
@@ -302,10 +301,17 @@ export default async function LeadByIdPage({
                   </ul>
                 )}
 
-                <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-3">
-                  <DiagnosticarButton leadId={lead.id} />
-                  <PriorizarButton leadId={lead.id} />
-                </div>
+                {/* "Priorizar" saiu de vez: desde a F025 o aprofundamento já
+                    recalcula o score e promove o Lead pra `priorizado` — quem
+                    chega nesta tela já está priorizado, e o botão só refazia a
+                    mesma conta. "Diagnosticar" fica só como saída pro Lead que
+                    ainda não tem Diagnóstico: sem ele a aba Proposta pediria um
+                    Diagnóstico que não haveria como rodar. */}
+                {!diagnostico && (
+                  <div className="mt-4 border-t border-border pt-3">
+                    <DiagnosticarButton leadId={lead.id} />
+                  </div>
+                )}
               </section>
 
               {demoUrl && (
@@ -323,25 +329,76 @@ export default async function LeadByIdPage({
 
           {aba === "abordagem" && (
             <div className="space-y-4">
-              {/* F027 — dois canais. O de e-mail pede o endereço quando o
-                  Lead não tem um capturado do site. */}
+              {/* F038 — a ordem dos cards É a recomendação: voz primeiro,
+                  texto depois. Texto frio é o que o dono do negócio desliza pra
+                  cima sem custo; voz custa atenção, e por isso responde mais. */}
+              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/[0.06] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-semibold tracking-wide text-emerald-300 uppercase">
+                    Ligação ou áudio
+                  </p>
+                  <span className="badge bg-emerald-500/20 text-emerald-300">
+                    Mais eficiente
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  Roteiro pra você ler na ligação ou gravar como áudio no
+                  WhatsApp. Quem liga é você — o Orion só escreve.
+                </p>
+                <div className="mt-3">
+                  <GerarOutreachButton leadId={lead.id} canal="ligacao" destaque />
+                </div>
+              </div>
+
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-                    WhatsApp
+                    WhatsApp (texto)
                   </p>
                   {!lead.telefone && (
                     <span className="text-xs text-zinc-600">sem telefone</span>
                   )}
                 </div>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <p className="mt-1.5 text-xs text-zinc-500">
+                  Alternativa de baixo atrito — ou o follow-up de quem já ouviu
+                  o áudio e não respondeu.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
                   <GerarOutreachButton leadId={lead.id} />
                   <GerarOutreachButton leadId={lead.id} tipo="followup" />
                 </div>
               </div>
 
+              {/* F038 — o site de amostra na mão do aluno, aqui e não só na aba
+                  Diagnóstico. Ele mora fora do Orion (`DEMOS_BASE_URL`), então
+                  o dono do negócio abre sem login nenhum. A Outreach de texto
+                  já sai com o link embutido; no roteiro falado, não — ninguém
+                  soletra URL no telefone —, e é daqui que o aluno copia depois. */}
+              {demoUrl && (
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                    Site de amostra deste Lead
+                  </p>
+                  <p className="mt-1.5 text-xs text-zinc-500">
+                    Link público — o cliente abre sem login. Já vai embutido na
+                    abordagem de texto.
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <a
+                      href={demoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-ghost"
+                    >
+                      Abrir ↗
+                    </a>
+                    <CopiarButton texto={demoUrl} rotulo="Copiar link" />
+                  </div>
+                </div>
+              )}
+
               {/* O canal e-mail (F027) saiu em 2026-08-13 — ver F035,
-                  "Saída do Outreach por e-mail". Abordagem é só WhatsApp. */}
+                  "Saída do Outreach por e-mail". */}
 
               {outreaches.length === 0 ? (
                 <p className="text-sm text-muted">
@@ -350,7 +407,13 @@ export default async function LeadByIdPage({
               ) : (
                 <ul className="space-y-3">
                   {outreaches.map((o) => {
-                    const wa = linkWhatsapp(lead.telefone, o.conteudo);
+                    // F038 AC4 — roteiro falado não vira `wa.me`: pré-preencher
+                    // o chat com ele mandaria pro cliente o texto que era pra
+                    // ser dito.
+                    const falado = ehRoteiroFalado(o.canal);
+                    const wa = falado
+                      ? null
+                      : linkWhatsapp(lead.telefone, o.conteudo);
                     return (
                       <li
                         key={o.id}
@@ -358,7 +421,12 @@ export default async function LeadByIdPage({
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-xs text-zinc-500">
-                            {o.canal} · {fmtData.format(o.gerado_em)}
+                            <span
+                              className={falado ? "text-emerald-300" : undefined}
+                            >
+                              {ROTULO_CANAL[o.canal]}
+                            </span>{" "}
+                            · {fmtData.format(o.gerado_em)}
                           </span>
                           <span
                             className={`badge ${
@@ -367,7 +435,11 @@ export default async function LeadByIdPage({
                                 : "bg-zinc-500/15 text-zinc-400"
                             }`}
                           >
-                            {o.enviado ? "enviado" : "não enviado"}
+                            {o.enviado
+                              ? falado
+                                ? "falado"
+                                : "enviado"
+                              : "não enviado"}
                           </span>
                         </div>
                         {o.assunto && (
@@ -379,7 +451,7 @@ export default async function LeadByIdPage({
                         <textarea
                           readOnly
                           value={o.conteudo}
-                          rows={5}
+                          rows={falado ? 8 : 5}
                           className="mt-2 w-full rounded-lg border border-border bg-zinc-900/70 p-2 text-xs text-zinc-200"
                         />
                         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -393,7 +465,18 @@ export default async function LeadByIdPage({
                               Abrir no WhatsApp
                             </a>
                           )}
-                          {!o.enviado && <MarcarEnviadaButton outreachId={o.id} />}
+                          <CopiarButton
+                            texto={o.conteudo}
+                            rotulo={falado ? "Copiar roteiro" : "Copiar texto"}
+                          />
+                          {!o.enviado && (
+                            <MarcarEnviadaButton
+                              outreachId={o.id}
+                              rotulo={
+                                falado ? "Já falei com ele" : "Marcar como enviada"
+                              }
+                            />
+                          )}
                         </div>
                       </li>
                     );
