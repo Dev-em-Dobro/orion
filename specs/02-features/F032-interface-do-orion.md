@@ -328,6 +328,43 @@ o verde da marca. A regra vale só onde a superfície é verde.
 - [ ] **AC15** — No card verde, a ação é a **única** superfície branca sólida;
       os badges são contorno.
 
+### Revisão 2026-08-13 (b) — hierarquia dentro do card verde
+
+O card verde ficou legível, mas chapado: nome, categoria, badges e estrela
+chegavam quase com o mesmo peso. A regra anterior resolveu o contraste **do
+botão** e deixou o resto no mesmo branco. Três ajustes, sobre o que já existe:
+
+- **Nome do Lead em semibold.** Era `font-medium` (500), o mesmo peso do resto
+  do card. O nome é o primeiro ponto de leitura e passa a pesar como tal (600),
+  nos dois cards — verde e escuro da `/leads` —, porque é o mesmo componente e
+  o mesmo papel.
+- **Estrela da avaliação dourada.** O tema claro derruba `amber-400` pra
+  `#b45309`, o tom que passa 4.5:1 sobre branco; sobre o verde ele vira marrom
+  e a estrela deixa de parecer estrela. No card verde ela volta a ser dourada —
+  é ícone decorativo (`aria-hidden`), quem carrega o dado é o número ao lado.
+- **Badge de score preenchido.** Contorno branco igual ao dos outros fazia o
+  score — o número que decide quem abordar primeiro — disputar em pé de
+  igualdade com "site" e "WhatsApp no braço". Ganha fundo de tinta escura
+  (preto sobre o verde da marca, **sem hex novo**, como o resto da profundidade
+  do card) e mantém o anel branco. Não vira pílula branca sólida: o branco
+  sólido segue reservado pra ação (AC15).
+
+**"Resolver" é ação primária e passa a parecer uma.** O botão da cobrança
+([F031](F031-central-de-tarefas.md)) usava `.btn-ghost` — contorno neutro em
+cima do card âmbar de "Pra fazer agora", onde a borda praticamente não aparece:
+o alvo lia como texto, não como botão. Vira `.btn-card` (sólido, verde da
+marca) nos **dois** lugares onde a linha de Tarefa existe: o bloco da home e a
+`/tarefas`. Lá ele fica ao lado do `⋯`, que continua fantasma — primária
+sólida, secundária contorno, a mesma regra do card.
+
+#### Critérios de aceitação da revisão (b)
+- [ ] **AC16** — O nome do Lead é semibold nos dois cards (verde e escuro).
+- [ ] **AC17** — No card verde a estrela da avaliação é dourada, não marrom.
+- [ ] **AC18** — No card verde o badge de score é o **único** badge com fundo
+      próprio, e a ação continua sendo a única superfície branca sólida.
+- [ ] **AC19** — "Resolver" é sólido na home e em `/tarefas`; o `⋯` de ações
+      secundárias continua fantasma.
+
 ## Lista `/leads`
 - **Grid** responsivo: 1 coluna no mobile, 2 no tablet, 3–4 no desktop.
 - **Largura: a lista usa a tela.** O container era `max-w-6xl` (1152px) dentro

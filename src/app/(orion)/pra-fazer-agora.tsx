@@ -49,11 +49,14 @@ export async function PraFazerAgora() {
                 {EXPLICACAO[t.tipo]}
               </span>
             </span>
+            {/* F032 (revisão b) — sólido, não fantasma: em cima do card âmbar
+                a borda neutra do `btn-ghost` quase não aparecia, e o alvo lia
+                como texto. Mesma regra do card de Lead: primária sólida. */}
             <Link
               href={
                 t.leadId ? `/leads/${t.leadId}?aba=abordagem` : "/tarefas"
               }
-              className="btn-ghost"
+              className="btn-card"
             >
               Resolver
             </Link>

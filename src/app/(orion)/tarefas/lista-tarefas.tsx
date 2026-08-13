@@ -61,9 +61,12 @@ function ItemTarefa({ tarefa }: { tarefa: Tarefa }) {
         ) : tarefa.tipo === "MANDAR_FOLLOWUP" && tarefa.leadId ? (
           <GerarAbordagemButton leadId={tarefa.leadId} tipo="followup" />
         ) : (
+          // F032 (revisão b) — a mesma ação tem o mesmo peso aqui e na home:
+          // sólida. O `⋯` ao lado continua fantasma, e é isso que separa
+          // primária de secundária na linha.
           <Link
             href={`/leads/${tarefa.leadId}?aba=abordagem`}
-            className="btn-ghost"
+            className="btn-card"
           >
             Resolver
           </Link>

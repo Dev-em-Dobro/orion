@@ -68,7 +68,7 @@ function Avaliacoes({
         viewBox="0 0 24 24"
         fill="currentColor"
         aria-hidden="true"
-        className="h-3.5 w-3.5 text-amber-400"
+        className="estrela-nota h-3.5 w-3.5 text-amber-400"
       >
         <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
       </svg>
@@ -113,9 +113,12 @@ export function LeadCard({
     >
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
+          {/* Semibold (F032 revisão b): era `font-medium`, o mesmo peso do
+              resto do card — o nome é o primeiro ponto de leitura e o card
+              chegava chapado, sem nada puxando o olho primeiro. */}
           <Link
             href={lead.href}
-            className="font-medium text-zinc-100 hover:text-primary hover:underline"
+            className="font-semibold text-zinc-100 hover:text-primary hover:underline"
           >
             {lead.nome}
           </Link>
@@ -135,7 +138,7 @@ export function LeadCard({
               redundante e do lado errado (a convenção de "aproximadamente" é
               antes do número, não depois). */}
           <span
-            className={`badge font-mono ${scoreBadge(lead.score, lead.scoreEstimado)}`}
+            className={`badge badge-score font-mono ${scoreBadge(lead.score, lead.scoreEstimado)}`}
             title={
               lead.scoreEstimado
                 ? `Score ${lead.score} estimado pela Triagem — ainda sem Diagnóstico`
