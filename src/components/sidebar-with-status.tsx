@@ -12,7 +12,12 @@ import { contarTarefas } from "@/lib/tarefas/consultar";
 import { Sidebar } from "@/components/sidebar";
 import type { Plano } from "@/lib/planos";
 
-export async function SidebarWithStatus() {
+export async function SidebarWithStatus({
+  /** F035 — medidor de uso, renderizado no cabeçalho do mobile. */
+  medidor,
+}: {
+  medidor?: React.ReactNode;
+} = {}) {
   let tarefasVencidas = 0;
   let plano: Plano = "free";
 
@@ -26,5 +31,11 @@ export async function SidebarWithStatus() {
     // Sem sessão: sidebar padrão. O middleware já cuida do redirect.
   }
 
-  return <Sidebar tarefasVencidas={tarefasVencidas} plano={plano} />;
+  return (
+    <Sidebar
+      tarefasVencidas={tarefasVencidas}
+      plano={plano}
+      medidor={medidor}
+    />
+  );
 }

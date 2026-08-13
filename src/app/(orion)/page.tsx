@@ -1,20 +1,15 @@
-import Link from "next/link";
+import { cookies } from "next/headers";
+import { cache, Suspense } from "react";
 import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
 import { FunilChart } from "@/components/funil-chart";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
-import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
-import { filaDeFollowUp } from "@/lib/followup";
-import {
-  ESTAGIOS_EM_ABERTO,
-  ONDE_NAO_DESCARTADO,
-  taxasDeConversao,
-} from "@/lib/funil";
+import { ESTAGIOS_EM_ABERTO, ONDE_NAO_DESCARTADO } from "@/lib/funil";
+import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
 import type { LeadStatus } from "@prisma/client";
 import { SkeletonPulse } from "@/components/page-skeleton";
-import { UsoMensalBanner } from "@/components/uso-mensal";
 import { FilaDoDia } from "./fila-do-dia";
 import { PraFazerAgora } from "./pra-fazer-agora";
 
@@ -33,263 +28,176 @@ const ESTAGIOS: { status: LeadStatus; label: string; cor: string }[] = [
   { status: "perdido", label: "Perdido", cor: "#ef4444" },
 ];
 
-const LABEL: Record<LeadStatus, string> = Object.fromEntries(
-  ESTAGIOS.map((e) => [e.status, e.label]),
-) as Record<LeadStatus, string>;
+/**
+ * Contagem por estágio. Era um `findMany` de **todos** os Leads do tenant só
+ * para contar em memória; virou `groupBy`, que o banco resolve pelo índice.
+ *
+ * Memoizado por request (F028 H5): o funil e a faixa de resultado leem a mesma
+ * coisa, e agora vivem em blocos `<Suspense>` diferentes.
+ */
+const contarPorStatus = cache(async (): Promise<Record<LeadStatus, number>> => {
+  const { whereUser } = await requireTenant();
+  const linhas = await prisma.lead.groupBy({
+    by: ["status"],
+    // F024 — descartado nunca esteve na disputa: fica fora das contagens.
+    where: { ...whereUser, ...ONDE_NAO_DESCARTADO },
+    _count: { _all: true },
+  });
+  const contagem = Object.fromEntries(
+    ESTAGIOS.map((e) => [e.status, 0]),
+  ) as Record<LeadStatus, number>;
+  for (const linha of linhas) contagem[linha.status] = linha._count._all;
+  return contagem;
+});
 
-export default async function DashboardPage() {
-  const { whereUser, userId } = await requireTenant();
-  const [leads, faltandoChaves] = await Promise.all([
-    prisma.lead.findMany({
-      // F024 — descartado nunca esteve na disputa: fica fora das contagens,
-      // das taxas de conversão e do score médio.
-      where: { ...whereUser, ...ONDE_NAO_DESCARTADO },
-      orderBy: { score: "desc" },
-      include: {
-        outreaches: {
-          where: { enviado: true },
-          orderBy: { enviado_em: "desc" },
-          take: 1,
-        },
-      },
-    }),
+async function PainelFunil() {
+  const { userId } = await requireTenant();
+  const [porStatus, faltandoChaves] = await Promise.all([
+    contarPorStatus(),
     chavesEssenciaisFaltando(userId),
   ]);
   const semChaves = faltandoChaves.length > 0;
-
-  const porStatus = Object.fromEntries(
-    ESTAGIOS.map((e) => [
-      e.status,
-      leads.filter((l) => l.status === e.status).length,
-    ]),
-  ) as Record<LeadStatus, number>;
+  const total = Object.values(porStatus).reduce((soma, n) => soma + n, 0);
   const maxEstagio = Math.max(1, ...Object.values(porStatus));
 
-  // Funil (silhueta): estágios de progressão, sem `perdido` (vazamento lateral).
+  // Silhueta: estágios de progressão, sem `perdido` (vazamento lateral).
   const funilStages = ESTAGIOS.filter((e) => e.status !== "perdido").map(
     (e) => ({
       id: e.status,
       label: e.label,
       value: porStatus[e.status],
       color: e.cor,
+      // Clicar no estágio abre a lista já filtrada por ele.
+      href: `/leads?status=${e.status}`,
     }),
   );
 
-  const scoreMedio =
-    leads.length > 0
-      ? Math.round(leads.reduce((soma, l) => soma + l.score, 0) / leads.length)
-      : 0;
+  return (
+    <section className="card">
+      <h2 className="card-title">Funil por estágio</h2>
+      <p className="card-sub">Clique em um estágio para ver os Leads dele.</p>
+      {total === 0 ? (
+        <div className="mt-4">
+          <EmptyState
+            titulo={
+              semChaves
+                ? "Configure as chaves pra começar"
+                : "Nenhum Lead no funil"
+            }
+            descricao={
+              semChaves
+                ? "Cole Google + provedor de IA em Configuração. Sem isso a coleta e o Outreach não rodam."
+                : "Colete os primeiros estabelecimentos em Leads pra encher o funil."
+            }
+            acao={
+              semChaves
+                ? { href: "/configuracao", label: "Ir para Configuração" }
+                : { href: "/leads", label: "Coletar Leads" }
+            }
+            secundaria={
+              semChaves
+                ? {
+                    href: "/configuracao/tutorial-google",
+                    label: "Tutorial Google",
+                  }
+                : undefined
+            }
+          />
+        </div>
+      ) : (
+        <FunilChart
+          stages={funilStages}
+          perdido={{
+            value: porStatus.perdido,
+            max: maxEstagio,
+            href: "/leads?status=perdido",
+          }}
+        />
+      )}
+    </section>
+  );
+}
 
+async function Resultado() {
+  const porStatus = await contarPorStatus();
   // Em aberto: no funil de venda e ainda sem desfecho final.
   const emAberto = ESTAGIOS_EM_ABERTO.reduce(
     (soma, st) => soma + porStatus[st],
     0,
   );
 
-  const taxas = taxasDeConversao(porStatus);
+  return (
+    <>
+      <section className="card">
+        <p className="metric-label">Ganhos</p>
+        <p className="metric-value text-primary">{porStatus.ganho}</p>
+        <p className="metric-nota">{porStatus.perdido} perdido(s)</p>
+      </section>
+      <section className="card">
+        <p className="metric-label">Em aberto</p>
+        <p className="metric-value text-amber-300">{emAberto}</p>
+        <p className="metric-nota">contatado → proposta, sem desfecho</p>
+      </section>
+    </>
+  );
+}
 
-  // Prontos pra contato: score alto e ainda não contatados.
-  const exigemAtencao = leads
-    .filter(
-      (l) =>
-        l.score >= 60 &&
-        (l.status === "novo" ||
-          l.status === "enriquecido" ||
-          l.status === "priorizado"),
-    )
-    .slice(0, 5);
-
-  const followUp = filaDeFollowUp(leads);
+export default async function DashboardPage() {
+  // A `/` não pode ter `loading.tsx`: o boundary ficaria no segmento `(orion)`
+  // e cobriria a `/leads`, onde o `notFound()` do detalhe chegaria depois do
+  // 200 (ver `page-skeleton.tsx`). Em vez disso a casca pinta na hora e cada
+  // bloco chega em streaming.
+  const tema = asTema((await cookies()).get(TEMA_COOKIE)?.value);
 
   return (
     <>
-    <BannerChaves />
-    <main className="mx-auto max-w-6xl px-6 py-8">
-      <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-      <p className="mt-1.5 text-base text-muted">
-        Funil de prospecção · visão geral
-      </p>
-
-      {/* F035 — medidor do plano no topo: é o número que decide quanto o aluno
-          ainda pode aprofundar este mês. */}
-      <div className="mt-5 max-w-md">
-        <Suspense fallback={<SkeletonPulse className="h-16 w-full" />}>
-          <UsoMensalBanner />
-        </Suspense>
-      </div>
-
-      {/* F025 — a fila vem antes do funil: a primeira pergunta do dia é
-          "quem eu abordo agora", não "como está o funil". */}
-      <div className="mt-6">
-        <Suspense fallback={<SkeletonPulse className="h-64 w-full" />}>
-          <FilaDoDia />
-        </Suspense>
-      </div>
-
-      {/* F031 — o par da fila: quem abordar (acima) + o que cobrar (aqui). */}
-      <div className="mt-6">
-        <Suspense fallback={<SkeletonPulse className="h-32 w-full" />}>
-          <PraFazerAgora />
-        </Suspense>
-      </div>
-
-      {/* Métricas em faixa própria. Antes viviam empilhadas numa coluna
-          estreita ao lado do funil: número de 30px espremido em 1/3 da
-          largura não é indicador, é rodapé. */}
-      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <section className="card">
-          <p className="metric-label">Total de Leads</p>
-          <p className="metric-value">{leads.length}</p>
-          <p className="metric-nota">no funil, sem descartados</p>
-        </section>
-        <section className="card">
-          <p className="metric-label">Score médio</p>
-          <p className="metric-value">{scoreMedio}</p>
-          <p className="metric-nota">de 0 a 100</p>
-        </section>
-        <section className="card">
-          <p className="metric-label">Ganhos</p>
-          <p className="metric-value text-primary">{porStatus.ganho}</p>
-          <p className="metric-nota">{porStatus.perdido} perdido(s)</p>
-        </section>
-        <section className="card">
-          <p className="metric-label">Em aberto</p>
-          <p className="metric-value text-amber-300">{emAberto}</p>
-          <p className="metric-nota">contatado → proposta, sem desfecho</p>
-        </section>
-      </div>
-
-      {/* items-start: sem isso o card de follow-up estica pra acompanhar a
-          altura do funil e vira um bloco vermelho quase vazio. */}
-      <div className="mt-6 grid items-start gap-5 lg:grid-cols-3">
-        <section className="card lg:col-span-2">
-          <h2 className="card-title">Funil por estágio</h2>
-          {leads.length === 0 ? (
-            <div className="mt-4">
-              <EmptyState
-                titulo={
-                  semChaves
-                    ? "Configure as chaves pra começar"
-                    : "Nenhum Lead no funil"
-                }
-                descricao={
-                  semChaves
-                    ? "Cole Google + provedor de IA em Configuração. Sem isso a coleta e o Outreach não rodam."
-                    : "Colete os primeiros estabelecimentos em Leads pra encher o funil."
-                }
-                acao={
-                  semChaves
-                    ? { href: "/configuracao", label: "Ir para Configuração" }
-                    : { href: "/leads", label: "Coletar Leads" }
-                }
-                secundaria={
-                  semChaves
-                    ? {
-                        href: "/configuracao/tutorial-google",
-                        label: "Tutorial Google",
-                      }
-                    : undefined
-                }
-              />
-            </div>
-          ) : (
-            <FunilChart
-              stages={funilStages}
-              perdido={{ value: porStatus.perdido, max: maxEstagio }}
-            />
-          )}
-        </section>
-
-        <section className="rounded-xl border border-red-500/35 bg-red-500/[0.07] p-6 shadow-[var(--elev-1)]">
-          <h2 className="card-title text-red-200">Follow-up pendente</h2>
-          <p className="mt-1 text-sm text-red-300/70">
-            Contatados sem resposta há 3+ dias
-          </p>
-          {followUp.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">Ninguém esperando.</p>
-          ) : (
-            <ul className="mt-4 space-y-2.5">
-              {followUp.map(({ lead, dias }) => (
-                <li
-                  key={lead.id}
-                  className="flex items-center justify-between gap-3 text-sm"
-                >
-                  <span className="truncate font-medium">{lead.nome}</span>
-                  <span className="badge shrink-0 bg-red-500/20 font-mono text-red-200">
-                    {dias}d
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {followUp.length > 0 && (
-            <Link
-              href="/leads"
-              className="mt-4 inline-block text-sm font-medium text-red-300 transition-colors hover:text-red-200 hover:underline"
-            >
-              Resolver →
-            </Link>
-          )}
-        </section>
-      </div>
-
-      <section className="card mt-6">
-        <h2 className="card-title">Taxas de conversão</h2>
-        <p className="card-sub">
-          Funil de venda · aproximação sobre o estado atual (sem histórico)
+      <BannerChaves />
+      <main
+        className={`${classeDoTema(tema)} min-h-[calc(100vh-3.5rem)] px-6 py-8 lg:px-8`}
+      >
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-base text-muted">
+          Funil de prospecção · visão geral
         </p>
-        <div className="mt-5 flex flex-wrap items-stretch gap-3">
-          {taxas.map((passo) => (
-            <div
-              key={`${passo.de}-${passo.para}`}
-              className="surface-2 min-w-[9rem] flex-1"
-            >
-              <p className="truncate text-xs text-zinc-400">
-                {LABEL[passo.de]} → {LABEL[passo.para]}
-              </p>
-              <p className="mt-1.5 font-mono text-2xl font-semibold text-zinc-50">
-                {passo.taxa === null
-                  ? "—"
-                  : `${Math.round(passo.taxa * 100)}%`}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      <section className="card mt-6">
-        <h2 className="card-title">Exigem atenção</h2>
-        <p className="card-sub">Score ≥ 60 e ainda sem Outreach enviado</p>
-        {exigemAtencao.length === 0 ? (
-          <p className="mt-4 text-sm text-muted">Nada pendente por aqui.</p>
-        ) : (
-          <ul className="mt-4 divide-y divide-border">
-            {exigemAtencao.map((lead) => (
-              <li
-                key={lead.id}
-                className="flex items-center justify-between gap-3 py-3 first:pt-0"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{lead.nome}</p>
-                  <p className="truncate text-xs text-zinc-500">
-                    {lead.categoria}
-                  </p>
-                </div>
-                <span className="badge shrink-0 bg-emerald-500/20 font-mono text-emerald-300">
-                  {lead.score}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <Link
-          href="/leads"
-          className="mt-4 inline-block text-sm font-medium text-primary transition-colors hover:text-primary-hover hover:underline"
-        >
-          Abrir Leads →
-        </Link>
-      </section>
-    </main>
+        {/* F032 (2026-08-13) — três perguntas, um bloco cada. "O que fazer" na
+            coluna larga porque a Fila do dia renderiza o card de Lead inteiro
+            (~320px); o funil é SVG vertical de 320px fixos e é ele que cabe no
+            rail estreito. A coluna da esquerda é o primeiro ponto de leitura,
+            o que preserva a prioridade da F025. */}
+        <div className="mt-6 grid items-start gap-5 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            <Suspense fallback={<SkeletonPulse className="h-64 w-full" />}>
+              <FilaDoDia />
+            </Suspense>
+
+            {/* F031 — o par da fila: quem abordar (acima) + o que cobrar (aqui). */}
+            <Suspense fallback={<SkeletonPulse className="h-32 w-full" />}>
+              <PraFazerAgora />
+            </Suspense>
+          </div>
+
+          <Suspense fallback={<SkeletonPulse className="h-96 w-full" />}>
+            <PainelFunil />
+          </Suspense>
+        </div>
+
+        {/* O que já fiz. Fraco de propósito por enquanto: a medida de esforço
+            (Leads abordados no mês) ficou fora desta rodada — ver a nota na
+            F032. */}
+        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <Suspense
+            fallback={
+              <>
+                <SkeletonPulse className="h-32 w-full" />
+                <SkeletonPulse className="h-32 w-full" />
+              </>
+            }
+          >
+            <Resultado />
+          </Suspense>
+        </div>
+      </main>
     </>
   );
 }
