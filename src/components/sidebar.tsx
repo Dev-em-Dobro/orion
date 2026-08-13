@@ -57,6 +57,25 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
           />
         ),
       },
+      // Funil em segundo: depois de "como estou" (Dashboard), a pergunta é
+      // "onde cada Lead parou" — e é no kanban que o aluno mexe o funil. A
+      // lista bruta vem depois disso.
+      {
+        href: "/funil",
+        label: "Funil",
+        recurso: "kanban",
+        icone: (
+          <Icone
+            d={
+              <>
+                <rect x="3" y="4" width="5" height="16" rx="1" />
+                <rect x="10" y="4" width="5" height="11" rx="1" />
+                <rect x="17" y="4" width="4" height="7" rx="1" />
+              </>
+            }
+          />
+        ),
+      },
       {
         href: "/leads",
         label: "Leads",
@@ -83,22 +102,6 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
               <>
                 <rect x="4" y="7" width="16" height="12" rx="3" />
                 <path d="M12 3v4M9 13h.01M15 13h.01M9 16h6" />
-              </>
-            }
-          />
-        ),
-      },
-      {
-        href: "/funil",
-        label: "Funil",
-        recurso: "kanban",
-        icone: (
-          <Icone
-            d={
-              <>
-                <rect x="3" y="4" width="5" height="16" rx="1" />
-                <rect x="10" y="4" width="5" height="11" rx="1" />
-                <rect x="17" y="4" width="4" height="7" rx="1" />
               </>
             }
           />
