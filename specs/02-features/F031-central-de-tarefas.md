@@ -121,9 +121,29 @@ existentes — `registrarDesfecho` (F006), `gerarOutreach` (F005/F027),
 - **`/tarefas`** — lista completa, agrupada por faixa de atraso. Cada linha:
   nome do Lead + o que aconteceu ("abordado há 14h, sem resposta registrada") +
   ação primária + `⋯` (Adiar 1 dia · Dispensar · Abrir Lead).
+- **A ação primária resolve na própria linha quando dá.** `MANDAR_FOLLOWUP`
+  gera o follow-up ali mesmo (`GerarOutreachButton tipo="followup"`), como o
+  `APROFUNDAR_FILA` já fazia. Só quem precisa de decisão do aluno
+  (`CONFIRMAR_RESPOSTA`, `AVANCAR_RESPONDEU`, `COBRAR_PROPOSTA`) manda pro Lead
+  com "Resolver".
 - **Estado vazio** — "Nada atrasado. Sua fila de hoje tem N Leads." com link.
 - Cada Tarefa **explica a regra** em uma linha, pra cobrança não parecer
   arbitrária.
+
+### A cobrança de follow-up mora aqui, e só aqui
+
+> **Mudança de 2026-08-13.** A `/leads` tinha um painel "Follow-up pendente"
+> herdado da [F006](F006-followup-e-funil.md), com a própria query. Era a
+> **mesma regra** da Tarefa `MANDAR_FOLLOWUP` — `regras.ts` já registrava
+> "alinhado ao `FOLLOWUP_DIAS` da F006, é a mesma janela". O mesmo Lead atrasado
+> aparecia no painel **e** no badge da sidebar **e** em `/tarefas`, com três
+> contagens diferentes na tela (o painel ainda cortava em 20 e mostrava o número
+> **já cortado** como se fosse o total).
+
+O painel saiu da `/leads`. A regra de janela da F006 (`filaDeFollowUp`,
+`whereFilaFollowUp`) continua servindo o Dashboard e o cálculo da Tarefa — o que
+some é a **terceira superfície** de aviso. Cobrança de follow-up tem um lugar:
+`/tarefas`, com o badge da sidebar como aviso.
 
 ## Critérios de aceitação
 - [ ] **AC1** — Lead `contatado` com Outreach enviada há 13h e sem desfecho
@@ -143,6 +163,10 @@ existentes — `registrarDesfecho` (F006), `gerarOutreach` (F005/F027),
       única** `APROFUNDAR_FILA`, e o botão dela chama o lote da F025.
 - [ ] **AC9** — Badge da sidebar bate com o número de Tarefas vencidas da
       página.
+- [ ] **AC13** — `MANDAR_FOLLOWUP` gera o follow-up na própria linha de
+      `/tarefas`, sem passar pelo detalhe do Lead.
+- [ ] **AC14** — A `/leads` **não** mostra painel de follow-up: o Lead atrasado
+      aparece em `/tarefas` e no badge da sidebar, e em nenhum outro lugar.
 - [ ] **AC10** — `calcular.ts` é puro e testado com relógio fixo, cobrindo os
       seis tipos, a exclusão mútua (AC2) e os adiamentos.
 - [ ] **AC11** — Isolamento (F015): as Tarefas só olham Leads do usuário

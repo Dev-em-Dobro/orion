@@ -10,6 +10,7 @@ import {
   type FaixaUrgencia,
 } from "@/lib/tarefas/regras";
 import { AprofundarButton } from "../leads/aprofundar-button";
+import { GerarOutreachButton } from "../leads/gerar-outreach-button";
 import { TarefaAcoes } from "./tarefa-acoes";
 
 const ORDEM_FAIXA: FaixaUrgencia[] = ["atrasada", "vencida", "hoje"];
@@ -51,9 +52,14 @@ function ItemTarefa({ tarefa }: { tarefa: Tarefa }) {
         </p>
       </div>
 
+      {/* F031 — a ação resolve na própria linha quando dá. `MANDAR_FOLLOWUP`
+          gera o follow-up aqui, como o painel que saiu da `/leads` fazia; o
+          resto pede decisão do aluno e continua indo pro detalhe do Lead. */}
       <div className="flex flex-wrap items-center gap-2">
         {tarefa.tipo === "APROFUNDAR_FILA" ? (
           <AprofundarButton rotulo="Aprofundar próximos 10" />
+        ) : tarefa.tipo === "MANDAR_FOLLOWUP" && tarefa.leadId ? (
+          <GerarOutreachButton leadId={tarefa.leadId} tipo="followup" />
         ) : (
           <Link
             href={`/leads/${tarefa.leadId}?aba=abordagem`}
