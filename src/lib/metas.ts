@@ -34,10 +34,10 @@ export type MetaDoMes = {
 
 /**
  * Conta **Leads distintos** com abordagem enviada na competência — não
- * Outreaches. Mandar três follow-ups pro mesmo Lead é um Lead abordado, não
+ * Abordagens. Mandar três follow-ups pro mesmo Lead é um Lead abordado, não
  * três; senão a meta premiaria insistência em vez de alcance.
  *
- * `Outreach.enviado_em` já é persistido e o índice
+ * `Abordagem.enviado_em` já é persistido e o índice
  * `[lead_id, enviado, enviado_em]` já existe, então isto é uma consulta — sem
  * event log e sem cron (ADR-002).
  */
@@ -50,7 +50,7 @@ export async function metaDoMes(
   const abordados = await prisma.lead.count({
     where: {
       user_id: userId,
-      outreaches: {
+      abordagens: {
         some: { enviado: true, enviado_em: { gte: inicio, lt: fim } },
       },
     },

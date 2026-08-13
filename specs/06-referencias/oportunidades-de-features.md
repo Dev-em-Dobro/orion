@@ -23,7 +23,7 @@ qualificado → proposta → ganho`.
 |-------|------------------------|
 | novo → enriquecido | F002 Diagnóstico · F008 Diagnóstico UX |
 | enriquecido → priorizado | F003 Score |
-| priorizado → contatado | F005 Outreach · F006 marcar enviada |
+| priorizado → contatado | F005 Abordagem · F006 marcar enviada |
 | contatado → (re-toque) | F006 Follow-up |
 | **contatado → respondeu** | *(nada)* |
 | **respondeu → qualificado** | ❌ **nada** |
@@ -129,7 +129,7 @@ e mirando a fraqueza real do aluno (vender, não achar Lead).**
   quer cliente agora**: ótimo *sinal de qualificação/timing*, mas é upstream
   (prioriza), não fecha. Candidato a incrementar a F003, não a "camada de
   fechamento".
-- **Canal e-mail no Outreach** — Apollo/MapLeads são multicanal. No local BR o
+- **Canal e-mail na Abordagem** — Apollo/MapLeads são multicanal. No local BR o
   WhatsApp domina; ganho marginal de fechamento. Baixa prioridade.
 - **Escrita de e-mail por IA / disparo em massa** (MapLeads) — já coberto pela
   F005 no espírito certo (personalizado, manual), e o "massa" conflita com LGPD.
@@ -143,4 +143,4 @@ As 3 viraram specs em `/specs/02-features`:
 Sugestão de **ordem de implementação** por alavanca de fechamento (independe do
 nº do ID): **F012 Proposta** (mais direta pro `ganho`) → **F011 Objeções** →
 **F013 Roleplay**. Nenhuma muda o domain model nem exige lib/ADR novos (todas
-reusam o [ADR-005](../04-decisions/ADR-005-anthropic-sdk-outreach.md)).
+reusam o [ADR-005](../04-decisions/ADR-005-anthropic-sdk-abordagem.md)).

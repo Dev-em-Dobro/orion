@@ -20,7 +20,7 @@ export { competenciaDe, intervaloDaCompetencia };
 
 /**
  * Venda que conta (F037, "Antifraude"): Lead `ganho` na competência que teve
- * **trabalho real** — Diagnóstico executado e Outreach marcada como enviada.
+ * **trabalho real** — Diagnóstico executado e Abordagem marcada como enviada.
  *
  * Não impede fraude, encarece: pra inflar o número é preciso rodar o fluxo
  * inteiro e gastar cota de coleta e de diagnóstico. A conferência humana antes
@@ -31,7 +31,7 @@ function ondeVendaConta(inicio: Date, fim: Date) {
     status: "ganho" as const,
     status_em: { gte: inicio, lt: fim },
     diagnosticos: { some: {} },
-    outreaches: { some: { enviado: true } },
+    abordagens: { some: { enviado: true } },
   };
 }
 

@@ -18,11 +18,11 @@ Duas formas de isolar tenants:
 ## Decisão
 **Row-level tenancy: um schema compartilhado com `user_id`.**
 
-- `user_id` (FK → `User`) em **Lead, Diagnóstico, Dor, Outreach** (+ índice por
+- `user_id` (FK → `User`) em **Lead, Diagnóstico, Dor, Abordagem** (+ índice por
   `user_id`) e em `UserApiKeys` ([F016](../02-features/F016-configuracao-de-chaves.md)).
 - **Toda** query e Server Action filtra por `user_id` da sessão, obtido via
   `requireUser()` ([ADR-007](ADR-007-better-auth.md)). Sem exceção: coletar,
-  diagnosticar, priorizar, outreach, follow-up, desfecho, proposta, objeções,
+  diagnosticar, priorizar, abordagem, follow-up, desfecho, proposta, objeções,
   simulador, dashboard, treino.
 - `revalidatePath` e qualquer cache revistos pra **não vazar** entre usuários.
 - **Teste de isolamento** obrigatório: aluno A nunca acessa dado de B (F015, AC).

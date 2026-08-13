@@ -55,7 +55,7 @@ Versão compacta do card da [F032](F032-interface-do-orion.md):
   não requisito. (Drag & drop nativo não é acessível por teclado — por isso o
   select não é fallback opcional, é parte da entrega.)
 - Soltar chama `corrigirStatus({ lead_id, status })` (F024): aceita avanço e
-  regressão, grava `status_em`, não apaga Diagnóstico, Dor nem Outreach.
+  regressão, grava `status_em`, não apaga Diagnóstico, Dor nem Abordagem.
 - **Otimista com rollback**: o card move na hora; se a action falhar, ele volta
   e a UI mostra o erro.
 
@@ -71,7 +71,7 @@ mais útil pra quem trabalha uma cidade de cada vez.
 - [ ] **AC3** — Arrastar um card de "Abordados" para "Responderam" persiste
       `status = respondeu` e atualiza `status_em`.
 - [ ] **AC4** — Mover **para trás** (ex.: "Abordados" → "Prontos") é permitido e
-      mantém Diagnóstico, Dores e Outreaches intactos.
+      mantém Diagnóstico, Dores e Abordagens intactos.
 - [ ] **AC5** — O select "Mover para…" faz exatamente o mesmo que o arrastar, e
       é operável só com teclado.
 - [ ] **AC6** — Falha na action devolve o card à coluna de origem e mostra erro

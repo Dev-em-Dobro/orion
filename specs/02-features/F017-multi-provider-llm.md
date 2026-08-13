@@ -39,7 +39,7 @@ cliente. Features não tocam SDK de provider.
 - [x] **AC2** — Trocar o provider na `/configuracao` faz as features usarem o
       provedor escolhido, com a chave do aluno (F016).
 - [x] **AC3** — **Structured output** funciona nos 3 provedores para os schemas
-      já usados (outreach, proposta, objeções, scorecard, ideias, UX).
+      já usados (abordagem, proposta, objeções, scorecard, ideias, UX).
 - [x] **AC4** — **Visão** (F008) via `generateVisionStructured`; falha com
       `LlmError` claro se o provedor/modelo rejeitar.
 - [x] **AC5** — Chave/permissão inválida → `LlmError` / mensagem amigável.
@@ -53,7 +53,7 @@ cliente. Features não tocam SDK de provider.
 
 ## Como testar
 1. `/configuracao` — salvar chave Gemini (ou OpenAI) + escolher o provider
-2. Gerar Outreach / Ideias / Treino — deve usar o provedor escolhido
+2. Gerar Abordagem / Ideias / Treino — deve usar o provedor escolhido
 3. Voltar para Anthropic — features voltam a Claude
 
 ## Fora do escopo (F017)

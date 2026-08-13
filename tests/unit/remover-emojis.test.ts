@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { removerEmojis } from "@/lib/outreach/removerEmojis";
+import { removerEmojis } from "@/lib/abordagem/removerEmojis";
 
 describe("removerEmojis", () => {
   it("remove emoji e limpa espaços", () => {

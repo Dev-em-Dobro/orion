@@ -18,7 +18,7 @@ function lead(patch: Partial<LeadParaTarefa> = {}): LeadParaTarefa {
     status_em: new Date(AGORA),
     score: 70,
     telefone: "(41) 90000-0000",
-    outreaches: [],
+    abordagens: [],
     ...patch,
   };
 }
@@ -44,13 +44,13 @@ function calc(leads: LeadParaTarefa[], adiamentos: Adiamento[] = []) {
 
 describe("CONFIRMAR_RESPOSTA (o pedido que originou a feature)", () => {
   it("aparece com 13h sem desfecho", () => {
-    const t = calc([lead({ outreaches: [enviada(AGORA - 13 * HORA)] })]);
+    const t = calc([lead({ abordagens: [enviada(AGORA - 13 * HORA)] })]);
     expect(t).toHaveLength(1);
     expect(t[0]?.tipo).toBe("CONFIRMAR_RESPOSTA");
   });
 
   it("não aparece com 11h", () => {
-    expect(calc([lead({ outreaches: [enviada(AGORA - 11 * HORA)] })])).toEqual(
+    expect(calc([lead({ abordagens: [enviada(AGORA - 11 * HORA)] })])).toEqual(
       [],
     );
   });
@@ -58,7 +58,7 @@ describe("CONFIRMAR_RESPOSTA (o pedido que originou a feature)", () => {
 
 describe("exclusão mútua com MANDAR_FOLLOWUP", () => {
   it("passados 3 dias, vira follow-up e NÃO empilha as duas", () => {
-    const t = calc([lead({ outreaches: [enviada(AGORA - 4 * DIA)] })]);
+    const t = calc([lead({ abordagens: [enviada(AGORA - 4 * DIA)] })]);
     expect(t).toHaveLength(1);
     expect(t[0]?.tipo).toBe("MANDAR_FOLLOWUP");
   });
@@ -66,7 +66,7 @@ describe("exclusão mútua com MANDAR_FOLLOWUP", () => {
   it("follow-up enviado hoje zera a cobrança", () => {
     // O envio mais recente é o que conta, não o mais antigo.
     const t = calc([
-      lead({ outreaches: [enviada(AGORA - 1 * HORA), enviada(AGORA - 5 * DIA)] }),
+      lead({ abordagens: [enviada(AGORA - 1 * HORA), enviada(AGORA - 5 * DIA)] }),
     ]);
     expect(t).toEqual([]);
   });
@@ -75,7 +75,7 @@ describe("exclusão mútua com MANDAR_FOLLOWUP", () => {
 describe("demais tipos", () => {
   it("ENVIAR_ABORDAGEM: gerada há 25h e não enviada", () => {
     const t = calc([
-      lead({ status: "priorizado", outreaches: [gerada(AGORA - 25 * HORA)] }),
+      lead({ status: "priorizado", abordagens: [gerada(AGORA - 25 * HORA)] }),
     ]);
     expect(t[0]?.tipo).toBe("ENVIAR_ABORDAGEM");
   });
@@ -109,7 +109,7 @@ describe("status fora do jogo", () => {
   it("descartado, ganho e perdido não geram cobrança", () => {
     for (const status of ["descartado", "ganho", "perdido"] as const) {
       const t = calc([
-        lead({ status, outreaches: [enviada(AGORA - 10 * DIA)] }),
+        lead({ status, abordagens: [enviada(AGORA - 10 * DIA)] }),
       ]);
       expect(t).toEqual([]);
     }
@@ -118,7 +118,7 @@ describe("status fora do jogo", () => {
 
 describe("adiar e dispensar", () => {
   const marco = new Date(AGORA - 13 * HORA);
-  const base = lead({ outreaches: [enviada(marco.getTime())] });
+  const base = lead({ abordagens: [enviada(marco.getTime())] });
 
   it("adiada some até o prazo e volta depois", () => {
     const adiada: Adiamento = {
@@ -164,7 +164,7 @@ describe("adiar e dispensar", () => {
 describe("ordenação", () => {
   it("a mais atrasada vem primeiro", () => {
     const t = calc([
-      lead({ id: "a", outreaches: [enviada(AGORA - 13 * HORA)] }),
+      lead({ id: "a", abordagens: [enviada(AGORA - 13 * HORA)] }),
       lead({
         id: "b",
         status: "proposta",

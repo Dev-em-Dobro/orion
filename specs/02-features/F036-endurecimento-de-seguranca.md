@@ -60,7 +60,7 @@ efeito na contagem visível ao aluno está na [F018](F018-limites-diarios.md).
 O passo 2 vem antes do 3 de propósito: **bloqueio de plano não pode gastar cota
 diária**. O aluno que bateu no teto mensal não perde também a cota do dia.
 
-Call sites migrados: `coletar`, `gerarOutreach`, `gerarProposta`,
+Call sites migrados: `coletar`, `gerarAbordagem`, `gerarProposta`,
 `simulador/responder` (em `ec4a822`); `aprofundar` e o endpoint do Agente (em
 `fb15821`). `verificarCota` e `consumirCota` continuam exportados como aliases
 **depreciados** — nenhum call site os usa.

@@ -1,10 +1,10 @@
-// F005/F006 — Playbook de conversão do Outreach. Fonte única da estratégia de
-// mensagem. Spec: F005-outreach-whatsapp.md e F006-follow-up-e-funil.md.
+// F005/F006 — Playbook de conversão da Abordagem. Fonte única da estratégia de
+// mensagem. Spec: F005-abordagem-whatsapp.md e F006-follow-up-e-funil.md.
 // Mudar o tom/as regras aqui é mudança de comportamento → atualizar a spec antes.
 
 import { BRAND } from "../brand";
 
-export type TipoOutreach = "primeira" | "followup";
+export type TipoAbordagem = "primeira" | "followup";
 
 export type ContextoLead = {
   nome: string;
@@ -63,7 +63,7 @@ COMO ESCREVER
 SAÍDA
 Responda apenas com o campo "mensagem": o texto final, pronto pra enviar. Nada antes, nada depois. Sem emoji.`;
 
-export function systemPrompt(tipo: TipoOutreach): string {
+export function systemPrompt(tipo: TipoAbordagem): string {
   return tipo === "followup" ? SYSTEM_PROMPT_FOLLOWUP : SYSTEM_PROMPT_PRIMEIRA;
 }
 

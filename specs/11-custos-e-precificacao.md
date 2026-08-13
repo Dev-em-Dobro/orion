@@ -69,7 +69,7 @@ Modelos configurados em `src/lib/llm/modelos.ts`: `gpt-4o` (strong) e
 > antes de publicar plano pago. A ordem de grandeza — mini ≈ **6% do custo** do
 > strong — é o que importa aqui e é estável.
 
-### LLM — Anthropic (BYOK, e referência do [ADR-005](04-decisions/ADR-005-anthropic-sdk-outreach.md))
+### LLM — Anthropic (BYOK, e referência do [ADR-005](04-decisions/ADR-005-anthropic-sdk-abordagem.md))
 Fonte: tabela oficial de modelos (consultada em 2026-08-10).
 
 | Modelo | Input / 1M | Output / 1M |
@@ -102,8 +102,8 @@ Lead ≈ 2.000 tokens de entrada; saída conforme a operação). Câmbio assumid
 | Busca (padrão de hoje, 5 páginas) | 5 req Places | $0,175 · R$0,96 |
 | **Triagem** (score de todos, F025) | — | **$0** |
 | **Diagnóstico** de 1 Lead (F002 + F026 + F027) | 1 GET no site + 1 PSI | **$0** |
-| **Outreach** WhatsApp ou e-mail (~300 tokens de saída) | gpt-4o | **~$0,008** · R$0,04 |
-| Outreach no tier `fast` | gpt-4o-mini | ~$0,0005 · R$0,003 |
+| **Abordagem** WhatsApp ou e-mail (~300 tokens de saída) | gpt-4o | **~$0,008** · R$0,04 |
+| Abordagem no tier `fast` | gpt-4o-mini | ~$0,0005 · R$0,003 |
 | **Proposta** (F012, ~800 tokens de saída) | gpt-4o | ~$0,013 · R$0,07 |
 | **Objeções** (F011) | gpt-4o | ~$0,008 · R$0,04 |
 | **Simulador** (F013, por mensagem) | gpt-4o | ~$0,006 · R$0,03 |
@@ -115,7 +115,7 @@ Duas leituras que orientam o resto do documento:
    a leitura do site aproveita uma requisição que já acontecia
    ([ADR-016](04-decisions/ADR-016-leitura-do-site-do-lead.md)).
 2. **O custo está na busca, não na IA.** Uma busca custa o equivalente a ~4
-   Outreaches. Limitar geração de texto protege pouco; limitar **coleta**
+   Abordagens. Limitar geração de texto protege pouco; limitar **coleta**
    protege muito.
 
 ---
@@ -131,7 +131,7 @@ Perfil = **aluno no teto do plano**. É o pior caso, não o caso típico: na
 prática quase ninguém encosta no limite, então a margem real fica acima da
 calculada aqui.
 
-Modelo por operação: Outreach, Proposta e Objeções em **gpt-4o** (texto que vai
+Modelo por operação: Abordagem, Proposta e Objeções em **gpt-4o** (texto que vai
 pro cliente, qualidade importa); Agente e Simulador em **gpt-4o-mini** (~6% do
 custo, conversa interativa de alto volume — ver §6, alavanca 3).
 
@@ -139,7 +139,7 @@ custo, conversa interativa de alto volume — ver §6, alavanca 3).
 |---|---|---|---|
 | Leads novos/mês | 60 | 300 | 800 |
 | Places (req · custo) | 3 · $0,105 | 15 · $0,525 | 40 · $1,400 |
-| Outreach (4o) | 20 · $0,160 | 150 · $1,200 | 300 · $2,400 |
+| Abordagem (4o) | 20 · $0,160 | 150 · $1,200 | 300 · $2,400 |
 | Proposta (4o) | 3 · $0,039 | 30 · $0,390 | 60 · $0,780 |
 | Objeções (4o) | 5 · $0,040 | 50 · $0,400 | 80 · $0,640 |
 | Agente (mini) | 5 · $0,006 | 100 · $0,120 | 300 · $0,360 |
@@ -180,7 +180,7 @@ Passando de ~333 alunos Free ativos, cada aluno adicional custa **$0,105/mês**
 | **Preço cheio** | R$0 | **R$39/mês** | **R$97/mês** |
 | **Preço aluno (−20%)** | R$0 | **R$31,20/mês** | **R$77,60/mês** |
 | Leads novos/mês | 60 | 300 | 800 |
-| Outreach WhatsApp/mês | 20 | 150 | 300 |
+| Abordagem WhatsApp/mês | 20 | 150 | 300 |
 | Proposta/mês | 3 | 30 | 60 |
 | Objeções/mês | 5 | 50 | 80 |
 | Agente Orion/mês | 5 | 100 | 300 |
@@ -196,7 +196,7 @@ o teto chegou.
 
 ### Por que a Agência caiu de 1.500 para 800 leads
 
-A 1.500 leads + 600 outreach o custo vai a **R$58,55/mês**. Contra R$97 isso é
+A 1.500 leads + 600 abordagem o custo vai a **R$58,55/mês**. Contra R$97 isso é
 39% de margem, e contra os R$77,60 do aluno com desconto, **25%** — abaixo do
 que qualquer software sustenta. Duas saídas:
 
@@ -289,7 +289,7 @@ o que vier primeiro), não plano permanente.
 | 1 | **Padrão de 1 página no Places** (20 Leads em vez de até 100) | **−80%** do custo Places | [F033](02-features/F033-busca-estruturada.md) — já especificado |
 | 2 | **Cache compartilhado de resultados do Places** por (nicho, cidade, bairro), TTL ~30 dias | **−70 a −90%** do Places quando vários alunos varrem a mesma praça — e eles varrem | **Exige ADR** (dado é público e idêntico entre alunos, mas o Lead é escopado por `user_id` — o cache seria da *resposta do Google*, não do Lead) |
 | 3 | **Tier `fast` por operação** (follow-up, resumo, classificação) | **−94%** nessas operações (mini vs. 4o) | `modeloPara(provider, "fast")` **já existe e quase não é usado** — decidir por operação |
-| 4 | **Prompt caching** nos prompts fixos (outreach, proposta, agente) | −40 a −80% do input a partir da 2ª chamada | Agente (F029) é o maior beneficiário: multi-turn com system prompt grande |
+| 4 | **Prompt caching** nos prompts fixos (abordagem, proposta, agente) | −40 a −80% do input a partir da 2ª chamada | Agente (F029) é o maior beneficiário: multi-turn com system prompt grande |
 | 5 | **Empurrar BYOK nos planos pagos** | custo marginal → ~$0 | Já é o gancho do "+100% de limite" |
 | 6 | **Não aprofundar Lead que ninguém vai abordar** | −N diagnósticos | Já é o desenho da F025 (top 10, não os 83) |
 | 7 | **Batch API (−50%)** | só se surgir geração em lote assíncrona | Hoje tudo é síncrono ([ADR-002](04-decisions/ADR-002-sem-workers-fase-1.md)) — não aplicável |

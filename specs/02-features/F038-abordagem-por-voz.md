@@ -6,7 +6,7 @@ Proposta — 2026-08-13
 ## Objetivo
 Dar ao aluno, na aba **Abordagem** do Lead, um **roteiro falado** — pronto pra
 ligar ou pra gravar um áudio de WhatsApp — gerado da mesma **Dor** que hoje
-alimenta a Outreach de texto ([F005](F005-outreach-whatsapp.md)).
+alimenta a Abordagem de texto ([F005](F005-abordagem-whatsapp.md)).
 
 Hoje a única saída do Orion é texto frio no WhatsApp. Texto frio é o canal
 mais fácil de ignorar: chega junto com todo o resto da caixa e não custa nada
@@ -19,7 +19,7 @@ alternativa de baixo atrito logo abaixo.
 
 ## Decisão: canal novo (`ligacao`), não um `tipo` de WhatsApp
 
-`Outreach.canal` ganha o valor **`ligacao`**. A alternativa — gravar o roteiro
+`Abordagem.canal` ganha o valor **`ligacao`**. A alternativa — gravar o roteiro
 como `canal = whatsapp` — foi descartada: o artefato é diferente o bastante pra
 não poder ser tratado igual.
 
@@ -28,17 +28,17 @@ não poder ser tratado igual.
 - O histórico da aba precisa distinguir "o que eu já mandei escrito" de "o que
   eu falei" — são taxas de resposta diferentes, e é isso que o aluno vai querer
   comparar depois.
-- `Outreach.enviado` continua significando "eu fiz o contato", agora incluindo
+- `Abordagem.enviado` continua significando "eu fiz o contato", agora incluindo
   "eu liguei / mandei o áudio". A janela de follow-up da
   [F006](F006-follow-up-e-funil.md) não muda: conta do `enviado_em`, qualquer
   que seja o canal.
 
 O `canal = email` continua **fora** do produto ([F035](F035-planos-e-limites.md),
-"Saída do Outreach por e-mail"): o valor do enum sobrevive no banco pelos
+"Saída da Abordagem por e-mail"): o valor do enum sobrevive no banco pelos
 registros antigos, mas a Server Action rejeita `email` na entrada (AC7).
 
 ## Táticas do roteiro (embutidas no system prompt)
-Codificado em `src/lib/outreach/prompt-ligacao.ts`. Herda a disciplina da F005 —
+Codificado em `src/lib/abordagem/prompt-ligacao.ts`. Herda a disciplina da F005 —
 especificidade, CTA único, honestidade — com o que **muda quando é falado**:
 
 1. **Frase falada, não frase escrita.** Sem período longo, sem subordinada, sem
@@ -80,20 +80,20 @@ A ordem dos cards codifica a recomendação: **voz primeiro, texto depois.**
   sempre que `canal = ligacao`).
 - **Marcar como enviada** continua disponível: é como o aluno registra que
   ligou ou mandou o áudio, e é o que alimenta o follow-up da F006.
-- No histórico da aba, cada Outreach mostra o rótulo do canal em PT
+- No histórico da aba, cada Abordagem mostra o rótulo do canal em PT
   ("Ligação ou áudio" / "WhatsApp") e só as ações que fazem sentido pra ele.
 
 ## Fluxo
 1. Aluno clica em **Gerar roteiro de ligação** na aba Abordagem.
-2. Server Action `gerarOutreachAction({ lead_id, canal: "ligacao" })` — a mesma
+2. Server Action `gerarAbordagemAction({ lead_id, canal: "ligacao" })` — a mesma
    da F005, sem caminho novo de cota:
    1. Valida com Zod; `canal = email` → input inválido (AC7).
-   2. Teto mensal do plano e cota diária da operação **`outreach`** — voz e
+   2. Teto mensal do plano e cota diária da operação **`abordagem`** — voz e
       texto disputam o mesmo teto, porque custam o mesmo (uma geração).
    3. Sem Diagnóstico → `{ erro: "Diagnostique o Lead antes de gerar a
-      Outreach" }`, sem chamar o modelo e com a cota estornada.
+      Abordagem" }`, sem chamar o modelo e com a cota estornada.
    4. `gerarRoteiroLigacao(ctx, llm, tipo)` → `{ mensagem }`.
-   5. Persiste `Outreach { canal: "ligacao", assunto: null, enviado: false }`.
+   5. Persiste `Abordagem { canal: "ligacao", assunto: null, enviado: false }`.
    6. Retorna `waLink: null`.
 3. UI mostra o roteiro + **Copiar roteiro** + **Marcar como enviada**.
 
@@ -102,7 +102,7 @@ Gerar roteiro **não** muda o `status` do Lead — igual à F005.
 ## Critérios de aceitação
 - [ ] **AC1** — Na aba Abordagem, o card de ligação/áudio aparece **acima** do
       de WhatsApp, com borda `emerald` e a tag "Mais eficiente".
-- [ ] **AC2** — Gerar roteiro cria um `Outreach` com `canal = ligacao`,
+- [ ] **AC2** — Gerar roteiro cria um `Abordagem` com `canal = ligacao`,
       `assunto = null`, `enviado = false`.
 - [ ] **AC3** — O roteiro vem em PT-BR falado, ≤ ~90 palavras, terminando em
       pergunta, sem emoji e sem rubrica entre colchetes ou parênteses.
@@ -110,24 +110,24 @@ Gerar roteiro **não** muda o `status` do Lead — igual à F005.
 - [ ] **AC4** — `canal = ligacao` → a UI **não** mostra "Abrir no WhatsApp",
       nem no resultado recém-gerado nem no histórico; mostra "Copiar roteiro".
 - [ ] **AC5** — Lead sem Diagnóstico → `{ erro }` específico, sem chamada de
-      modelo, sem `Outreach` criada e com a cota diária estornada.
+      modelo, sem `Abordagem` criada e com a cota diária estornada.
 - [ ] **AC6** — Roteiro gerado conta no mesmo teto mensal e na mesma cota
-      diária de `outreach` que a Outreach de texto.
+      diária de `abordagem` que a Abordagem de texto.
 - [ ] **AC7** — `canal = email` enviado direto pra Server Action → input
-      inválido, sem `Outreach` criada (mantém a F035 AC20).
-- [ ] **AC8** — "Marcar como enviada" numa Outreach de `canal = ligacao` grava
+      inválido, sem `Abordagem` criada (mantém a F035 AC20).
+- [ ] **AC8** — "Marcar como enviada" numa Abordagem de `canal = ligacao` grava
       `enviado_em` e entra na janela de follow-up da F006 como qualquer outra.
 
 ## Decisões de implementação
-- `src/lib/outreach/prompt-ligacao.ts` — system prompt do roteiro falado
+- `src/lib/abordagem/prompt-ligacao.ts` — system prompt do roteiro falado
   (playbook acima). Fonte única do tom de voz.
-- `src/lib/outreach/gerarOutreach.ts` — `gerarRoteiroLigacao()`, mesmo
+- `src/lib/abordagem/gerarAbordagem.ts` — `gerarRoteiroLigacao()`, mesmo
   `generateStructured` e mesmo `removerEmojis` da F005.
-- `src/actions/leads/gerarOutreach.ts` — o `canal` do Zod passa a
+- `src/actions/leads/gerarAbordagem.ts` — o `canal` do Zod passa a
   `z.enum(["whatsapp", "ligacao"])`; o `waLink` só é montado no WhatsApp.
 - `prisma/schema.prisma` — `enum Canal` ganha `ligacao`
   (`ALTER TYPE "Canal" ADD VALUE 'ligacao'`).
-- `src/lib/outreach/canais.ts` — rótulo em PT por canal, usado no histórico.
+- `src/lib/abordagem/canais.ts` — rótulo em PT por canal, usado no histórico.
 
 ## Fora do escopo (F038)
 - **Discagem, gravação ou envio pela plataforma.** O Orion escreve o roteiro; o
@@ -138,7 +138,7 @@ Gerar roteiro **não** muda o `status` do Lead — igual à F005.
 - Follow-up por voz (`tipo = followup` com `canal = ligacao`) na UI — o
   contrato já aceita, mas a aba só oferece a primeira abordagem por voz.
 - Registro de resultado da ligação (atendeu / caixa postal / recusou). Vira
-  qualificação de Lead, não de Outreach.
+  qualificação de Lead, não de Abordagem.
 
 ## Custo estimado
 Mesma ordem da F005 (~R$0,05 por geração) — o roteiro é mais curto que a soma

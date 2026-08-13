@@ -72,14 +72,14 @@ export async function requireLeadOwned(leadId: string) {
   return { ...ctx, lead };
 }
 
-export async function requireOutreachOwned(outreachId: string) {
+export async function requireAbordagemOwned(abordagemId: string) {
   const ctx = await requireTenant();
-  const outreach = await prisma.outreach.findFirst({
-    where: { id: outreachId, user_id: ctx.userId },
+  const abordagem = await prisma.abordagem.findFirst({
+    where: { id: abordagemId, user_id: ctx.userId },
     include: { lead: true },
   });
-  if (!outreach) {
-    throw new TenantNotFoundError("Outreach");
+  if (!abordagem) {
+    throw new TenantNotFoundError("Abordagem");
   }
-  return { ...ctx, outreach };
+  return { ...ctx, abordagem };
 }

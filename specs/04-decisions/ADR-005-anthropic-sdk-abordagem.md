@@ -1,10 +1,10 @@
-# ADR-005 — SDK oficial da Anthropic para o Outreach
+# ADR-005 — SDK oficial da Anthropic para a Abordagem
 
 ## Status
 Aceito — 2026-06-12
 
 ## Contexto
-A F005 (Outreach) gera a mensagem de abordagem via Claude API. É a primeira
+A F005 (Abordagem) gera a mensagem de abordagem via Claude API. É a primeira
 integração com a Claude API no projeto e introduz uma **lib nova** — o que,
 pela regra do `CLAUDE.md` ("Sem nova lib sem ADR"), exige esta decisão.
 
@@ -17,7 +17,7 @@ tipados (429/5xx/refusal) e o model id correto.
 
 ## Decisão
 Adotar o **SDK oficial `@anthropic-ai/sdk`** para a integração com a Claude API,
-isolado em `src/lib/outreach/` (sem dependência de Next, como toda lib de
+isolado em `src/lib/abordagem/` (sem dependência de Next, como toda lib de
 domínio).
 
 - Model: **`claude-opus-4-8`** (id exato, sem sufixo de data).
@@ -51,5 +51,5 @@ domínio).
 - Uma dependência a mais (`@anthropic-ai/sdk`) e um terceiro padrão de
   integração (SDK, enquanto Places/PageSpeed usam `fetch`). Aceito: a
   superfície da Claude API justifica o SDK; as outras duas seguem em `fetch`.
-- Custo de tokens (marginal — ver contrato; ~R$0,05/Outreach, dentro do
+- Custo de tokens (marginal — ver contrato; ~R$0,05/Abordagem, dentro do
   teto de R$50/mês da visão).

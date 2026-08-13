@@ -1,5 +1,5 @@
 /**
- * Remove emojis / pictográficos do texto da Outreach (F005).
+ * Remove emojis / pictográficos do texto da Abordagem (F005).
  * Rede de segurança se o LLM ignorar o prompt.
  */
 export function removerEmojis(texto: string): string {

@@ -83,7 +83,7 @@ Foi o critério de escolha: `25 · 50 · 100` daria números mais redondos na te
 mas 25 pagaria 2 páginas pra entregar 25 e 50 pagaria 3 pra entregar 50, e o
 piso da busca dobraria de $0,035 pra $0,070. Como
 [11 — Custos](../11-custos-e-precificacao.md) mostra, a busca é o insumo caro do
-Orion (uma busca ≈ 4 Outreaches) e o free tier do Google são 1.000 requisições
+Orion (uma busca ≈ 4 Abordagens) e o free tier do Google são 1.000 requisições
 por mês — o piso decide quantos alunos Free cabem sem custo (~330 com 1 página,
 ~165 com 2).
 

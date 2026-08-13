@@ -88,7 +88,7 @@ async function PainelFunil() {
             }
             descricao={
               semChaves
-                ? "Cole Google + provedor de IA em Configuração. Sem isso a coleta e o Outreach não rodam."
+                ? "Cole Google + provedor de IA em Configuração. Sem isso a coleta e a Abordagem não rodam."
                 : "Colete os primeiros estabelecimentos em Leads pra encher o funil."
             }
             acao={

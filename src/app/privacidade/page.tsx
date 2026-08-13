@@ -68,7 +68,7 @@ export default function PrivacidadePage() {
               fontes públicas
             </strong>{" "}
             (ex.: Google Places, PageSpeed) e resultados gerados pelo app
-            (scores, textos de Outreach, etc.), sempre isolados à sua conta.
+            (scores, textos de Abordagem, etc.), sempre isolados à sua conta.
           </li>
           <li>
             <strong className="font-medium text-zinc-100">

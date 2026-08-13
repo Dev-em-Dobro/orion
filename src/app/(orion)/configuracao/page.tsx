@@ -69,7 +69,7 @@ export default async function ConfiguracaoPage() {
             </h2>
             <p className="mt-2 text-sm text-muted">
               Google Places (coleta) e <strong className="text-zinc-300">OpenAI</strong>{" "}
-              (Outreach, proposta, simulador…) vêm da Orion.{" "}
+              (Abordagem, proposta, simulador…) vêm da Orion.{" "}
               <strong className="text-zinc-300">Gemini não entra no modo Orion</strong>
               — para usar sua chave Gemini: ative BYOK, escolha Gemini como
               provedor e salve/teste a chave abaixo.
@@ -88,7 +88,7 @@ export default async function ConfiguracaoPage() {
       <p className="mt-8 text-xs text-zinc-500">
         {modoByok
           ? "Essenciais no BYOK: Google (coleta + diagnóstico) e a chave do provedor de IA ativo."
-          : "Limites diários no modo Orion: 5 coletas, 5 propostas, 5 outreaches e 20 mensagens no simulador."}{" "}
+          : "Limites diários no modo Orion: 5 coletas, 5 propostas, 5 abordagens e 20 mensagens no simulador."}{" "}
         Ver{" "}
         <a href="/termos" className="underline underline-offset-2">
           Termos

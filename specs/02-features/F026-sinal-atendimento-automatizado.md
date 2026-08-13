@@ -69,8 +69,8 @@ Criada quando **todas** valem:
 Severidade **MEDIA**. Detalhe: *"Nenhum sinal de atendimento automatizado no
 site — o WhatsApp provavelmente é respondido no braço."*
 
-Alimenta o Outreach ([F005](F005-outreach-whatsapp.md) /
-[F027](F027-outreach-por-email.md)) como qualquer outra Dor.
+Alimenta a Abordagem ([F005](F005-abordagem-whatsapp.md) /
+[F027](F027-abordagem-por-email.md)) como qualquer outra Dor.
 
 ## Modelo de dados
 ```prisma

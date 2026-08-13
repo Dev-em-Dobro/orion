@@ -1,4 +1,4 @@
-# F027 — Outreach por e-mail (dentro da plataforma)
+# F027 — Abordagem por e-mail (dentro da plataforma)
 
 ## Status
 Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.md) (Fase C)
@@ -9,8 +9,8 @@ comercial que o próprio negócio publica no site, gerar **assunto + corpo** com
 IA a partir das Dores diagnosticadas, e abrir tudo pronto no cliente de e-mail
 do aluno em um clique.
 
-O canal `email` **já existe** no domínio (`Outreach.canal`) desde a
-[F005](F005-outreach-whatsapp.md) — nunca foi implementado. A F027 o liga.
+O canal `email` **já existe** no domínio (`Abordagem.canal`) desde a
+[F005](F005-abordagem-whatsapp.md) — nunca foi implementado. A F027 o liga.
 
 Por que importa: muito negócio local não responde WhatsApp de número
 desconhecido, mas lê o e-mail do contato@ — e o e-mail aguenta um argumento
@@ -61,7 +61,7 @@ Zero requisição extra.
 - O aluno pode **apagar** o e-mail de um Lead na UI.
 - A Política de Privacidade (`/privacidade`) ganha um parágrafo dizendo isso.
 
-### `Outreach.assunto`
+### `Abordagem.assunto`
 Novo campo (`String?`). Preenchido só quando `canal = email`; `null` no
 WhatsApp.
 
@@ -78,7 +78,7 @@ model Lead {
   email_origem EmailOrigem?  // F027
 }
 
-model Outreach {
+model Abordagem {
   // ...
   assunto String?  // F027 — só para canal = email
 }
@@ -94,14 +94,14 @@ Não achou → deixa `null` (não é erro, não vira Dor).
 
 Re-diagnóstico **não sobrescreve** um e-mail com `email_origem = manual`.
 
-### 2. Geração — `gerarOutreachAction({ lead_id, canal, tipo })`
+### 2. Geração — `gerarAbordagemAction({ lead_id, canal, tipo })`
 A action da F005 ganha o parâmetro `canal` (`whatsapp` | `email`), mantendo
 `tipo` (`primeira` | `followup`) da [F006](F006-follow-up-e-funil.md).
 
 Para `canal = email`:
 1. Exige `Lead.email` (ou o endereço digitado na hora, que é gravado com
    `email_origem = manual`). Sem endereço → `{ erro: "Lead sem e-mail — cole um endereço ou use o WhatsApp" }`.
-2. Prompt próprio (`src/lib/outreach/prompt-email.ts`), com saída estruturada
+2. Prompt próprio (`src/lib/abordagem/prompt-email.ts`), com saída estruturada
    `{ assunto, corpo }`. Diferenças em relação ao WhatsApp:
    - **Assunto** curto e concreto, sem clickbait e sem "URGENTE"
      (ex.: *"Site da [Nome] está lento no celular"*).
@@ -111,8 +111,8 @@ Para `canal = email`:
    - **Sem emoji** (mesma regra da F005), sem anexo, sem imagem, sem
      rastreamento (pixel/UTM) — nada que faça o e-mail parecer disparo.
    - Assinatura com o nome do aluno e a oferta do `brand.ts`.
-3. Cria o `Outreach` com `canal = email`, `assunto`, `conteudo = corpo`,
-   `enviado = false`. Consome cota `outreach` (F018), igual ao WhatsApp.
+3. Cria o `Abordagem` com `canal = email`, `assunto`, `conteudo = corpo`,
+   `enviado = false`. Consome cota `abordagem` (F018), igual ao WhatsApp.
 
 ### 3. Envio (manual, pelo aluno)
 No resultado, três ações:
@@ -126,7 +126,7 @@ No resultado, três ações:
   [F031](F031-central-de-tarefas.md)).
 
 ### 4. Escolha do canal na UI
-Onde hoje existe **Gerar Outreach**, passa a existir **Gerar abordagem** com
+Onde hoje existe **Gerar Abordagem**, passa a existir **Gerar abordagem** com
 dois botões: **WhatsApp** e **E-mail**. O de e-mail fica desabilitado (com
 tooltip) quando o Lead não tem `email` — e ao lado dele um link **"colar
 e-mail"** que abre o input.
@@ -140,15 +140,15 @@ Na Fila do dia (F025), o card mostra qual canal está disponível.
       `email = null`.
 - [ ] **AC3** — Com endereços do domínio do site e de terceiros, prevalece o do
       domínio do site.
-- [ ] **AC4** — Gerar Outreach de e-mail cria `Outreach` com `canal = email`,
+- [ ] **AC4** — Gerar Abordagem de e-mail cria `Abordagem` com `canal = email`,
       `assunto` não vazio e corpo sem emoji.
 - [ ] **AC5** — Gerar e-mail sem `Lead.email` e sem endereço digitado →
-      `{ erro }` específico, sem criar Outreach e sem consumir cota.
+      `{ erro }` específico, sem criar Abordagem e sem consumir cota.
 - [ ] **AC6** — Endereço digitado na hora é gravado com `email_origem = manual`
       e sobrevive a um re-diagnóstico.
 - [ ] **AC7** — "Abrir no meu e-mail" produz `mailto:` com assunto e corpo
       corretamente encodados (acentos e quebras de linha preservados).
-- [ ] **AC8** — Marcar a Outreach de e-mail como enviada promove o Lead a
+- [ ] **AC8** — Marcar a Abordagem de e-mail como enviada promove o Lead a
       `contatado` e alimenta o follow-up (F006) e as Tarefas (F031) igual ao
       WhatsApp.
 - [ ] **AC9** — Follow-up (`tipo = followup`) funciona no canal e-mail, com
@@ -159,9 +159,9 @@ Na Fila do dia (F025), o card mostra qual canal está disponível.
 
 ## Decisões de implementação
 - `src/lib/leads/extrairEmail.ts` — pura.
-- `src/lib/outreach/prompt-email.ts` — prompt + saída estruturada
+- `src/lib/abordagem/prompt-email.ts` — prompt + saída estruturada
   `{ assunto, corpo }` pela camada LLM existente (F017); sem SDK novo.
-- `src/actions/leads/gerarOutreach.ts` ganha `canal`; `definirEmailLead.ts`
+- `src/actions/leads/gerarAbordagem.ts` ganha `canal`; `definirEmailLead.ts`
   cobre digitar/apagar endereço.
 - Sem lib nova. A leitura do HTML é coberta pelo
   [ADR-016](../04-decisions/ADR-016-leitura-do-site-do-lead.md).

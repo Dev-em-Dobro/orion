@@ -10,7 +10,7 @@ import {
   type FaixaUrgencia,
 } from "@/lib/tarefas/regras";
 import { AprofundarButton } from "../leads/aprofundar-button";
-import { GerarOutreachButton } from "../leads/gerar-outreach-button";
+import { GerarAbordagemButton } from "../leads/gerar-abordagem-button";
 import { TarefaAcoes } from "./tarefa-acoes";
 
 const ORDEM_FAIXA: FaixaUrgencia[] = ["atrasada", "vencida", "hoje"];
@@ -59,7 +59,7 @@ function ItemTarefa({ tarefa }: { tarefa: Tarefa }) {
         {tarefa.tipo === "APROFUNDAR_FILA" ? (
           <AprofundarButton rotulo="Aprofundar próximos 10" />
         ) : tarefa.tipo === "MANDAR_FOLLOWUP" && tarefa.leadId ? (
-          <GerarOutreachButton leadId={tarefa.leadId} tipo="followup" />
+          <GerarAbordagemButton leadId={tarefa.leadId} tipo="followup" />
         ) : (
           <Link
             href={`/leads/${tarefa.leadId}?aba=abordagem`}

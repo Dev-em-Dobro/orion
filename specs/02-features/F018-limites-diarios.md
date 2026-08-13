@@ -33,7 +33,7 @@ Toggle em `/configuracao` (`key_mode` em `UserApiKeys`).
 | **Coleta** (`coletarLeads`) | 5 | Antes do Places, depois da validação da busca |
 | **Diagnóstico** (`aprofundarLote`, F025) | 50 | Por Lead do lote, depois do teto mensal do plano |
 | **Proposta** (`gerarPropostaAction`) | 5 | Antes do LLM |
-| **Outreach** (`gerarOutreachAction`) | 5 | Antes do LLM, depois do gate de canal (F035) |
+| **Abordagem** (`gerarAbordagemAction`) | 5 | Antes do LLM, depois do gate de canal (F035) |
 | **Simulador** (`responderTurnoAction`) | 20 | Antes do LLM |
 | **Agente** (`POST /api/agente`, F029) | 30 | Por pergunta, antes do LLM e depois do gate de plano |
 
@@ -73,7 +73,7 @@ abaixo.
 Unique `(user_id, data, operacao)`.
 
 ## UI
-- Banner/contador em `/leads` (coletas, propostas, outreaches) e `/treino`
+- Banner/contador em `/leads` (coletas, propostas, abordagens) e `/treino`
   (mensagens do simulador).
 - Mensagem amigável ao atingir limite, com menção a upgrade futuro.
 - Modo Orion: não exige chaves BYOK; modo BYOK: fluxo F016/F017 inalterado.
@@ -83,7 +83,7 @@ Unique `(user_id, data, operacao)`.
       `ORION_OPENAI_API_KEY` nas features de IA.
 - [ ] **AC2** — Modo BYOK usa chaves do aluno (F016/F017); sem cotas.
 - [ ] **AC3** — Coleta bem-sucedida incrementa contador; 6ª no mesmo dia → erro.
-- [ ] **AC4** — Proposta, Outreach e Simulador seguem limites próprios.
+- [ ] **AC4** — Proposta, Abordagem e Simulador seguem limites próprios.
 - [ ] **AC5** — UI mostra `usado/limite` por operação relevante.
 - [ ] **AC6** — Toggle Orion/BYOK persiste e reflete nas próximas actions.
 - [x] **AC7** ([F036](F036-endurecimento-de-seguranca.md)) — Operação que falha
@@ -100,7 +100,7 @@ Premissa: uso máximo diário no modo Orion.
 | Operação | Volume/mês | Custo ref. |
 |----------|------------|------------|
 | Coletas | 150 | ~US$5,25 (Places) |
-| Outreaches | 150 | ~R$7,50 |
+| Abordagens | 150 | ~R$7,50 |
 | Propostas | 150 | ~R$22,50–37,50 |
 | Simulador (msgs) | 600 | ~R$9,00–18,00 |
 

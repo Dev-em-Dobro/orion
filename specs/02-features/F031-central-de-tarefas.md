@@ -40,9 +40,9 @@ cobra.
 
 | Tipo | Dispara quando | Prazo | Ação primária |
 |------|----------------|-------|---------------|
-| `CONFIRMAR_RESPOSTA` | Lead `contatado`, última Outreach enviada há ≥ **12h**, sem desfecho registrado | 12h | Respondeu? / Ainda não |
-| `MANDAR_FOLLOWUP` | Lead `contatado` sem desfecho, última Outreach enviada há ≥ **3 dias** (`FOLLOWUP_DIAS`, F006) | 3d | Gerar follow-up |
-| `ENVIAR_ABORDAGEM` | Lead `priorizado` com Outreach gerada **não enviada** há ≥ **24h** | 24h | Abrir WhatsApp / e-mail · Marcar enviada |
+| `CONFIRMAR_RESPOSTA` | Lead `contatado`, última Abordagem enviada há ≥ **12h**, sem desfecho registrado | 12h | Respondeu? / Ainda não |
+| `MANDAR_FOLLOWUP` | Lead `contatado` sem desfecho, última Abordagem enviada há ≥ **3 dias** (`FOLLOWUP_DIAS`, F006) | 3d | Gerar follow-up |
+| `ENVIAR_ABORDAGEM` | Lead `priorizado` com Abordagem gerada **não enviada** há ≥ **24h** | 24h | Abrir WhatsApp / e-mail · Marcar enviada |
 | `AVANCAR_RESPONDEU` | Lead `respondeu` parado (`status_em`) há ≥ **2 dias** | 2d | Qualificar · Gerar proposta ([F012](F012-gerador-de-proposta.md)) |
 | `COBRAR_PROPOSTA` | Lead `proposta` parado há ≥ **3 dias** | 3d | Gerar follow-up de proposta |
 | `APROFUNDAR_FILA` | Existem Leads com score **estimado** ≥ 60 e sem Diagnóstico ([F025](F025-fila-do-dia.md)) | — | Aprofundar próximos 10 |
@@ -65,7 +65,7 @@ esquecido no topo. Faixas na UI: **Atrasada** (> 2× o prazo), **Vencida**
 - **Adiar** — sai da lista até `adiada_ate` (1 dia por padrão).
 - **Dispensar** — some **enquanto o fato não mudar**. O adiamento guarda o
   `marco` (o timestamp que originou a Tarefa: `enviado_em` ou `status_em`); se
-  o marco mudar — nova Outreach enviada, status alterado — a Tarefa **volta**.
+  o marco mudar — nova Abordagem enviada, status alterado — a Tarefa **volta**.
   Sem isso, dispensar viraria silêncio permanente.
 
 ## Modelo de dados
@@ -105,11 +105,11 @@ e devolve as Tarefas ordenadas. Sem Prisma, sem Next: testável com relógio fix
 
 A busca desses dados é **uma query só** (respeitando o AC5 da
 [F028](F028-desempenho.md)): Leads em `contatado`, `respondeu`, `proposta` ou
-`priorizado`, com `take: 1` na última Outreach enviada e uma contagem agregada
+`priorizado`, com `take: 1` na última Abordagem enviada e uma contagem agregada
 pro `APROFUNDAR_FILA`.
 
 Ações (Server Actions finas): `adiarTarefa`, `dispensarTarefa` e o reuso das
-existentes — `registrarDesfecho` (F006), `gerarOutreach` (F005/F027),
+existentes — `registrarDesfecho` (F006), `gerarAbordagem` (F005/F027),
 `marcarEnviado` (F006), `aprofundarLote` (F025).
 
 ## UI
@@ -122,7 +122,7 @@ existentes — `registrarDesfecho` (F006), `gerarOutreach` (F005/F027),
   nome do Lead + o que aconteceu ("abordado há 14h, sem resposta registrada") +
   ação primária + `⋯` (Adiar 1 dia · Dispensar · Abrir Lead).
 - **A ação primária resolve na própria linha quando dá.** `MANDAR_FOLLOWUP`
-  gera o follow-up ali mesmo (`GerarOutreachButton tipo="followup"`), como o
+  gera o follow-up ali mesmo (`GerarAbordagemButton tipo="followup"`), como o
   `APROFUNDAR_FILA` já fazia. Só quem precisa de decisão do aluno
   (`CONFIRMAR_RESPOSTA`, `AVANCAR_RESPONDEU`, `COBRAR_PROPOSTA`) manda pro Lead
   com "Resolver".
@@ -133,7 +133,7 @@ existentes — `registrarDesfecho` (F006), `gerarOutreach` (F005/F027),
 ### A cobrança de follow-up mora aqui, e só aqui
 
 > **Mudança de 2026-08-13.** A `/leads` tinha um painel "Follow-up pendente"
-> herdado da [F006](F006-followup-e-funil.md), com a própria query. Era a
+> herdado da [F006](F006-follow-up-e-funil.md), com a própria query. Era a
 > **mesma regra** da Tarefa `MANDAR_FOLLOWUP` — `regras.ts` já registrava
 > "alinhado ao `FOLLOWUP_DIAS` da F006, é a mesma janela". O mesmo Lead atrasado
 > aparecia no painel **e** no badge da sidebar **e** em `/tarefas`, com três
@@ -146,7 +146,7 @@ some é a **terceira superfície** de aviso. Cobrança de follow-up tem um lugar
 `/tarefas`, com o badge da sidebar como aviso.
 
 ## Critérios de aceitação
-- [ ] **AC1** — Lead `contatado` com Outreach enviada há 13h e sem desfecho
+- [ ] **AC1** — Lead `contatado` com Abordagem enviada há 13h e sem desfecho
       aparece como `CONFIRMAR_RESPOSTA`; com 11h, **não** aparece.
 - [ ] **AC2** — Passados 3 dias, o mesmo Lead aparece como `MANDAR_FOLLOWUP` e
       **não** mais como `CONFIRMAR_RESPOSTA` (nunca as duas).
@@ -155,9 +155,9 @@ some é a **terceira superfície** de aviso. Cobrança de follow-up tem um lugar
 - [ ] **AC4** — Lead `descartado` (F024) não gera Tarefa de nenhum tipo.
 - [ ] **AC5** — Adiar some com a Tarefa por 24h e ela volta depois — **sem**
       duplicar.
-- [ ] **AC6** — Dispensar some com a Tarefa; enviar uma **nova** Outreach
+- [ ] **AC6** — Dispensar some com a Tarefa; enviar uma **nova** Abordagem
       (marco novo) faz a cobrança voltar.
-- [ ] **AC7** — Outreach gerada e não enviada há 25h vira `ENVIAR_ABORDAGEM`;
+- [ ] **AC7** — Abordagem gerada e não enviada há 25h vira `ENVIAR_ABORDAGEM`;
       marcar como enviada resolve.
 - [ ] **AC8** — Com Leads de score estimado ≥ 60 sem Diagnóstico, aparece **uma
       única** `APROFUNDAR_FILA`, e o botão dela chama o lote da F025.

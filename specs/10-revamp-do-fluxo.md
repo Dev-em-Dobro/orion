@@ -22,7 +22,7 @@ botão que o aluno precisa lembrar de apertar, na ordem certa, lead a lead.
 
 ```
 Buscar → (clicar Diagnosticar em cada lead) → (clicar Priorizar em cada lead)
-       → (clicar Gerar Outreach) → (copiar) → (abrir WhatsApp) → (voltar e marcar enviada)
+       → (clicar Gerar Abordagem) → (copiar) → (abrir WhatsApp) → (voltar e marcar enviada)
        → (lembrar sozinho de fazer follow-up)
 ```
 
@@ -38,7 +38,7 @@ Somando o que o uso mostrou, oito problemas concretos:
 | 1 | Depois de priorizar um Lead não tem como despriorizar / tirar da frente | [F024](02-features/F024-estado-do-lead-reversivel.md) |
 | 2 | O sistema devia já trazer os melhores Leads prontos depois da busca | [F025](02-features/F025-fila-do-dia.md) |
 | 3 | Saber se o negócio já tem atendimento automatizado no WhatsApp | [F026](02-features/F026-sinal-atendimento-automatizado.md) |
-| 4 | Fazer o contato por e-mail por dentro da plataforma | [F027](02-features/F027-outreach-por-email.md) |
+| 4 | Fazer o contato por e-mail por dentro da plataforma | [F027](02-features/F027-abordagem-por-email.md) |
 | 5 | Todas as interações com o site estão lentas | [F028](02-features/F028-desempenho.md) |
 | 6 | Um agente de IA dentro do Orion pra perguntar coisas | [F029](02-features/F029-agente-orion.md) |
 | 7 | Falta o menu Skills (com o extrator-de-DNA) | [F030](02-features/F030-menu-skills.md) |
@@ -128,7 +128,7 @@ Três inversões:
 └──────────────────────────────┬───────────────────────────────────────────┘
                                │
 ┌─ 4. ABORDAGEM ───────────────▼───────────────────────────────────────────┐
-│ Outreach gerada por IA, agora em dois canais: WhatsApp e e-mail.        │
+│ Abordagem gerada por IA, agora em dois canais: WhatsApp e e-mail.        │
 │ Envio segue manual (WhatsApp Web / cliente de e-mail do aluno).         │
 │ Um clique marca como enviada e move o funil.                            │
 └──────────────────────────────┬───────────────────────────────────────────┘
@@ -229,7 +229,7 @@ seguinte. Dentro de cada fase, a ordem importa.
    aproveita o HTML que a F002 já baixa).
 
 ### Fase D — Abordar, cobrar e operar
-7. **[F027](02-features/F027-outreach-por-email.md) Outreach por e-mail** —
+7. **[F027](02-features/F027-abordagem-por-email.md) Abordagem por e-mail** —
    depende da captura de e-mail feita junto com a F026.
 8. **[F031](02-features/F031-central-de-tarefas.md) Central de Tarefas** —
    depende de `status_em` (F024/F025) pra saber há quanto tempo algo parou.

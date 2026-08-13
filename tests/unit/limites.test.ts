@@ -87,7 +87,7 @@ describe("limites diários (F018)", () => {
     prismaMock.dailyUsage.findUnique.mockResolvedValue(null);
     prismaMock.dailyUsage.create.mockResolvedValue({ contador: 1 });
 
-    const uso = await reservarCota(userId, "outreach");
+    const uso = await reservarCota(userId, "abordagem");
 
     expect(uso.usado).toBe(1);
     expect(uso.restante).toBe(4);
@@ -131,13 +131,13 @@ describe("limites diários (F018)", () => {
   it("estornarCota devolve 1 com o piso no WHERE", async () => {
     prismaMock.dailyUsage.updateMany.mockResolvedValue({ count: 1 });
 
-    await estornarCota(userId, "outreach");
+    await estornarCota(userId, "abordagem");
 
     expect(prismaMock.dailyUsage.updateMany).toHaveBeenCalledWith({
       where: {
         user_id: userId,
         data: hoje,
-        operacao: "outreach",
+        operacao: "abordagem",
         contador: { gt: 0 },
       },
       data: { contador: { decrement: 1 } },
@@ -156,7 +156,7 @@ describe("limites diários (F018)", () => {
 
   it("consumirCota (compat) só lê uso atual", async () => {
     prismaMock.dailyUsage.findUnique.mockResolvedValue({ contador: 2 });
-    const uso = await consumirCota(userId, "outreach");
+    const uso = await consumirCota(userId, "abordagem");
     expect(uso.usado).toBe(2);
   });
 

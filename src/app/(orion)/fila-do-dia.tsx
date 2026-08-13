@@ -27,7 +27,7 @@ export async function FilaDoDia() {
         score_estimado: false,
         // Quem já foi abordado vira cobrança na Central de Tarefas (F031),
         // não fila de abordagem.
-        outreaches: { none: { enviado: true } },
+        abordagens: { none: { enviado: true } },
       },
       orderBy: [{ score: "desc" }, { status_em: "asc" }],
       take: FILA_TAMANHO,

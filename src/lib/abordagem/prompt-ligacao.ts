@@ -7,7 +7,7 @@
 // saída é só a fala, sem rubrica de teatro pro aluno ter que editar antes.
 
 import { BRAND } from "../brand";
-import type { TipoOutreach } from "./prompt";
+import type { TipoAbordagem } from "./prompt";
 
 const EMPRESA = `A ${BRAND.empresa} ${BRAND.descricaoEmpresa}. A oferta de entrada é ${BRAND.ofertaDeEntrada}.`;
 
@@ -63,6 +63,6 @@ ${COMUM}
 SAÍDA
 Responda apenas com o campo "mensagem": o roteiro final, pronto pra ler em voz alta. Nada antes, nada depois.`;
 
-export function systemPromptLigacao(tipo: TipoOutreach): string {
+export function systemPromptLigacao(tipo: TipoAbordagem): string {
   return tipo === "followup" ? SYSTEM_PROMPT_FOLLOWUP : SYSTEM_PROMPT_PRIMEIRA;
 }

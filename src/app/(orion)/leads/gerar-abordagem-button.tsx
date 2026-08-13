@@ -8,16 +8,16 @@
 
 import { useActionState, useState } from "react";
 import {
-  gerarOutreachAction,
+  gerarAbordagemAction,
   type CanalGeravel,
-  type GerarOutreachState,
-} from "@/actions/leads/gerarOutreach";
-import type { TipoOutreach } from "@/lib/outreach/prompt";
+  type GerarAbordagemState,
+} from "@/actions/leads/gerarAbordagem";
+import type { TipoAbordagem } from "@/lib/abordagem/prompt";
 import { MarcarEnviadaButton } from "./marcar-enviada-button";
 
-const initial: GerarOutreachState = { kind: "idle" };
+const initial: GerarAbordagemState = { kind: "idle" };
 
-function rotular(canal: CanalGeravel, tipo: TipoOutreach): string {
+function rotular(canal: CanalGeravel, tipo: TipoAbordagem): string {
   if (canal === "ligacao") {
     return tipo === "followup"
       ? "Gerar roteiro de retorno"
@@ -26,19 +26,19 @@ function rotular(canal: CanalGeravel, tipo: TipoOutreach): string {
   return tipo === "followup" ? "Gerar follow-up" : "Gerar abordagem";
 }
 
-export function GerarOutreachButton({
+export function GerarAbordagemButton({
   leadId,
   tipo = "primeira",
   canal = "whatsapp",
   destaque = false,
 }: {
   leadId: string;
-  tipo?: TipoOutreach;
+  tipo?: TipoAbordagem;
   canal?: CanalGeravel;
   /** F038 — o caminho recomendado da aba ganha botão sólido, não fantasma. */
   destaque?: boolean;
 }) {
-  const [state, action, pending] = useActionState(gerarOutreachAction, initial);
+  const [state, action, pending] = useActionState(gerarAbordagemAction, initial);
   const [copiado, setCopiado] = useState(false);
 
   const ehLigacao = canal === "ligacao";
@@ -98,7 +98,7 @@ export function GerarOutreachButton({
               {copiado ? "Copiado" : ehLigacao ? "Copiar roteiro" : "Copiar texto"}
             </button>
             <MarcarEnviadaButton
-              outreachId={state.outreachId}
+              abordagemId={state.abordagemId}
               rotulo={ehLigacao ? "Já falei com ele" : "Marcar como enviada"}
             />
           </div>

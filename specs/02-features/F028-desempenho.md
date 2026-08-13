@@ -63,8 +63,8 @@ O código atual (`src/app/(orion)/leads/page.tsx`) tem três problemas concretos
 
 | Problema | Onde | Efeito | Correção |
 |----------|------|--------|----------|
-| Carrega **todos** os Leads `contatado` com as Outreaches enviadas, sem paginar, só pra montar o painel de follow-up | `leadsFollowUp` | Cresce sem teto: a página fica mais lenta a cada Lead abordado | Filtrar no banco (`enviado_em <= agora - janela`) e trazer só o que é exibido |
-| `include: { outreaches: { orderBy } }` **sem `take`** | lista principal | Traz todas as Outreaches de cada Lead da página só pra usar a primeira e a contagem | `take: 1` + `_count` |
+| Carrega **todos** os Leads `contatado` com as Abordagens enviadas, sem paginar, só pra montar o painel de follow-up | `leadsFollowUp` | Cresce sem teto: a página fica mais lenta a cada Lead abordado | Filtrar no banco (`enviado_em <= agora - janela`) e trazer só o que é exibido |
+| `include: { abordagens: { orderBy } }` **sem `take`** | lista principal | Traz todas as Abordagens de cada Lead da página só pra usar a primeira e a contagem | `take: 1` + `_count` |
 | `count` extra **sequencial** depois do `Promise.all` quando há filtro | `total` | Um round-trip a mais em série | Entrar no mesmo `Promise.all` |
 
 > **Feito em 2026-08-10.** Além dos três acima, a serialização tinha uma quarta
@@ -82,7 +82,7 @@ só `@@index([user_id])`.
 ```prisma
 @@index([user_id, score(sort: Desc), created_at(sort: Desc)])  // Lead — ordenação da lista
 @@index([user_id, status])                                     // Lead — funil, fila, tarefas
-@@index([lead_id, enviado, enviado_em])                        // Outreach — follow-up
+@@index([lead_id, enviado, enviado_em])                        // Abordagem — follow-up
 @@index([lead_id, executado_em])                               // Diagnostico — último diagnóstico
 ```
 
@@ -138,7 +138,7 @@ via `serverExternalPackages`) e manter o Prisma Client único (já feito em
 
 ## Critérios de aceitação
 Medidos em produção, com uma conta de teste contendo **500 Leads**, 200
-Diagnósticos e 100 Outreaches:
+Diagnósticos e 100 Abordagens:
 
 - [ ] **AC1** — `db_rtt_ms` em `/api/health` **< 15 ms** (p50) — função e banco
       co-localizados.

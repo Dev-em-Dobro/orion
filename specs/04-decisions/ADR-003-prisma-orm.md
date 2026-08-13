@@ -6,7 +6,7 @@ Aceito — 2026-05-13
 ## Contexto
 - Stack TypeScript (ver [ADR-001](./ADR-001-stack-typescript-nextjs.md)).
 - Postgres como banco (ver [ADR-004](./ADR-004-neon-postgres.md)).
-- Schema com poucas tabelas (Lead, Diagnóstico, Dor, Outreach), mas com
+- Schema com poucas tabelas (Lead, Diagnóstico, Dor, Abordagem), mas com
   enums e relações 1-N.
 - Necessidade de migrations versionadas, tipos derivados do schema e DX
   amigável pra dev solo.

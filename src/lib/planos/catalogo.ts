@@ -34,7 +34,7 @@ export const LABEL_RECURSO: Record<Recurso, string> = {
  */
 export const OPERACOES_MENSAIS = [
   "lead_novo",
-  "outreach",
+  "abordagem",
   "proposta",
   "objecoes",
   "agente_msg",
@@ -44,7 +44,7 @@ export type OperacaoMensal = (typeof OPERACOES_MENSAIS)[number];
 
 export const LABEL_OPERACAO_MENSAL: Record<OperacaoMensal, string> = {
   lead_novo: "Leads novos",
-  outreach: "Abordagens",
+  abordagem: "Abordagens",
   proposta: "Propostas",
   objecoes: "Respostas a objeção",
   agente_msg: "Perguntas ao Agente",
@@ -78,7 +78,7 @@ export const CATALOGO_PLANOS: Record<Plano, DefinicaoPlano> = {
       // Google. É também a opção do meio da busca (F033): uma busca de 60 é
       // exatamente um mês de Free.
       lead_novo: 60,
-      outreach: 20,
+      abordagem: 20,
       proposta: 3,
       objecoes: 5,
       // Aperitivo deliberado: 5 perguntas por mês não resolvem trabalho, servem
@@ -96,7 +96,7 @@ export const CATALOGO_PLANOS: Record<Plano, DefinicaoPlano> = {
     precoCentavos: 3900,
     limites: {
       lead_novo: 300,
-      outreach: 150,
+      abordagem: 150,
       proposta: 30,
       objecoes: 50,
       agente_msg: 100,
@@ -114,7 +114,7 @@ export const CATALOGO_PLANOS: Record<Plano, DefinicaoPlano> = {
       // Caiu de 1.500 pra 800 em 2026-08-13: a 1.500 a margem no preço de
       // aluno ficava em 25% (ver 11 §5).
       lead_novo: 800,
-      outreach: 300,
+      abordagem: 300,
       proposta: 60,
       objecoes: 80,
       agente_msg: 300,

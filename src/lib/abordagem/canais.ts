@@ -1,4 +1,4 @@
-// F038 — rótulo em PT de cada canal de Outreach, e o que a UI pode oferecer
+// F038 — rótulo em PT de cada canal de Abordagem, e o que a UI pode oferecer
 // para cada um. Sem dep de Next: usado pelo detalhe do Lead (server) e pelos
 // botões (client).
 //

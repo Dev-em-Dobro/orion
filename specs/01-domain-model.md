@@ -23,8 +23,8 @@ Estabelecimento coletado da Google Places API. É a unidade central de trabalho.
 | `num_avaliacoes` | int \| null                                                                  | Nº de avaliações no Google — proxy de porte/movimento |
 | `place_id`    | string                                                                          | ID estável do Google Places; único **por usuário** (`unique(user_id, place_id)` — [F015](02-features/F015-multi-tenant.md)) |
 | `user_id`     | string                                                                          | FK → User (auth). Isolamento multi-tenant ([F015](02-features/F015-multi-tenant.md) / [ADR-008](04-decisions/ADR-008-multi-tenant.md)) |
-| `email`       | string \| null                                                                  | E-mail comercial publicado no site do próprio Lead ([F027](02-features/F027-outreach-por-email.md) / [ADR-016](04-decisions/ADR-016-leitura-do-site-do-lead.md)) |
-| `email_origem`| enum: `site` \| `manual` \| null                                                 | Como o `email` chegou ([F027](02-features/F027-outreach-por-email.md)) |
+| `email`       | string \| null                                                                  | E-mail comercial publicado no site do próprio Lead ([F027](02-features/F027-abordagem-por-email.md) / [ADR-016](04-decisions/ADR-016-leitura-do-site-do-lead.md)) |
+| `email_origem`| enum: `site` \| `manual` \| null                                                 | Como o `email` chegou ([F027](02-features/F027-abordagem-por-email.md)) |
 | `status`      | enum: `novo` \| `enriquecido` \| `priorizado` \| `contatado` \| `respondeu` \| `qualificado` \| `proposta` \| `ganho` \| `perdido` \| `descartado` | Estado no funil. Visualizado pela [F010](02-features/F010-dashboard-funil.md); `descartado` vem da [F024](02-features/F024-estado-do-lead-reversivel.md) |
 | `status_em`   | datetime                                                                        | Quando o `status` atual foi assumido. Base das cobranças da [F031](02-features/F031-central-de-tarefas.md) ([F024](02-features/F024-estado-do-lead-reversivel.md)) |
 | `motivo_descarte` | string \| null                                                              | Por que o aluno descartou (≤ 140 chars) — [F024](02-features/F024-estado-do-lead-reversivel.md) |
@@ -37,8 +37,8 @@ Estabelecimento coletado da Google Places API. É a unidade central de trabalho.
 - `novo` — recém-coletado, ainda sem Diagnóstico
 - `enriquecido` — Diagnóstico executado (a transição ocorre na F002;
   a detecção de Dores soma-se ao mesmo passo a partir da F004)
-- `priorizado` — score calculado, pronto pra outreach
-- `contatado` — Outreach enviado manualmente
+- `priorizado` — score calculado, pronto pra abordagem
+- `contatado` — Abordagem enviada manualmente
 - `respondeu` — Lead respondeu (positivo ou negativo), mas ainda sem qualificação
 - `qualificado` — respondeu **e** foi qualificado na conversa: há fit, verba e
   intenção (qualificação de venda). Não confundir com "Lead pronto" — o critério
@@ -78,7 +78,7 @@ Diagnósticos ao longo do tempo (re-diagnóstico).
 
 ### Dor
 Problema concreto detectado num Lead a partir do Diagnóstico. Um Lead pode
-ter várias Dores. É o que justifica o outreach.
+ter várias Dores. É o que justifica a abordagem.
 
 | Campo        | Tipo                                                                                                  | Notas |
 |--------------|-------------------------------------------------------------------------------------------------------|-------|
@@ -89,9 +89,16 @@ ter várias Dores. É o que justifica o outreach.
 | `severidade` | enum: `BAIXA` \| `MEDIA` \| `ALTA`                                                                    | Peso no score |
 | `detalhes`   | string                                                                                                | Texto curto explicando a Dor |
 
-### Outreach
-Abordagem gerada via Claude API pra um Lead. Pode haver várias Outreaches por
-Lead (canais diferentes, reescritas, etc.). Nem toda Outreach é uma *mensagem*:
+### Abordagem
+
+> **Renomeada em 2026-08-13.** Chamava-se **Outreach** — nome que ninguém
+> pronunciava em português, então na prática o time dizia "mensagem" e a
+> linguagem ubíqua se perdia justamente onde ela mais importa. O model Prisma
+> virou `Abordagem`; a **tabela** continua `Outreach` via `@@map`, porque nome
+> físico não é lido por ninguém e renomear tabela é migração destrutiva.
+
+Abordagem gerada via Claude API pra um Lead. Pode haver várias Abordagens por
+Lead (canais diferentes, reescritas, etc.). Nem toda Abordagem é uma *mensagem*:
 no canal `ligacao` o `conteudo` é um **roteiro pra falar**, não um texto pra
 enviar ([F038](02-features/F038-abordagem-por-voz.md)).
 
@@ -101,7 +108,7 @@ enviar ([F038](02-features/F038-abordagem-por-voz.md)).
 | `lead_id`    | string                          | FK → Lead |
 | `user_id`    | string                          | FK → User (auth). Isolamento multi-tenant ([F015](02-features/F015-multi-tenant.md)) |
 | `canal`      | enum: `whatsapp` \| `ligacao` \| `email` | Canal-alvo. `ligacao` é o **roteiro falado** da [F038](02-features/F038-abordagem-por-voz.md) — o aluno lê na ligação ou grava como áudio; o Orion nunca disca nem envia. `email` saiu do produto na [F035](02-features/F035-planos-e-limites.md) e o valor sobrevive só pelos registros antigos |
-| `assunto`    | string \| null                  | Assunto — só quando `canal = email` ([F027](02-features/F027-outreach-por-email.md)) |
+| `assunto`    | string \| null                  | Assunto — só quando `canal = email` ([F027](02-features/F027-abordagem-por-email.md)) |
 | `conteudo`   | text                            | Texto final da mensagem (no e-mail, o corpo) |
 | `gerado_em`  | datetime                        | |
 | `enviado`    | bool                            | Marcado manualmente após envio |
@@ -115,7 +122,7 @@ enviar ([F038](02-features/F038-abordagem-por-voz.md)).
 User (auth) 1 ─── N Lead
 User (auth) 1 ─── N Diagnóstico
 User (auth) 1 ─── N Dor
-User (auth) 1 ─── N Outreach
+User (auth) 1 ─── N Abordagem
 User (auth) 1 ─── 1 UserApiKeys (BYOK / modo Orion — [F016](02-features/F016-configuracao-de-chaves.md), [F018](02-features/F018-limites-diarios.md))
 User (auth) 1 ─── N DailyUsage (cotas diárias — [F018](02-features/F018-limites-diarios.md))
 User (auth) — `purchase_email`, `purchase_verified_at`, `purchase_product_id` ([F019.1](02-features/F019.1-ativacao-acesso.md))
@@ -123,7 +130,7 @@ HublaEntitlement — e-mails autorizados via webhook ([F019](02-features/F019-we
 User (auth) 1 ─── N TarefaAdiamento (adiar/dispensar cobrança — [F031](02-features/F031-central-de-tarefas.md))
 Lead 1 ─── N Diagnóstico
 Lead 1 ─── N Dor
-Lead 1 ─── N Outreach
+Lead 1 ─── N Abordagem
 Lead 1 ─── N TarefaAdiamento
 ```
 
@@ -197,7 +204,7 @@ apresentação.
 | **Lead**           | prospect, contato, empresa, cliente potencial, target  |
 | **Diagnóstico**    | análise, auditoria, scan, check                        |
 | **Dor**            | problema, issue, oportunidade, gap, pain point         |
-| **Outreach**       | mensagem, abordagem, copy, contato (no sentido genérico) |
+| **Abordagem**      | **outreach**, mensagem, copy, contato (no sentido genérico) |
 | **score**          | rating, ranking, nota, prioridade (como sinônimo)      |
 | **place_id**       | google_id, gid, external_id                            |
 | **status `contatado`** | enviado, abordado, prospectado                     |

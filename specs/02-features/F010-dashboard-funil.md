@@ -71,7 +71,7 @@ Todos os números vêm de uma única leitura do banco no server component.
    por zero.
 3. **KPIs** (cards pequenos) — Total de Leads · Score médio · Ganhos
    (com nº de perdidos) · **Em aberto** (contagem dos 4 estágios em aberto).
-4. **Exigem atenção** — mantém o painel atual: `score ≥ 60` e ainda sem Outreach
+4. **Exigem atenção** — mantém o painel atual: `score ≥ 60` e ainda sem Abordagem
    enviado (`novo|enriquecido|priorizado`), top 5, link pra `/leads`.
 5. **Follow-up pendente** — mantém o painel atual da F006 (`filaDeFollowUp`).
 
@@ -80,7 +80,7 @@ Estado vazio (0 Leads) mostra CTA pra coletar, como hoje.
 ## Fluxo
 F010 é **leitura pura** — não há Server Action nova de dashboard. O server
 component da home:
-1. `prisma.lead.findMany` com a última Outreach enviada incluída (já é assim).
+1. `prisma.lead.findMany` com a última Abordagem enviada incluída (já é assim).
 2. Conta Leads por `status` e calcula taxas de conversão e KPIs em memória.
 3. Renderiza. `export const dynamic = "force-dynamic"` (já é assim).
 

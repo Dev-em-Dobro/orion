@@ -163,7 +163,7 @@ duplica** essa lógica.
 - `src/app/leads/gerar-proposta-button.tsx` — painel, padrão dos existentes.
 - `src/lib/dores/` — detecção/persistência na [F004](F004-deteccao-de-dor.md);
   textos via `textosDasDores`. Reusa também `src/lib/score/tierDoNicho` (F003).
-- Lib nova? Não — reusa `@anthropic-ai/sdk` ([ADR-005](../04-decisions/ADR-005-anthropic-sdk-outreach.md)). **Sem ADR.**
+- Lib nova? Não — reusa `@anthropic-ai/sdk` ([ADR-005](../04-decisions/ADR-005-anthropic-sdk-abordagem.md)). **Sem ADR.**
 
 ## Fora do escopo (F012)
 - **Persistência da Proposta** como entidade (`Proposta`, Lead 1—N) — exigiria

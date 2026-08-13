@@ -1,14 +1,14 @@
-# F005 — Outreach de WhatsApp via Claude
+# F005 — Abordagem de WhatsApp via Claude
 
 ## Status
 Proposta — 2026-06-12
 
 ## Objetivo
-Gerar, para um Lead, uma **Outreach** de WhatsApp pronta pra enviar —
+Gerar, para um Lead, uma **Abordagem** de WhatsApp pronta pra enviar —
 personalizada na **Dor** concreta detectada no Diagnóstico e ancorada na
 sua oferta de entrada (configurada em `src/lib/brand.ts`; por padrão, um
 diagnóstico gratuito). Persistir como
-`Outreach` (`canal = whatsapp`, `enviado = false`) e oferecer um link
+`Abordagem` (`canal = whatsapp`, `enviado = false`) e oferecer um link
 `wa.me` pré-preenchido pro operador disparar com um clique.
 
 É o último passo antes do envio manual. Sem F005, o Lead priorizado não vira
@@ -25,7 +25,7 @@ prova social, no máximo um número forte — e verdadeiro. Ajuste o
 `brand.ts` quando a oferta mudar.
 
 ## Táticas de conversão (embutidas no system prompt)
-O que move a taxa de fechamento — codificado em `src/lib/outreach/prompt.ts`:
+O que move a taxa de fechamento — codificado em `src/lib/abordagem/prompt.ts`:
 
 1. **Especificidade > genérico.** Abrir com a observação concreta do
    Diagnóstico ("vi que vocês não têm site / o site abre devagar no celular").
@@ -42,13 +42,13 @@ O que move a taxa de fechamento — codificado em `src/lib/outreach/prompt.ts`:
    evita quebra de encode em click-to-chat).
 7. **Honestidade.** Não inventar dados que não temos sobre o Lead; não
    prometer resultado garantido.
-8. **Mirar quem vale (F003).** Gerar Outreach preferencialmente para Leads
+8. **Mirar quem vale (F003).** Gerar Abordagem preferencialmente para Leads
    `priorizado` de alto score — concentra esforço em quem tem Dor e verba.
-9. **Mensurar e aprender.** `Outreach.enviado` + `Lead.status` (`contatado`/
+9. **Mensurar e aprender.** `Abordagem.enviado` + `Lead.status` (`contatado`/
    `respondeu`) fecham o loop pra saber o que converte.
 
 ## Input (UI)
-Botão **Gerar Outreach** em cada linha de `/leads` (habilitado quando o Lead
+Botão **Gerar Abordagem** em cada linha de `/leads` (habilitado quando o Lead
 tem ao menos um Diagnóstico — sem Diagnóstico não há Dor concreta pra citar).
 
 | Campo     | Tipo   | Validação                |
@@ -62,39 +62,39 @@ tem ao menos um Diagnóstico — sem Diagnóstico não há Dor concreta pra cita
   Lead tem `telefone`; senão, só o texto pra copiar.
 
 ## Fluxo
-1. Operador clica em **Gerar Outreach** na linha do Lead.
-2. Server Action `gerarOutreach({ lead_id })`:
+1. Operador clica em **Gerar Abordagem** na linha do Lead.
+2. Server Action `gerarAbordagem({ lead_id })`:
    1. Valida com Zod. Lead inexistente → `{ erro: "Lead não encontrado" }`.
    2. `ANTHROPIC_API_KEY` ausente → `{ erro: "ANTHROPIC_API_KEY não configurada" }`
       antes de qualquer chamada.
    3. Carrega o Lead + último Diagnóstico (`take: 1`, `executado_em desc`).
-      Sem Diagnóstico → `{ erro: "Diagnostique o Lead antes de gerar a Outreach" }`.
+      Sem Diagnóstico → `{ erro: "Diagnostique o Lead antes de gerar a Abordagem" }`.
    4. Deriva as **dores detectadas** (texto natural) do último Diagnóstico —
       até a F004 existir, lê o Diagnóstico direto (mesmos fatos das Dores):
       - sem website OU `tem_site = false` → "não tem site / presença própria"
       - `performance_mobile` não-nulo e `< 50` → "site muito lento no celular (nota N/100)"
       - `tem_https = false` → "site sem HTTPS (sem cadeado de segurança)"
       - nenhuma das acima → foco no valor central (captar/atender automático)
-   5. Chama `src/lib/outreach/gerarOutreach({ nome, categoria, endereco,
+   5. Chama `src/lib/abordagem/gerarAbordagem({ nome, categoria, endereco,
       dores })` → `{ mensagem }` (Claude API, structured output — ver
       [contrato](../03-contracts/claude-messages.md)).
-   6. Persiste `Outreach { lead_id, canal: "whatsapp", conteudo: mensagem,
-      enviado: false }` (novo registro — N Outreaches por Lead).
+   6. Persiste `Abordagem { lead_id, canal: "whatsapp", conteudo: mensagem,
+      enviado: false }` (novo registro — N Abordagens por Lead).
    7. Monta o link `wa.me` (normaliza `telefone` p/ dígitos, prefixo `55`;
       `null` se sem telefone) e retorna `{ mensagem, wa_link }`.
 3. UI mostra a mensagem + o link, e revalida `/leads`.
 
-Gerar Outreach **não** muda o `status` — a transição para `contatado` ocorre
+Gerar Abordagem **não** muda o `status` — a transição para `contatado` ocorre
 no envio manual (fora do escopo desta feature).
 
 ## Critérios de aceitação
-- [ ] **AC1** — Lead com Diagnóstico `tem_site = false` gera uma Outreach que
+- [ ] **AC1** — Lead com Diagnóstico `tem_site = false` gera uma Abordagem que
       cita "não ter site/presença" e convida pro diagnóstico gratuito; um
-      registro `Outreach` é criado com `canal = whatsapp`, `enviado = false`.
+      registro `Abordagem` é criado com `canal = whatsapp`, `enviado = false`.
 - [ ] **AC2** — Lead com site lento (`performance_mobile < 50`) gera mensagem
       que cita a lentidão no celular.
 - [ ] **AC3** — Lead sem nenhum Diagnóstico → `{ erro }` específico, sem
-      chamar a Claude API nem criar Outreach.
+      chamar a Claude API nem criar Abordagem.
 - [ ] **AC4** — `ANTHROPIC_API_KEY` ausente → `{ erro }` descritivo, sem
       chamada externa.
 - [ ] **AC5** — Lead com `telefone` → `wa_link` no formato
@@ -102,36 +102,36 @@ no envio manual (fora do escopo desta feature).
       Lead sem telefone → `wa_link = null` e a UI mostra só o texto.
 - [ ] **AC6** — A mensagem vem em PT-BR, ≤ ~70 palavras, sem "Prezado",
       com um único CTA. (Validação manual na dashboard.)
-- [ ] **AC7** — Gerar duas vezes cria **dois** registros `Outreach` (histórico
-      preservado, 1 Lead — N Outreaches). O `status` do Lead não muda.
+- [ ] **AC7** — Gerar duas vezes cria **dois** registros `Abordagem` (histórico
+      preservado, 1 Lead — N Abordagens). O `status` do Lead não muda.
 - [ ] **AC8** — `lead_id` inválido (Zod) ou inexistente → `{ erro }` na UI,
       sem efeitos colaterais.
 - [ ] **AC9** — Falha da Claude API (429/5xx/refusal → `parsed_output` nulo) →
-      `{ erro }` na UI, sem criar Outreach, sem quebrar a app.
+      `{ erro }` na UI, sem criar Abordagem, sem quebrar a app.
 
 ## Decisões de implementação
-- `src/lib/outreach/prompt.ts` — system prompt (playbook acima) + builder do
+- `src/lib/abordagem/prompt.ts` — system prompt (playbook acima) + builder do
   contexto do Lead. Fonte única da estratégia de mensagem.
-- `src/lib/outreach/gerarOutreach.ts` — cliente Claude via SDK, structured
-  output; lança `OutreachError`. Sem dep de Next.
-- `src/actions/leads/gerarOutreach.ts` — Server Action fina; orquestra
-  `lib/outreach` + Prisma; monta o `wa.me`.
-- `src/app/leads/gerar-outreach-button.tsx` — botão + render da mensagem e do
+- `src/lib/abordagem/gerarAbordagem.ts` — cliente Claude via SDK, structured
+  output; lança `AbordagemError`. Sem dep de Next.
+- `src/actions/leads/gerarAbordagem.ts` — Server Action fina; orquestra
+  `lib/abordagem` + Prisma; monta o `wa.me`.
+- `src/app/leads/gerar-abordagem-button.tsx` — botão + render da mensagem e do
   link, no padrão de `diagnosticar-button.tsx`.
-- Lib nova `@anthropic-ai/sdk` → ver [ADR-005](../04-decisions/ADR-005-anthropic-sdk-outreach.md).
+- Lib nova `@anthropic-ai/sdk` → ver [ADR-005](../04-decisions/ADR-005-anthropic-sdk-abordagem.md).
 
 ## Fora do escopo (F005)
-- **Marcar Outreach como enviada / transicionar Lead p/ `contatado`** → F006
+- **Marcar Abordagem como enviada / transicionar Lead p/ `contatado`** → F006
   (fecha o loop de mensuração). Sem isso o funil não avança automaticamente.
 - Envio automático (disparo via API de WhatsApp) — a visão proíbe disparo sem
   consentimento; envio é manual.
-- Outreach por e-mail (`canal = email`) — esta feature é só WhatsApp.
-- Reescrita/variações A/B de uma Outreach existente.
+- Abordagem por e-mail (`canal = email`) — esta feature é só WhatsApp.
+- Reescrita/variações A/B de uma Abordagem existente.
 - Geração em lote ("gerar pra todos os priorizados") — conflita com a
   guideline síncrona.
 - Uso de Dores persistidas ([F004](F004-deteccao-de-dor.md)) — consumers leem
   `Lead.dores.detalhes` após o Diagnóstico.
 
 ## Custo estimado
-~R$0,05 por Outreach (Opus 4.8) — ver [contrato](../03-contracts/claude-messages.md).
+~R$0,05 por Abordagem (Opus 4.8) — ver [contrato](../03-contracts/claude-messages.md).
 A ~100/mês ≈ **R$5/mês**, dentro do teto da visão.

@@ -28,7 +28,7 @@ Transformar o Orion de "tudo liberado pra todo aluno" em produto com **planos**.
 >
 > Três mudanças acompanham:
 > - **BYOK encerrado para novos alunos** (ver "Fim do BYOK").
-> - **Outreach por e-mail sai do produto** ([F027](F027-outreach-por-email.md)).
+> - **Abordagem por e-mail sai do produto** ([F027](F027-abordagem-por-email.md)).
 > - **O medidor mensal passa a contar Lead coletado**, não diagnosticado.
 
 ## Conceitos
@@ -44,11 +44,11 @@ derivados da análise de margem em [11 §4–5](../11-custos-e-precificacao.md).
 | Preço cheio (BRL/mês) | R$0 | R$39 | R$97 |
 | Preço aluno (−20%) | R$0 | R$31,20 | R$77,60 |
 | **Leads novos / mês** | **60** | 300 | 800 |
-| **Outreach WhatsApp / mês** | **20** | 150 | 300 |
-| **Proposta ([F012](F012-gerador-proposta.md)) / mês** | **3** | 30 | 60 |
-| **Objeções ([F011](F011-assistente-objecoes.md)) / mês** | **5** | 50 | 80 |
+| **Abordagem WhatsApp / mês** | **20** | 150 | 300 |
+| **Proposta ([F012](F012-gerador-de-proposta.md)) / mês** | **3** | 30 | 60 |
+| **Objeções ([F011](F011-assistente-de-objecoes.md)) / mês** | **5** | 50 | 80 |
 | **Agente Orion ([F029](F029-agente-orion.md)) / mês** | **5** | 100 | 300 |
-| **Simulador ([F013](F013-simulador-venda.md)) / mês** | **20 msg** | 300 | 1.000 |
+| **Simulador ([F013](F013-simulador-de-venda.md)) / mês** | **20 msg** | 300 | 1.000 |
 | Aprofundamento por busca ([F025](F025-fila-do-dia.md)) | 10 | 20 | 20 |
 | Central de Tarefas ([F031](F031-central-de-tarefas.md)) | ✅ | ✅ | ✅ |
 | Funil kanban ([F034](F034-funil-kanban.md)) | ✅ | ✅ | ✅ |
@@ -181,7 +181,7 @@ Precedência quando há mais de um: `agencia` > `pro` > `free`.
 ## Fim do BYOK (2026-08-13)
 
 O modo **BYOK** — aluno cola as próprias chaves de Google e de IA
-([F016](F016-configuracao-chaves.md)/[F017](F017-multi-provider-llm.md)) —
+([F016](F016-configuracao-de-chaves.md)/[F017](F017-multi-provider-llm.md)) —
 **encerra para novos alunos**. Todo mundo passa a usar as chaves da Orion.
 
 **Desligado por feature flag, não por remoção de código:**
@@ -215,9 +215,9 @@ requisições Enterprise/mês) passa a ser o teto real de quantos alunos Free ca
 sem custo — e o número de páginas por busca da F033 vira a variável mais cara do
 produto. A spec 11 é atualizada junto.
 
-## Saída do Outreach por e-mail (2026-08-13)
+## Saída da Abordagem por e-mail (2026-08-13)
 
-A [F027](F027-outreach-por-email.md) sai do produto. O canal de abordagem volta
+A [F027](F027-abordagem-por-email.md) sai do produto. O canal de abordagem volta
 a ser **só WhatsApp** (F005).
 
 - Some da UI: seletor de canal no detalhe do Lead, botão "Gerar e-mail",
@@ -392,7 +392,7 @@ por plano. Quem já tem plano vê o que ganharia subindo.
 - [ ] **AC19** — Com `BYOK_NOVOS_ALUNOS=0`, aluno em modo `orion` não vê a opção
       BYOK nem campos de chave; aluno com `key_mode = "byok"` **continua** vendo
       e gerenciando as chaves dele.
-- [ ] **AC20** — Nenhum caminho da UI gera Outreach de e-mail; a Server Action
+- [ ] **AC20** — Nenhum caminho da UI gera Abordagem de e-mail; a Server Action
       recusa `canal = "email"` mesmo se chamada direto.
 - [ ] **AC21** — Simulador de venda: **20 mensagens/mês** no Free, contadas por
       competência. A 21ª devolve erro com CTA de plano.

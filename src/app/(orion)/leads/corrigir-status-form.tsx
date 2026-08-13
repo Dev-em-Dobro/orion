@@ -65,7 +65,7 @@ export function CorrigirStatusForm({
           if (
             regride &&
             !confirm(
-              `Isso volta o Lead para "${escolhido}". Diagnósticos, Dores e Outreaches continuam salvos.`,
+              `Isso volta o Lead para "${escolhido}". Diagnósticos, Dores e Abordagens continuam salvos.`,
             )
           ) {
             e.preventDefault();

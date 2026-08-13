@@ -5,7 +5,7 @@ Aceito — 2026-05-13
 
 ## Contexto
 - 1 usuário operando, esporadicamente (algumas vezes por semana).
-- Operações típicas (coletar Leads, rodar Diagnóstico, gerar Outreach)
+- Operações típicas (coletar Leads, rodar Diagnóstico, gerar Abordagem)
   são acionadas manualmente.
 - Tolerância a latência: até ~30s por operação é aceitável — o usuário
   pode esperar a barrinha rodar.

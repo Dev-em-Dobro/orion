@@ -39,7 +39,7 @@ sistema que:
    automação, etc.)
 4. Calcula um **score** (0–100) e prioriza — **automaticamente**, sem clique
 5. Entrega a **Fila do dia**: os melhores Leads prontos pra abordar
-6. Gera o Outreach personalizado via IA, em **WhatsApp ou e-mail**
+6. Gera a Abordagem personalizada via IA, em **WhatsApp ou e-mail**
 7. **Cobra o que ficou parado** (follow-up, desfecho não registrado) numa
    Central de Tarefas ([F031](02-features/F031-central-de-tarefas.md))
 8. Mostra tudo numa dashboard simples onde o aluno marca o status — e agora
@@ -49,7 +49,7 @@ sistema que:
 **10 Leads prontos por semana, por aluno, sem prospecção manual ativa.**
 
 "**Lead pronto**" = score acima de um threshold definido + Diagnóstico executado +
-ao menos uma Dor detectada + Outreach gerado e pronto pra enviar. (Termo
+ao menos uma Dor detectada + Abordagem gerada e pronto pra enviar. (Termo
 deliberadamente distinto do status de funil `qualificado`, que é a qualificação
 de venda *depois* da resposta — ver [domain model](01-domain-model.md).)
 
@@ -108,7 +108,7 @@ Em produção serverless exige a API de screenshot externa (entra no BYOK — F0
 - **Estado do Lead reversível**: descartar, restaurar, corrigir status ([F024](02-features/F024-estado-do-lead-reversivel.md)).
 - **Fila do dia**: triagem, aprofundamento e priorização automáticos ([F025](02-features/F025-fila-do-dia.md)).
 - **Sinal de atendimento automatizado** no WhatsApp ([F026](02-features/F026-sinal-atendimento-automatizado.md)).
-- **Outreach por e-mail**, preparado na plataforma e enviado pelo aluno ([F027](02-features/F027-outreach-por-email.md)).
+- **Abordagem por e-mail**, preparado na plataforma e enviado pelo aluno ([F027](02-features/F027-abordagem-por-email.md)).
 - **Central de Tarefas** in-app, sem cron ([F031](02-features/F031-central-de-tarefas.md)).
 - **Menu Skills** ([F030](02-features/F030-menu-skills.md)) e **Agente Orion** ([F029](02-features/F029-agente-orion.md)).
 - **Interface nova**: grid de cards e detalhe com abas ([F032](02-features/F032-interface-do-orion.md)),
@@ -122,7 +122,7 @@ Em produção serverless exige a API de screenshot externa (entra no BYOK — F0
 
 ## Fora de escopo
 - Envio automático de mensagens (WhatsApp/email API) — LGPD; envio segue
-  **manual**. O e-mail da [F027](02-features/F027-outreach-por-email.md) é
+  **manual**. O e-mail da [F027](02-features/F027-abordagem-por-email.md) é
   **preparado** no Orion e disparado pelo cliente de e-mail do aluno; o Orion
   **não** opera servidor de saída pra prospecção
 - Rastreamento de abertura/clique em e-mail (pixel, link encurtado) — por

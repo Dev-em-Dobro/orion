@@ -42,12 +42,14 @@ export function AjudaScore({
       >
         {(foco === "score" || foco === "completo") && (
           <span className="block">
+            {/* F025 — o texto antigo mandava "Diagnosticar e Priorizar". Os
+                dois botões saíram: o aprofundamento faz as duas coisas. */}
             <strong className="text-zinc-100">Score</strong> — prioridade do
-            Lead (0–100). Combina Valor e Necessidade. Fica{" "}
-            <strong className="text-zinc-100">0</strong> até você{" "}
-            <strong className="text-zinc-100">Diagnosticar</strong> e{" "}
-            <strong className="text-zinc-100">Priorizar</strong>. O rótulo ao
-            lado (ALTO/MÉDIO/BAIXO) é o tier do nicho, não o score.
+            Lead (0–100). Combina Valor e Necessidade. Sai{" "}
+            <strong className="text-zinc-100">estimado</strong> na busca e vira{" "}
+            <strong className="text-zinc-100">confirmado</strong> sozinho quando
+            o Orion aprofunda o Lead. O rótulo ao lado (ALTO/MÉDIO/BAIXO) é o
+            tier do nicho, não o score.
           </span>
         )}
         {(foco === "valor" || foco === "completo") && (

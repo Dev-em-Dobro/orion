@@ -4,7 +4,7 @@
 // Spec: /specs/02-features/F031-central-de-tarefas.md
 //
 // A Tarefa não é persistida; o adiamento é. Ele guarda o `marco` do fato que
-// originou a cobrança — se o marco mudar (nova Outreach, status novo), a
+// originou a cobrança — se o marco mudar (nova Abordagem, status novo), a
 // cobrança volta sozinha. Sem isso, dispensar viraria silêncio permanente.
 
 import { revalidatePath } from "next/cache";

@@ -1,5 +1,5 @@
 // Espelha /specs/01-domain-model.md.
-// Linguagem ubíqua: Lead, Diagnostico, Dor, Outreach. Snake_case nos campos
+// Linguagem ubíqua: Lead, Diagnostico, Dor, Abordagem. Snake_case nos campos
 // para bater com a tabela do domain model (CLAUDE.md regra explícita).
 
 generator client {
@@ -98,7 +98,7 @@ model Lead {
   user         User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
   diagnosticos Diagnostico[]
   dores        Dor[]
-  outreaches   Outreach[]
+  abordagens   Abordagem[]
   adiamentos   TarefaAdiamento[]
 
   @@unique([user_id, place_id])
@@ -151,7 +151,7 @@ model Dor {
   @@index([user_id])
 }
 
-model Outreach {
+model Abordagem {
   id         String    @id @default(cuid())
   user_id    String
   lead_id    String
@@ -168,8 +168,14 @@ model Outreach {
 
   @@index([lead_id])
   @@index([user_id])
-  // F028 — fila de follow-up (F006): "última Outreach enviada" por Lead.
+  // F028 — fila de follow-up (F006): "última Abordagem enviada" por Lead.
   @@index([lead_id, enviado, enviado_em(sort: Desc)])
+  /// O model virou `Abordagem` em 2026-08-13 (linguagem ubíqua — "outreach"
+  /// ninguém fala). A TABELA continua `Outreach`: renomear tabela é migração
+  /// destrutiva com janela de indisponibilidade, e o nome físico não é lido
+  /// por ninguém. Se um dia valer alinhar, é um `ALTER TABLE ... RENAME TO`
+  /// isolado — não precisa vir junto com o rename de código.
+  @@map("Outreach")
 }
 
 // F031 — cobrancas derivadas do estado. A Tarefa em si nao e persistida; so
@@ -227,7 +233,7 @@ enum QuotaOperacao {
   // F025 — aprofundamento consome PageSpeed da chave Orion.
   diagnostico
   proposta
-  outreach
+  abordagem
   simulador_msg
   // F029 — uma por pergunta ao Agente.
   agente_msg
@@ -314,7 +320,7 @@ model User {
   leads          Lead[]
   diagnosticos   Diagnostico[]
   dores          Dor[]
-  outreaches     Outreach[]
+  abordagens     Abordagem[]
   apiKeys        UserApiKeys?
   dailyUsages    DailyUsage[]
   adiamentos     TarefaAdiamento[]
@@ -355,7 +361,7 @@ model UsoMensal {
 enum OperacaoMensal {
   /// Lead criado pela coleta. Duplicata ignorada pelo dedupe **não** conta.
   lead_novo
-  outreach
+  abordagem
   proposta
   objecoes
   agente_msg

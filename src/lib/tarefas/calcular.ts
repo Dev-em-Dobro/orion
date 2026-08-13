@@ -7,7 +7,7 @@
 import type { LeadStatus, TipoTarefa } from "@prisma/client";
 import { faixaDe, PRAZOS, type FaixaUrgencia } from "./regras";
 
-export type OutreachParaTarefa = {
+export type AbordagemParaTarefa = {
   enviado: boolean;
   enviado_em: Date | null;
   gerado_em: Date;
@@ -21,7 +21,7 @@ export type LeadParaTarefa = {
   score: number;
   telefone: string | null;
   /** Mais recentes primeiro (o cálculo usa só as primeiras). */
-  outreaches: OutreachParaTarefa[];
+  abordagens: AbordagemParaTarefa[];
 };
 
 export type Adiamento = {
@@ -61,9 +61,9 @@ const FORA = new Set<LeadStatus>([
   "qualificado",
 ]);
 
-function ultimoEnvio(outreaches: OutreachParaTarefa[]): Date | null {
+function ultimoEnvio(abordagens: AbordagemParaTarefa[]): Date | null {
   let maior: Date | null = null;
-  for (const o of outreaches) {
+  for (const o of abordagens) {
     if (!o.enviado || !o.enviado_em) continue;
     if (!maior || o.enviado_em > maior) maior = o.enviado_em;
   }
@@ -71,10 +71,10 @@ function ultimoEnvio(outreaches: OutreachParaTarefa[]): Date | null {
 }
 
 function ultimaGeracaoNaoEnviada(
-  outreaches: OutreachParaTarefa[],
+  abordagens: AbordagemParaTarefa[],
 ): Date | null {
   let maior: Date | null = null;
-  for (const o of outreaches) {
+  for (const o of abordagens) {
     if (o.enviado) continue;
     if (!maior || o.gerado_em > maior) maior = o.gerado_em;
   }
@@ -102,7 +102,7 @@ function tarefaDoLead(lead: LeadParaTarefa, agora: number): Tarefa | null {
   };
 
   if (lead.status === "contatado") {
-    const envio = ultimoEnvio(lead.outreaches);
+    const envio = ultimoEnvio(lead.abordagens);
     if (!envio) return null;
     const desde = agora - envio.getTime();
     if (desde >= PRAZOS.MANDAR_FOLLOWUP) return criar("MANDAR_FOLLOWUP", envio);
@@ -112,7 +112,7 @@ function tarefaDoLead(lead: LeadParaTarefa, agora: number): Tarefa | null {
   }
 
   if (lead.status === "priorizado") {
-    const gerada = ultimaGeracaoNaoEnviada(lead.outreaches);
+    const gerada = ultimaGeracaoNaoEnviada(lead.abordagens);
     if (!gerada) return null;
     return agora - gerada.getTime() >= PRAZOS.ENVIAR_ABORDAGEM
       ? criar("ENVIAR_ABORDAGEM", gerada)
@@ -138,7 +138,7 @@ function tarefaDoLead(lead: LeadParaTarefa, agora: number): Tarefa | null {
  * Adiada ou dispensada?
  *
  * Dispensar some com a cobrança **enquanto o fato não mudar**: o adiamento
- * guarda o `marco`, e um marco novo (nova Outreach enviada, status alterado)
+ * guarda o `marco`, e um marco novo (nova Abordagem enviada, status alterado)
  * traz a Tarefa de volta. Sem isso, dispensar viraria silêncio permanente.
  */
 function silenciada(tarefa: Tarefa, adiamentos: Adiamento[], agora: number) {

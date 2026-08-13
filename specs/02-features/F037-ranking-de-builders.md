@@ -31,7 +31,7 @@ primeiro mês.
 ## Decisão: sem entidade nova — venda é `Lead.status = ganho`
 
 O aluno "declara a venda" **marcando o Lead como ganho**, que é o que a
-[F006](F006-followup-e-funil.md) já faz. Não entra tabela de "venda declarada".
+[F006](F006-follow-up-e-funil.md) já faz. Não entra tabela de "venda declarada".
 
 Uma entidade separada criaria **duas verdades** sobre a mesma coisa: um aluno
 com 4 Leads `ganho` e 2 vendas declaradas estaria certo em qual dos números? E
@@ -114,7 +114,7 @@ Duas camadas, e **nenhuma delas é suficiente sozinha**:
 **1. Filtro automático — a venda precisa de rastro.** Só conta o Lead que:
 - veio de uma **coleta** (tem `place_id` do Places, não foi digitado), **e**
 - tem **Diagnóstico** executado, **e**
-- tem **Outreach com `enviado = true`**
+- tem **Abordagem com `enviado = true`**
 
 Ou seja: pra fraudar é preciso rodar o fluxo inteiro — gastar cota de coleta e
 de diagnóstico, gerar e marcar abordagem. Não impede fraude; encarece.
@@ -190,8 +190,8 @@ nenhuma delas, e competição no meio da fila do dia atrapalha o trabalho.
 
 ## Critérios de aceitação
 - [ ] **AC1** — Lead `ganho` com `status_em` no mês corrente e com coleta +
-      Diagnóstico + Outreach enviada conta 1 venda.
-- [ ] **AC2** — Lead `ganho` **sem** Outreach enviada (ou sem Diagnóstico, ou
+      Diagnóstico + Abordagem enviada conta 1 venda.
+- [ ] **AC2** — Lead `ganho` **sem** Abordagem enviada (ou sem Diagnóstico, ou
       criado à mão sem `place_id` de coleta) **não** conta.
 - [ ] **AC3** — Virada de mês zera o ranking sem job: em 01/09 o quadro de
       setembro está vazio e o de agosto continua consultável.

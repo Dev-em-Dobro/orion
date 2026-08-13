@@ -16,7 +16,7 @@ const ESTAGIOS_COBRAVEIS = [
   "proposta",
 ] as const;
 
-/** Teto de Outreaches lidas por Lead: só as mais recentes importam. */
+/** Teto de Abordagens lidas por Lead: só as mais recentes importam. */
 const OUTREACHES_POR_LEAD = 5;
 
 /**
@@ -40,7 +40,7 @@ export async function tarefasDoUsuario(
         status_em: true,
         score: true,
         telefone: true,
-        outreaches: {
+        abordagens: {
           select: { enviado: true, enviado_em: true, gerado_em: true },
           orderBy: { gerado_em: "desc" },
           take: OUTREACHES_POR_LEAD,

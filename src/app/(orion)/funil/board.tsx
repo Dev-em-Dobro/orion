@@ -203,7 +203,7 @@ export function Board({
 
       <p className="mt-2 text-xs text-zinc-600">
         Arraste um card ou use o seletor dentro dele. Mover corrige o status —
-        Diagnóstico, Dores e Outreaches continuam salvos.
+        Diagnóstico, Dores e Abordagens continuam salvos.
       </p>
     </div>
   );

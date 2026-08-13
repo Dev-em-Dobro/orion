@@ -7,7 +7,7 @@ export const OPERACOES_COTA = [
   // F025 — aprofundamento: 1 por Lead diagnosticado.
   "diagnostico",
   "proposta",
-  "outreach",
+  "abordagem",
   "simulador_msg",
   // F029 — uma por pergunta ao Agente (1 a 3 chamadas de LLM cada).
   "agente_msg",
@@ -20,7 +20,7 @@ export const LIMITES_DIARIOS: Record<OperacaoCota, number> = {
   // 5 coletas × 10 aprofundados por coleta (APROFUNDAR_POR_COLETA) = 50.
   diagnostico: 50,
   proposta: 5,
-  outreach: 5,
+  abordagem: 5,
   simulador_msg: 20,
   agente_msg: 30,
 };
@@ -29,7 +29,7 @@ export const LABEL_OPERACAO: Record<OperacaoCota, string> = {
   coleta: "coletas",
   diagnostico: "diagnósticos",
   proposta: "propostas",
-  outreach: "outreaches",
+  abordagem: "abordagens",
   simulador_msg: "mensagens no simulador",
   agente_msg: "perguntas ao Agente",
 };

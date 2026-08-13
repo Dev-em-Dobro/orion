@@ -130,7 +130,7 @@ Codificado em `src/lib/simulador/prompt.ts`:
 - `MAX_TURNOS = 20` como constante no `lib/simulador`.
 - Reusa `src/lib/dores/derivarDoDiagnostico` (F011) para semear o Cenário a
   partir de um Lead.
-- Lib nova? Não — reusa `@anthropic-ai/sdk` ([ADR-005](../04-decisions/ADR-005-anthropic-sdk-outreach.md)). **Sem ADR.**
+- Lib nova? Não — reusa `@anthropic-ai/sdk` ([ADR-005](../04-decisions/ADR-005-anthropic-sdk-abordagem.md)). **Sem ADR.**
 
 ## Fora do escopo (F013)
 - **Persistência** de treinos e **evolução do score** ao longo do tempo —

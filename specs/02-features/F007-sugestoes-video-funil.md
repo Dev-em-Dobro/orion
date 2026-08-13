@@ -69,7 +69,7 @@ Gera **5 Ideias** variando as etapas do funil.
 - `src/lib/conteudo/prompt.ts` — `IdeiaVideo` (tipo), `SYSTEM_PROMPT_CONTEUDO`
   (playbook de conteúdo/funil) e `montarTema(tema)`. Fonte única da estratégia.
 - `src/lib/conteudo/sugerirVideos.ts` — cliente Claude (SDK, structured output
-  com array); lança `ConteudoError`. Reusa [ADR-005](../04-decisions/ADR-005-anthropic-sdk-outreach.md)
+  com array); lança `ConteudoError`. Reusa [ADR-005](../04-decisions/ADR-005-anthropic-sdk-abordagem.md)
   (sem lib nova).
 - `src/actions/conteudo/sugerir.ts` — Server Action fina.
 - `src/app/conteudo/page.tsx` + `sugerir-form.tsx` (client, form + cards).

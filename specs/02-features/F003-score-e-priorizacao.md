@@ -1,7 +1,38 @@
 # F003 — Score e Priorização por Valor de Nicho
 
 ## Status
-Proposta — 2026-06-12
+Proposta — 2026-06-12 · **emendada em 2026-08-13** (ver abaixo).
+
+## Emenda 2026-08-13 — o botão Priorizar deixou de existir
+
+A **fórmula** desta spec continua íntegra e é a que roda em produção. O que saiu
+foi o **disparo manual**.
+
+Desde a [F025](F025-fila-do-dia.md) o ponto único de "score confirmado" é
+`src/lib/score/recalcular.ts` — chamado pelo aprofundamento em lote, pelo
+Diagnóstico manual e pelo re-diagnóstico. Ele grava o `score`, marca
+`score_estimado = false` e promove `novo`/`enriquecido` → `priorizado`. Ou seja:
+**quando o Lead chega na tela, ele já está priorizado**, e o botão só refazia a
+mesma conta com o mesmo resultado.
+
+Em 2026-08-13, junto com o enxugamento do detalhe do Lead
+([F032](F032-interface-do-orion.md)), foram removidos:
+
+- `src/app/(orion)/leads/priorizar-button.tsx` — o botão;
+- `src/actions/leads/priorizar.ts` — a Server Action `priorizarLead`, que ficou
+  sem nenhum chamador.
+
+**O que isso faz com os critérios abaixo:**
+
+| AC | Situação |
+|----|----------|
+| AC1–AC4, AC9 | **Valem** — são a fórmula pura de `src/lib/score/`, coberta por `tests/unit/score.test.ts` |
+| AC7 | **Vale** — ordenação e realce da lista |
+| AC5, AC6, AC8 | **Obsoletos** — descreviam o contrato de erro da Server Action removida. A garantia equivalente vive na F025: `recalcularScore` devolve `null` sem Diagnóstico, e não regride status já avançado |
+
+O "Input (UI)", o "Fluxo" e a linha de `src/actions/leads/priorizar.ts` em
+"Decisões de implementação" descrevem, daqui em diante, **como era** — ficam
+como registro histórico.
 
 ## Objetivo
 Calcular o **score** (0–100) de um Lead combinando duas dimensões e promover
@@ -75,7 +106,7 @@ dinheiro —, mas a Necessidade segura o caso "perfil caro com site ótimo"
 
 ### Qualificado
 Constante `SCORE_QUALIFICADO = 60` (default). Alinha com a visão: "Lead
-qualificado" exige score ≥ threshold + Diagnóstico + Dor + Outreach. A F003
+qualificado" exige score ≥ threshold + Diagnóstico + Dor + Abordagem. A F003
 entrega só a parte do score; a UI pode destacar Leads `score ≥ 60`.
 
 ## Input (UI)
@@ -143,7 +174,7 @@ Cada linha exibe `score`, Tier do nicho e um realce visual para `score ≥ 60`.
 ## Fora do escopo (F003)
 - Necessidade a partir de Dor persistida ([F004](F004-deteccao-de-dor.md)) —
   a F003 continua lendo o Diagnóstico direto até evolução própria.
-- Geração de Outreach (F005).
+- Geração de Abordagem (F005).
 - Priorização em lote ("priorizar todos os enriquecidos") — conflita com a
   guideline síncrona; avaliar por spec se virar dor real.
 - Re-priorização automática após re-diagnóstico — disparo continua manual.

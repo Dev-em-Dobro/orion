@@ -124,7 +124,7 @@ export function ferramentasDoAgente(userId: string) {
           include: {
             diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 },
             dores: true,
-            outreaches: {
+            abordagens: {
               // Sem o texto: o agente não precisa reproduzir a mensagem.
               select: { canal: true, enviado: true, enviado_em: true },
               orderBy: { gerado_em: "desc" },
@@ -164,7 +164,7 @@ export function ferramentasDoAgente(userId: string) {
             severidade: d.severidade,
             detalhes: d.detalhes,
           })),
-          outreaches: lead.outreaches,
+          abordagens: lead.abordagens,
         };
       },
     }),
@@ -263,7 +263,7 @@ export function ferramentasDoAgente(userId: string) {
             ...whereUser,
             status: { in: ["priorizado", "enriquecido"] },
             score_estimado: false,
-            outreaches: { none: { enviado: true } },
+            abordagens: { none: { enviado: true } },
           },
           orderBy: [{ score: "desc" }, { status_em: "asc" }],
           take: 10,

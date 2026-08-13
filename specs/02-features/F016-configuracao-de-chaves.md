@@ -48,7 +48,7 @@ dentro da lib):
 |-----|----------|------|
 | `places/textSearch` | `GOOGLE_PLACES_API_KEY` | chave Google do aluno |
 | `pagespeed/performanceMobile` | `PAGESPEED_API_KEY` | chave Google do aluno |
-| `outreach`, `conteudo`, `diagnostico-ux`, `proposta`, `objecoes`, `simulador` | `ANTHROPIC_API_KEY` | chave de IA do aluno |
+| `abordagem`, `conteudo`, `diagnostico-ux`, `proposta`, `objecoes`, `simulador` | `ANTHROPIC_API_KEY` | chave de IA do aluno |
 | `diagnostico-ux` (screenshot) | `SCREENSHOTONE_ACCESS_KEY` | chave ScreenshotOne do aluno |
 
 ## Onboarding
@@ -85,8 +85,8 @@ state explicativo). Reaproveitar o tutorial existente do Google Places
 ## Como testar
 1. `.env` com `BYOK_MASTER_KEY` (`openssl rand -base64 32`) + migrate
 2. Login → `/configuracao` → salvar Google + Anthropic → "Testar chave"
-3. Coletar Lead e gerar Outreach (usam a chave do aluno, não o `.env`)
-4. Remover Anthropic → Outreach falha com mensagem apontando `/configuracao`
+3. Coletar Lead e gerar Abordagem (usam a chave do aluno, não o `.env`)
+4. Remover Anthropic → Abordagem falha com mensagem apontando `/configuracao`
 
 ## Fora do escopo (F016)
 - Escolha/uso efetivo de OpenAI/Gemini → [F017](F017-multi-provider-llm.md)

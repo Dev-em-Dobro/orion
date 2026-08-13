@@ -22,11 +22,11 @@ disso ele responderia sobre uma base vazia.
 1. **Sem dado inventado.** Todo número que o agente afirma vem de uma
    ferramenta. Se não tem ferramenta pra pergunta, ele diz que não sabe.
 2. **Só leitura na v1.** O agente **não** muda status, não descarta Lead, não
-   dispara Outreach. Sugere e leva pra tela certa.
+   dispara Abordagem. Sugere e leva pra tela certa.
 3. **Isolamento é do servidor.** O `user_id` vem da sessão; o modelo **nunca**
    informa de quem são os dados — não existe parâmetro de usuário nas
    ferramentas.
-4. **Linguagem ubíqua.** O agente fala Lead, Diagnóstico, Dor, Outreach, score
+4. **Linguagem ubíqua.** O agente fala Lead, Diagnóstico, Dor, Abordagem, score
    — nunca "prospect", "análise" ou "mensagem"
    ([domain model](../01-domain-model.md)).
 
@@ -35,7 +35,7 @@ disso ele responderia sobre uma base vazia.
 | Ferramenta | Parâmetros | Devolve |
 |------------|-----------|---------|
 | `listar_leads` | `status?`, `categoria?`, `score_min?`, `tem_site?`, `atendimento?`, `limite ≤ 25` | Leads do usuário, com score, status e Dor principal |
-| `detalhar_lead` | `lead_id` ou `nome` | Lead + último Diagnóstico + Dores + Outreaches (sem o texto completo das mensagens) |
+| `detalhar_lead` | `lead_id` ou `nome` | Lead + último Diagnóstico + Dores + Abordagens (sem o texto completo das mensagens) |
 | `explicar_score` | `lead_id` | Decomposição da [F003](F003-score-e-priorizacao.md): Valor (tier + porte), Necessidade e a conta |
 | `resumo_do_funil` | — | Contagem por status + taxas de conversão ([F010](F010-dashboard-funil.md)) |
 | `fila_do_dia` | — | A fila da [F025](F025-fila-do-dia.md) |
@@ -101,7 +101,7 @@ sugere um filtro mais estreito.
 - Nova operação de cota `agente_msg` em `QuotaOperacao`.
 
 ## Fora do escopo (F029)
-- **Ações de escrita** (mudar status, gerar Outreach, descartar). Entram numa v2
+- **Ações de escrita** (mudar status, gerar Abordagem, descartar). Entram numa v2
   com confirmação explícita do aluno antes de cada escrita.
 - Histórico de conversa persistido no banco.
 - Busca semântica / RAG sobre as specs, os entregáveis ou as skills.

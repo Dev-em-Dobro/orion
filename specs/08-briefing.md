@@ -22,7 +22,7 @@ entrega o contato com a **Dor diagnosticada** e a **mensagem de abordagem pronta
 2. **Diagnostica** a presença digital: tem site? HTTPS? é rápido no mobile? [F002/F008]
 3. **Detecta Dores** concretas: sem site, site lento, sem HTTPS… [F002 → F004]
 4. **Prioriza** com um score de 0–100. [F003]
-5. **Gera o outreach** de WhatsApp pronto e personalizado, via Claude. [F005]
+5. **Gera a abordagem** de WhatsApp pronto e personalizado, via Claude. [F005]
 6. **Acompanha o funil** e ajuda a fechar: follow-up, objeções, proposta e
    roleplay de venda. [F006/F010/F011/F012/F013]
 
@@ -36,7 +36,7 @@ quem, de fato, precisa dele.
 ## O diferencial (o fosso)
 Os concorrentes ou fazem **scraping cru + disparo em massa** (MapLeads) ou são
 **caros/enterprise** (Apollo, Leads Per Hour). Nenhum entrega **contato + Dor
-diagnosticada + outreach pronto**, por **dado público (API oficial)**, dentro da
+diagnosticada + abordagem pronta**, por **dado público (API oficial)**, dentro da
 **LGPD**, a **custo marginal**, para **um operador**. O **diagnóstico que
 qualifica** é o que ninguém faz — e é o núcleo. Ver [concorrentes](06-referencias/concorrentes.md).
 
@@ -51,7 +51,7 @@ De ferramenta interna → produto pros alunos:
 Detalhe, decisões e ordem no [roadmap de lançamento](07-lancamento-para-alunos.md).
 
 ## O que já existe (features)
-Coleta [F001], Diagnóstico de presença [F002], Score [F003], Outreach WhatsApp
+Coleta [F001], Diagnóstico de presença [F002], Score [F003], Abordagem WhatsApp
 [F005], Follow-up e funil [F006], Ideias de vídeo/inbound [F007], Diagnóstico de
 UX por IA com visão [F008], Sinal de site agregador [F009], Dashboard de funil
 [F010], Assistente de objeções [F011], Gerador de proposta [F012], Simulador de

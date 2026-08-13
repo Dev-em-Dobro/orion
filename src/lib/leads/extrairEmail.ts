@@ -1,5 +1,5 @@
 // F027 — e-mail de contato publicado no site do próprio Lead.
-// Spec: /specs/02-features/F027-outreach-por-email.md · fronteira: ADR-016
+// Spec: /specs/02-features/F027-abordagem-por-email.md · fronteira: ADR-016
 //
 // LGPD, explícito: só endereço que o negócio publicou **no site dele**, para
 // ser contactado. Nada de terceiros, redes sociais, bases vazadas ou

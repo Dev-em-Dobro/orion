@@ -7,8 +7,8 @@ import {
 } from "@/lib/simulador/prompt";
 import { avaliarSimulacao } from "@/lib/simulador/avaliar";
 import { simularTurno, SimuladorError } from "@/lib/simulador/simular";
-import { systemPrompt, montarContexto } from "@/lib/outreach/prompt";
-import { gerarOutreach, OutreachError } from "@/lib/outreach/gerarOutreach";
+import { systemPrompt, montarContexto } from "@/lib/abordagem/prompt";
+import { gerarAbordagem, AbordagemError } from "@/lib/abordagem/gerarAbordagem";
 import { montarContextoObjecao } from "@/lib/objecoes/prompt";
 import { responderObjecao, ObjecaoError } from "@/lib/objecoes/responderObjecao";
 import { montarContextoProposta } from "@/lib/proposta/prompt";
@@ -28,7 +28,7 @@ function fakeLlm(partial: Partial<LlmClient> = {}): LlmClient {
 }
 
 describe("prompts (builders)", () => {
-  it("outreach system + contexto", () => {
+  it("abordagem system + contexto", () => {
     expect(systemPrompt("primeira")).toMatch(/PRIMEIRA mensagem/);
     expect(systemPrompt("followup")).toMatch(/FOLLOW-UP/);
     expect(
@@ -95,11 +95,11 @@ describe("wrappers LLM (mock client)", () => {
     dores: ["sem site"],
   };
 
-  it("gerarOutreach ok e LlmError → OutreachError", async () => {
+  it("gerarAbordagem ok e LlmError → AbordagemError", async () => {
     const llm = fakeLlm({
       generateStructured: vi.fn().mockResolvedValue({ mensagem: "  oi  " }),
     });
-    expect(await gerarOutreach(lead, llm, "primeira")).toEqual({
+    expect(await gerarAbordagem(lead, llm, "primeira")).toEqual({
       mensagem: "oi",
     });
 
@@ -108,8 +108,8 @@ describe("wrappers LLM (mock client)", () => {
         .fn()
         .mockRejectedValue(new LlmError(429, "quota")),
     });
-    await expect(gerarOutreach(lead, bad)).rejects.toBeInstanceOf(
-      OutreachError,
+    await expect(gerarAbordagem(lead, bad)).rejects.toBeInstanceOf(
+      AbordagemError,
     );
   });
 

@@ -3,7 +3,7 @@
 > Repositório / codename interno: `prospect-engine`.
 
 Motor de prospecção para **negócios locais**: acha estabelecimentos que precisam
-de um dev, diagnostica a presença digital, prioriza por score e gera Outreach via
+de um dev, diagnostica a presença digital, prioriza por score e gera Abordagem via
 Claude API. **A partir da Fase 2, é um app hospedado para alunos**: cada aluno faz
 **login**, o app é **multi-tenant** (cada um vê só os seus dados) e usa as
 **próprias chaves de API** (BYOK), configuráveis na UI. A marca/oferta fica em
@@ -24,14 +24,14 @@ em `specs/07-lancamento-para-alunos.md`, briefing em `specs/08-briefing.md`.
 - **Toda feature tem ID** (`F001`, `F002`, ...). Commits e PRs referenciam o ID.
 - **Linguagem ubíqua** definida em `/specs/01-domain-model.md`. Não usar sinônimos
   (é "Lead", não "prospect"; "Diagnóstico", não "análise"; "Dor", não "problema"
-  genérico; "Outreach", não "mensagem" no sentido de domínio).
+  genérico; "Abordagem", não "mensagem" no sentido de domínio).
 
 ## Stack fixa
 - Next.js 15 (App Router) + TypeScript estrito
 - PostgreSQL hospedado no Neon
 - Prisma ORM
 - Tailwind + shadcn/ui
-- Claude API para geração de outreach
+- Claude API para geração de abordagem
 - Google Places API + PageSpeed Insights API para coleta e diagnóstico
 - **Sem workers, sem filas** — tudo via Server Actions síncronas (ADR-002,
   mantido na Fase 3: operações longas viram **lotes curtos** com progresso)

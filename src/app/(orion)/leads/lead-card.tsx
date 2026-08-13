@@ -27,10 +27,10 @@ export type LeadCardProps = {
   /** F025 — score ainda vem da Triagem (sem Diagnóstico). */
   scoreEstimado: boolean;
   dorPrincipal: string | null;
-  temOutreach: boolean;
+  temAbordagem: boolean;
   /** F026 — sem sinal de atendimento automatizado (e com telefone). */
   semAtendimento: boolean;
-  outreachEnviado: boolean;
+  abordagemEnviada: boolean;
   waLink: string | null;
   motivoDescarte: string | null;
   /** Link do detalhe já com o contexto de filtro (F032 AC8). */
@@ -170,7 +170,7 @@ export function LeadCard({
       </div>
 
       {/* A linha da Dor saiu do card em 2026-08-13. Ela continua no detalhe
-          (aba Diagnóstico) e alimenta o Outreach — só não aparece na varredura. */}
+          (aba Diagnóstico) e alimenta a Abordagem — só não aparece na varredura. */}
       {lead.motivoDescarte && (
         <p className="text-xs text-zinc-500">Descartado: {lead.motivoDescarte}</p>
       )}

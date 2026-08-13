@@ -1,6 +1,6 @@
 "use client";
 
-// F038 — copiar o conteúdo de uma Outreach do histórico.
+// F038 — copiar o conteúdo de uma Abordagem do histórico.
 //
 // Existe porque o roteiro de ligação não tem "Abrir no WhatsApp": sem um botão
 // de copiar, a única saída seria selecionar o texto na mão dentro do textarea.

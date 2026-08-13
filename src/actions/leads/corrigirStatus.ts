@@ -6,7 +6,7 @@
 // Porta separada do `registrarDesfecho` de propósito: lá a trava
 // `podeRegistrarDesfecho` impede regressão (desfecho não deve voltar sozinho);
 // aqui o aluno está declarando que o registro estava errado. Nunca apaga
-// Diagnóstico, Dor nem Outreach — só muda o estado do funil.
+// Diagnóstico, Dor nem Abordagem — só muda o estado do funil.
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";

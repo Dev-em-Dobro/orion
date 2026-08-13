@@ -9,10 +9,10 @@ import {
 const initial: MarcarEnviadoState = { kind: "idle" };
 
 export function MarcarEnviadaButton({
-  outreachId,
+  abordagemId,
   rotulo = "Marcar como enviada",
 }: {
-  outreachId: string;
+  abordagemId: string;
   /** F038 — "enviada" não descreve uma ligação; o canal ligacao passa outro. */
   rotulo?: string;
 }) {
@@ -24,7 +24,7 @@ export function MarcarEnviadaButton({
 
   return (
     <form action={action} className="mt-1">
-      <input type="hidden" name="outreach_id" value={outreachId} />
+      <input type="hidden" name="abordagem_id" value={abordagemId} />
       <button type="submit" disabled={pending} className="btn-ghost">
         {pending ? "Marcando..." : rotulo}
       </button>

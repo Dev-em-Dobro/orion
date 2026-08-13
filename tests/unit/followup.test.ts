@@ -5,13 +5,13 @@ import {
   limiteDaJanela,
   whereFilaFollowUp,
 } from "@/lib/followup";
-import type { Lead, Outreach } from "@prisma/client";
+import type { Lead, Abordagem } from "@prisma/client";
 
-type LeadComOutreach = Lead & { outreaches: Outreach[] };
+type LeadComAbordagem = Lead & { abordagens: Abordagem[] };
 
 function fakeLead(
-  patch: Partial<Lead> & { outreaches: Outreach[] },
-): LeadComOutreach {
+  patch: Partial<Lead> & { abordagens: Abordagem[] },
+): LeadComAbordagem {
   return {
     id: "l1",
     user_id: "u1",
@@ -48,19 +48,19 @@ describe("filaDeFollowUp", () => {
         fakeLead({
           id: "a",
           status: "contatado",
-          outreaches: [{ enviado_em: ha5 } as Outreach],
+          abordagens: [{ enviado_em: ha5 } as Abordagem],
         }),
         fakeLead({
           id: "b",
           status: "contatado",
-          outreaches: [{ enviado_em: ha1 } as Outreach],
+          abordagens: [{ enviado_em: ha1 } as Abordagem],
         }),
         fakeLead({
           id: "c",
           status: "novo",
-          outreaches: [{ enviado_em: ha5 } as Outreach],
+          abordagens: [{ enviado_em: ha5 } as Abordagem],
         }),
-        fakeLead({ id: "d", status: "contatado", outreaches: [] }),
+        fakeLead({ id: "d", status: "contatado", abordagens: [] }),
       ],
       agora,
     );
@@ -87,7 +87,7 @@ describe("whereFilaFollowUp", () => {
     expect(where.status).toBe("contatado");
     // `some` sozinho traria de volta quem já recebeu follow-up hoje (ele tem
     // um envio antigo). O `none` é o que fecha a janela pelo envio mais recente.
-    expect(where.outreaches).toEqual({
+    expect(where.abordagens).toEqual({
       some: { enviado: true },
       none: { enviado: true, enviado_em: { gt: limite } },
     });

@@ -2,7 +2,7 @@
 // (client). Sem hooks nem "use client" → usável dos dois lados.
 import type { LeadStatus } from "@prisma/client";
 
-export { linkWhatsapp } from "@/lib/outreach/whatsappLink";
+export { linkWhatsapp } from "@/lib/abordagem/whatsappLink";
 
 export const STATUS_BADGE: Record<LeadStatus, string> = {
   novo: "bg-zinc-500/15 text-zinc-300",

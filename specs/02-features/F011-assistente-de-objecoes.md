@@ -4,7 +4,7 @@
 Proposta — 2026-07-11
 
 ## Objetivo
-Quando o Lead **responde** ao Outreach com uma objeção ou pergunta
+Quando o Lead **responde** à Abordagem com uma objeção ou pergunta
 ("achei caro", "já tenho site", "não tenho tempo", "me manda por e-mail"),
 gerar **2–3 respostas sugeridas** — curtas, em PT-BR, prontas pra colar no
 WhatsApp — que **acolhem** a objeção, **reancoram** na Dor concreta do
@@ -36,7 +36,7 @@ Codificadas em `src/lib/objecoes/prompt.ts` — o que move o fechamento:
 4. **CTA único e fácil** por resposta — uma pergunta de sim/não.
 5. **Brevidade.** WhatsApp: **≤ ~60 palavras**, 2–4 frases.
 6. **Honestidade.** Não prometer resultado garantido, não inventar dados que
-   não temos sobre o Lead (mesma disciplina da [F005](F005-outreach-whatsapp.md)).
+   não temos sobre o Lead (mesma disciplina da [F005](F005-abordagem-whatsapp.md)).
 7. **PT-BR coloquial**, sem "Prezado"; usa o nome do negócio quando couber.
 8. **Variar o ângulo** entre as 2–3 respostas — não repetir a mesma tática.
 
@@ -88,7 +88,7 @@ operador cola a mensagem do Lead + botão **Sugerir respostas**.
 - [ ] **AC5** — `mensagem_do_lead` vazia ou < 2 chars (Zod) → erro de campo na
       UI, sem chamada externa.
 - [ ] **AC6** — A action **não** altera `Lead.status` nem cria registro algum
-      (nenhum `Outreach`, nenhuma entidade nova).
+      (nenhum `Abordagem`, nenhuma entidade nova).
 - [ ] **AC7** — Falha da Claude API (429/5xx/refusal → `parsed_output` nulo) →
       `{ erro }` na UI, sem quebrar a app.
 - [ ] **AC8** — `lead_id` inválido (Zod) ou inexistente → `{ erro }` específico
@@ -101,14 +101,14 @@ operador cola a mensagem do Lead + botão **Sugerir respostas**.
   output (array de 2–3 `{ abordagem, texto }`); lança `ObjecaoError`. Sem dep de
   Next. Modelo **`claude-opus-4-8`** (qualidade de escrita importa, como na F005).
 - `src/lib/dores/derivarDoDiagnostico.ts` — **extrair** a derivação hoje inline
-  no passo 4 da [F005](F005-outreach-whatsapp.md) para um helper puro reusado por
+  no passo 4 da [F005](F005-abordagem-whatsapp.md) para um helper puro reusado por
   F005/F011/F012 (e por F003 quando migrar). Quando a F004 (Dores persistidas)
   existir, o helper passa a ler as Dores — sem mudar as chamadas.
 - Server Action `src/actions/leads/responderObjecao.ts`, fina — orquestra
   `lib/objecoes` + Prisma (só leitura).
 - UI `src/app/leads/responder-objecao-panel.tsx` — textarea + botão + cards, no
-  padrão de `gerar-outreach-button.tsx`.
-- Lib nova? Não — reusa `@anthropic-ai/sdk` ([ADR-005](../04-decisions/ADR-005-anthropic-sdk-outreach.md)). **Sem ADR.**
+  padrão de `gerar-abordagem-button.tsx`.
+- Lib nova? Não — reusa `@anthropic-ai/sdk` ([ADR-005](../04-decisions/ADR-005-anthropic-sdk-abordagem.md)). **Sem ADR.**
 
 ## Fora do escopo (F011)
 - **Persistência** das objeções/respostas (histórico de conversa) — exigiria

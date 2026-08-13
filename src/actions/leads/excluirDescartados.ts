@@ -4,7 +4,7 @@
 // Spec: /specs/02-features/F024-estado-do-lead-reversivel.md
 //
 // Única exclusão destrutiva da feature, e só alcança `descartado`. Diagnóstico,
-// Dor e Outreach vão junto por cascata (schema). Exige confirmação na UI: o
+// Dor e Abordagem vão junto por cascata (schema). Exige confirmação na UI: o
 // aluno digita a quantidade que espera excluir, e a action só age se bater com
 // o que existe — assim um clique errado não leva a base embora.
 

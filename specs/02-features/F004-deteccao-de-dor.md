@@ -11,7 +11,7 @@ registros de **Dor** no banco, escopados por `user_id` ([F015](F015-multi-tenant
 Hoje a entidade `Dor` existe no schema e no
 [domain model](../01-domain-model.md), mas nenhum fluxo a cria: F005/F011/F012/F013
 derivam texto em runtime a partir do Diagnóstico. Esta feature fecha o modelo:
-as Dores passam a ser a **fonte de verdade** para Outreach, proposta, objeções e
+as Dores passam a ser a **fonte de verdade** para Abordagem, proposta, objeções e
 simulador.
 
 ## Linguagem
@@ -42,14 +42,14 @@ Regras:
 1. `SEM_SITE` e `SITE_AGREGADOR` são **exclusivos** entre si e **não empilham**
    com `SITE_LENTO` / `SEM_HTTPS` (não há site próprio mensurável).
 2. Com site próprio, `SITE_LENTO` e `SEM_HTTPS` podem coexistir.
-3. Site no ar sem essas Dores → **zero** registros de Dor (proposta/outreach
+3. Site no ar sem essas Dores → **zero** registros de Dor (proposta/abordagem
    usam fallback de copy “sem problema técnico grave”, como hoje).
 4. `SEM_RESPOSTA_REVIEWS` permanece no enum do domínio, **sem detector** nesta
    feature (extensão futura).
 
 ## Input / saída (UI)
 Sem UI nova. O botão **Diagnosticar** (F002) passa a também persistir Dores.
-Consumidores (Outreach, Proposta, Objeções, Treino) leem `Lead.dores` (tenant)
+Consumidores (Abordagem, Proposta, Objeções, Treino) leem `Lead.dores` (tenant)
 em vez de derivar do Diagnóstico.
 
 ## Fluxo
@@ -68,7 +68,7 @@ em vez de derivar do Diagnóstico.
       tenant); não acumula Dores contraditórias.
 - [x] **AC3** — Toda leitura/escrita de Dor filtra por `user_id` da sessão (F015);
       Lead de outro aluno → 404 / “não encontrado”.
-- [x] **AC4** — Outreach (F005), Proposta (F012), Objeções (F011) e seed do
+- [x] **AC4** — Abordagem (F005), Proposta (F012), Objeções (F011) e seed do
       Simulador (F013) usam Dores persistidas (`detalhes`), não derivação ad-hoc
       do Diagnóstico na action.
 - [x] **AC5** — Detecção é função pura em `src/lib/dores/`, coberta por testes

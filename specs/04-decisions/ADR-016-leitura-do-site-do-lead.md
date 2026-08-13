@@ -3,7 +3,7 @@
 ## Status
 Proposta — 2026-08-10 (decidir antes do código da
 [F026](../02-features/F026-sinal-atendimento-automatizado.md) e da
-[F027](../02-features/F027-outreach-por-email.md)).
+[F027](../02-features/F027-abordagem-por-email.md)).
 
 ## Contexto
 Duas features do revamp precisam de sinais que **só existem dentro do HTML** do
@@ -11,7 +11,7 @@ site do Lead:
 
 - [F026](../02-features/F026-sinal-atendimento-automatizado.md) — se há
   atendimento automatizado (widget de chatbot no site).
-- [F027](../02-features/F027-outreach-por-email.md) — o e-mail de contato que o
+- [F027](../02-features/F027-abordagem-por-email.md) — o e-mail de contato que o
   negócio publica.
 
 Hoje o [Diagnóstico](../02-features/F002-diagnostico-de-presenca-digital.md)

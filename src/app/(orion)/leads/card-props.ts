@@ -7,15 +7,15 @@ import { classificarWebsite } from "@/lib/diagnostico/agregador";
 import { dorPrincipal } from "@/lib/dores/principal";
 import { rotuloCategoria } from "@/lib/nichos/catalogo";
 import { valor as calcularValor } from "@/lib/score/score";
-import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
+import { linkWhatsapp } from "@/lib/abordagem/whatsappLink";
 import type { LeadCardProps } from "./lead-card";
 
 /** Include mínimo que o card precisa. Use nas duas queries. */
 export const INCLUDE_CARD = {
   diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 },
   dores: { select: { tipo: true, severidade: true, detalhes: true } },
-  outreaches: { orderBy: { gerado_em: "desc" }, take: 1 },
-  _count: { select: { outreaches: true } },
+  abordagens: { orderBy: { gerado_em: "desc" }, take: 1 },
+  _count: { select: { abordagens: true } },
 } satisfies Prisma.LeadInclude;
 
 export type LeadComCard = Prisma.LeadGetPayload<{
@@ -28,7 +28,7 @@ export function paraCardProps(lead: LeadComCard, href: string): LeadCardProps {
     categoria: lead.categoria,
     num_avaliacoes: lead.num_avaliacoes,
   });
-  const ultimoOutreach = lead.outreaches[0];
+  const ultimaAbordagem = lead.abordagens[0];
   const dor = dorPrincipal(lead.dores);
 
   return {
@@ -50,13 +50,13 @@ export function paraCardProps(lead: LeadComCard, href: string): LeadCardProps {
     agregadorTipo: classif?.ehAgregador ? classif.tipo : null,
     temDiagnostico: lead.diagnosticos.length > 0,
     dorPrincipal: dor?.detalhes ?? null,
-    temOutreach: lead._count.outreaches > 0,
+    temAbordagem: lead._count.abordagens > 0,
     semAtendimento: lead.dores.some(
       (d) => d.tipo === "SEM_ATENDIMENTO_AUTOMATIZADO",
     ),
-    outreachEnviado: ultimoOutreach?.enviado ?? false,
-    waLink: ultimoOutreach
-      ? linkWhatsapp(lead.telefone, ultimoOutreach.conteudo)
+    abordagemEnviada: ultimaAbordagem?.enviado ?? false,
+    waLink: ultimaAbordagem
+      ? linkWhatsapp(lead.telefone, ultimaAbordagem.conteudo)
       : null,
     motivoDescarte: lead.motivo_descarte,
     href,

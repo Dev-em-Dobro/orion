@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ehRoteiroFalado, ROTULO_CANAL } from "@/lib/outreach/canais";
-import { montarContexto, systemPrompt } from "@/lib/outreach/prompt";
-import { systemPromptLigacao } from "@/lib/outreach/prompt-ligacao";
+import { ehRoteiroFalado, ROTULO_CANAL } from "@/lib/abordagem/canais";
+import { montarContexto, systemPrompt } from "@/lib/abordagem/prompt";
+import { systemPromptLigacao } from "@/lib/abordagem/prompt-ligacao";
 
 // F038 — abordagem por voz. Spec: /specs/02-features/F038-abordagem-por-voz.md
 const CTX = {

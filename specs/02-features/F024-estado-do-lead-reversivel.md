@@ -46,8 +46,8 @@ regra; adiciona uma porta separada e explícita, a **correção**:
   dentro do detalhe do Lead, não na linha da lista).
 - Aceita **qualquer** destino, inclusive anterior ao atual.
 - Exige confirmação quando regride ("Isso volta o Lead pra `priorizado`. Os
-  registros de Outreach continuam.").
-- **Nunca apaga** Diagnóstico, Dor ou Outreach — só muda o estado do funil.
+  registros de Abordagem continuam.").
+- **Nunca apaga** Diagnóstico, Dor ou Abordagem — só muda o estado do funil.
 
 ### Efeito no `status_em`
 Toda mudança de status (por qualquer caminho) grava `Lead.status_em = now()`.
@@ -91,7 +91,7 @@ disponível); Leads existentes ficam com `motivo_descarte = null`.
   quando ele existir; senão vai pra `priorizado` se tem score confirmado, ou
   `novo` se não tem.
 - Ação em lote **Excluir descartados** — apaga de vez (Lead + Diagnósticos +
-  Dores + Outreaches em cascata), com confirmação digitando a quantidade.
+  Dores + Abordagens em cascata), com confirmação digitando a quantidade.
   É a única exclusão destrutiva da feature, e só alcança descartados.
 
 ### No detalhe `/leads/[id]`
@@ -132,7 +132,7 @@ disponível); Leads existentes ficam com `motivo_descarte = null`.
 - [ ] **AC3** — Restaurar devolve o Lead à lista: `priorizado` se ele já tinha
       score confirmado, `novo` caso contrário.
 - [ ] **AC4** — Corrigir status aceita regressão (ex.: `contatado` →
-      `priorizado`) e mantém Diagnósticos, Dores e Outreaches intactos.
+      `priorizado`) e mantém Diagnósticos, Dores e Abordagens intactos.
 - [ ] **AC5** — Toda mudança de status (descartar, restaurar, corrigir,
       desfecho da F006, promoção automática da F025) grava `status_em`.
 - [ ] **AC6** — Uma nova coleta que reencontre um `place_id` descartado **não**

@@ -36,7 +36,7 @@ comportamento, abre-se spec em `/specs/02-features` (e ADR se precisar de lib).
 Nenhum dos três concorrentes faz o que é o **core** desta ferramenta:
 **diagnosticar a presença digital** do estabelecimento (sem site / site lento /
 sem HTTPS) e usar isso como qualificador e gancho de abordagem. Eles entregam
-*contato*; o prospect-engine entrega *contato + Dor concreta + Outreach pronto*,
+*contato*; o prospect-engine entrega *contato + Dor concreta + Abordagem pronta*,
 via **API oficial** (Google Places) e dentro da **LGPD** (só dado público,
 envio manual). Ver [visão de produto](../00-product-vision.md).
 

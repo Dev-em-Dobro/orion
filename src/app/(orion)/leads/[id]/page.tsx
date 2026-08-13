@@ -11,7 +11,7 @@ import { ROTULO_ATENDIMENTO } from "@/lib/diagnostico/atendimento";
 import { demoUrlFor } from "@/lib/demos";
 import { ESTAGIOS_EM_ABERTO } from "@/lib/funil";
 import { rotuloCategoria } from "@/lib/nichos/catalogo";
-import { ehRoteiroFalado, ROTULO_CANAL } from "@/lib/outreach/canais";
+import { ehRoteiroFalado, ROTULO_CANAL } from "@/lib/abordagem/canais";
 import {
   parseFiltroLista,
   queryDoFiltro,
@@ -28,7 +28,7 @@ import { CorrigirStatusForm } from "../corrigir-status-form";
 import { DescartarButton, RestaurarButton } from "../descarte-buttons";
 import { DesfechoButtons } from "../desfecho-buttons";
 import { DiagnosticarButton } from "../diagnosticar-button";
-import { GerarOutreachButton } from "../gerar-outreach-button";
+import { GerarAbordagemButton } from "../gerar-abordagem-button";
 import { GerarPropostaButton } from "../gerar-proposta-button";
 import { MarcarEnviadaButton } from "../marcar-enviada-button";
 import { ResponderObjecaoPanel } from "../responder-objecao-panel";
@@ -89,14 +89,14 @@ export default async function LeadByIdPage({
     const cursor = { score: lead.score, created_at: lead.created_at };
     const whereContexto = { ...whereUser, ...whereFiltroLista(filtro) };
 
-    const [diagnostico, dores, outreaches, anterior, proximo, antesCount, total] =
+    const [diagnostico, dores, abordagens, anterior, proximo, antesCount, total] =
       await Promise.all([
         prisma.diagnostico.findFirst({
           where: { lead_id: lead.id, user_id: userId },
           orderBy: { executado_em: "desc" },
         }),
         prisma.dor.findMany({ where: { lead_id: lead.id, user_id: userId } }),
-        prisma.outreach.findMany({
+        prisma.abordagem.findMany({
           where: { lead_id: lead.id, user_id: userId },
           orderBy: { gerado_em: "desc" },
         }),
@@ -346,7 +346,7 @@ export default async function LeadByIdPage({
                   WhatsApp. Quem liga é você — o Orion só escreve.
                 </p>
                 <div className="mt-3">
-                  <GerarOutreachButton leadId={lead.id} canal="ligacao" destaque />
+                  <GerarAbordagemButton leadId={lead.id} canal="ligacao" destaque />
                 </div>
               </div>
 
@@ -364,14 +364,14 @@ export default async function LeadByIdPage({
                   o áudio e não respondeu.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <GerarOutreachButton leadId={lead.id} />
-                  <GerarOutreachButton leadId={lead.id} tipo="followup" />
+                  <GerarAbordagemButton leadId={lead.id} />
+                  <GerarAbordagemButton leadId={lead.id} tipo="followup" />
                 </div>
               </div>
 
               {/* F038 — o site de amostra na mão do aluno, aqui e não só na aba
                   Diagnóstico. Ele mora fora do Orion (`DEMOS_BASE_URL`), então
-                  o dono do negócio abre sem login nenhum. A Outreach de texto
+                  o dono do negócio abre sem login nenhum. A Abordagem de texto
                   já sai com o link embutido; no roteiro falado, não — ninguém
                   soletra URL no telefone —, e é daqui que o aluno copia depois. */}
               {demoUrl && (
@@ -398,15 +398,15 @@ export default async function LeadByIdPage({
               )}
 
               {/* O canal e-mail (F027) saiu em 2026-08-13 — ver F035,
-                  "Saída do Outreach por e-mail". */}
+                  "Saída da Abordagem por e-mail". */}
 
-              {outreaches.length === 0 ? (
+              {abordagens.length === 0 ? (
                 <p className="text-sm text-muted">
-                  Nenhuma Outreach gerada ainda.
+                  Nenhuma Abordagem gerada ainda.
                 </p>
               ) : (
                 <ul className="space-y-3">
-                  {outreaches.map((o) => {
+                  {abordagens.map((o) => {
                     // F038 AC4 — roteiro falado não vira `wa.me`: pré-preencher
                     // o chat com ele mandaria pro cliente o texto que era pra
                     // ser dito.
@@ -471,7 +471,7 @@ export default async function LeadByIdPage({
                           />
                           {!o.enviado && (
                             <MarcarEnviadaButton
-                              outreachId={o.id}
+                              abordagemId={o.id}
                               rotulo={
                                 falado ? "Já falei com ele" : "Marcar como enviada"
                               }

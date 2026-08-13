@@ -1,11 +1,11 @@
 "use server";
 
-// F005 — Outreach de WhatsApp · F006 — suporte a follow-up (tipo).
-// Specs: F005-outreach-whatsapp.md e F006-follow-up-e-funil.md
+// F005 — Abordagem de WhatsApp · F006 — suporte a follow-up (tipo).
+// Specs: F005-abordagem-whatsapp.md e F006-follow-up-e-funil.md
 // F004 — dores persistidas (fallback: detectar do Diagnóstico se Lead antigo).
 //
-// F027 (Outreach por e-mail) saiu do produto em 2026-08-13 — ver F035, "Saída
-// do Outreach por e-mail".
+// F027 (Abordagem por e-mail) saiu do produto em 2026-08-13 — ver F035, "Saída
+// da Abordagem por e-mail".
 //
 // F038 — o canal `ligacao` (roteiro falado) entra aqui, e não numa Action
 // própria: mesma Dor, mesmo Diagnóstico exigido, mesma cota. Só o system prompt
@@ -18,15 +18,15 @@ import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 import { demoUrlFor } from "@/lib/demos";
 import { detectarDores, textosDasDores } from "@/lib/dores";
 import {
-  gerarOutreach as gerarOutreachLib,
+  gerarAbordagem as gerarAbordagemLib,
   gerarRoteiroLigacao,
-  OutreachError,
-} from "@/lib/outreach/gerarOutreach";
+  AbordagemError,
+} from "@/lib/abordagem/gerarAbordagem";
 import { createLlmForUser } from "@/lib/llm";
 import { estornarCota, reservarCota } from "@/lib/limites";
 import { consumirMensal, verificarLimiteMensal } from "@/lib/planos";
-import type { ContextoLead } from "@/lib/outreach/prompt";
-import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
+import type { ContextoLead } from "@/lib/abordagem/prompt";
+import { linkWhatsapp } from "@/lib/abordagem/whatsappLink";
 
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
@@ -39,7 +39,7 @@ const schema = z.object({
 
 export type CanalGeravel = "whatsapp" | "ligacao";
 
-export type GerarOutreachState =
+export type GerarAbordagemState =
   | { kind: "idle" }
   | {
       kind: "ok";
@@ -47,14 +47,14 @@ export type GerarOutreachState =
       mensagem: string;
       /** F038 — sempre `null` no canal `ligacao`: roteiro não se envia. */
       waLink: string | null;
-      outreachId: string;
+      abordagemId: string;
     }
   | { kind: "erro"; mensagem: string };
 
-export async function gerarOutreachAction(
-  _prev: GerarOutreachState,
+export async function gerarAbordagemAction(
+  _prev: GerarAbordagemState,
   formData: FormData,
-): Promise<GerarOutreachState> {
+): Promise<GerarAbordagemState> {
   const parsed = schema.safeParse({
     lead_id: formData.get("lead_id"),
     tipo: formData.get("tipo") ?? undefined,
@@ -71,8 +71,8 @@ export async function gerarOutreachAction(
     ({ userId } = await requireTenant());
     // F035 — teto mensal do plano antes da cota diária e de qualquer chamada
     // de IA: no limite, nada é gasto.
-    await verificarLimiteMensal(userId, "outreach");
-    await reservarCota(userId, "outreach");
+    await verificarLimiteMensal(userId, "abordagem");
+    await reservarCota(userId, "abordagem");
     reservou = true;
     const llm = await createLlmForUser(userId);
     const lead = await prisma.lead.findFirst({
@@ -83,18 +83,18 @@ export async function gerarOutreachAction(
       },
     });
     if (!lead) {
-      await estornarCota(userId, "outreach");
+      await estornarCota(userId, "abordagem");
       reservou = false;
       return { kind: "erro", mensagem: "Lead não encontrado" };
     }
 
     const diag = lead.diagnosticos[0];
     if (!diag) {
-      await estornarCota(userId, "outreach");
+      await estornarCota(userId, "abordagem");
       reservou = false;
       return {
         kind: "erro",
-        mensagem: "Diagnostique o Lead antes de gerar a Outreach",
+        mensagem: "Diagnostique o Lead antes de gerar a Abordagem",
       };
     }
 
@@ -120,20 +120,20 @@ export async function gerarOutreachAction(
     try {
       ({ mensagem } = ehLigacao
         ? await gerarRoteiroLigacao(ctx, llm, parsed.data.tipo)
-        : await gerarOutreachLib(ctx, llm, parsed.data.tipo));
+        : await gerarAbordagemLib(ctx, llm, parsed.data.tipo));
     } catch (e) {
-      await estornarCota(userId, "outreach");
+      await estornarCota(userId, "abordagem");
       reservou = false;
-      if (e instanceof OutreachError) {
+      if (e instanceof AbordagemError) {
         return { kind: "erro", mensagem: e.message };
       }
       return {
         kind: "erro",
-        mensagem: "Falha ao gerar a Outreach. Tente novamente.",
+        mensagem: "Falha ao gerar a Abordagem. Tente novamente.",
       };
     }
 
-    const outreach = await prisma.outreach.create({
+    const abordagem = await prisma.abordagem.create({
       data: {
         user_id: userId,
         lead_id: lead.id,
@@ -144,9 +144,9 @@ export async function gerarOutreachAction(
       },
     });
 
-    // Só depois de gravar: o teto mensal conta Outreach que existe, não
+    // Só depois de gravar: o teto mensal conta Abordagem que existe, não
     // tentativa. Falha antes daqui já devolveu a cota diária.
-    await consumirMensal(userId, "outreach");
+    await consumirMensal(userId, "abordagem");
 
     revalidatePath("/leads");
     revalidatePath(`/leads/${lead.id}`);
@@ -158,11 +158,11 @@ export async function gerarOutreachAction(
       // F038 AC4 — roteiro é pra falar. Pré-preencher o WhatsApp com ele seria
       // a ação errada oferecida com destaque.
       waLink: ehLigacao ? null : linkWhatsapp(lead.telefone, mensagem),
-      outreachId: outreach.id,
+      abordagemId: abordagem.id,
     };
   } catch (e) {
     if (reservou && userId) {
-      await estornarCota(userId, "outreach").catch(() => undefined);
+      await estornarCota(userId, "abordagem").catch(() => undefined);
     }
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };

@@ -1,5 +1,5 @@
 // F027 — link `mailto:` com assunto e corpo prontos.
-// Spec: /specs/02-features/F027-outreach-por-email.md
+// Spec: /specs/02-features/F027-abordagem-por-email.md
 //
 // O envio é do cliente de e-mail do aluno, não do Orion: assim a mensagem sai
 // da caixa dele, a resposta chega pra ele, e nenhuma prospecção fria passa

@@ -5,7 +5,7 @@ Implementada — 2026-08-10 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 
 ## Objetivo
 Trocar a interface de **planilha** por uma de **trabalho**. Hoje `/leads` é uma
-tabela de 7 colunas em que tudo — Diagnóstico, Outreach, objeções, proposta,
+tabela de 7 colunas em que tudo — Diagnóstico, Abordagem, objeções, proposta,
 desfecho — está espremido dentro de um modal único
 (`src/app/(orion)/leads/lead-row.tsx`, 388 linhas). O aluno não consegue bater o
 olho e saber quem abordar, e o detalhe do Lead (`/leads/[id]`) hoje mostra só
@@ -130,12 +130,12 @@ ponto de leitura.
 | **Taxas de conversão** | A própria legenda dizia "aproximação sobre o estado atual (sem histórico)". Taxa tirada de foto do momento engana: quem converteu já saiu do estágio de origem |
 | **Score médio** | Média de um número que na maioria ainda é estimativa da Triagem. Não muda decisão nenhuma |
 | **Total de Leads** | O funil ao lado já mostra a distribuição, e a soma dela é o total |
-| **"Exigem atenção"** | É a Fila do dia com outro recorte (score ≥ 60 sem Outreach enviado, contra "diagnosticado, priorizado e não abordado"). Duas listas respondendo "quem eu abordo" na mesma tela, com resultados quase iguais e ordens diferentes |
+| **"Exigem atenção"** | É a Fila do dia com outro recorte (score ≥ 60 sem Abordagem enviada, contra "diagnosticado, priorizado e não abordado"). Duas listas respondendo "quem eu abordo" na mesma tela, com resultados quase iguais e ordens diferentes |
 
 > **Pendente: "o que já fiz" ainda é fraco.** Sem uma medida de esforço, o bloco
 > tem só Ganhos e Em aberto — resultado raro e trabalho em curso, nada que dê
 > noção de progresso no dia a dia. A medida natural é **Leads abordados no mês**
-> (`Outreach.enviado_em` já é persistido e já tem índice, então é consulta, não
+> (`Abordagem.enviado_em` já é persistido e já tem índice, então é consulta, não
 > infra nova). Ficou fora desta rodada por decisão do Ricardo (2026-08-13).
 > Quando entrar, precisa **não** parecer a barra de cota do plano
 > ([F035](F035-planos-e-limites.md)): cota é teto que não se quer bater, meta é
@@ -193,7 +193,7 @@ Substitui a linha da tabela. Anatomia, de cima pra baixo:
   porque sai de um Diagnóstico real. Sem Dor detectada, a linha some (não
   inventa texto).
 - **Ação primária** muda com o estado: `novo` → *Diagnosticar*; `priorizado` →
-  *Gerar abordagem*; com Outreach não enviada → *Abrir WhatsApp / e-mail*;
+  *Gerar abordagem*; com Abordagem não enviada → *Abrir WhatsApp / e-mail*;
   `contatado` → *Registrar desfecho*.
 - Badge de site reusa o `SiteBadge` atual (sem site / link-in-bio / rede social
   / site).
@@ -237,7 +237,7 @@ Vira a tela de trabalho de verdade, com **abas**:
 | Aba | Conteúdo | De onde vem |
 |-----|----------|-------------|
 | **Diagnóstico** | Dados do Lead, último Diagnóstico, Dores, atendimento automatizado, botão Diagnosticar/Recalcular | F002 · F026 · F003 |
-| **Abordagem** | Outreaches (WhatsApp e e-mail), gerar 1º toque e follow-up, copiar, abrir, marcar enviada | F005 · F006 · F027 |
+| **Abordagem** | Abordagens (WhatsApp e e-mail), gerar 1º toque e follow-up, copiar, abrir, marcar enviada | F005 · F006 · F027 |
 | **Objeções** | Painel de objeções | F011 |
 | **Proposta** | Gerar/ver proposta | F012 |
 
@@ -269,7 +269,7 @@ Vira a tela de trabalho de verdade, com **abas**:
 - [ ] **AC9** — Lead de outro usuário em `/leads/[id]` continua dando 404.
 - [ ] **AC10** — Tudo responsivo: no mobile o grid vira 1 coluna e as abas
       viram scroll horizontal, sem quebra de layout.
-- [ ] **AC11** — Nenhuma regressão de ação: diagnosticar, gerar Outreach,
+- [ ] **AC11** — Nenhuma regressão de ação: diagnosticar, gerar Abordagem,
       responder objeção, gerar proposta e registrar desfecho seguem
       funcionando a partir do detalhe.
 
@@ -279,7 +279,7 @@ Vira a tela de trabalho de verdade, com **abas**:
   `faixaDeScore()`.
 - Abas por **query param** (`?aba=`), com server components — sem estado de
   cliente e sem lib de tabs.
-- Os botões de ação existentes (`diagnosticar-button`, `gerar-outreach-button`,
+- Os botões de ação existentes (`diagnosticar-button`, `gerar-abordagem-button`,
   `responder-objecao-panel`, `gerar-proposta-button`, `desfecho-buttons`) são
   **movidos**, não reescritos.
 - Sem lib nova (nada de biblioteca de tabela, grid ou tabs) → **sem ADR**.

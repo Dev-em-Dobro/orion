@@ -1,11 +1,11 @@
-// F027 — playbook do Outreach por e-mail. Irmão do prompt de WhatsApp, com as
+// F027 — playbook da Abordagem por e-mail. Irmão do prompt de WhatsApp, com as
 // diferenças que o canal exige.
-// Spec: /specs/02-features/F027-outreach-por-email.md
+// Spec: /specs/02-features/F027-abordagem-por-email.md
 //
 // Mudar o tom ou as regras aqui é mudança de comportamento → spec antes.
 
 import { BRAND } from "../brand";
-import { montarContexto, type ContextoLead, type TipoOutreach } from "./prompt";
+import { montarContexto, type ContextoLead, type TipoAbordagem } from "./prompt";
 
 const EMPRESA = `A ${BRAND.empresa} ${BRAND.descricaoEmpresa}. A oferta de entrada é ${BRAND.ofertaDeEntrada}.`;
 
@@ -70,7 +70,7 @@ ${REGRAS_COMUNS}
 SAÍDA
 Responda com os campos "assunto" e "corpo". Nada antes, nada depois.`;
 
-export function systemPromptEmail(tipo: TipoOutreach): string {
+export function systemPromptEmail(tipo: TipoAbordagem): string {
   return tipo === "followup" ? SYSTEM_FOLLOWUP : SYSTEM_PRIMEIRA;
 }
 

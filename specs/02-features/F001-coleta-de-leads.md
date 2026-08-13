@@ -140,7 +140,7 @@ Contrato completo da Places API em
 - Filtros além de categoria/site (status, score, busca textual) → futuro.
 - Cálculo de score → F003.
 - Detecção de Dor → F004.
-- Outreach → F005.
+- Abordagem → F005.
 
 ## Custo estimado (Places API New, maio/2026)
 A FieldMask escolhida (`displayName`, `formattedAddress`, `primaryType`,

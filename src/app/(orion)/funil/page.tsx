@@ -10,7 +10,7 @@ import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { redirectSeRecursoBloqueado } from "@/lib/planos";
 import { COLUNAS_FUNIL, colunaDoStatus, STATUS_DO_BOARD } from "@/lib/funil";
-import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
+import { linkWhatsapp } from "@/lib/abordagem/whatsappLink";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonPulse } from "@/components/page-skeleton";
 import { Board, type CardFunil, type ColunaComTotal } from "./board";
@@ -43,7 +43,7 @@ async function Conteudo() {
         score: true,
         status: true,
         telefone: true,
-        outreaches: {
+        abordagens: {
           select: { conteudo: true },
           orderBy: { gerado_em: "desc" },
           take: 1,
@@ -83,7 +83,7 @@ async function Conteudo() {
     if (jaTem >= POR_COLUNA) continue;
     porColuna.set(coluna.id, jaTem + 1);
 
-    const ultimo = lead.outreaches[0];
+    const ultimo = lead.abordagens[0];
     cards.push({
       id: lead.id,
       nome: lead.nome,

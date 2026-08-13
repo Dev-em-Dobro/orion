@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { extrairEmail } from "@/lib/leads/extrairEmail";
-import { mailtoLongo, montarMailto } from "@/lib/outreach/mailto";
+import { mailtoLongo, montarMailto } from "@/lib/abordagem/mailto";
 
 // F027 — só endereço que o negócio publicou no site dele (ADR-016).
 describe("extrairEmail", () => {

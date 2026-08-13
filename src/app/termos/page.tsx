@@ -31,7 +31,7 @@ export default function TermosPage() {
         <p>
           O {produto} ajuda a: (a) coletar estabelecimentos a partir de
           fontes públicas (ex.: Google Places); (b) diagnosticar presença
-          digital; (c) priorizar Leads; (d) gerar textos de Outreach e
+          digital; (c) priorizar Leads; (d) gerar textos de Abordagem e
           conteúdos auxiliares via modelos de IA, usando as{" "}
           <strong className="font-medium text-zinc-100">
             chaves de API da plataforma
@@ -97,7 +97,7 @@ export default function TermosPage() {
         <p>
           O serviço pode estar em beta: funcionalidades, limites e estabilidade
           podem mudar. Não garantimos disponibilidade ininterrupta nem
-          resultados comerciais a partir dos Outreaches gerados.
+          resultados comerciais a partir dos Abordagens gerados.
         </p>
       </section>
 

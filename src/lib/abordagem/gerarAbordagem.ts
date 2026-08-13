@@ -1,4 +1,4 @@
-// F005/F006 — Geração da Outreach via LlmClient (F017 / ADR-011).
+// F005/F006 — Geração da Abordagem via LlmClient (F017 / ADR-011).
 
 import { z } from "zod";
 import type { LlmClient } from "@/lib/llm";
@@ -7,30 +7,30 @@ import {
   systemPrompt,
   montarContexto,
   type ContextoLead,
-  type TipoOutreach,
+  type TipoAbordagem,
 } from "./prompt";
 import { removerEmojis } from "./removerEmojis";
 import { systemPromptEmail } from "./prompt-email";
 import { systemPromptLigacao } from "./prompt-ligacao";
 
-export class OutreachError extends Error {
+export class AbordagemError extends Error {
   constructor(
     public status: number,
     message: string,
   ) {
     super(message);
-    this.name = "OutreachError";
+    this.name = "AbordagemError";
   }
 }
 
 const schema = z.object({ mensagem: z.string() });
 const schemaEmail = z.object({ assunto: z.string(), corpo: z.string() });
 
-/** Gera a mensagem de Outreach de WhatsApp para um Lead. */
-export async function gerarOutreach(
+/** Gera a mensagem de Abordagem de WhatsApp para um Lead. */
+export async function gerarAbordagem(
   ctx: ContextoLead,
   llm: LlmClient,
-  tipo: TipoOutreach = "primeira",
+  tipo: TipoAbordagem = "primeira",
 ): Promise<{ mensagem: string }> {
   try {
     const out = await llm.generateStructured({
@@ -42,9 +42,9 @@ export async function gerarOutreach(
     });
     return { mensagem: removerEmojis(out.mensagem.trim()) };
   } catch (e) {
-    if (e instanceof OutreachError) throw e;
+    if (e instanceof AbordagemError) throw e;
     if (e instanceof LlmError) {
-      throw new OutreachError(e.status, e.message);
+      throw new AbordagemError(e.status, e.message);
     }
     throw e;
   }
@@ -60,7 +60,7 @@ export async function gerarOutreach(
 export async function gerarRoteiroLigacao(
   ctx: ContextoLead,
   llm: LlmClient,
-  tipo: TipoOutreach = "primeira",
+  tipo: TipoAbordagem = "primeira",
 ): Promise<{ mensagem: string }> {
   try {
     const out = await llm.generateStructured({
@@ -72,8 +72,8 @@ export async function gerarRoteiroLigacao(
     });
     return { mensagem: removerEmojis(out.mensagem.trim()) };
   } catch (e) {
-    if (e instanceof OutreachError) throw e;
-    if (e instanceof LlmError) throw new OutreachError(e.status, e.message);
+    if (e instanceof AbordagemError) throw e;
+    if (e instanceof LlmError) throw new AbordagemError(e.status, e.message);
     throw e;
   }
 }
@@ -83,10 +83,10 @@ export async function gerarRoteiroLigacao(
  * O assunto é o que decide se o e-mail é aberto, então vem do modelo junto com
  * o corpo, olhando a mesma Dor.
  */
-export async function gerarOutreachEmail(
+export async function gerarAbordagemEmail(
   ctx: ContextoLead,
   llm: LlmClient,
-  tipo: TipoOutreach = "primeira",
+  tipo: TipoAbordagem = "primeira",
 ): Promise<{ assunto: string; corpo: string }> {
   try {
     const out = await llm.generateStructured({
@@ -101,8 +101,8 @@ export async function gerarOutreachEmail(
       corpo: removerEmojis(out.corpo.trim()),
     };
   } catch (e) {
-    if (e instanceof OutreachError) throw e;
-    if (e instanceof LlmError) throw new OutreachError(e.status, e.message);
+    if (e instanceof AbordagemError) throw e;
+    if (e instanceof LlmError) throw new AbordagemError(e.status, e.message);
     throw e;
   }
 }

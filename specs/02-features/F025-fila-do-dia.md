@@ -61,7 +61,7 @@ Os `FILA_TAMANHO = 10` melhores Leads **acionáveis agora**:
 status ∈ { priorizado, enriquecido }      -- já diagnosticado, ainda não abordado
 E score_estimado = false                   -- score confirmado
 E status ≠ descartado                      -- F024
-E não existe Outreach enviada              -- quem já foi abordado vira Tarefa (F031)
+E não existe Abordagem enviada              -- quem já foi abordado vira Tarefa (F031)
 ordenado por score desc, status_em asc
 ```
 
@@ -79,7 +79,7 @@ enum QuotaOperacao {
   coleta
   diagnostico   // F025 — aprofundamento consome PSI da chave Orion
   proposta
-  outreach
+  abordagem
   simulador_msg
 }
 ```
@@ -175,7 +175,7 @@ cada requisição curta.
       mensagem clara e **sem** perder o que já foi processado.
 - [ ] **AC7** — A Fila do dia mostra no máximo 10 Leads, ordenados por score
       desc, e exclui: descartados (F024), sem score confirmado, e os que já têm
-      Outreach enviada.
+      Abordagem enviada.
 - [ ] **AC8** — Descartar um Lead da fila o remove imediatamente e o próximo
       candidato entra no lugar.
 - [ ] **AC9** — Score estimado aparece na UI com marcação visual distinta do

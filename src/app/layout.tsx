@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: NOME_PRODUTO,
-  description: "Motor de prospecção para alunos — Leads prontos com Dor e Outreach",
+  description: "Motor de prospecção para alunos — Leads prontos com Dor e Abordagem",
 };
 
 export default function RootLayout({
