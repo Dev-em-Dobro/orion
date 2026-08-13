@@ -37,7 +37,6 @@ export function paraCardProps(lead: LeadComCard, href: string): LeadCardProps {
     // Traduzido aqui, no servidor: mandar o catálogo inteiro de nichos pro
     // bundle só pra rotular uma linha do card não se paga.
     categoria: rotuloCategoria(lead.categoria),
-    endereco: lead.endereco,
     telefone: lead.telefone,
     website: lead.website,
     nota: lead.nota,

@@ -13,7 +13,11 @@ export type LeadCardProps = {
   id: string;
   nome: string;
   categoria: string;
-  endereco: string;
+  /**
+   * F032 (revisão 2026-08-13) — o número **não** é exibido. Só interessa saber
+   * se existe: sem telefone não dá pra ligar nem mandar WhatsApp, e isso muda
+   * a decisão de abordar. O número em si é uso do detalhe.
+   */
   telefone: string | null;
   website: string | null;
   nota: number | null;
@@ -144,12 +148,17 @@ export function LeadCard({
         </div>
       </header>
 
+      {/* A Dor é o motivo de o Lead estar na fila — vem antes de qualquer
+          etiqueta. Saiu do card em 2026-08-13 e voltou na revisão do mesmo dia,
+          no lugar que telefone e endereço ocupavam. Sem Dor, a linha some: não
+          se inventa texto. */}
+      {lead.dorPrincipal && (
+        <p className="text-sm leading-snug font-medium text-zinc-200">
+          {lead.dorPrincipal}
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-        {lead.telefone ? (
-          <span className="text-zinc-300">{lead.telefone}</span>
-        ) : (
-          <span className="text-zinc-600">sem telefone</span>
-        )}
         <SiteBadge
           website={lead.website}
           ehAgregador={lead.ehAgregador}
@@ -167,22 +176,32 @@ export function LeadCard({
             WhatsApp no braço
           </span>
         )}
+        {/* Não é o número: é o aviso de que não dá pra ligar nem mandar
+            WhatsApp — o único bit do telefone que decide alguma coisa aqui. */}
+        {!lead.telefone && (
+          <span
+            className="badge bg-red-500/15 text-red-300"
+            title="O Places não expôs telefone. Sem ele não dá pra ligar nem abrir o WhatsApp."
+          >
+            sem telefone
+          </span>
+        )}
+        {/* Evita retrabalho na varredura: esse aqui você já falou. */}
+        {lead.abordagemEnviada && (
+          <span className="badge bg-emerald-500/15 text-emerald-300">
+            abordagem enviada
+          </span>
+        )}
       </div>
 
-      {/* A linha da Dor saiu do card em 2026-08-13. Ela continua no detalhe
-          (aba Diagnóstico) e alimenta a Abordagem — só não aparece na varredura. */}
       {lead.motivoDescarte && (
         <p className="text-xs text-zinc-500">Descartado: {lead.motivoDescarte}</p>
       )}
 
-      <p className="truncate text-xs text-zinc-500" title={lead.endereco}>
-        {lead.endereco}
-      </p>
-
       {/* Um botão só. Descartar e Restaurar individuais continuam no detalhe do
           Lead; descartar em lote segue na seleção da própria lista (F024). */}
       <footer className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-3">
-        <Link href={lead.href} className="btn-ghost">
+        <Link href={lead.href} className="btn-card">
           Abordar no CRM
         </Link>
       </footer>

@@ -201,6 +201,49 @@ Substitui a linha da tabela. Anatomia, de cima pra baixo:
 O card é usado em três lugares: Fila do dia (F025), lista `/leads` e resultado
 da busca (F033) — **um componente só**.
 
+### Revisão 2026-08-13 — o card diz por que, não onde
+
+O card acumulou dado de cadastro e perdeu o dado de decisão. Telefone e endereço
+ocupavam duas linhas inteiras e **não decidem nada na varredura**: ninguém
+escolhe qual Lead abordar pela rua em que ele fica, e o telefone só é usado
+depois de decidir — no detalhe, onde ele está. Enquanto isso a **Dor**, que é a
+razão de o Lead estar ali, tinha saído.
+
+O que muda:
+
+| Sai | Por quê |
+|-----|---------|
+| Número de telefone | Não decide nada na varredura; é uso do detalhe |
+| Endereço | Idem — e gastava a linha mais larga do card |
+
+| Entra / volta | Por quê |
+|---------------|---------|
+| **Dor principal**, com destaque | É o motivo do Lead existir na fila. Voltou de onde nunca devia ter saído |
+| Chip **"sem telefone"** | Só quando `telefone = null`. Não é o número: é o aviso de que não dá pra ligar nem mandar WhatsApp — isso **sim** muda a decisão |
+| Chip **"abordagem enviada"** | Evita retrabalho: o aluno vê na varredura que já falou com esse |
+
+**Contraste no card verde da Fila do dia.** Botão e badges eram os dois pílula
+branca, então a ação primária não tinha como ganhar — virava mais uma etiqueta.
+Agora só a ação é sólida:
+
+- **Ação**: pílula **branca com texto quase preto** (`.btn-card`). Preto sobre
+  branco lê melhor que o verde da marca em texto pequeno.
+- **Badges**: contorno branco sobre transparente, texto branco. Mesmo peso de
+  informação de antes, sem competir com o botão.
+
+No card escuro (`/leads`) nada disso muda: badges seguem coloridos e a ação usa
+o verde da marca. A regra vale só onde a superfície é verde.
+
+#### Critérios de aceitação da revisão
+- [ ] **AC12** — O card não mostra telefone nem endereço em nenhuma das três
+      telas onde é usado.
+- [ ] **AC13** — Lead sem telefone mostra o chip "sem telefone"; Lead com
+      telefone não mostra chip nenhum de contato.
+- [ ] **AC14** — Lead com Dor detectada mostra a Dor principal em destaque;
+      sem Dor, a linha some (não inventa texto).
+- [ ] **AC15** — No card verde, a ação é a **única** superfície branca sólida;
+      os badges são contorno.
+
 ## Lista `/leads`
 - **Grid** responsivo: 1 coluna no mobile, 2 no tablet, 3–4 no desktop.
 - **Largura: a lista usa a tela.** O container era `max-w-6xl` (1152px) dentro

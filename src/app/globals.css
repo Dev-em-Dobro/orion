@@ -148,6 +148,14 @@
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 
+  /* F032 (revisão 2026-08-13) — ação primária do card de Lead. Sólida, não
+     fantasma: no card verde o `btn-ghost` era borda branca a 35% sobre verde e
+     sumia. Sólida também no card escuro, pra a ação ser a mesma coisa nos dois
+     lugares — o que muda é só a cor da superfície. */
+  .btn-card {
+    @apply inline-flex cursor-pointer items-center justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
   .alert-ok {
     @apply rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300;
   }
@@ -282,12 +290,28 @@
 
 /* Os badges usam `bg-<cor>-500/15` — tinta escura, feita pra fundo escuro.
    Sobre o verde ficam encardidas, e não dá pra resolver na variável:
-   `--color-zinc-500` pinta o fundo do badge **e** o texto do endereço. Aqui o
-   seletor decide: pílula branca, texto na cor da marca — o mesmo tratamento do
-   botão. */
+   `--color-zinc-500` pinta o fundo do badge **e** o texto de apoio.
+
+   F032 (revisão 2026-08-13): eram pílula branca sólida, igual ao botão — e aí
+   a ação primária não tinha como ganhar, virava mais uma etiqueta no meio de
+   quatro. Agora são contorno, e o branco sólido fica reservado pra ação.
+   `box-shadow: inset` em vez de `border` de propósito: não muda o tamanho da
+   pílula, então nada se mexe de lugar. */
 .card-destaque .badge {
+  background-color: transparent;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.55);
+}
+
+/* A única superfície branca sólida do card verde é a ação. Texto quase preto,
+   e não o verde da marca: em 14px o preto no branco lê melhor. */
+.card-destaque .btn-card {
   background-color: #ffffff;
-  color: var(--verde-marca);
+  color: #0b1220;
+}
+
+.card-destaque .btn-card:hover {
+  background-color: rgb(255 255 255 / 0.86);
 }
 
 /* Checkbox: `accent-color` pinta a caixa, mas **não** deixa escolher a cor do
