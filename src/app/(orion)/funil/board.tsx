@@ -14,6 +14,7 @@ import type { LeadStatus } from "@prisma/client";
 import { corrigirStatus } from "@/actions/leads/corrigirStatus";
 import { COLUNAS_FUNIL, statusAoMover } from "@/lib/funil";
 import { scoreBadge } from "@/lib/leads/faixa";
+import { rotuloCategoria } from "@/lib/nichos/catalogo";
 
 export type CardFunil = {
   id: string;
@@ -155,8 +156,13 @@ export function Board({
                         {card.score}
                       </span>
                     </div>
+                    {/* Categoria em PT. `categoria` guarda o `primaryType` cru
+                        do Places ("veterinary_care", "marketing_consultant"), e
+                        o card da `/leads` já traduz desde a F032 — o board
+                        tinha ficado pra trás mostrando o enum na cara do
+                        aluno. */}
                     <p className="mt-0.5 truncate text-xs text-muted">
-                      {card.categoria}
+                      {rotuloCategoria(card.categoria)}
                     </p>
 
                     <div className="mt-2 flex flex-wrap items-center gap-1">

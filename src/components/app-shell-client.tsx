@@ -36,8 +36,15 @@ export function AppShellClient({
           quando a página é curta — sem isso o `body` escuro aparecia embaixo.
 
           A topbar entra junto porque ela mora nesta coluna: barra escura
-          colada num conteúdo claro era uma costura no meio da tela. */}
-      <div className={`${classeTema ?? ""} min-h-svh md:pl-60`}>
+          colada num conteúdo claro era uma costura no meio da tela.
+
+          `md:ml-60` e **não** `md:pl-60`, que era o que estava aqui antes de o
+          tema subir pro shell: padding não encolhe a caixa do elemento, então
+          o fundo claro pintava a largura inteira — inclusive a faixa de 240px
+          embaixo da sidebar, que é `bg-card/40` e deixa passar 60% do que está
+          atrás. O menu ficava lavado. Com margem, a caixa começa depois da
+          sidebar e o fundo dela volta a ser o `body` escuro. */}
+      <div className={`${classeTema ?? ""} min-h-svh md:ml-60`}>
         {/* Topbar do desktop: mesma altura da faixa da marca na sidebar, pra
             as duas linhas fecharem. z abaixo da sidebar (z-40) e do drawer. */}
         <header className="sticky top-0 z-30 hidden h-14 items-center justify-end gap-3 border-b border-border bg-background/95 px-6 backdrop-blur md:flex lg:px-8">
