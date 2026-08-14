@@ -6,7 +6,7 @@ import {
 } from "@/lib/proposta/formatar";
 import type { Precificacao } from "@/lib/proposta/precos";
 import type { PropostaTexto } from "@/lib/proposta/gerarProposta";
-import { cenarioSchema, entradaSchema } from "@/lib/simulador/validacao";
+import { pedidoCenarioSchema, entradaSchema } from "@/lib/simulador/validacao";
 import { colunasDe, lerEnvelope, lerLast4, lerStatus } from "@/lib/chaves/campos";
 import { mensagemChaveAusente } from "@/lib/chaves/tipos";
 import type { UserApiKeys } from "@prisma/client";
@@ -53,10 +53,21 @@ describe("formatar proposta", () => {
 });
 
 describe("simulador validacao", () => {
-  it("aceita cenário válido", () => {
-    const r = cenarioSchema.safeParse({
-      categoria: "dentist",
-      dores: ["sem site"],
+  // Desde a emenda de 2026-08-14 o pedido diz **qual** cenário, não qual
+  // conteúdo — quem monta o system prompt é o servidor.
+  it("aceita pedido válido por Lead", () => {
+    const r = pedidoCenarioSchema.safeParse({
+      origem: "lead",
+      lead_id: "clx123",
+      dificuldade: "medio",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("aceita pedido válido manual", () => {
+    const r = pedidoCenarioSchema.safeParse({
+      origem: "manual",
+      categoria: "dentista",
       dificuldade: "medio",
     });
     expect(r.success).toBe(true);
@@ -64,11 +75,7 @@ describe("simulador validacao", () => {
 
   it("rejeita histórico vazio", () => {
     const r = entradaSchema.safeParse({
-      cenario: {
-        categoria: "cafe",
-        dores: [],
-        dificuldade: "facil",
-      },
+      cenario: { origem: "manual", categoria: "cafe", dificuldade: "facil" },
       historico: [],
     });
     expect(r.success).toBe(false);

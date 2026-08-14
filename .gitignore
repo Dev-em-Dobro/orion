@@ -16,10 +16,13 @@
 
 # next.js
 /.next/
-# Builds isolados dos scripts de medição (perf-rotas, shot-tema). Existem pra
-# não reescreverem o `.next` que o `next dev` está usando.
-/.next-perf/
-/.next-shots/
+# Diretórios de build isolados: `.next-dev` (o `next dev`), `.next-perf` e
+# `.next-shots` (scripts de medição), `.next-build` (build de conferência).
+# Existem pra não reescreverem uns aos outros — ver `distDir` em next.config.ts.
+#
+# O glob cobre os que ainda vão existir: nomear um por um deixou `.next-build`
+# de fora, e um `git add -A` distraído levou 454 arquivos de artefato pro índice.
+/.next-*/
 /out/
 next-env.d.ts
 

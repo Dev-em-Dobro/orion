@@ -92,6 +92,66 @@ Codificado em `src/lib/simulador/prompt.ts`:
 - **Nunca quebra o personagem** nem dá dicas de venda no meio da conversa (isso
   é papel do Scorecard, no fim).
 
+## Emenda 2026-08-14 — o cenário para de vir do cliente
+
+O que a seção **Input (UI)** sempre descreveu — a action recebe `origem`,
+`lead_id`, `categoria`, `dificuldade` — não era o que o código fazia. A
+implementação montava o Cenário **no client** (`simulador.tsx`) e mandava
+`{ categoria, dores[], dificuldade }` já pronto para a Server Action, que
+confiava no pacote e o interpolava direto no **system prompt**.
+
+Isso entrega ao navegador a caneta que escreve as regras do modelo. `dores`
+aceitava 10 strings de 300 chars — 3.000 caracteres livres na posição de maior
+confiança da conversa. Não é o aluno quebrando o próprio treino (isso ele já
+pode, digitando): é usar o Simulador como **LLM de uso geral pago pela chave
+compartilhada da Orion** (modo Orion, F018), na conta e nos termos de uso do
+dono da plataforma.
+
+Duas portas, e as duas se fecham igual: **o servidor deriva o que o servidor
+usa.**
+
+### O cenário é derivado, não recebido
+A action passa a receber `{ origem, lead_id?, categoria?, dificuldade }`:
+
+- `origem = "lead"` → o servidor carrega o Lead **com escopo de tenant**
+  (F015) e deriva `categoria` e `dores` do banco. O client não escreve mais
+  nada no system prompt. Lead de outro aluno, ou inexistente → `{ erro }`.
+- `origem = "manual"` → `categoria` é o único texto livre que sobra, e é
+  **saneado**: sem quebra de linha, sem pontuação de instrução, ≤ 40 chars.
+  Nome de categoria de negócio ("dentista", "restaurante") vive bem nesse
+  alfabeto; payload de injeção, não.
+
+### As falas do dono são assinadas
+O histórico continua no client (a arquitetura stateless da F013 não muda), mas
+uma fala `dono` é **texto que o servidor produziu** — e o client podia forjar
+qualquer uma. Uma fala de assistente escrita pelo atacante é prefill: o jeito
+mais barato de fazer o modelo aceitar um papel novo.
+
+Cada resposta da persona volta com um **HMAC** (`node:crypto`, chave derivada
+do `BETTER_AUTH_SECRET`, ligada ao `user_id`), e o servidor recusa turno `dono`
+sem assinatura válida. Fala do `aluno` continua livre — é o canal que sempre
+foi dele. Sem lib nova, sem schema novo, sem persistir treino.
+
+### Dado citado nunca é instrução
+Mesmo derivados do banco, `categoria` e `dores` são texto de terceiro (nome e
+categoria vêm do Google Places). Vão para um **bloco delimitado**, declarado
+como dado, com as regras da persona **depois** dele. Vale igual no transcript
+do avaliador, onde as falas viram linhas delimitadas em vez de `DONO: …` solto
+— prefixo que o aluno podia digitar dentro da própria fala pra forjar linha.
+
+### Critérios de aceitação da emenda
+- [ ] **AC10** — A action recusa `dores` vindas do client: o campo não existe
+      mais no schema de entrada, e o cenário de `origem = lead` bate com o
+      banco.
+- [ ] **AC11** — `origem = lead` com `lead_id` de outro usuário → `{ erro }`,
+      sem chamada ao provedor de IA.
+- [ ] **AC12** — `categoria` manual com quebra de linha, dois-pontos ou
+      colchetes é saneada antes do prompt; string que sobra vazia → `{ erro }`.
+- [ ] **AC13** — Turno `dono` com assinatura ausente, adulterada ou de outro
+      usuário → `{ erro }`, sem chamada ao provedor de IA.
+- [ ] **AC14** — A assinatura devolvida por um turno legítimo é aceita no turno
+      seguinte (o fluxo normal não quebra).
+
 ## Critérios de aceitação
 - [ ] **AC1** — Cenário `origem = manual`, `categoria = "dentista"`,
       `dificuldade = medio` → a persona responde no personagem, em PT-BR, e

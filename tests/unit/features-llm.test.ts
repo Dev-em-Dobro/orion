@@ -82,7 +82,9 @@ describe("prompts (builders)", () => {
         { papel: "aluno", texto: "oi" },
         { papel: "dono", texto: "fala" },
       ]),
-    ).toContain("TREINANDO: oi");
+      // Tag fechada, não prefixo solto: `TREINANDO:` o aluno digitava dentro
+      // da própria fala e forjava linha (emenda de 2026-08-14).
+    ).toContain("<treinando>oi</treinando>");
     expect(MAX_TURNOS).toBe(20);
   });
 });

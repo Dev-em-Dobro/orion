@@ -3,16 +3,33 @@
 import { useState } from "react";
 import { responderTurnoAction } from "@/actions/simulador/responder";
 import { avaliarSimulacaoAction } from "@/actions/simulador/avaliar";
-import { MAX_TURNOS } from "@/lib/simulador/constantes";
-import type { Cenario, Dificuldade, Turno } from "@/lib/simulador/prompt";
+import { MAX_CATEGORIA, MAX_TURNOS } from "@/lib/simulador/constantes";
+import type { Dificuldade } from "@/lib/simulador/prompt";
 import type { Scorecard } from "@/lib/simulador/avaliar";
 
 type LeadOpcao = {
   id: string;
   nome: string;
   categoria: string;
-  dores: string[];
 };
+
+/**
+ * O que o client manda pro servidor: **qual** cenário, não qual conteúdo. As
+ * Dores e a categoria do Lead são lidas do banco lá (F013, emenda 2026-08-14).
+ */
+type PedidoCenario =
+  | { origem: "lead"; lead_id: string; dificuldade: Dificuldade }
+  | { origem: "manual"; categoria: string; dificuldade: Dificuldade };
+
+/** A fala do dono carrega a assinatura que o servidor devolveu. */
+type TurnoUI = {
+  papel: "aluno" | "dono";
+  texto: string;
+  assinatura?: string;
+};
+
+/** O treino em andamento: o que pedir ao servidor + o rótulo que a tela mostra. */
+type Sessao = { pedido: PedidoCenario; rotulo: string; dificuldade: Dificuldade };
 
 const DIFICULDADES: { v: Dificuldade; label: string }[] = [
   { v: "facil", label: "Fácil" },
@@ -27,8 +44,8 @@ function notaCor(n: number): string {
 }
 
 export function Simulador({ leads }: { leads: LeadOpcao[] }) {
-  const [cenario, setCenario] = useState<Cenario | null>(null);
-  const [historico, setHistorico] = useState<Turno[]>([]);
+  const [sessao, setSessao] = useState<Sessao | null>(null);
+  const [historico, setHistorico] = useState<TurnoUI[]>([]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [avaliando, setAvaliando] = useState(false);
@@ -47,48 +64,66 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
 
   function iniciar() {
     setErro(null);
-    let c: Cenario;
+    let nova: Sessao;
     if (origem === "lead") {
       const l = leads.find((x) => x.id === leadId);
       if (!l) {
         setErro("Escolha um Lead.");
         return;
       }
-      c = { categoria: l.categoria, dores: l.dores, dificuldade };
+      nova = {
+        pedido: { origem: "lead", lead_id: l.id, dificuldade },
+        rotulo: l.categoria,
+        dificuldade,
+      };
     } else {
-      if (categoria.trim().length < 2) {
+      const limpo = categoria.trim();
+      if (limpo.length < 2) {
         setErro("Informe a categoria do negócio.");
         return;
       }
-      c = { categoria: categoria.trim(), dores: [], dificuldade };
+      nova = {
+        pedido: { origem: "manual", categoria: limpo, dificuldade },
+        rotulo: limpo,
+        dificuldade,
+      };
     }
-    setCenario(c);
+    setSessao(nova);
     setHistorico([]);
     setScorecard(null);
   }
 
   async function enviar() {
     const texto = input.trim();
-    if (!cenario || !texto || pending || limite) return;
-    const novo: Turno[] = [...historico, { papel: "aluno", texto }];
+    if (!sessao || !texto || pending || limite) return;
+    const novo: TurnoUI[] = [...historico, { papel: "aluno", texto }];
     setHistorico(novo);
     setInput("");
     setPending(true);
     setErro(null);
-    const res = await responderTurnoAction({ cenario, historico: novo });
+    const res = await responderTurnoAction({
+      cenario: sessao.pedido,
+      historico: novo,
+    });
     setPending(false);
     if (!res.ok) {
       setErro(res.erro);
       return;
     }
-    setHistorico([...novo, { papel: "dono", texto: res.mensagem }]);
+    setHistorico([
+      ...novo,
+      { papel: "dono", texto: res.mensagem, assinatura: res.assinatura },
+    ]);
   }
 
   async function avaliar() {
-    if (!cenario || avaliando) return;
+    if (!sessao || avaliando) return;
     setAvaliando(true);
     setErro(null);
-    const res = await avaliarSimulacaoAction({ cenario, historico });
+    const res = await avaliarSimulacaoAction({
+      cenario: sessao.pedido,
+      historico,
+    });
     setAvaliando(false);
     if (!res.ok) {
       setErro(res.erro);
@@ -98,7 +133,7 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
   }
 
   function reiniciar() {
-    setCenario(null);
+    setSessao(null);
     setHistorico([]);
     setScorecard(null);
     setInput("");
@@ -106,7 +141,7 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
   }
 
   // ---- SETUP ----
-  if (!cenario) {
+  if (!sessao) {
     return (
       <div className="rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold text-zinc-200">Monte o cenário</h2>
@@ -151,7 +186,8 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
             <input
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
-              placeholder="ex.: dentist, restaurant, advogado…"
+              maxLength={MAX_CATEGORIA}
+              placeholder="ex.: dentista, restaurante, advogado…"
               className="mt-1 w-full rounded-lg border border-border bg-zinc-900/70 p-2 text-sm text-zinc-200 placeholder:text-muted"
             />
           </label>
@@ -264,8 +300,8 @@ export function Simulador({ leads }: { leads: LeadOpcao[] }) {
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between">
         <div className="text-xs text-zinc-400">
-          Cliente: <span className="text-zinc-200">{cenario.categoria}</span> ·{" "}
-          {cenario.dificuldade}
+          Cliente: <span className="text-zinc-200">{sessao.rotulo}</span> ·{" "}
+          {sessao.dificuldade}
         </div>
         <button type="button" onClick={reiniciar} className="btn-ghost">
           Recomeçar

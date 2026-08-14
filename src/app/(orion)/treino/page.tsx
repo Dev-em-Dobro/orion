@@ -7,7 +7,6 @@ import { EmptyState } from "@/components/empty-state";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
-import { detectarDores, textosDasDores } from "@/lib/dores";
 import { Simulador } from "./simulador";
 
 export const metadata: Metadata = { title: "Simulador de venda" };
@@ -21,30 +20,14 @@ export default async function TreinoPage() {
       where: { ...whereUser, diagnosticos: { some: {} } },
       orderBy: { score: "desc" },
       take: 50,
-      include: {
-        diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 },
-        dores: true,
-      },
+      // Só o que a tela mostra na lista. As Dores ficam no servidor: quem monta
+      // o cenário é a action, lendo do banco (F013, emenda de 2026-08-14).
+      select: { id: true, nome: true, categoria: true },
     }),
     chavesEssenciaisFaltando(userId),
   ]);
 
-  const opcoes = leads
-    .map((l) => {
-      const diag = l.diagnosticos[0];
-      if (!diag) return null;
-      const dores =
-        l.dores.length > 0
-          ? textosDasDores(l.dores)
-          : textosDasDores(detectarDores(diag, l.website));
-      return {
-        id: l.id,
-        nome: l.nome,
-        categoria: l.categoria,
-        dores,
-      };
-    })
-    .filter((o): o is NonNullable<typeof o> => o !== null);
+  const opcoes = leads;
 
   const precisaIa = faltando.some((t) => t !== "google");
 
