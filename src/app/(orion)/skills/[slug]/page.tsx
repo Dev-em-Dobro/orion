@@ -3,10 +3,52 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { SkeletonPulse } from "@/components/page-skeleton";
 import { skillPorSlug } from "@/lib/skills/catalogo";
 import { lerSkillMd, listarArquivosDaSkill } from "@/lib/skills/servir";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Prévia do SKILL.md + lista de arquivos: os dois vêm do disco, e são a única
+ * coisa desta tela que espera E/S. Num `<Suspense>` próprio porque a rota não
+ * pode ter `loading.tsx` — ela chama `notFound()` (F015 AC6).
+ */
+async function ConteudoDoDisco({ slug }: { slug: string }) {
+  const [conteudo, arquivos] = await Promise.all([
+    lerSkillMd(slug),
+    listarArquivosDaSkill(slug),
+  ]);
+
+  return (
+    <>
+      {conteudo && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
+            Prévia do SKILL.md
+          </h2>
+          <pre className="mt-2 max-h-96 overflow-auto rounded-xl border border-border bg-zinc-900/70 p-4 text-xs whitespace-pre-wrap text-zinc-300">
+            {conteudo}
+          </pre>
+        </section>
+      )}
+
+      {arquivos.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
+            Arquivos ({arquivos.length})
+          </h2>
+          <ul className="mt-2 space-y-0.5 text-xs text-muted">
+            {arquivos.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </>
+  );
+}
 
 export default async function SkillPage({
   params,
@@ -16,11 +58,6 @@ export default async function SkillPage({
   const { slug } = await params;
   const skill = skillPorSlug(slug);
   if (!skill) notFound();
-
-  const [conteudo, arquivos] = await Promise.all([
-    lerSkillMd(slug),
-    listarArquivosDaSkill(slug),
-  ]);
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -88,29 +125,15 @@ export default async function SkillPage({
         </ol>
       </section>
 
-      {conteudo && (
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
-            Prévia do SKILL.md
-          </h2>
-          <pre className="mt-2 max-h-96 overflow-auto rounded-xl border border-border bg-zinc-900/70 p-4 text-xs whitespace-pre-wrap text-zinc-300">
-            {conteudo}
-          </pre>
-        </section>
-      )}
-
-      {arquivos.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
-            Arquivos ({arquivos.length})
-          </h2>
-          <ul className="mt-2 space-y-0.5 text-xs text-muted">
-            {arquivos.map((a) => (
-              <li key={a}>{a}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <Suspense
+        fallback={
+          <div aria-busy="true" aria-label="Carregando a prévia da skill">
+            <SkeletonPulse className="mt-8 h-64 w-full" />
+          </div>
+        }
+      >
+        <ConteudoDoDisco slug={slug} />
+      </Suspense>
     </main>
   );
 }

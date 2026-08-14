@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { entregavelPorSlug } from "@/lib/entregaveis/catalogo";
 import { urlInternaEntregavel } from "@/lib/entregaveis/servir";
+import { Visor } from "./visor";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,7 @@ export default async function EntregavelPage({ params }: Props) {
         {item.kitZip ? (
           <a
             href={`/api/entregaveis/download/${item.slug}`}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900/80 px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900/80 px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-100"
             download={item.kitZip.nomeArquivo}
           >
             <IconeDownload />
@@ -69,12 +70,7 @@ export default async function EntregavelPage({ params }: Props) {
         ) : null}
       </header>
 
-      <iframe
-        src={src}
-        title={item.titulo}
-        className="min-h-0 w-full flex-1 border-0 bg-[#0b0d10]"
-        sandbox="allow-scripts allow-downloads allow-popups"
-      />
+      <Visor src={src} titulo={item.titulo} />
     </div>
   );
 }

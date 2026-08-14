@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { TenantNotFoundError, requireLeadOwned } from "@/lib/db/scoped";
 import { classificarWebsite } from "@/lib/diagnostico/agregador";
@@ -37,6 +38,7 @@ import { GerarAbordagemButton } from "../gerar-abordagem-button";
 import { GerarPropostaButton } from "../gerar-proposta-button";
 import { MarcarEnviadaButton } from "../marcar-enviada-button";
 import { ResponderObjecaoPanel } from "../responder-objecao-panel";
+import { SkeletonPulse } from "@/components/page-skeleton";
 import { faixaDeScore, linkWhatsapp, scoreBadge, SimNao, STATUS_BADGE } from "../ui";
 import { Abas, parseAba, type AbaId } from "./abas";
 
@@ -75,144 +77,113 @@ function Campo({
   );
 }
 
-export default async function LeadByIdPage({
-  params,
-  searchParams,
+type LeadDoDetalhe = Awaited<ReturnType<typeof requireLeadOwned>>["lead"];
+
+/**
+ * Navegação "3 de 47 ‹ ›" entre os Leads do filtro de origem (AC8).
+ *
+ * Componente próprio porque as quatro consultas dele são as mais caras da tela
+ * — dois `findFirst` e dois `count` sobre a lista INTEIRA do filtro — e não
+ * dizem nada sobre o Lead aberto. Segurando o render, elas atrasavam o nome e
+ * o score do Lead, que são o motivo de a pessoa ter clicado.
+ */
+async function NavVizinhos({
+  lead,
+  whereUser,
+  filtro,
+  aba,
+  query,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: SearchParams;
+  lead: LeadDoDetalhe;
+  whereUser: { user_id: string };
+  filtro: ReturnType<typeof parseFiltroLista>;
+  aba: AbaId;
+  query: string;
 }) {
-  const { id } = await params;
-  const sp = await searchParams;
-  const aba = parseAba(sp.aba);
-  const filtro = parseFiltroLista(sp);
-  const query = queryDoFiltro(filtro, { page: sp.page });
+  const cursor = { score: lead.score, created_at: lead.created_at };
+  const whereContexto = { ...whereUser, ...whereFiltroLista(filtro) };
 
-  try {
-    const { lead, userId, whereUser } = await requireLeadOwned(id);
+  const [anterior, proximo, antesCount, total] = await Promise.all([
+    prisma.lead.findFirst({
+      where: { ...whereContexto, ...whereAntes(cursor) },
+      orderBy: ORDEM_INVERSA,
+      select: { id: true },
+    }),
+    prisma.lead.findFirst({
+      where: { ...whereContexto, ...whereDepois(cursor) },
+      orderBy: ORDEM_LISTA,
+      select: { id: true },
+    }),
+    prisma.lead.count({ where: { ...whereContexto, ...whereAntes(cursor) } }),
+    prisma.lead.count({ where: whereContexto }),
+  ]);
 
-    const cursor = { score: lead.score, created_at: lead.created_at };
-    const whereContexto = { ...whereUser, ...whereFiltroLista(filtro) };
+  if (total <= 1) return null;
 
-    const [diagnostico, dores, abordagens, anterior, proximo, antesCount, total] =
-      await Promise.all([
-        prisma.diagnostico.findFirst({
-          where: { lead_id: lead.id, user_id: userId },
-          orderBy: { executado_em: "desc" },
-        }),
-        prisma.dor.findMany({ where: { lead_id: lead.id, user_id: userId } }),
-        prisma.abordagem.findMany({
-          where: { lead_id: lead.id, user_id: userId },
-          orderBy: { gerado_em: "desc" },
-        }),
-        prisma.lead.findFirst({
-          where: { ...whereContexto, ...whereAntes(cursor) },
-          orderBy: ORDEM_INVERSA,
-          select: { id: true },
-        }),
-        prisma.lead.findFirst({
-          where: { ...whereContexto, ...whereDepois(cursor) },
-          orderBy: ORDEM_LISTA,
-          select: { id: true },
-        }),
-        prisma.lead.count({
-          where: { ...whereContexto, ...whereAntes(cursor) },
-        }),
-        prisma.lead.count({ where: whereContexto }),
-      ]);
+  const hrefVizinho = (vizinhoId: string) => {
+    const p = new URLSearchParams(query);
+    p.set("aba", aba);
+    return `/leads/${vizinhoId}?${p.toString()}`;
+  };
 
-    const classif = lead.website ? classificarWebsite(lead.website) : null;
-    const demoUrl = demoUrlFor(lead.place_id);
-    const hrefVizinho = (vizinhoId: string) => {
-      const p = new URLSearchParams(query);
-      p.set("aba", aba);
-      return `/leads/${vizinhoId}?${p.toString()}`;
-    };
-    /** Mesma tela, outra aba — preservando o filtro de origem. */
-    const hrefAba = (destino: AbaId) => {
-      const p = new URLSearchParams(query);
-      p.set("aba", destino);
-      return `/leads/${lead.id}?${p.toString()}`;
-    };
+  return (
+    <div className="flex items-center gap-2 text-sm text-zinc-400">
+      <span className="font-mono text-xs">
+        {antesCount + 1} de {total}
+      </span>
+      {anterior ? (
+        <Link href={hrefVizinho(anterior.id)} className="btn-ghost">
+          ‹
+        </Link>
+      ) : (
+        <span className="btn-ghost pointer-events-none opacity-40">‹</span>
+      )}
+      {proximo ? (
+        <Link href={hrefVizinho(proximo.id)} className="btn-ghost">
+          ›
+        </Link>
+      ) : (
+        <span className="btn-ghost pointer-events-none opacity-40">›</span>
+      )}
+    </div>
+  );
+}
 
-    return (
-      <main className="mx-auto max-w-4xl px-6 py-10">
-        <p className="text-sm text-muted">
-          <Link
-            href={query ? `/leads?${query}` : "/leads"}
-            className="hover:text-primary"
-          >
-            ← Leads
-          </Link>
-        </p>
+/** Conteúdo da aba aberta — Diagnóstico, Dores e Abordagens do Lead. */
+async function CorpoAba({
+  lead,
+  userId,
+  aba,
+  query,
+}: {
+  lead: LeadDoDetalhe;
+  userId: string;
+  aba: AbaId;
+  query: string;
+}) {
+  const [diagnostico, dores, abordagens] = await Promise.all([
+    prisma.diagnostico.findFirst({
+      where: { lead_id: lead.id, user_id: userId },
+      orderBy: { executado_em: "desc" },
+    }),
+    prisma.dor.findMany({ where: { lead_id: lead.id, user_id: userId } }),
+    prisma.abordagem.findMany({
+      where: { lead_id: lead.id, user_id: userId },
+      orderBy: { gerado_em: "desc" },
+    }),
+  ]);
 
-        {/* Cabeçalho fixo do Lead */}
-        <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Mesma régua do card: estimado é contorno neutro e sem a
-                  palavra da faixa — a cor é promessa de confiança. */}
-              <span
-                className={`badge font-mono ${scoreBadge(lead.score, lead.score_estimado)}`}
-              >
-                {lead.score}
-                {lead.score_estimado ? (
-                  <span className="sr-only">
-                    {" "}
-                    — estimado pela Triagem, ainda sem Diagnóstico
-                  </span>
-                ) : (
-                  <> {faixaDeScore(lead.score)}</>
-                )}
-              </span>
-              <span className={`badge ${STATUS_BADGE[lead.status]}`}>
-                {ROTULO_ESTAGIO[lead.status]}
-              </span>
-            </div>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight">
-              {lead.nome}
-            </h1>
-            {/* Categoria em PT (o Places devolve `veterinary_care`). O tier e o
-                Valor saíram: são entrada do score, e o score já está no badge
-                acima — repetir a fórmula ao lado do resultado não decide nada. */}
-            <p className="mt-1 text-sm text-muted">
-              {rotuloCategoria(lead.categoria)}
-            </p>
-          </div>
+  const classif = lead.website ? classificarWebsite(lead.website) : null;
+  const demoUrl = demoUrlFor(lead.place_id);
+  /** Mesma tela, outra aba — preservando o filtro de origem. */
+  const hrefAba = (destino: AbaId) => {
+    const p = new URLSearchParams(query);
+    p.set("aba", destino);
+    return `/leads/${lead.id}?${p.toString()}`;
+  };
 
-          {/* Navegação entre os Leads do filtro de origem (AC8) */}
-          {total > 1 && (
-            <div className="flex items-center gap-2 text-sm text-zinc-400">
-              <span className="font-mono text-xs">
-                {antesCount + 1} de {total}
-              </span>
-              {anterior ? (
-                <Link href={hrefVizinho(anterior.id)} className="btn-ghost">
-                  ‹
-                </Link>
-              ) : (
-                <span className="btn-ghost pointer-events-none opacity-40">
-                  ‹
-                </span>
-              )}
-              {proximo ? (
-                <Link href={hrefVizinho(proximo.id)} className="btn-ghost">
-                  ›
-                </Link>
-              ) : (
-                <span className="btn-ghost pointer-events-none opacity-40">
-                  ›
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6">
-          <Abas leadId={lead.id} atual={aba} query={query} />
-        </div>
-
-        <div className="mt-6">
+  return (
+    <>
           {aba === "diagnostico" && (
             <div className="space-y-6">
               <section className="rounded-xl border border-border bg-card p-4">
@@ -584,30 +555,136 @@ export default async function LeadByIdPage({
             ) : (
               <GerarPropostaButton leadId={lead.id} nomeDoLead={lead.nome} />
             ))}
-        </div>
+    </>
+  );
+}
 
-        {/* F024 — correção de estado, fora das abas: vale pra qualquer uma. */}
-        <section className="mt-8 space-y-2 border-t border-border pt-4">
-          {lead.status === "descartado" ? (
-            <>
-              {lead.motivo_descarte && (
-                <p className="text-xs text-muted">
-                  Descartado: {lead.motivo_descarte}
-                </p>
-              )}
-              <RestaurarButton leadId={lead.id} />
-            </>
-          ) : (
-            <>
-              <CorrigirStatusForm leadId={lead.id} statusAtual={lead.status} />
-              <DescartarButton leadId={lead.id} />
-            </>
-          )}
-        </section>
-      </main>
-    );
+export default async function LeadByIdPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: SearchParams;
+}) {
+  const { id } = await params;
+  const sp = await searchParams;
+  const aba = parseAba(sp.aba);
+  const filtro = parseFiltroLista(sp);
+  const query = queryDoFiltro(filtro, { page: sp.page });
+
+  // O dono do Lead resolve AQUI, fora de qualquer `<Suspense>`. É a regra da
+  // F015 AC6: `notFound()` só vira 404 de verdade enquanto nada foi enviado, e
+  // é por isso que esta rota não tem `loading.tsx`. O que os boundaries abaixo
+  // envolvem são só consultas de conteúdo — nenhuma delas decide o status.
+  let ctx: Awaited<ReturnType<typeof requireLeadOwned>>;
+  try {
+    ctx = await requireLeadOwned(id);
   } catch (e) {
     if (e instanceof TenantNotFoundError) notFound();
     throw e;
   }
+  const { lead, userId, whereUser } = ctx;
+
+  return (
+    <main className="mx-auto max-w-4xl px-6 py-10">
+      <p className="text-sm text-muted">
+        <Link
+          href={query ? `/leads?${query}` : "/leads"}
+          className="hover:text-primary"
+        >
+          ← Leads
+        </Link>
+      </p>
+
+      {/* Cabeçalho fixo do Lead. Sai do `requireLeadOwned`, que já resolveu —
+          nome, score e estágio pintam na primeira leva, sem esperar as sete
+          consultas que a tela fazia em bloco antes. */}
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Mesma régua do card: estimado é contorno neutro e sem a
+                palavra da faixa — a cor é promessa de confiança. */}
+            <span
+              className={`badge font-mono ${scoreBadge(lead.score, lead.score_estimado)}`}
+            >
+              {lead.score}
+              {lead.score_estimado ? (
+                <span className="sr-only">
+                  {" "}
+                  — estimado pela Triagem, ainda sem Diagnóstico
+                </span>
+              ) : (
+                <> {faixaDeScore(lead.score)}</>
+              )}
+            </span>
+            <span className={`badge ${STATUS_BADGE[lead.status]}`}>
+              {ROTULO_ESTAGIO[lead.status]}
+            </span>
+          </div>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight">
+            {lead.nome}
+          </h1>
+          {/* Categoria em PT (o Places devolve `veterinary_care`). O tier e o
+              Valor saíram: são entrada do score, e o score já está no badge
+              acima — repetir a fórmula ao lado do resultado não decide nada. */}
+          <p className="mt-1 text-sm text-muted">
+            {rotuloCategoria(lead.categoria)}
+          </p>
+        </div>
+
+        {/* `fallback={null}` e não um esqueleto: o contador só existe quando o
+            filtro tem mais de um Lead, então reservar espaço pra ele mostraria
+            uma caixa fantasma na maioria das aberturas. */}
+        <Suspense fallback={null}>
+          <NavVizinhos
+            lead={lead}
+            whereUser={whereUser}
+            filtro={filtro}
+            aba={aba}
+            query={query}
+          />
+        </Suspense>
+      </div>
+
+      <div className="mt-6">
+        <Abas leadId={lead.id} atual={aba} query={query} />
+      </div>
+
+      <div className="mt-6">
+        <Suspense
+          fallback={
+            <div
+              className="space-y-6"
+              aria-busy="true"
+              aria-label="Carregando a aba"
+            >
+              <SkeletonPulse className="h-40 w-full" />
+              <SkeletonPulse className="h-64 w-full" />
+            </div>
+          }
+        >
+          <CorpoAba lead={lead} userId={userId} aba={aba} query={query} />
+        </Suspense>
+      </div>
+
+      {/* F024 — correção de estado, fora das abas: vale pra qualquer uma. */}
+      <section className="mt-8 space-y-2 border-t border-border pt-4">
+        {lead.status === "descartado" ? (
+          <>
+            {lead.motivo_descarte && (
+              <p className="text-xs text-muted">
+                Descartado: {lead.motivo_descarte}
+              </p>
+            )}
+            <RestaurarButton leadId={lead.id} />
+          </>
+        ) : (
+          <>
+            <CorrigirStatusForm leadId={lead.id} statusAtual={lead.status} />
+            <DescartarButton leadId={lead.id} />
+          </>
+        )}
+      </section>
+    </main>
+  );
 }

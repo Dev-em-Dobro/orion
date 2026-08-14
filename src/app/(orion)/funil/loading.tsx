@@ -1,5 +1,5 @@
-import { RotaSkeleton } from "@/components/page-skeleton";
+import { FunilSkeleton } from "@/components/page-skeleton";
 
 export default function Loading() {
-  return <RotaSkeleton />;
+  return <FunilSkeleton />;
 }

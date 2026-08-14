@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth/client";
@@ -272,8 +272,34 @@ function LogoutButton({ className }: { className?: string }) {
 // O spinner por item saiu em 2026-08-13. Cada `NavLink` tinha o **próprio**
 // `useTransition`, e o pending de um não zerava quando outro começava: clicar
 // em três menus seguidos deixava três spinners girando ao mesmo tempo, nenhum
-// deles dizendo o que estava carregando. O feedback agora é o `loading.tsx` de
-// cada rota — o esqueleto da página que está chegando.
+// deles dizendo o que estava carregando. O feedback passou a ser o
+// `loading.tsx` de cada rota — o esqueleto da página que está chegando.
+//
+// O ponto do item voltou no fim do dia, e não é o spinner de antes: quem
+// manda agora é o `useLinkStatus` do próprio Next, que só existe DENTRO de um
+// `<Link>` e descreve a navegação daquele link. Ele zera sozinho quando outra
+// navegação começa — era exatamente isso que o `useTransition` à mão não
+// fazia.
+//
+// Ele cobre o buraco que o `loading.tsx` não alcança. O fallback de uma rota
+// mora **dentro** do `layout.tsx` dela, então enquanto o layout está esperando
+// (o gate de compra de `/skills` e `/entregaveis` é uma consulta no banco) não
+// há esqueleto nenhum pra mostrar. E `/` e `/leads` não podem ter boundary de
+// rota: seria acima de `/leads/[id]`, que precisa de 404 de verdade. Nesses
+// quatro casos, o ponto no menu é o único sinal entre o clique e a tela.
+function PontoPendente() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    // Sem `ml-auto`: o rótulo já é `flex-1`, então o ponto e o badge ficam
+    // encostados no canto direito juntos em vez de brigarem pelo espaço.
+    <span
+      className="ml-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-primary"
+      role="status"
+      aria-label="Carregando"
+    />
+  );
+}
 
 // Item bloqueado era `text-muted opacity-50` — 2,3:1 antes da opacidade, e
 // ~1,6:1 depois dela. Ilegível, e a F035 quer o contrário: o recurso pago tem
@@ -417,6 +443,9 @@ function NavLink({
           <IconeCadeado />
         </span>
       ) : null}
+      {/* Fora de um `<Link>` o hook devolve `pending: false`, então o mesmo
+          `conteudo` serve pro item bloqueado (`<button>`) e pro externo. */}
+      <PontoPendente />
     </>
   );
 

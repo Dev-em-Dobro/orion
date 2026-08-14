@@ -54,7 +54,7 @@ export default function EntregaveisPage() {
                 {item.kitZip ? (
                   <a
                     href={`/api/entregaveis/download/${item.slug}`}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900/80 px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900/80 px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-100"
                     download={item.kitZip.nomeArquivo}
                   >
                     <IconeDownload />

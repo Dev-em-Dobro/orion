@@ -1,5 +1,5 @@
-import { RotaSkeleton } from "@/components/page-skeleton";
+import { PlanosSkeleton } from "@/components/page-skeleton";
 
 export default function Loading() {
-  return <RotaSkeleton />;
+  return <PlanosSkeleton />;
 }
