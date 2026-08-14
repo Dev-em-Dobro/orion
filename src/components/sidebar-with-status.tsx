@@ -25,8 +25,15 @@ export async function SidebarWithStatus({
     const user = await requireUser();
     // Falha aqui não pode derrubar a sidebar inteira: sem contador e no plano
     // mais restrito é melhor que sem navegação.
-    tarefasVencidas = await contarTarefas(user.id).catch(() => 0);
-    plano = await planoDoUsuario(user.id).catch((): Plano => "free");
+    //
+    // `Promise.all` e não dois `await` em fila: uma consulta não depende da
+    // outra, e a sidebar roda em TODA página. Em sequência isso custava dois
+    // ida-e-volta de banco antes do primeiro byte — sem efeito perceptível
+    // contra o Postgres local (~1 ms), mas ~70 ms contra o Neon.
+    [tarefasVencidas, plano] = await Promise.all([
+      contarTarefas(user.id).catch(() => 0),
+      planoDoUsuario(user.id).catch((): Plano => "free"),
+    ]);
   } catch {
     // Sem sessão: sidebar padrão. O middleware já cuida do redirect.
   }

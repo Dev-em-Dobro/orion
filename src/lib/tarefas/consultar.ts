@@ -4,6 +4,7 @@
 // Uma rodada de queries (F028): Leads em estágio cobrável, adiamentos e a
 // contagem da fila que espera aprofundamento.
 
+import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { SCORE_QUALIFICADO } from "@/lib/score/score";
 import { calcularTarefas, type Tarefa } from "./calcular";
@@ -23,8 +24,19 @@ const OUTREACHES_POR_LEAD = 5;
  * Recebe o `userId` em vez de chamar `requireTenant()` por dentro: quem chama
  * já resolveu a sessão (as páginas) ou já tem o id na mão (as ferramentas do
  * Agente, F029). Sem isso, o módulo arrastava a auth inteira junto.
+ *
+ * Memoizado por request (`cache()` do React, mesmo recurso do `requireUser`
+ * na F028 H5). Isto aqui é a consulta mais cara que roda em TODA página: o
+ * badge da sidebar chama `contarTarefas`, que chama esta função. Na `/tarefas`
+ * ela rodava duas vezes por request — uma pro badge, outra pro conteúdo — e
+ * cada rodada é um `findMany` de Leads com as Abordagens aninhadas.
+ *
+ * `agora` fica fora da chave de propósito: `cache()` compara os argumentos, e
+ * `Date.now()` como padrão criaria uma chave nova a cada chamada, o que
+ * anularia a memoização inteira. Quem passa `agora` explícito (os testes)
+ * continua recebendo o cálculo do instante pedido.
  */
-export async function tarefasDoUsuario(
+export const tarefasDoUsuario = cache(async function tarefasDoUsuario(
   userId: string,
   agora: number = Date.now(),
 ): Promise<Tarefa[]> {
@@ -71,7 +83,7 @@ export async function tarefasDoUsuario(
     { leads, adiamentos, aguardandoAprofundamento },
     agora,
   );
-}
+});
 
 /** Badge da sidebar: só o número de cobranças já vencidas. */
 export async function contarTarefas(userId: string): Promise<number> {

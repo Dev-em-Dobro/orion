@@ -168,6 +168,92 @@ Diagnósticos e 100 Abordagens:
 - [ ] **AC9** — Os números antes/depois de cada hipótese ficam registrados na
       descrição da PR (é o que impede "otimização" sem prova).
 
+## Etapa 3 — Varredura de rotas (2026-08-14)
+
+**Critério novo, pedido pelo dono do produto: nenhuma rota passa de 2,5 s.**
+
+### Como passou a ser medido
+`scripts/perf-rotas.mts` sobe o build de produção numa porta própria, forja uma
+sessão (linha em `session` + cookie assinado como o Better Auth faz — o helper
+`/api/e2e/session` não serve porque se desliga em `NODE_ENV=production`, que é
+justamente o modo a medir) e roda **duas passadas** por rota:
+
+- **HTTP** — TTFB e corpo completo, 7–12 amostras, p50 e p95. É o piso: nenhum
+  navegador pinta antes disso.
+- **Navegador** — Chromium de verdade, `load` e LCP.
+
+E roda em **dois cenários**, porque um só mente:
+
+| cenário | banco | máquina |
+|---|---|---|
+| piso do código | Postgres local (~1 ms) | CPU do desktop, sem throttle |
+| perfil de produção | `scripts/perf-proxy-latencia.mts` põe **+35 ms** por ida-e-volta (perfil Neon) | CPU 4× mais lenta + 4G ruim (150 ms RTT) |
+
+O relay de latência não é firula: contra o Postgres local, uma tela com oito
+consultas em série mede igual a uma com uma só. É o cenário 2 que revela a
+diferença — e é ele que responde ao critério de 2,5 s.
+
+> **Armadilha registrada.** A primeira rodada "provou" que 35 ms de latência de
+> banco não custavam nada. O `next start` sobe via shell, `proc.kill()` matava
+> só o shell, e o segundo cenário estava medindo o servidor do primeiro. Quem
+> mede precisa checar que mediu o que pensa ter medido — o script agora derruba
+> a árvore de processo e recusa subir com a porta ocupada.
+
+### O que a medição achou: o pedágio do shell
+
+TTFB p50 tinha **piso de ~250 ms em toda rota** no cenário de produção —
+incluindo `/conteudo` e `/agente`, que não consultam nada de domínio. O custo
+não era de página nenhuma: era do **shell**, que roda antes de qualquer uma e
+não estava coberto pelo AC5.
+
+Três causas, todas antes do primeiro byte:
+
+1. `SidebarWithStatus` fazia `await contarTarefas()` e **depois**
+   `await planoDoUsuario()` — duas idas-e-voltas em série pra duas consultas
+   independentes. Viraram `Promise.all`.
+2. `contarTarefas` chama `tarefasDoUsuario`, que é a consulta mais cara que
+   roda em toda página (`findMany` de Leads com as Abordagens aninhadas), só
+   pra desenhar o número do badge. Em `/tarefas` rodava **duas vezes** por
+   request — uma pro badge, outra pro conteúdo. Passou a ser memoizada por
+   request com o `cache()` do React, o mesmo recurso da H5.
+3. `MedidorUso` é `async` e vive no shell: toda página esperava as consultas
+   de plano e uso antes do primeiro byte. Foi pra dentro de um `<Suspense>`
+   com placeholder do tamanho exato — o medidor saiu do caminho crítico sem
+   custar layout shift.
+
+### Números (12 amostras, cenário de produção)
+
+| | antes | depois |
+|---|---|---|
+| `load` no navegador, pior rota | 731 ms (`/ranking`) | **635 ms** |
+| `load` no navegador, faixa das demais | 538–570 ms | **401–477 ms** |
+| TTFB p50, piso do shell | ~263 ms | **~251 ms** |
+
+Todas as 17 rotas medidas ficam abaixo de 2,5 s — a pior com **3,9× de folga**.
+
+### Limites honestos desta medição
+- A base de teste tem **30 Leads**, não os 500 que os AC1–AC9 exigem. O que a
+  varredura prova é a latência de estrutura (idas-e-voltas em série), não o
+  comportamento em escala. `tarefasDoUsuario` é a que mais deve doer quando a
+  base crescer, porque lê todos os Leads em estágio cobrável.
+- O relay simula **tempo de viagem**, não o Neon: sem cold start de branch, sem
+  limite de conexão do pooler.
+- Continua valendo o aviso do topo desta spec: H1/H2 são infra e não foram
+  feitas.
+- Uma amostra isolada de `/leads?status=descartados` marcou 19 s de p95 numa
+  rodada. **Não reproduziu** em 12 amostras (p95 = 328 ms); a causa provável é
+  churn de conexão do Prisma através do relay, não código da aplicação. Fica
+  registrado em vez de descartado.
+
+### Critérios de aceitação da etapa 3
+- [ ] **AC10** — Nenhuma rota autenticada passa de **2,5 s** de `load` no
+      cenário de produção do `scripts/perf-rotas.mts`.
+- [ ] **AC11** — O shell (sidebar + medidor) não faz ida-e-volta **em série**
+      antes do primeiro byte; o que não é essencial pra navegar mora em
+      `<Suspense>`.
+- [ ] **AC12** — `tarefasDoUsuario` roda **uma vez** por request, mesmo quando
+      a página e o badge da sidebar a pedem.
+
 ## Decisões de implementação
 - Correções entram **uma por commit**, com o número medido antes e depois.
 - H1 e H2 são infra (`vercel.json`, variável de ambiente) — nenhuma linha de
