@@ -27,9 +27,28 @@ const PASSOS = [
       "Maps Platform exige conta de faturamento com cartão, mesmo dentro da cota gratuita. Sem billing a Places API falha. Crie um orçamento/alerta baixo pra não ter surpresa.",
   },
   {
-    titulo: "Crie e restrinja a chave",
+    titulo: "Crie a chave",
     corpo:
-      "Credenciais → Criar chave de API. Restrinja a chave só a Places API (New) e PageSpeed Insights API.",
+      "Credenciais → Criar credenciais → Chave de API. Ela começa com AIza… — copie antes de fechar.",
+  },
+  {
+    // O passo que mais trava aluno: a tela pede DUAS restrições e a intuição
+    // erra na primeira. "Sites (referenciadores HTTP)" parece a resposta certa
+    // e derruba tudo com 403 — o Orion chama o Google do servidor, onde não
+    // existe cabeçalho `Referer`.
+    titulo: "Restrições de aplicativo: escolha Nenhuma",
+    corpo:
+      "Parece errado, mas as outras opções quebram: 'Sites' só vale pra chamada feita pelo navegador, e o Orion chama o Google do servidor — toda busca voltaria 403. 'Endereços IP' exigiria um IP de saída fixo, que a hospedagem não garante. A sua chave não corre risco por isso: ela fica cifrada no banco e nunca chega ao navegador.",
+  },
+  {
+    titulo: "Restrições de API: só as duas",
+    corpo:
+      "Esta é a que protege de verdade. Marque apenas Places API (New) e PageSpeed Insights API — se a chave vazar, ela não serve pra mais nada.",
+  },
+  {
+    titulo: "Ponha um teto de cota",
+    corpo:
+      "Em APIs e serviços → Places API (New) → Cotas, limite as requisições por dia. A restrição de API decide QUAL API a chave abre; a cota decide QUANTO ela pode gastar. É o que transforma um vazamento em aborrecimento em vez de fatura.",
   },
   {
     titulo: "Cole em Configuração",
