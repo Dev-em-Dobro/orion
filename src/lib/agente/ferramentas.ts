@@ -206,6 +206,7 @@ export function ferramentasDoAgente(userId: string) {
           site_e_agregador: diag.site_e_agregador,
           tem_https: diag.tem_https,
           performance_mobile: diag.performance_mobile,
+          tempo_carregamento_ms: diag.tempo_carregamento_ms,
         });
 
         return {

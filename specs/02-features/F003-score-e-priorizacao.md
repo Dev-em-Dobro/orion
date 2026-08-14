@@ -60,8 +60,19 @@ números.
 | tem site, `performance_mobile < 50` | 20 + 50 |
 | tem site, `performance_mobile` 50–79 | 20 + 25 |
 | tem site, `performance_mobile ≥ 80` | 20 + 0 |
-| tem site, `performance_mobile = null` (PSI falhou) | 20 + 25 |
+| tem site, `performance_mobile = null` **e** carregamento ≥ 5 s | 20 + 50 |
+| tem site, `performance_mobile = null` **e** carregamento ≥ 3 s | 20 + 35 |
+| tem site, `performance_mobile = null` (PSI falhou, carregamento desconhecido ou < 3 s) | 20 + 25 |
 | tem site, `tem_https = false`  | **+20** (soma-se ao acima) |
+
+> **Emenda 2026-08-14.** As duas linhas novas de `performance_mobile = null`
+> vêm junto com a [F004](F004-deteccao-de-dor.md): o PSI desiste justamente nos
+> piores sites, então `null` estava achatando em **+25** tanto o site que não
+> deu pra medir quanto o que levou 6 segundos pra abrir. Quando a F002 mediu o
+> carregamento e ele é ruim, isso **é** necessidade — e passa a pesar como tal.
+> O +25 continua valendo para o `null` de verdade, aquele em que não se sabe
+> nada. Fonte do tempo: `Diagnostico.tempo_carregamento_ms`, que a F002 já
+> gravava e ninguém lia.
 
 Necessidade é a soma dos termos aplicáveis, **limitada a 100** (`min(soma, 100)`).
 Lead sem nenhum Diagnóstico → Necessidade indefinida → **não pontua** (ver Fluxo).
