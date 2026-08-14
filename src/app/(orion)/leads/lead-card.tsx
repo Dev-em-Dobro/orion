@@ -8,6 +8,7 @@
 import Link from "next/link";
 import type { LeadStatus } from "@prisma/client";
 import { ROTULO_ESTAGIO } from "@/lib/funil";
+import { MandarProFunilButton } from "./mandar-pro-funil-button";
 import { faixaDeScore, scoreBadge, STATUS_BADGE } from "./ui";
 
 export type LeadCardProps = {
@@ -220,11 +221,14 @@ export function LeadCard({
       )}
 
       {/* Um botão só. Descartar e Restaurar individuais continuam no detalhe do
-          Lead; descartar em lote segue na seleção da própria lista (F024). */}
+          Lead; descartar em lote segue na seleção da própria lista (F024).
+
+          "Abordar no CRM" abria o **detalhe do Lead** — o rótulo prometia o
+          CRM (que é o funil) e entregava outra tela. Agora leva pro funil de
+          verdade, com o card destacado. O detalhe continua a um clique: é o
+          nome do Lead, no topo. */}
       <footer className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-3">
-        <Link href={lead.href} className="btn-card">
-          Abordar no CRM
-        </Link>
+        <MandarProFunilButton leadId={lead.id} />
       </footer>
     </article>
   );

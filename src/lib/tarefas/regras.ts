@@ -43,6 +43,30 @@ export const EXPLICACAO: Record<TipoTarefa, string> = {
     "há Leads com potencial alto na triagem esperando diagnóstico",
 };
 
+/**
+ * O que fazer, e por que isso importa — o texto do "i" ao lado do título.
+ *
+ * A `EXPLICACAO` acima diz por que a cobrança **apareceu** (a regra). Isso
+ * responde "por que estou sendo cobrado" e deixa em branco "o que eu faço com
+ * isso": "há Leads com potencial alto na triagem esperando diagnóstico" só
+ * significa alguma coisa pra quem já sabe o que é triagem e o que muda depois
+ * do Diagnóstico. Aqui o texto assume que a pessoa não sabe.
+ */
+export const O_QUE_FAZER: Record<TipoTarefa, string> = {
+  CONFIRMAR_RESPOSTA:
+    "Você abordou e não registrou o que aconteceu. Sem isso o funil trava: o Lead fica parado em Contatado e o Orion não sabe se cobra follow-up ou para de cobrar. Abra o Lead e marque o desfecho — respondeu, não respondeu ou perdido.",
+  MANDAR_FOLLOWUP:
+    "Passaram 3 dias da abordagem sem resposta. A maior parte das respostas vem do SEGUNDO toque, não do primeiro — parar no primeiro joga fora metade do trabalho já feito. O botão aqui gera o texto do follow-up pronto, puxando o que já foi dito.",
+  ENVIAR_ABORDAGEM:
+    "O Orion escreveu a abordagem e ela está parada há mais de um dia. Texto gerado e não enviado não vale nada, e o Diagnóstico que sustenta o argumento envelhece junto. Abra, revise e marque como enviada quando mandar.",
+  AVANCAR_RESPONDEU:
+    "Ele respondeu e o funil não andou desde então. Responder é o ponto mais quente da conversa; deixar esfriar dois dias costuma custar a venda. Decida o próximo passo: qualificar (tem fit, verba e intenção) ou já mandar proposta.",
+  COBRAR_PROPOSTA:
+    "A proposta foi enviada e ninguém decidiu. Proposta sem cobrança vira 'depois eu vejo' e morre em silêncio. Pergunte direto se é sim ou não — um não rápido devolve o seu tempo pro próximo Lead.",
+  APROFUNDAR_FILA:
+    "A busca trouxe Leads com score alto na Triagem, que é um chute a partir do que o Google devolveu: nicho, número de avaliações e se existe site. Aprofundar roda o Diagnóstico de verdade — abre o site, mede a velocidade, confere HTTPS e levanta as Dores. Só depois disso o score é confiável e o Lead entra na Fila do dia.",
+};
+
 export type FaixaUrgencia = "atrasada" | "vencida" | "hoje";
 
 /** Atrasada = passou de 2× o prazo. É o que sobe pro topo da lista. */

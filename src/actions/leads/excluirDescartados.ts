@@ -13,11 +13,17 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 
+// `z.coerce.number()` sozinho transforma `""` e `null` em **0**, e 0 é inteiro
+// não-negativo válido. O campo em branco passava pela validação, virava zero,
+// não batia com a contagem e caía na mensagem "você tem N descartados —
+// confirme com esse número" — que descreve o estado certo e a causa errada.
 const schema = z.object({
-  confirmacao: z.coerce
-    .number()
-    .int("Confirmação inválida")
-    .nonnegative("Confirmação inválida"),
+  confirmacao: z
+    .string()
+    .trim()
+    .min(1, "Digite a quantidade para confirmar.")
+    .regex(/^\d+$/, "Confirmação inválida — digite só o número.")
+    .transform(Number),
 });
 
 export type ExcluirDescartadosState =
@@ -35,7 +41,9 @@ export async function excluirDescartados(
   if (!parsed.success) {
     return {
       kind: "erro",
-      mensagem: "Digite a quantidade de descartados para confirmar.",
+      mensagem:
+        parsed.error.issues[0]?.message ??
+        "Digite a quantidade de descartados para confirmar.",
     };
   }
 

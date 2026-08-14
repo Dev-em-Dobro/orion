@@ -62,6 +62,15 @@
   :root {
     color-scheme: dark;
 
+    /* Verde de PREENCHIMENTO grande — o card da Fila do dia (`.card-destaque`).
+       Vivia só dentro de `.tema-claro`, então no tema escuro o
+       `linear-gradient(var(--verde-marca), …)` do card resolvia pra valor
+       inválido e o `background-image` inteiro caía: os cards da Fila ficavam
+       transparentes, sem o verde que os distingue do resto do Dashboard.
+       Aqui ele é o verde da marca; no tema claro é redeclarado porque lá
+       `--color-primary` escurece pra passar contraste em texto. */
+    --verde-marca: #22c55e;
+
     /* Quina do card: realce no topo (luz vindo de cima) + sombra embaixo.
        É o que faz a divisão aparecer sem borda berrante. */
     --elev-1:

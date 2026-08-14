@@ -31,10 +31,17 @@ export function ExcluirDescartadosForm({ quantidade }: { quantidade: number }) {
       <label className="text-xs text-muted">
         Excluir de vez? Digite <strong className="text-zinc-300">{quantidade}</strong> para confirmar
       </label>
+      {/* O placeholder era o PRÓPRIO número a digitar. Cinza dentro do campo,
+          ele lê como valor já preenchido — quem clicava direto no botão
+          mandava vazio e recebia "você tem N descartados, confirme com esse
+          número", com N igual ao que parecia estar ali. `required` fecha a
+          porta antes de chegar no servidor. */}
       <input
         name="confirmacao"
         inputMode="numeric"
-        placeholder={String(quantidade)}
+        required
+        aria-label={`Digite ${quantidade} para confirmar a exclusão`}
+        placeholder="nº"
         className="w-20 rounded-lg border border-border bg-zinc-900/70 px-3 py-1.5 text-xs text-zinc-100"
       />
       <button

@@ -59,11 +59,13 @@ export function GerarAbordagemButton({
         <button
           type="submit"
           disabled={pending}
-          className={
-            destaque
-              ? "rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 transition-colors hover:bg-emerald-400 disabled:opacity-60"
-              : "btn-ghost"
-          }
+          // `btn-primary` no lugar do emerald cru. O botão trazia
+          // `bg-emerald-500` + `text-emerald-950` escrito à mão, fora do
+          // sistema de cor — e o tema claro derruba `emerald-400` pra #047857
+          // pra passar contraste em texto, então o HOVER virava verde-escuro
+          // com texto quase preto: 2,7:1, ilegível. `btn-primary` já carrega o
+          // par fundo/texto certo nos dois temas.
+          className={destaque ? "btn-primary" : "btn-ghost"}
         >
           {pending ? "Gerando..." : label}
         </button>

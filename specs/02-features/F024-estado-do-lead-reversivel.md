@@ -124,6 +124,31 @@ disponível); Leads existentes ficam com `motivo_descarte = null`.
    (cascata cuida dos filhos).
 2. Retorna quantos foram excluídos. `revalidatePath('/leads')`.
 
+## Emenda 2026-08-14 — descartar sai da tela, e a confirmação para de mentir
+
+**Descartar do detalhe deixava o aluno na tela do Lead que ele acabou de
+descartar.** A tela sai do fluxo mas continua aberta, e a volta é por conta
+dele. Agora o descarte devolve para a tela de origem (`lib/leads/origem.ts`),
+que é a mesma que a seta "voltar" usa.
+
+**"Excluir descartados" recusava a confirmação certa.** O campo tinha como
+`placeholder` **o próprio número a digitar** — cinza dentro do campo, lê como
+valor já preenchido. Quem clicava direto no botão mandava vazio, e
+`z.coerce.number()` transforma `""` em **0**, que é inteiro não-negativo válido:
+passava na validação, não batia com a contagem e caía em *"você tem N
+descartados — confirme com esse número"*, com N igual ao que parecia estar ali.
+A mensagem descrevia o estado certo e a causa errada.
+
+Agora o campo é `required`, o placeholder não é mais a resposta, e vazio tem
+mensagem própria ("Digite a quantidade para confirmar"). A confirmação por
+número **continua** — é a única ação da feature sem volta.
+
+### Critérios de aceitação da emenda
+- [ ] **AC10** — Descartar a partir do detalhe leva de volta à tela de origem
+      (lista ou funil), com o Lead já fora dela.
+- [ ] **AC11** — Enviar a confirmação de exclusão em branco diz que falta
+      digitar o número, e nunca é interpretado como zero.
+
 ## Critérios de aceitação
 - [ ] **AC1** — Descartar um Lead o remove da lista padrão, da Fila do dia
       (F025) e da Central de Tarefas (F031), sem apagar nada do banco.

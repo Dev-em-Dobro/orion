@@ -119,7 +119,11 @@ export default async function RankingPage({
     : competenciaDe(new Date());
 
   return (
-    <main className="px-6 py-8 lg:px-8">
+    // Centralizada como /tarefas, /agente e /skills. Era largura cheia com o
+    // quadro em `max-w-2xl` sem `mx-auto`: o conteúdo colava na esquerda e a
+    // tela parecia desalinhada das vizinhas. Largura cheia continua sendo
+    // exceção de quem USA a tela — a lista de Leads e o Dashboard.
+    <main className="mx-auto max-w-4xl px-6 py-10">
       <h1 className="text-2xl font-bold tracking-tight">
         Ranking de Builders
       </h1>
@@ -128,13 +132,13 @@ export default async function RankingPage({
         Todo mês zera.
       </p>
 
-      <div className="mt-6 max-w-2xl">
+      <div className="mt-6">
         <Suspense fallback={<SkeletonPulse className="h-64 w-full" />}>
           <Quadro competencia={competencia} />
         </Suspense>
       </div>
 
-      <div className="mt-8 max-w-2xl rounded-xl border border-border bg-card p-4 text-xs text-muted">
+      <div className="mt-8 rounded-xl border border-border bg-card p-4 text-xs text-muted">
         <p className="font-semibold text-zinc-300">Como a conta é feita</p>
         <ul className="mt-2 list-disc space-y-1 pl-4">
           <li>

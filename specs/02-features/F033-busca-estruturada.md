@@ -131,6 +131,38 @@ assim o filtro nunca deixa o aluno sem resposta.
 **Nenhuma mudança.** A busca não é persistida; `Lead.categoria` continua vindo
 do `primaryType` do Places (o nicho escolhido é entrada, não campo do domínio).
 
+## Emenda 2026-08-14 — o formulário para de apagar o que o aluno escolheu
+
+Três defeitos do formulário de busca, achados em uso:
+
+**1. Nicho vinha pré-selecionado.** O `<select>` abria já no primeiro item da
+lista (`NICHOS[0]`). Quem não reparasse no campo buscava *dentista* achando que
+tinha escolhido — e o erro só aparecia depois de a consulta ao Google ser
+cobrada. Agora começa vazio, com **"Selecione o nicho"** e `required`.
+
+**2. Cidade e bairro sumiam a cada busca.** Eram campos **não controlados**, e
+`<form action>` do React limpa campo não controlado quando a ação termina. Nicho,
+UF e quantidade sobreviviam (estado de cliente) e cidade/bairro/texto livre não —
+o que dava a impressão de "reset aleatório". Todos passam a ser controlados.
+Trocar de UF continua limpando a cidade, de propósito: "Porto Alegre" com o
+estado em SP é busca que não acha nada e não diz por quê.
+
+**3. O campo de cidade abria torto.** Era `<input list>` + `<datalist>`, e quem
+desenha o painel do `datalist` é o navegador: com as ~500 cidades de uma UF, o
+Chrome abre um painel do tamanho do conteúdo, encostado onde couber — às vezes
+ao **lado** do campo. `datalist` não é estilizável, então não havia CSS que
+resolvesse. Trocado por um combobox próprio (`src/components/combobox.tsx`):
+painel ancorado **embaixo** do campo, teto de altura com rolagem, navegação por
+setas/Enter/Escape (padrão de combobox da WAI-ARIA). **Sem lib nova** → sem ADR.
+
+### Critérios de aceitação da emenda
+- [ ] **AC9** — O nicho começa em "Selecione o nicho" e a busca não envia sem
+      escolha.
+- [ ] **AC10** — Depois de buscar, nicho, UF, cidade, bairro e quantidade
+      continuam preenchidos como estavam.
+- [ ] **AC11** — O painel de cidade abre abaixo do campo, com altura máxima e
+      rolagem, e é operável por teclado.
+
 ## Critérios de aceitação
 - [ ] **AC1** — Selecionar UF habilita o select de município com os municípios
       daquela UF; sem UF, o de município fica desabilitado com dica.

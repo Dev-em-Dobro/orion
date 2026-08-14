@@ -3,8 +3,10 @@
 
 import Link from "next/link";
 import type { Tarefa } from "@/lib/tarefas/calcular";
+import { Dica } from "@/components/dica";
 import {
   EXPLICACAO,
+  O_QUE_FAZER,
   ROTULO_FAIXA,
   TITULO,
   type FaixaUrgencia,
@@ -31,13 +33,21 @@ function ItemTarefa({ tarefa }: { tarefa: Tarefa }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-zinc-100">
+        <p className="flex flex-wrap items-center gap-x-1 text-sm font-medium text-zinc-100">
           {TITULO[tarefa.tipo]}
+          {/* A linha de baixo diz por que a cobrança apareceu; o "i" diz o que
+              fazer e por que importa. Sem ele, "há Leads com potencial alto na
+              triagem esperando diagnóstico" só significa algo pra quem já sabe
+              o que é triagem. */}
+          <Dica
+            titulo={TITULO[tarefa.tipo]}
+            texto={O_QUE_FAZER[tarefa.tipo]}
+          />
           {tarefa.leadNome && (
             <>
               {" — "}
               <Link
-                href={`/leads/${tarefa.leadId}?aba=abordagem`}
+                href={`/leads/${tarefa.leadId}?aba=abordagem&de=tarefas`}
                 className="text-primary hover:underline"
               >
                 {tarefa.leadNome}
@@ -65,7 +75,7 @@ function ItemTarefa({ tarefa }: { tarefa: Tarefa }) {
           // sólida. O `⋯` ao lado continua fantasma, e é isso que separa
           // primária de secundária na linha.
           <Link
-            href={`/leads/${tarefa.leadId}?aba=abordagem`}
+            href={`/leads/${tarefa.leadId}?aba=abordagem&de=tarefas`}
             className="btn-card"
           >
             Resolver

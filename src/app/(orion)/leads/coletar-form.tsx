@@ -17,7 +17,7 @@ import {
 } from "@/lib/nichos/catalogo";
 import { QUANTIDADES } from "@/lib/leads/aprofundamento";
 import { UFS } from "@/lib/localidades/ufs";
-import { AprofundarButton } from "./aprofundar-button";
+import { ComboBox } from "@/components/combobox";
 
 const initial: ColetarState = { kind: "idle" };
 
@@ -137,12 +137,24 @@ export function ColetarForm({
   const [uf, setUf] = useState("");
   const [municipios, setMunicipios] = useState<string[]>([]);
   const [carregandoMunicipios, setCarregando] = useState(false);
-  const [nicho, setNicho] = useState(NICHOS[0]?.slug ?? NICHO_OUTRO);
+  // Nicho começa VAZIO: com o primeiro da lista pré-selecionado, quem não
+  // reparasse no campo buscava "dentista" achando que tinha escolhido — e o
+  // erro só aparecia depois de gastar a consulta no Google.
+  const [nicho, setNicho] = useState("");
   const [quantidade, setQuantidade] = useState<number>(QUANTIDADES[0]);
+  // Cidade e bairro controlados: `<form action>` do React limpa campo não
+  // controlado quando a ação termina, e era isso que "resetava os filtros" a
+  // cada busca.
+  const [municipio, setMunicipio] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [termoLivre, setTermoLivre] = useState("");
 
   // Municípios da UF escolhida, sob demanda: a base inteira são 5.571 nomes e
   // não pode ir pro bundle (F033 AC8).
   useEffect(() => {
+    // Trocar de UF limpa a cidade escolhida: "Porto Alegre" com o estado em SP
+    // é busca que não acha nada e não diz por quê.
+    setMunicipio("");
     if (!uf) {
       setMunicipios([]);
       return;
@@ -202,8 +214,10 @@ export function ColetarForm({
               name="nicho"
               value={nicho}
               onChange={(e) => setNicho(e.target.value)}
+              required
               className="input-base"
             >
+              <option value="">Selecione o nicho</option>
               {GRUPOS_NICHO.map((grupo) => (
                 <optgroup key={grupo.tier} label={grupo.titulo}>
                   {NICHOS.filter((n) => n.tier === grupo.tier).map((n) => (
@@ -235,11 +249,16 @@ export function ColetarForm({
             </select>
           </label>
 
-          <label className="flex flex-col gap-1">
+          {/* `<label>` não embrulha mais o campo: o combobox tem `role` e
+              `aria-controls` próprios, e um label envolvendo o painel faria o
+              clique numa opção contar como clique no label. */}
+          <div className="flex flex-col gap-1">
             <span className="text-xs text-zinc-400">Cidade</span>
-            <input
+            <ComboBox
               name="municipio"
-              list="municipios-uf"
+              opcoes={municipios}
+              valor={municipio}
+              onChange={setMunicipio}
               required
               disabled={!uf || carregandoMunicipios}
               placeholder={
@@ -249,18 +268,21 @@ export function ColetarForm({
                     ? "Carregando…"
                     : "Digite para filtrar"
               }
-              className="input-base"
             />
-            <datalist id="municipios-uf">
-              {municipios.map((m) => (
-                <option key={m} value={m} />
-              ))}
-            </datalist>
-          </label>
+          </div>
 
           <label className="flex flex-col gap-1">
             <span className="text-xs text-zinc-400">Bairro (opcional)</span>
-            <input name="bairro" placeholder="Batel" className="input-base" />
+            {/* Controlado: `<form action>` do React limpa campo NÃO controlado
+                depois que a ação termina, e era isso que apagava cidade e
+                bairro a cada busca. */}
+            <input
+              name="bairro"
+              value={bairro}
+              onChange={(e) => setBairro(e.target.value)}
+              placeholder="Batel"
+              className="input-base"
+            />
           </label>
         </div>
 
@@ -271,6 +293,8 @@ export function ColetarForm({
             </span>
             <input
               name="termoLivre"
+              value={termoLivre}
+              onChange={(e) => setTermoLivre(e.target.value)}
               required
               placeholder="lava-rápido"
               className="input-base"
@@ -361,14 +385,15 @@ export function ColetarForm({
               filtro de categoria.
             </p>
           )}
-          {/* F025 — o aprofundamento dispara sozinho: a busca entrega
-              trabalho pronto, não matéria-prima. */}
-          {state.criados > 0 && (
-            <AprofundarButton
-              key={`${state.criados}-${state.comPotencial}`}
-              automatico
-            />
-          )}
+          {/* O aprofundamento automático saiu daqui em 2026-08-14. Ele
+              despejava no meio do formulário de busca o progresso de uma
+              operação longa e, quando a cota do dia acabava, um aviso de
+              limite — bem embaixo do campo onde o aluno acabou de buscar e
+              está prestes a buscar de novo. A busca volta a terminar no
+              resultado da busca.
+
+              O aprofundamento continua onde ele é a ação principal: a Fila do
+              dia (F025) e a Central de Tarefas (F031). */}
         </div>
       )}
       </div>

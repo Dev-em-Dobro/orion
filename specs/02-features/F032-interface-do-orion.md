@@ -471,6 +471,43 @@ não era acidental — era estrutural:
       `<Suspense>` na própria página, ou esqueleto próprio — garantido por
       `tests/unit/feedback-de-navegacao.test.ts`.
 
+### Revisão 2026-08-14 (c) — menu, cards e o verde nos dois temas
+
+- **Leads antes do Funil no menu.** O trabalho começa na lista: é lá que se
+  busca, diagnostica e escolhe quem entra no funil. A ordem anterior punha
+  "onde cada Lead parou" antes de "quais Leads eu tenho".
+- **O card da Fila do dia voltou a ser verde no tema ESCURO.** `--verde-marca`
+  só existia dentro de `.tema-claro`, então no escuro o
+  `linear-gradient(var(--verde-marca), …)` resolvia para valor inválido e o
+  `background-image` inteiro caía — os cards ficavam transparentes. Agora ele
+  nasce no `:root` com o verde da marca, e o tema claro o redeclara só porque lá
+  `--color-primary` escurece pra passar contraste em texto.
+- **"Gerar roteiro de ligação" saiu do emerald cru.** Era `bg-emerald-500` +
+  `text-emerald-950` escritos à mão, fora do sistema de cor. Como o tema claro
+  derruba `emerald-400` pra #047857 (o tom que passa em texto), o **hover**
+  virava verde-escuro com texto quase preto: 2,7:1. Passa a usar `.btn-primary`,
+  que já carrega o par fundo/texto certo nos dois temas.
+- **A meta "Leads abordados este mês" saiu do Dashboard.** Era medida de esforço
+  ocupando duas colunas num painel que já responde "como estou" pelo funil e
+  pelo resultado. `lib/metas.ts` fica no código caso ela volte com lugar próprio.
+- **O aprofundamento automático saiu da `/leads`.** Ele despejava no meio do
+  formulário de busca o progresso de uma operação longa e, quando a cota do dia
+  acabava, um aviso de limite — logo abaixo do campo onde o aluno acabou de
+  buscar e está prestes a buscar de novo. Continua onde é a ação principal: Fila
+  do dia (F025) e Central de Tarefas (F031).
+- **`/ranking` passa a ser centralizada** (`mx-auto max-w-4xl`), como `/tarefas`,
+  `/agente` e `/skills`. Era largura cheia com o conteúdo em `max-w-2xl` sem
+  `mx-auto`: colava na esquerda e destoava das vizinhas. Largura cheia segue
+  sendo exceção de quem **usa** a tela — a lista de Leads e o Dashboard.
+
+#### Critérios de aceitação da revisão (c)
+- [ ] **AC29** — No menu, Leads vem antes de Funil.
+- [ ] **AC30** — Os cards da Fila do dia são verdes nos **dois** temas.
+- [ ] **AC31** — Nenhum botão de ação primária fica abaixo de 4.5:1 no estado
+      normal **nem no hover**, nos dois temas.
+- [ ] **AC32** — Todas as telas de conteúdo estreito são centralizadas; só
+      `/leads` e `/` usam largura cheia.
+
 ## Lista `/leads`
 - **Grid** responsivo: 1 coluna no mobile, 2 no tablet, 3–4 no desktop.
 - **Largura: a lista usa a tela.** O container era `max-w-6xl` (1152px) dentro

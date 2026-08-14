@@ -21,15 +21,19 @@ export function Abas({
   leadId,
   atual,
   query,
+  origem,
 }: {
   leadId: string;
   atual: AbaId;
   /** Querystring do filtro de origem, preservada ao trocar de aba. */
   query: string;
+  /** De onde o aluno veio — trocar de aba não pode perder a volta. */
+  origem?: string | null;
 }) {
   const href = (aba: AbaId) => {
     const params = new URLSearchParams(query);
     params.set("aba", aba);
+    if (origem) params.set("de", origem);
     return `/leads/${leadId}?${params.toString()}`;
   };
 

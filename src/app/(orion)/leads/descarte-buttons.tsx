@@ -3,7 +3,8 @@
 // F024 — descartar / restaurar Lead.
 // Spec: /specs/02-features/F024-estado-do-lead-reversivel.md
 
-import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
 import {
   descartarLead,
   restaurarLead,
@@ -15,10 +16,30 @@ const initial: DescarteState = { kind: "idle" };
 /**
  * Descartar em dois tempos: o primeiro clique abre o motivo (opcional), o
  * segundo confirma. Evita descarte acidental sem custar um modal.
+ *
+ * `voltarPara`: descartar do detalhe deixava o aluno **na tela do Lead que ele
+ * acabou de descartar** — a tela some do fluxo mas continua aberta, e ele tem
+ * que achar a volta sozinho. Com o destino em mãos, some junto.
  */
-export function DescartarButton({ leadId }: { leadId: string }) {
+export function DescartarButton({
+  leadId,
+  voltarPara,
+}: {
+  leadId: string;
+  voltarPara?: string;
+}) {
   const [state, action, pending] = useActionState(descartarLead, initial);
   const [aberto, setAberto] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.kind === "ok" && voltarPara) {
+      router.push(voltarPara);
+      // `refresh` porque a lista de destino é Server Component: sem ele o Lead
+      // descartado ainda apareceria na volta, vindo do cache do router.
+      router.refresh();
+    }
+  }, [state, voltarPara, router]);
 
   if (!aberto) {
     return (

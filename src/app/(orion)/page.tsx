@@ -15,7 +15,6 @@ import {
   ONDE_NAO_DESCARTADO,
 } from "@/lib/funil";
 import { hrefDoEstagio, TOKEN_EM_ABERTO } from "@/lib/leads/filtros";
-import { metaDoMes } from "@/lib/metas";
 import type { LeadStatus } from "@prisma/client";
 import { SkeletonPulse } from "@/components/page-skeleton";
 import { FilaDoDia } from "./fila-do-dia";
@@ -128,50 +127,6 @@ async function PainelFunil() {
 }
 
 /**
- * A meta é PISO, não teto — o oposto da cota do medidor. Por isso mora aqui, no
- * bloco de resultado, e é desenhada como conquista: barra que enche, "faltam
- * N", e um estado de meta batida. Ver `lib/metas.ts`.
- */
-async function MetaAbordagem() {
-  const { userId } = await requireTenant();
-  const meta = await metaDoMes(userId);
-
-  return (
-    <section className="card sm:col-span-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <p className="metric-label">Leads abordados este mês</p>
-        {meta.batida ? (
-          <span className="text-sm font-semibold text-primary">
-            meta batida 🎯
-          </span>
-        ) : (
-          <span className="text-sm text-muted">
-            faltam <strong className="font-mono text-zinc-200">{meta.restante}</strong>
-          </span>
-        )}
-      </div>
-
-      <p className="metric-value">
-        {meta.abordados}
-        <span className="text-2xl text-muted">/{meta.meta}</span>
-      </p>
-
-      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
-        <div
-          className="h-full bg-primary transition-all duration-500"
-          style={{ width: `${Math.round(meta.fracao * 100)}%` }}
-        />
-      </div>
-
-      <p className="metric-nota">
-        Conta Lead com abordagem marcada como enviada. Vários follow-ups pro
-        mesmo Lead contam uma vez.
-      </p>
-    </section>
-  );
-}
-
-/**
  * Card de resultado que abre a lista filtrada.
  *
  * F010 (emenda b) — número de funil sem porta é beco: o card dizia "5 em
@@ -239,11 +194,11 @@ async function Resultado() {
 }
 
 export default function DashboardPage() {
-  // A `/` não podia ter `loading.tsx` enquanto morava direto no `(orion)`: o
-  // boundary cobriria a `/leads`, onde o `notFound()` do detalhe chegaria
-  // depois do 200 (ver `page-skeleton.tsx`). Agora ela vive no grupo `(home)`,
-  // que só existe pra ela — e o `loading.tsx` cabe lá sem alcançar irmã
-  // nenhuma. A casca continua pintando na hora, com cada bloco em streaming.
+  // A `/` não tem `loading.tsx`: o boundary ficaria no segmento `(orion)` e
+  // cobriria a `/leads`, onde o `notFound()` do detalhe chegaria depois do 200
+  // (ver `page-skeleton.tsx`). O feedback aqui é a casca pintando na hora com
+  // cada bloco em streaming, mais o ponto pulsante no item do menu
+  // (`useLinkStatus`, em `sidebar.tsx`), que cobre o tempo até o primeiro byte.
   return (
     <>
       {/* `<Suspense>` no banner: ele é `async` e consulta o banco. Solto,
@@ -291,10 +246,12 @@ export default function DashboardPage() {
             regra de contagem, e em um terço da largura a nota vira três linhas e
             o "faltam N" desce pra baixo do rótulo. Abaixo de `lg` continua meta
             em cima, os dois embaixo. */}
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <Suspense fallback={<SkeletonPulse className="h-40 w-full sm:col-span-2" />}>
-            <MetaAbordagem />
-          </Suspense>
+        {/* A meta "Leads abordados este mês" saiu em 2026-08-14: era medida de
+            esforço num painel que já responde "como estou" pelo funil e pelo
+            resultado. Duas colunas de largura pra dizer quanto falta pra um
+            número que o aluno não pediu. Ver `lib/metas.ts`, que segue no
+            código caso a meta volte com um lugar próprio. */}
+        <div className="mt-6 grid gap-5 sm:grid-cols-2">
           <Suspense
             fallback={
               <>

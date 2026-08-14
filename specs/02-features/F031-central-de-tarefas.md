@@ -145,6 +145,23 @@ O painel saiu da `/leads`. A regra de janela da F006 (`filaDeFollowUp`,
 some é a **terceira superfície** de aviso. Cobrança de follow-up tem um lugar:
 `/tarefas`, com o badge da sidebar como aviso.
 
+## Emenda 2026-08-14 — a cobrança diz o que fazer, não só por que apareceu
+
+A linha de apoio de cada cobrança traz a **regra** (`EXPLICACAO`): "há Leads com
+potencial alto na triagem esperando diagnóstico". Isso responde *por que estou
+sendo cobrado* e deixa em branco *o que eu faço com isso* — e só significa algo
+para quem já sabe o que é Triagem e o que muda depois do Diagnóstico.
+
+Entra `O_QUE_FAZER` (`lib/tarefas/regras.ts`): um texto por tipo, atrás do ícone
+de informação ao lado do título, escrito assumindo que a pessoa **não** conhece
+o jargão. Ele diz a ação, e o custo de não fazer.
+
+A regra continua visível na linha: cobrança sem explicação parece arbitrária.
+
+### Critérios de aceitação da emenda
+- [ ] **AC9** — Todo tipo de cobrança tem um "i" que explica a ação e por que
+      ela importa, sem depender de jargão do produto.
+
 ## Critérios de aceitação
 - [ ] **AC1** — Lead `contatado` com Abordagem enviada há 13h e sem desfecho
       aparece como `CONFIRMAR_RESPOSTA`; com 11h, **não** aparece.

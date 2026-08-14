@@ -28,6 +28,7 @@ import {
   whereAntes,
   whereDepois,
 } from "@/lib/leads/vizinhos";
+import { asOrigem, destinoDeVolta, type Origem } from "@/lib/leads/origem";
 import { Ajuda } from "../ajuda";
 import { CopiarButton } from "../copiar-button";
 import { CorrigirStatusForm } from "../corrigir-status-form";
@@ -58,6 +59,8 @@ type SearchParams = Promise<{
   atendimento?: string;
   status?: string;
   page?: string;
+  /** De onde o aluno veio — decide pra onde a seta "voltar" leva. */
+  de?: string;
 }>;
 
 function Campo({
@@ -93,12 +96,15 @@ async function NavVizinhos({
   filtro,
   aba,
   query,
+  origem,
 }: {
   lead: LeadDoDetalhe;
   whereUser: { user_id: string };
   filtro: ReturnType<typeof parseFiltroLista>;
   aba: AbaId;
   query: string;
+  /** Viaja junto: pular pro vizinho não pode perder de onde se veio. */
+  origem: Origem | null;
 }) {
   const cursor = { score: lead.score, created_at: lead.created_at };
   const whereContexto = { ...whereUser, ...whereFiltroLista(filtro) };
@@ -123,6 +129,7 @@ async function NavVizinhos({
   const hrefVizinho = (vizinhoId: string) => {
     const p = new URLSearchParams(query);
     p.set("aba", aba);
+    if (origem) p.set("de", origem);
     return `/leads/${vizinhoId}?${p.toString()}`;
   };
 
@@ -155,11 +162,13 @@ async function CorpoAba({
   userId,
   aba,
   query,
+  origem,
 }: {
   lead: LeadDoDetalhe;
   userId: string;
   aba: AbaId;
   query: string;
+  origem: Origem | null;
 }) {
   const [diagnostico, dores, abordagens] = await Promise.all([
     prisma.diagnostico.findFirst({
@@ -179,6 +188,7 @@ async function CorpoAba({
   const hrefAba = (destino: AbaId) => {
     const p = new URLSearchParams(query);
     p.set("aba", destino);
+    if (origem) p.set("de", origem);
     return `/leads/${lead.id}?${p.toString()}`;
   };
 
@@ -584,15 +594,16 @@ export default async function LeadByIdPage({
     throw e;
   }
   const { lead, userId, whereUser } = ctx;
+  // A volta segue a origem: quem entrou pelo kanban volta pro kanban. Antes
+  // caía sempre em `/leads`, e quem estava operando o funil perdia o lugar.
+  const origem = asOrigem(sp.de);
+  const volta = destinoDeVolta(origem, query);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <p className="text-sm text-muted">
-        <Link
-          href={query ? `/leads?${query}` : "/leads"}
-          className="hover:text-primary"
-        >
-          ← Leads
+        <Link href={volta.href} className="hover:text-primary">
+          ← {volta.rotulo}
         </Link>
       </p>
 
@@ -642,12 +653,13 @@ export default async function LeadByIdPage({
             filtro={filtro}
             aba={aba}
             query={query}
+            origem={origem}
           />
         </Suspense>
       </div>
 
       <div className="mt-6">
-        <Abas leadId={lead.id} atual={aba} query={query} />
+        <Abas leadId={lead.id} atual={aba} query={query} origem={origem} />
       </div>
 
       <div className="mt-6">
@@ -663,7 +675,13 @@ export default async function LeadByIdPage({
             </div>
           }
         >
-          <CorpoAba lead={lead} userId={userId} aba={aba} query={query} />
+          <CorpoAba
+            lead={lead}
+            userId={userId}
+            aba={aba}
+            query={query}
+            origem={origem}
+          />
         </Suspense>
       </div>
 
@@ -681,7 +699,7 @@ export default async function LeadByIdPage({
         ) : (
           <>
             <CorrigirStatusForm leadId={lead.id} statusAtual={lead.status} />
-            <DescartarButton leadId={lead.id} />
+            <DescartarButton leadId={lead.id} voltarPara={volta.href} />
           </>
         )}
       </section>

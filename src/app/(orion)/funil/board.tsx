@@ -40,10 +40,14 @@ export type ColunaComTotal = {
 export function Board({
   cards,
   colunas,
+  destaque = [],
 }: {
   cards: CardFunil[];
   colunas: ColunaComTotal[];
+  /** Ids recém-mandados pra cá — sobem pro topo da coluna e ganham anel. */
+  destaque?: string[];
 }) {
+  const destacados = new Set(destaque);
   // Otimista: o card muda de coluna na hora e volta se a action falhar.
   const [mudancas, setMudancas] = useState<Record<string, string>>({});
   const [arrastando, setArrastando] = useState<string | null>(null);
@@ -85,7 +89,15 @@ export function Board({
       <div className="flex gap-3 overflow-x-auto pb-4">
         {COLUNAS_FUNIL.map((def) => {
           const meta = colunas.find((c) => c.id === def.id);
-          const daColuna = cards.filter((card) => colunaDe(card) === def.id);
+          // Destacado vai pro topo: quem acabou de mandar 10 Leads pra cá
+          // precisa ver os 10, não caçá-los no meio de uma coluna ordenada por
+          // score. `sort` estável mantém a ordem original dentro de cada grupo.
+          const daColuna = cards
+            .filter((card) => colunaDe(card) === def.id)
+            .sort(
+              (a, b) =>
+                Number(destacados.has(b.id)) - Number(destacados.has(a.id)),
+            );
 
           return (
             <section
@@ -136,13 +148,18 @@ export function Board({
                       setArrastando(card.id);
                     }}
                     onDragEnd={() => setArrastando(null)}
-                    className={`cursor-grab rounded-lg border border-border bg-card p-3 ${
-                      arrastando === card.id ? "opacity-50" : ""
-                    }`}
+                    className={`cursor-grab rounded-lg border bg-card p-3 ${
+                      destacados.has(card.id)
+                        ? "border-primary ring-1 ring-primary"
+                        : "border-border"
+                    } ${arrastando === card.id ? "opacity-50" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-2">
+                      {/* `?de=funil`: sem isso a seta "voltar" do detalhe
+                          largava o aluno em `/leads`, e quem estava operando o
+                          kanban perdia o lugar. */}
                       <Link
-                        href={`/leads/${card.id}`}
+                        href={`/leads/${card.id}?de=funil`}
                         className="text-sm font-medium text-zinc-100 hover:text-primary hover:underline"
                       >
                         {card.nome}

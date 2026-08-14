@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 /** Teto de cards exibidos por coluna (F034 AC7). */
 const POR_COLUNA = 50;
 
-async function Conteudo() {
+async function Conteudo({ destaque }: { destaque: string[] }) {
   const { whereUser } = await requireTenant();
 
   // Duas queries: os contadores (exatos, por groupBy) e os cards (limitados).
@@ -110,14 +110,26 @@ async function Conteudo() {
     };
   });
 
-  return <Board cards={cards} colunas={colunas} />;
+  return <Board cards={cards} colunas={colunas} destaque={destaque} />;
 }
 
-export default async function FunilPage() {
+export default async function FunilPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ destaque?: string }>;
+}) {
   // F035 — gate de plano no servidor, **antes** do JSX: dentro de um
   // <Suspense> o redirect chegaria depois do shell, e viraria 200.
   const { userId } = await requireTenant();
   await redirectSeRecursoBloqueado(userId, "kanban");
+
+  // Ids que acabaram de ser mandados pra cá (F034). Só ids, sem consulta: o
+  // board já tem os cards e só precisa saber quais subir e destacar.
+  const sp = await searchParams;
+  const destaque = (sp.destaque ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   return (
     <main className="mx-auto max-w-[100rem] px-6 py-10">
@@ -129,7 +141,7 @@ export default async function FunilPage() {
 
       <div className="mt-6">
         <Suspense fallback={<SkeletonPulse className="h-64 w-full" />}>
-          <Conteudo />
+          <Conteudo destaque={destaque} />
         </Suspense>
       </div>
     </main>

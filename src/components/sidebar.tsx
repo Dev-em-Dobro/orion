@@ -57,25 +57,10 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
           />
         ),
       },
-      // Funil em segundo: depois de "como estou" (Dashboard), a pergunta é
-      // "onde cada Lead parou" — e é no kanban que o aluno mexe o funil. A
-      // lista bruta vem depois disso.
-      {
-        href: "/funil",
-        label: "Funil",
-        recurso: "kanban",
-        icone: (
-          <Icone
-            d={
-              <>
-                <rect x="3" y="4" width="5" height="16" rx="1" />
-                <rect x="10" y="4" width="5" height="11" rx="1" />
-                <rect x="17" y="4" width="4" height="7" rx="1" />
-              </>
-            }
-          />
-        ),
-      },
+      // Leads antes do Funil (2026-08-14): o trabalho começa na lista — é lá
+      // que se busca, diagnostica e escolhe quem entra no funil. O kanban é o
+      // passo seguinte, não o primeiro. A ordem anterior punha o "onde cada
+      // Lead parou" antes do "quais Leads eu tenho".
       {
         href: "/leads",
         label: "Leads",
@@ -87,6 +72,22 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
                 <circle cx="9" cy="7" r="4" />
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </>
+            }
+          />
+        ),
+      },
+      {
+        href: "/funil",
+        label: "Funil",
+        recurso: "kanban",
+        icone: (
+          <Icone
+            d={
+              <>
+                <rect x="3" y="4" width="5" height="16" rx="1" />
+                <rect x="10" y="4" width="5" height="11" rx="1" />
+                <rect x="17" y="4" width="4" height="7" rx="1" />
               </>
             }
           />

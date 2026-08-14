@@ -12,6 +12,7 @@ import {
 import { exportarLeadsCsv } from "@/actions/leads/exportarCsv";
 import { IconeCadeado } from "@/components/icones";
 import { LeadCard, type LeadCardProps } from "./lead-card";
+import { MandarProFunilButton } from "./mandar-pro-funil-button";
 
 const initial: DescarteLoteState = { kind: "idle" };
 
@@ -99,6 +100,14 @@ export function LeadsGrid({
             <span className="text-xs text-muted">
               {idsSelecionados.length} selecionado(s)
             </span>
+            {/* Ação positiva primeiro: a seleção em massa só sabia descartar e
+                exportar, então escolher 10 Leads bons obrigava a abrir um por
+                um pra mandar cada um pro funil. */}
+            <MandarProFunilButton
+              leadIds={idsSelecionados.map((l) => l.id)}
+              rotulo={`Mandar pro Funil (${idsSelecionados.length})`}
+              variante="ghost"
+            />
             {podeExportar ? (
               <button
                 type="button"

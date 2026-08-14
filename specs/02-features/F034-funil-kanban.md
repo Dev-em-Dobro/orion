@@ -64,6 +64,47 @@ Os mesmos chips da lista (F032), compartilhados via URL: `Sem site`,
 `Score 60+`, `Com telefone`, categoria. Um funil filtrado por nicho é a visão
 mais útil pra quem trabalha uma cidade de cada vez.
 
+## Emenda 2026-08-14 — o Lead entra no funil pela lista
+
+**"Abordar no CRM" abria o detalhe do Lead.** O rótulo prometia o CRM — que
+neste produto é o funil — e entregava outra tela. Não havia caminho da lista
+para o kanban a não ser pelo menu, e escolher dez Leads bons obrigava a abrir um
+por um.
+
+**A regra nova.** O botão do card chama-se **"Mandar pro Funil"** e faz isso:
+
+1. Lead em `novo` é promovido a `enriquecido` — o único status fora do
+   `STATUS_DO_BOARD`, então sem isso o aluno cairia num kanban onde o Lead que
+   ele acabou de mandar não aparece. É correção manual de estado, reversível
+   como toda a [F024](F024-estado-do-lead-reversivel.md).
+2. Lead que já está no board **não muda de estágio** — mexer nele apagaria
+   trabalho.
+3. Redireciona para `/funil?destaque=<ids>`, e os destacados **sobem para o topo
+   da coluna** com anel na cor primária.
+
+`enriquecido` e não `priorizado`: "Pronto pra abordar" é o que o aprofundamento
+concede depois de confirmar o score ([F025](F025-fila-do-dia.md)). Dizer isso de
+um Lead que o aluno só empurrou pra fila seria promessa que o dado não sustenta.
+
+A mesma ação atende a **seleção em massa** da lista: marcando N Leads, aparece
+"Mandar pro Funil (N)". Antes a seleção só sabia descartar e exportar — as duas
+saídas negativas.
+
+**Voltar respeita a origem.** O detalhe do Lead sempre voltava para `/leads`,
+mesmo quando quem abriu foi o kanban: quem estava arrastando cards perdia o
+lugar. A origem viaja na URL (`?de=funil`), não em estado de cliente, pra
+sobreviver a recarregar a página e a abrir em aba nova. Ver `lib/leads/origem.ts`.
+
+### Critérios de aceitação da emenda
+- [ ] **AC12** — "Mandar pro Funil" leva ao kanban com o Lead visível no topo
+      da coluna dele, destacado.
+- [ ] **AC13** — Lead em `novo` entra no board; Lead que já está no board não
+      muda de estágio ao ser mandado de novo.
+- [ ] **AC14** — Selecionando N Leads na lista, "Mandar pro Funil (N)" leva
+      todos e destaca todos.
+- [ ] **AC15** — Abrindo um Lead pelo kanban, a seta voltar volta pro **kanban**;
+      abrindo pela lista, volta pra lista **com o filtro preservado**.
+
 ## Critérios de aceitação
 - [ ] **AC1** — `/funil` mostra 7 colunas com os Leads no estágio certo e o
       contador correto por coluna.
