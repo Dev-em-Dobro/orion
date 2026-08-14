@@ -35,8 +35,23 @@ const prisma = new PrismaClient();
 
 const ARQUIVO = process.argv[2];
 const EMAIL = process.argv[3] ?? "devemdobro@gmail.com";
-/** Contexto acrescentado à busca — sem isso "Kombi" acha uma van. */
-const CONTEXTO = process.env.IMPORTAR_CONTEXTO ?? "agência de marketing";
+
+/**
+ * Cidade acrescentada à busca. **Cidade, não segmento.**
+ *
+ * A primeira versão disto era `"agência de marketing"`, e o Ricardo achou na
+ * mão o negócio que provou que estava errado: "Intensa" é a **Intensa
+ * audiovisual**. Empurrar "agência de marketing" na consulta teria levado a
+ * busca pra longe do negócio certo — o segmento é o que a gente está tentando
+ * DESCOBRIR, então usá-lo como pista é circular. Cidade não tem esse problema:
+ * ela restringe sem opinar sobre o que o negócio faz.
+ *
+ * Porto Alegre é o padrão porque os dois negócios confirmados na mão estão lá
+ * (-30.03/-51.23 e -30.05/-51.22) e o repositório já tem esteira de POA
+ * (`prospect-poa`, `outreach-poa`, `persistir-poa`). Se a lista for de outra
+ * praça, passe `IMPORTAR_CIDADE`.
+ */
+const CIDADE = process.env.IMPORTAR_CIDADE ?? "Porto Alegre RS";
 
 if (!ARQUIVO) {
   console.error(
@@ -45,27 +60,58 @@ if (!ARQUIVO) {
   process.exit(1);
 }
 
-/** Tira numeração de lista, marcador e espaço. Linha vazia ou título → null. */
-function nomeDaLinha(linha: string): string | null {
-  const limpo = linha.trim().replace(/^\d+\s*[.)-]\s*/, "").replace(/^[-•*]\s*/, "");
+type Alvo = {
+  /** O nome como está na lista — é ele que vai pro relatório de conferência. */
+  nome: string;
+  /** O que realmente vai pro Places. */
+  consulta: string;
+  /** `true` quando a linha traz uma consulta escrita à mão. */
+  fixada: boolean;
+};
+
+/**
+ * Uma linha vira um alvo. Aceita `Nome → consulta` (ou `|`) pra quando o nome
+ * sozinho não acha o negócio certo e alguém já conferiu no mapa qual é.
+ *
+ * A consulta fixada NÃO recebe a cidade automática: quem escreveu a linha já
+ * disse exatamente o que quer buscar, e concatenar cidade em cima disso pode
+ * duplicar ("... Porto Alegre Porto Alegre RS") e piorar o resultado.
+ */
+function alvoDaLinha(linha: string): Alvo | null {
+  const cru = linha.trim();
+  if (cru.startsWith("#")) return null;
+
+  const limpo = cru.replace(/^\d+\s*[.)-]\s*/, "").replace(/^[-•*]\s*/, "");
   if (limpo.length < 3) return null;
-  // Linha de título não tem numeração e costuma começar com um número solto
-  // ("50 Agências para Prospecção") — o `replace` acima não a toca.
-  if (/^\d+\s+\w+.*prospec/i.test(limpo)) return null;
-  return limpo;
+
+  const partes = limpo.split(/\s*(?:→|\|)\s*/);
+  const nome = partes[0]?.trim() ?? "";
+  const fixada = partes.length > 1 && Boolean(partes[1]?.trim());
+  if (nome.length < 3) return null;
+
+  return {
+    nome,
+    consulta: fixada ? partes[1]!.trim() : `${nome} ${CIDADE}`.trim(),
+    fixada,
+  };
 }
 
 /**
  * O Places devolve o candidato mais relevante primeiro. Aceitamos o primeiro,
- * mas registramos o nome que veio pra você conferir: buscar "Intensa" ou
- * "Lumina" sem cidade pode cair em outro negócio, e um Lead errado na base é
- * pior que um Lead faltando.
+ * mas registramos o nome que veio pra conferência: buscar "Intensa" sem cidade
+ * cai em outro negócio, e um Lead errado na base é pior que um Lead faltando —
+ * você liga, fala do site errado e queima o contato.
  */
 function melhorCandidato(res: PlacesResult[]): PlacesResult | null {
   return res[0] ?? null;
 }
 
-/** Igual ao `mesmoNome` que a triagem usaria: comparação frouxa pra conferir. */
+/**
+ * Comparação frouxa: o Places quase nunca devolve o nome exatamente como está
+ * na lista ("Agência Cow" → "Cow"). Ignora acento, pontuação e as palavras
+ * genéricas do ramo, e aceita se um contém o outro. Serve pra decidir se vale
+ * pedir conferência humana, não pra decidir o que grava.
+ */
 function pareceOMesmo(procurado: string, achado: string): boolean {
   const norm = (s: string) =>
     s
@@ -95,38 +141,43 @@ async function main() {
     process.exit(1);
   }
 
-  const nomes = readFileSync(ARQUIVO, "utf8")
+  const alvos = readFileSync(ARQUIVO, "utf8")
     .split(/\r?\n/)
-    .map(nomeDaLinha)
-    .filter((n): n is string => n !== null);
+    .map(alvoDaLinha)
+    .filter((a): a is Alvo => a !== null);
 
-  console.log(`${nomes.length} nomes · usuário ${EMAIL}\n`);
+  const fixadas = alvos.filter((a) => a.fixada).length;
+  console.log(
+    `${alvos.length} negócios (${fixadas} com busca fixada à mão) · cidade "${CIDADE}" · usuário ${EMAIL}\n`,
+  );
 
-  const achados: { nome: string; place: PlacesResult; confere: boolean }[] = [];
+  const achados: { alvo: Alvo; place: PlacesResult; confere: boolean }[] = [];
   const semResultado: string[] = [];
 
-  for (const [i, nome] of nomes.entries()) {
-    const query = `${nome} ${CONTEXTO}`;
+  for (const [i, alvo] of alvos.entries()) {
     try {
-      const res = await textSearch(query, apiKey, { paginas: 1 });
+      const res = await textSearch(alvo.consulta, apiKey, { paginas: 1 });
       const place = melhorCandidato(res);
       if (!place) {
-        semResultado.push(nome);
-        console.log(`  ${String(i + 1).padStart(2)}. ${nome.padEnd(38)} — nada`);
+        semResultado.push(alvo.nome);
+        console.log(`  ${String(i + 1).padStart(2)}. ${alvo.nome.padEnd(34)} — nada`);
         continue;
       }
-      const confere = pareceOMesmo(nome, place.nome);
-      achados.push({ nome, place, confere });
+      // Busca fixada já foi conferida por gente no mapa: não faz sentido o
+      // script "duvidar" dela por o nome não bater com o da lista, que é
+      // justamente o nome ruim que motivou a correção.
+      const confere = alvo.fixada || pareceOMesmo(alvo.nome, place.nome);
+      achados.push({ alvo, place, confere });
       console.log(
-        `  ${String(i + 1).padStart(2)}. ${nome.padEnd(38)} → ${place.nome}` +
-          `${confere ? "" : "  ⚠ nome diferente"}` +
+        `  ${String(i + 1).padStart(2)}. ${alvo.nome.padEnd(34)} → ${place.nome}` +
+          `${confere ? "" : "  ⚠ CONFIRA"}` +
           `${place.telefone ? "" : "  [sem telefone]"}` +
           `${place.website ? "" : "  [sem site]"}`,
       );
     } catch (e) {
-      semResultado.push(nome);
+      semResultado.push(alvo.nome);
       console.log(
-        `  ${String(i + 1).padStart(2)}. ${nome.padEnd(38)} — erro: ${
+        `  ${String(i + 1).padStart(2)}. ${alvo.nome.padEnd(34)} — erro: ${
           e instanceof Error ? e.message.slice(0, 60) : e
         }`,
       );
@@ -192,14 +243,27 @@ async function main() {
   const duvidosos = achados.filter((a) => !a.confere);
 
   console.log(`\n${criados} criados · ${atualizados} atualizados`);
-  console.log(`${semTelefone} sem telefone · ${semSite} sem site`);
+  console.log(
+    `${achados.length - semTelefone} com telefone · ${achados.length - semSite} com site`,
+  );
+  if (semTelefone > 0 || semSite > 0) {
+    console.log(`  (${semTelefone} sem telefone, ${semSite} sem site)`);
+  }
   if (semResultado.length > 0) {
     console.log(`\nnão achou no Places (${semResultado.length}):`);
     for (const n of semResultado) console.log(`  - ${n}`);
   }
   if (duvidosos.length > 0) {
-    console.log(`\nCONFIRA — o Places devolveu nome diferente (${duvidosos.length}):`);
-    for (const d of duvidosos) console.log(`  - "${d.nome}" → "${d.place.nome}"`);
+    console.log(
+      `\nCONFIRA — o Places devolveu nome diferente (${duvidosos.length}).`,
+    );
+    console.log(
+      "Pra corrigir, ache no Google Maps e escreva a busca boa na lista:",
+    );
+    console.log('  <n>. Nome → Nome completo do negócio Cidade\n');
+    for (const d of duvidosos) {
+      console.log(`  - "${d.alvo.nome}" → "${d.place.nome}"  ${d.place.endereco}`);
+    }
   }
 }
 

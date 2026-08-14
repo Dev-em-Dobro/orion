@@ -1,53 +1,62 @@
-﻿
-50 Agências para Prospecção
+# Lista de prospecção — agências.
+#
+# Formato: um negócio por linha. Numeração é ignorada.
+#
+# Quando o nome sozinho não acha o negócio certo no Google, escreva a busca
+# boa depois de `→` (ou `|`):
+#
+#     43. Intensa → Intensa audiovisual Porto Alegre
+#
+# Linha começando com `#` é comentário.
+#
+# Removidas por serem ambíguas demais e não valerem a conferência (2026-08-14):
+#   - Agência Luma Digital  (vários negócios "Luma" sem cidade)
+#   - Kombi                 (a busca cai na van)
+
 1. Case Marketing de Performance
 2. Agência Cow
-3. Agência Luma Digital
-4. HOC – House of Creativity
-5. Agência Conecta
-6. Agência Noz
-7. Lumina
-8. Global AD
-9. Agência S3
-10. Wonder 55
-11. Agência Pense
-12. Agência Euro
-13. Macaw
-14. e21
-15. Agência IBR
-16. Kombi
-17. Digital Hunter
-18. Inventa
-19. DIVIA
-20. DigitalCycle
-21. Agência Escala
-22. Agência Bistrô
-23. Agência JKR
-24. Akau
-25. Moove Comunicação
-26. SPR Comunicação
-27. Competence Comunicação
-28. HappyHouse
-29. Share Marketing Digital
-30. W3haus
-31. V4 Company
-32. Be Nice To People
-33. Abajur Propaganda
-34. Agência Batuca
-35. Agência Centro
-36. 3.ag Comunicação
-37. Clube de Mídia
-38. Enfato Multicomunicação
-39. Ftcom
-40. Gampi Casa Criativa
-41. Gio – Agência de Cultura de Marca
-42. Gross Marketing
-43. Intensa
-44. O.R.B.360
-45. Padrinho Conteúdo e Assessoria
-46. Polvo Content
-47. Pro Target Comunicação e Marketing
-48. Sobe Comunicação & Negócios
-49. Studio Elefante
-50. WT.AG Agência
-
+3. HOC – House of Creativity
+4. Agência Conecta
+5. Agência Noz
+6. Global AD
+7. Agência S3
+8. Wonder 55
+9. Agência Pense
+10. Agência Euro
+11. Macaw
+12. e21
+13. Agência IBR
+14. Digital Hunter
+15. Inventa → INVENTA design Criação de Sites e Criação de Marcas Porto Alegre
+16. DIVIA
+17. DigitalCycle
+18. Agência Escala
+19. Agência Bistrô
+20. Agência JKR
+21. Akau
+22. Moove Comunicação
+23. SPR Comunicação
+24. Competence Comunicação
+25. HappyHouse
+26. Share Marketing Digital
+27. W3haus
+28. V4 Company
+29. Be Nice To People
+30. Abajur Propaganda
+31. Agência Batuca
+32. Agência Centro
+33. 3.ag Comunicação
+34. Clube de Mídia
+35. Enfato Multicomunicação
+36. Ftcom
+37. Gampi Casa Criativa
+38. Gio – Agência de Cultura de Marca
+39. Gross Marketing
+40. Intensa → Intensa audiovisual Porto Alegre
+41. O.R.B.360
+42. Padrinho Conteúdo e Assessoria
+43. Polvo Content
+44. Pro Target Comunicação e Marketing
+45. Sobe Comunicação & Negócios
+46. Studio Elefante
+47. WT.AG Agência
