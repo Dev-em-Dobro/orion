@@ -47,7 +47,10 @@ async function main() {
     process.env.ORION_GOOGLE_API_KEY ?? process.env.GOOGLE_API_KEY
   )?.trim();
   if (!apiKey) {
-    console.error("Chave Google ausente (GOOGLE_API_KEY no .env).");
+    console.error(
+      "Chave Google ausente. Ponha ORION_GOOGLE_API_KEY no .env (o script " +
+        "também aceita GOOGLE_API_KEY).",
+    );
     process.exit(1);
   }
 
