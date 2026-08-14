@@ -127,10 +127,15 @@ function pareceOMesmo(procurado: string, achado: string): boolean {
 }
 
 async function main() {
-  const apiKey = process.env.ORION_GOOGLE_API_KEY?.trim();
+  // `ORION_GOOGLE_API_KEY` é o nome que o app usa pra chave da plataforma
+  // (F018); `GOOGLE_API_KEY` é o nome óbvio pra quem está só rodando o script.
+  // Aceitar os dois evita um erro de "chave ausente" com a chave ali no .env.
+  const apiKey = (
+    process.env.ORION_GOOGLE_API_KEY ?? process.env.GOOGLE_API_KEY
+  )?.trim();
   if (!apiKey) {
     console.error(
-      "ORION_GOOGLE_API_KEY ausente. Ponha no .env ou passe na linha de comando.",
+      "Chave Google ausente. Ponha GOOGLE_API_KEY (ou ORION_GOOGLE_API_KEY) no .env.",
     );
     process.exit(1);
   }
