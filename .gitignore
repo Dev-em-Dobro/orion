@@ -16,6 +16,10 @@
 
 # next.js
 /.next/
+# Builds isolados dos scripts de medição (perf-rotas, shot-tema). Existem pra
+# não reescreverem o `.next` que o `next dev` está usando.
+/.next-perf/
+/.next-shots/
 /out/
 next-env.d.ts
 

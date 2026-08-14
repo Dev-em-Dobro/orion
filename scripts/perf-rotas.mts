@@ -27,13 +27,15 @@ import "dotenv/config";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHmac, randomBytes } from "node:crypto";
 import net from "node:net";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 import { chromium } from "playwright";
 import { criarProxy } from "./perf-proxy-latencia.mts";
 
 const PORTA = Number(process.env.PERF_PORTA ?? 3123);
 const PORTA_PROXY = Number(process.env.PERF_PORTA_PROXY ?? 5433);
+/** Build isolado: medir não pode derrubar o `next dev` de quem está usando. */
+const DIST_DIR = process.env.PERF_DIST_DIR ?? ".next-perf";
 /** Ida-e-volta típica de um Postgres hospedado (Neon) a partir da app. */
 const LATENCIA_BANCO_MS = Number(process.env.PERF_LATENCIA_BANCO ?? 35);
 const BASE = `http://127.0.0.1:${PORTA}`;
@@ -156,6 +158,49 @@ async function derrubar(proc: ChildProcess, porta: number) {
   }
 }
 
+/**
+ * Build de produção num diretório SÓ desta medição.
+ *
+ * Sem isto, `next build` reescrevia o `.next` que o `next dev` do dia a dia
+ * está usando, e o dev server passava a responder erro de módulo em toda rota
+ * (`Cannot find module './8665.js'`). O erro não aponta pra causa — dá a
+ * impressão de bug no código. `NEXT_DIST_DIR` mora no `next.config.ts`.
+ */
+async function construir(): Promise<void> {
+  console.log(`build de produção em ${DIST_DIR}/ (não toca no .next do dev)…`);
+
+  // O `next build` REESCREVE o `tsconfig.json`: ele injeta
+  // `<distDir>/types/**/*.ts` no `include` e reformata o arquivo inteiro. Com
+  // um distDir de medição isso sujava o repositório a cada rodada, com uma
+  // linha que só serve pra uma pasta descartável. Guardamos e devolvemos.
+  const tsconfig = "tsconfig.json";
+  const original = readFileSync(tsconfig, "utf8");
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawn("npx next build", {
+        env: { ...process.env, NEXT_DIST_DIR: DIST_DIR },
+        stdio: "pipe",
+        shell: true,
+      });
+      let saida = "";
+      proc.stdout?.on("data", (b: Buffer) => (saida += b.toString()));
+      proc.stderr?.on("data", (b: Buffer) => (saida += b.toString()));
+      proc.on("exit", (code) =>
+        code === 0
+          ? resolve()
+          : reject(
+              new Error(`next build falhou (${code}):\n${saida.slice(-1500)}`),
+            ),
+      );
+    });
+  } finally {
+    if (readFileSync(tsconfig, "utf8") !== original) {
+      writeFileSync(tsconfig, original);
+    }
+  }
+}
+
 async function subirServidor(databaseUrl?: string): Promise<ChildProcess> {
   if (await portaOcupada(PORTA)) {
     throw new Error(
@@ -168,6 +213,7 @@ async function subirServidor(databaseUrl?: string): Promise<ChildProcess> {
     env: {
       ...process.env,
       NODE_ENV: "production",
+      NEXT_DIST_DIR: DIST_DIR,
       ...(databaseUrl ? { DATABASE_URL: databaseUrl } : {}),
     },
     stdio: "pipe",
@@ -351,6 +397,10 @@ async function medirNavegador(
 
 async function main() {
   console.log(`Medindo ${BASE} · ${AMOSTRAS} amostras HTTP por rota · teto ${TETO_MS} ms\n`);
+
+  // `--sem-build` reaproveita o build anterior desta pasta — útil pra repetir a
+  // medição sem esperar 100s, e seguro porque a pasta é só desta medição.
+  if (!process.argv.includes("--sem-build")) await construir();
 
   const { cookie, userId } = await criarSessao();
   const lead = await prisma.lead.findFirst({

@@ -7,6 +7,22 @@ const nextConfig: NextConfig = {
   // Playwright (F008/ADR-006) não pode ser bundlado pelo Next — carrega o
   // Chromium em runtime.
   serverExternalPackages: ["playwright"],
+
+  /**
+   * Diretório de build. Padrão `.next`; os scripts de medição (`perf-rotas`,
+   * `shot-tema`) passam `NEXT_DIST_DIR=.next-perf`.
+   *
+   * Por quê: eles rodam `next build` + `next start` de produção, e o dev roda
+   * `next dev` — os dois escrevendo no MESMO `.next`. O build de produção
+   * apagava e reescrevia os artefatos por baixo do dev server, que passava a
+   * responder `Cannot find module './8665.js'` e `Cannot read properties of
+   * undefined (reading 'call')` em toda rota. Aconteceu duas vezes em
+   * 2026-08-14, e nas duas o diagnóstico inicial foi procurar bug no código —
+   * o erro não aponta pra causa.
+   *
+   * Com diretórios separados, medir não encosta no que você está usando.
+   */
+  distDir: process.env.NEXT_DIST_DIR || ".next",
 };
 
 const temAuthToken = Boolean(process.env.SENTRY_AUTH_TOKEN?.trim());
