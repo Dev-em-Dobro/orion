@@ -24,6 +24,8 @@ import {
   type Recurso,
 } from "@/lib/planos";
 import { requireTenant } from "@/lib/db/scoped";
+import { APROFUNDAR_EXPLICACAO } from "@/lib/leads/aprofundamento";
+import { Dica } from "@/components/dica";
 
 export const metadata: Metadata = { title: "Planos" };
 
@@ -110,8 +112,18 @@ export default async function PlanosPage({
                     </strong>
                   </li>
                 ))}
+                {/* "Aprofunda" é jargão nosso e esta é a tela onde o aluno
+                    decide pagar — comparar planos por uma linha que ele não
+                    entende é comparar no escuro. A explicação já existia em
+                    `APROFUNDAR_EXPLICACAO`, só não chegava aqui. */}
                 <li className="flex justify-between gap-3 border-t border-border pt-1.5">
-                  <span className="text-muted">Aprofunda por busca</span>
+                  <span className="flex items-center gap-1 text-muted">
+                    Aprofunda por busca
+                    <Dica
+                      titulo="O que é aprofundar?"
+                      texto={APROFUNDAR_EXPLICACAO}
+                    />
+                  </span>
                   <strong className="font-mono">{def.aprofundarPorBusca}</strong>
                 </li>
                 {/* Tudo liberado em todo plano — dizer isso explicitamente vale
