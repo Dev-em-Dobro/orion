@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
@@ -13,7 +12,6 @@ import {
   whereFiltroLista,
   type FiltroLista,
 } from "@/lib/leads/filtros";
-import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
 import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
 import { GridLeadsSkeleton, SkeletonPulse } from "@/components/page-skeleton";
@@ -228,9 +226,6 @@ export default async function LeadsPage({
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
-  // Tema lido no servidor: o cookie chega junto com o request, então o HTML já
-  // sai na cor certa — sem o flash de trocar de tema depois da hidratação.
-  const tema = asTema((await cookies()).get(TEMA_COOKIE)?.value);
   const filtro = parseFiltroLista(params);
   const pageRaw = Number.parseInt(params.page ?? "1", 10);
   const pageRequested =
@@ -244,12 +239,9 @@ export default async function LeadsPage({
       {/* F032 — sem `max-w`: a lista usa a tela. O texto é que ganha teto
           próprio (`max-w-prose`), porque linha longa demais não se lê.
 
-          O tema vem de `/configuracao` (cookie). No escuro a classe some e
-          valem os tokens do `:root`. A altura mínima desconta a topbar (h-14)
-          pra o fundo claro chegar no rodapé mesmo com pouca lista. */}
-      <main
-        className={`${classeDoTema(tema)} @container min-h-[calc(100vh-3.5rem)] px-6 py-8 lg:px-8`}
-      >
+          O tema não mora mais aqui: quem veste a coluna de conteúdo inteira é
+          o `AppShell`, pra o `loading.tsx` das rotas nascer na mesma cor. */}
+      <main className="@container px-6 py-8 lg:px-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
           {/* Sem `max-w-prose`: o teto de 65ch quebrava a frase em duas linhas.

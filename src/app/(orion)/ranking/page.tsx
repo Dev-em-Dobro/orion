@@ -4,12 +4,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { cookies } from "next/headers";
 import { requireTenant } from "@/lib/db/scoped";
 import { requireUser } from "@/lib/auth/require-user";
 import { rotuloCompetencia } from "@/lib/planos";
 import { competenciaDe, obterPerfilPublico, rankingDoMes } from "@/lib/ranking";
-import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
 import { EmptyState } from "@/components/empty-state";
 import { SkeletonPulse } from "@/components/page-skeleton";
 
@@ -115,16 +113,13 @@ export default async function RankingPage({
 }: {
   searchParams: Promise<{ mes?: string }>;
 }) {
-  const [sp, jar] = await Promise.all([searchParams, cookies()]);
-  const tema = asTema(jar.get(TEMA_COOKIE)?.value);
+  const sp = await searchParams;
   const competencia = /^\d{4}-\d{2}$/.test(sp.mes ?? "")
     ? (sp.mes as string)
     : competenciaDe(new Date());
 
   return (
-    <main
-      className={`${classeDoTema(tema)} min-h-[calc(100vh-3.5rem)] px-6 py-8 lg:px-8`}
-    >
+    <main className="px-6 py-8 lg:px-8">
       <h1 className="text-2xl font-bold tracking-tight">
         Ranking de Builders
       </h1>

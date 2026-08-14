@@ -166,7 +166,13 @@
 }
 
 /* ---------------------------------------------------------------------------
-   TEMA CLARO — piloto, escopado à `/leads` (2026-08-13).
+   TEMA CLARO — app inteiro (2026-08-13; nasceu como piloto da `/leads`).
+
+   Quem veste é o `AppShellClient`, numa classe só na coluna de conteúdo, e não
+   cada página no próprio `<main>`. A diferença não é organizacional: o
+   `loading.tsx` de cada rota é **irmão** do `page.tsx`, então com a classe na
+   página o esqueleto pintava escuro e a página chegava clara — um flash por
+   clique no menu. A sidebar fica de fora de propósito.
 
    Referência: sidebar escura + fundo claro + cards brancos, com **um** card
    preenchido na cor da marca.
@@ -212,14 +218,28 @@
 
   /* Badges: o padrão é `bg-X-500/15` (tinta de fundo) + `text-X-300` (texto).
      A tinta continua servindo sobre branco; o texto claro, não — cada -300/-400
-     desce para o tom -700, que passa 4.5:1 sobre a tinta. */
+     desce para o tom -700, que passa 4.5:1 sobre a tinta.
+
+     Os degraus -50/-100/-200 aparecem nos **avisos** (banner de chaves,
+     onboarding BYOK, aviso do ScreenshotOne): ali o padrão é tinta a 10% + o
+     texto quase branco da própria cor. Sobre branco esse texto simplesmente
+     não existia — `text-amber-100` (#fef3c7) sobre tinta âmbar a 10% dá
+     ~1,1:1. Como são os tons mais claros da escala, viram os mais **escuros**
+     da inversão (-800/-900), e não só -700 como os de badge. */
+  --color-red-200: #991b1b;
   --color-red-300: #b91c1c;
   --color-red-400: #b91c1c;
+  --color-amber-50: #78350f;
+  --color-amber-100: #92400e;
   --color-amber-200: #92400e;
   --color-amber-300: #b45309;
   --color-amber-400: #b45309;
+  --color-emerald-200: #065f46;
   --color-emerald-300: #047857;
   --color-emerald-400: #047857;
+  --color-sky-50: #0c4a6e;
+  --color-sky-100: #075985;
+  --color-sky-200: #0369a1;
   --color-sky-300: #0369a1;
   --color-violet-300: #6d28d9;
   --color-cyan-300: #0e7490;
@@ -235,19 +255,73 @@
     0 2px 4px -2px rgb(16 24 40 / 0.06),
     0 8px 16px -4px rgb(16 24 40 / 0.1);
 
+  /* O verde desce dois degraus (green-500 → green-700) quando o tema é claro.
+
+     `--color-primary` é o mesmo token do preenchimento (`bg-primary`) e do
+     TEXTO (`text-primary`), e o #22c55e é verde de fundo escuro: sobre branco
+     dá **2,04:1**. Isso não é detalhe de um lugar — é todo link de ação do
+     app ("Abrir →", "Ver planos →", "A fila de hoje", o preço de aluno), o
+     `text-primary` dentro de `bg-primary/20` e o próprio "Assinar". Enquanto o
+     tema claro era só a `/leads` dava pra não ver; valendo no app inteiro,
+     não dá.
+
+     #15803d dá 5,01:1 sobre branco, e branco sobre ele dá os mesmos 5,01:1 —
+     o mesmo verde serve de texto e de botão sem virar dois tokens. */
+  --color-primary: #15803d;
+  --color-primary-hover: #166534;
+
   /* Padrão do tema claro: **texto branco sobre fundo verde**, em toda a UI —
      botão Buscar, chip ativo, pílula de quantidade, checkbox marcado. Troca o
      `#03180a` do tema escuro. */
   --color-primary-foreground: #ffffff;
 
-  /* Guarda o verde da marca **antes** de o card preenchido reescrever
-     `--color-primary` pro botão branco. `var()` dentro de custom property
-     resolve no elemento que declara, então aqui isto vira `#22c55e` de verdade
-     e desce herdado — o card não repete hex nenhum. */
-  --verde-marca: var(--color-primary);
+  /* Verde de PREENCHIMENTO grande — o card da Fila do dia. Aqui o hex volta a
+     ser o da marca, e por isso está escrito de novo em vez de sair de
+     `var(--color-primary)` como antes: com o token de ação escurecido pra
+     passar em texto, o card ficaria verde-escuro e perderia o único ponto de
+     cor cheia da tela. Área grande com texto branco por cima não tem o
+     problema de contraste do texto verde — 3,4:1 num bloco de 320px é
+     legível, num link de 15px não é. */
+  --verde-marca: #22c55e;
 
   background-color: var(--color-background);
   color: var(--color-foreground);
+}
+
+/* Botão secundário sobre fundo claro: preenchimento branco + contorno forte.
+
+   No tema escuro `btn-ghost` é transparente com `border-border` (#2f2f38) — o
+   contorno aparece porque o fundo é quase preto. Sobre #f4f5f7 o mesmo token
+   vira #e4e4e7 e dá 1,05:1: o botão sumia, e sobrava um texto solto que não
+   parecia clicável. Quem desenha o botão aqui é a superfície branca contra o
+   fundo cinza, com o contorno reforçando.
+
+   `var(--color-card)` e não `#fff` literal: dentro do card verde a variável é
+   `transparent` e o par contorno/texto branco continua valendo — o botão não
+   abre um retângulo branco no meio do verde. */
+.tema-claro .btn-ghost {
+  border-color: var(--color-border-strong);
+  background-color: var(--color-card);
+}
+
+/* O hover precisa da sua própria regra: as utilitárias do Tailwind moram numa
+   `@layer`, e regra sem layer ganha de regra com layer independente de
+   especificidade — sem isto o `hover:bg-card-raised` do `.btn-ghost` perdia
+   pro `background-color` acima e o botão parava de reagir. */
+.tema-claro .btn-ghost:hover {
+  border-color: var(--color-border-strong);
+  background-color: var(--color-card-raised);
+}
+
+/* Coluna do kanban: bandeja **rebaixada**, com os cards brancos por cima.
+
+   `bg-zinc-900/30` funciona no escuro (clareia o fundo quase preto), mas na
+   inversão zinc-900 vira #f4f4f5 — a mesma família do fundo da página, o que
+   apagava a coluna inteira. Profundidade por opacidade de preto, o mesmo
+   recurso do gradiente do card verde e sem hex novo. */
+.tema-claro .coluna-funil {
+  background-color: rgb(16 24 40 / 0.045);
+  border-color: rgb(16 24 40 / 0.09);
 }
 
 /* Card preenchido no verde da marca. Na `/leads` **nenhum** card usa isto: lá
@@ -257,6 +331,10 @@
    o destaque de um item. */
 .card-destaque {
   --color-card: transparent;
+  /* Superfície "um degrau acima" dentro do card verde: branco a 16%, não o
+     #f4f4f5 do tema. É o que o `btn-ghost` usa no hover — com o cinza claro,
+     passar o mouse abria um retângulo cinza no meio do verde. */
+  --color-card-raised: rgb(255 255 255 / 0.16);
   --color-foreground: #ffffff;
   /* Hierarquia por tamanho e peso, não por opacidade: branco a 70% sobre o
      verde cai pra ~3:1 e o texto secundário reprovaria. */

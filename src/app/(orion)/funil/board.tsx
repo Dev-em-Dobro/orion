@@ -105,7 +105,7 @@ export function Board({
               className={`w-64 shrink-0 rounded-xl border p-3 transition-colors ${
                 sobre === def.id
                   ? "border-primary bg-primary/5"
-                  : "border-border bg-zinc-900/30"
+                  : "coluna-funil border-border bg-zinc-900/30"
               }`}
             >
               <header className="flex items-center justify-between gap-2">

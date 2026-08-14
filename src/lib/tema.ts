@@ -1,4 +1,18 @@
-// Tema da interface — piloto de 2026-08-13, aplicado só na `/leads`.
+// Tema da interface — nasceu como piloto da `/leads` em 2026-08-13 e virou
+// preferência do app inteiro no mesmo dia.
+//
+// Quem aplica é o **shell** (`AppShell` → `AppShellClient`), numa classe só na
+// coluna de conteúdo. Enquanto cada página carregava a classe no próprio
+// `<main>`, três coisas ficavam de fora e não tinham como entrar:
+//
+// - as telas que ninguém tinha convertido ainda (funil, agente, planos…);
+// - o `loading.tsx` de cada rota, que é irmão da página e não descendente dela
+//   — o esqueleto pintava escuro e a página chegava clara, um flash a cada
+//   clique no menu;
+// - o `BannerChaves`, que mora **acima** do `<main>`.
+//
+// A sidebar continua escura de propósito: a referência do tema claro é sidebar
+// escura + fundo claro + cards brancos.
 //
 // Guardado em **cookie**, não em `localStorage` nem no banco:
 //

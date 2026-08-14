@@ -365,6 +365,112 @@ sólida, secundária contorno, a mesma regra do card.
 - [ ] **AC19** — "Resolver" é sólido na home e em `/tarefas`; o `⋯` de ações
       secundárias continua fantasma.
 
+### Revisão 2026-08-14 — o tema sai da página e vai pro shell
+
+O tema claro nasceu como piloto da `/leads` (revisão de 2026-08-13), com a
+classe `tema-claro` no `<main>` de cada página convertida — `/leads`, `/` e
+`/ranking`. Converter as demais telas uma a uma repetiria o mesmo erro em mais
+dez arquivos, e o piloto já tinha exposto três buracos que a página **não tem
+como** fechar, porque estão fora dela:
+
+1. **O esqueleto de rota pintava no tema errado.** `loading.tsx` é irmão do
+   `page.tsx`, não descendente: a classe no `<main>` nunca o alcançava. Cada
+   clique no menu dava um flash — esqueleto escuro, página clara.
+2. **O `BannerChaves` ficava de fora**, porque mora acima do `<main>`.
+3. **As telas não convertidas continuavam escuras**, e a lista só crescia.
+
+**A regra agora:** quem veste o tema é o `AppShell`, numa classe só na coluna
+de conteúdo (`AppShellClient`). Toda rota autenticada — inclusive o esqueleto
+dela e o banner — nasce no tema escolhido. A **sidebar continua escura de
+propósito**: a referência do tema claro é sidebar escura + fundo claro + cards
+brancos, e isso não mudou.
+
+**O verde da marca se divide em dois no tema claro.** `--color-primary` é o
+mesmo token do preenchimento (`bg-primary`) e do texto (`text-primary`), e o
+`#22c55e` sobre branco dá **2,04:1** — reprova para texto por larga margem.
+Enquanto o tema claro era só a `/leads` isso passava despercebido; valendo no
+app inteiro, atinge todo link de ação ("Abrir →", "Ver planos →", "A fila de
+hoje"), o preço de aluno e o `text-primary` dentro de `bg-primary/20`. Então:
+
+- **Ação e texto** usam `#15803d` (green-700) — 5,01:1 sobre branco, e os
+  mesmos 5,01:1 de branco sobre ele: um token só serve de texto e de botão.
+- **Preenchimento grande** (o card da Fila do dia) mantém o `#22c55e` da marca,
+  via `--verde-marca`. Área grande com texto branco por cima não tem o problema
+  do texto verde de 15px, e escurecer o card tiraria o único ponto de cor cheia
+  da tela.
+
+**Botão secundário sobre fundo claro ganha superfície.** `.btn-ghost` é
+transparente com `border-border`; no claro esse token vira `#e4e4e7`, que sobre
+o fundo `#f4f5f7` dá 1,05:1 — o botão sumia e sobrava um texto que não parecia
+clicável. No tema claro ele passa a ter preenchimento (`--color-card`) e
+contorno `--color-border-strong`.
+
+**Avisos: os degraus -50/-100/-200 também invertem.** Banner de chaves,
+onboarding BYOK e aviso do ScreenshotOne usam tinta a 10% + texto quase branco
+da mesma cor. Sobre branco, `text-amber-100` dava ~1,1:1. Como são os tons mais
+claros da escala, viram os mais **escuros** da inversão (-800/-900) — não -700
+como os de badge. E os modificadores de alfa (`/70`, `/80`, `/85`, `/90`)
+saíram desses avisos: eles existiam pra abaixar texto claro sobre tinta escura,
+e invertidos clareavam texto escuro sobre tinta clara, derrubando o contraste.
+
+**Hover que trocava de cor virou opacidade** onde a direção de "mais claro" se
+inverte com o tema (`hover:text-white` no banner âmbar pintava de branco um
+texto que precisa ser escuro).
+
+#### Critérios de aceitação da revisão (2026-08-14)
+- [ ] **AC20** — Trocar o tema em `/configuracao` muda **todas** as rotas
+      autenticadas, não só `/leads`, `/` e `/ranking`.
+- [ ] **AC21** — O esqueleto de carregamento de cada rota aparece no mesmo tema
+      da página que está chegando (sem flash escuro→claro).
+- [ ] **AC22** — No tema claro, texto e ação em verde passam 4.5:1 sobre
+      branco; o card verde da Fila do dia mantém o `#22c55e` da marca.
+- [ ] **AC23** — No tema claro, `.btn-ghost` tem superfície e contorno visíveis
+      sobre o fundo da página, e continua reagindo ao hover.
+- [ ] **AC24** — Nenhum texto de aviso (âmbar, azul, verde) fica abaixo de
+      4.5:1 sobre a própria tinta, nos dois temas.
+
+### Revisão 2026-08-14 (b) — feedback de navegação em toda rota
+
+O menu já tinha voltado a `<Link>` puro pra o `loading.tsx` de cada rota
+aparecer (revisão de 2026-08-13), mas a cobertura estava incompleta e a lacuna
+não era acidental — era estrutural:
+
+- **`/skills` e `/entregaveis` não podiam ter `loading.tsx`**, porque um
+  boundary ali cobriria `[slug]`, que chama `notFound()` e precisa de 404 de
+  verdade ([F015](F015-multi-tenant.md) AC6). Resolvido com **grupo de rota**:
+  a lista mora em `(lista)/`, que aceita o `loading.tsx` sem alcançar a irmã.
+- **O `loading.tsx` mora dentro do `layout.tsx` da rota.** Enquanto o layout
+  espera — e o de `/skills` e `/entregaveis` faz consulta de compra — não há
+  esqueleto nenhum pra mostrar. E `/` e `/leads` não podem ter boundary pelo
+  mesmo motivo do `notFound()`. Nesses quatro casos o sinal passa a ser um
+  **ponto pulsante no item do menu**, via `useLinkStatus` do Next: ele só
+  existe dentro do `<Link>`, descreve a navegação daquele link e zera sozinho
+  quando outra começa — que é exatamente o que o `useTransition` à mão não
+  fazia quando os três spinners ficavam girando juntos.
+- **Cada esqueleto usa a largura da própria rota.** `RotaSkeleton` era
+  `max-w-6xl` fixo pra todas, e as páginas vão de `max-w-2xl` (Configuração) a
+  `max-w-[100rem]` (Funil): o conteúdo pulava de largura ao chegar. Esqueleto
+  que não bate com a página é layout shift disfarçado de carregamento.
+- **`/leads/[id]` passa a pintar o cabeçalho antes do corpo.** A tela fazia
+  sete consultas num `Promise.all` e só então renderizava; nome, score e
+  estágio saem do `requireLeadOwned`, que já resolveu. O 404 continua decidido
+  **fora** de qualquer `<Suspense>`.
+- **`/entregaveis/[slug]` não tem o que suspender** (o `page.tsx` não faz E/S),
+  mas a espera existe no `<iframe>`. Ganhou esqueleto próprio, removido no
+  `onLoad`.
+
+#### Critérios de aceitação da revisão (b)
+- [ ] **AC25** — Clicar em qualquer item do menu produz feedback visível antes
+      da tela nova chegar, inclusive em `/`, `/leads`, `/skills` e
+      `/entregaveis`.
+- [ ] **AC26** — O esqueleto de cada rota tem a mesma largura de conteúdo da
+      página correspondente.
+- [ ] **AC27** — `/leads/[id]` de outro aluno continua devolvendo **404**
+      (nenhum boundary de rota acima dela).
+- [ ] **AC28** — Toda `page.tsx` sob `(orion)` tem `loading.tsx` acima,
+      `<Suspense>` na própria página, ou esqueleto próprio — garantido por
+      `tests/unit/feedback-de-navegacao.test.ts`.
+
 ## Lista `/leads`
 - **Grid** responsivo: 1 coluna no mobile, 2 no tablet, 3–4 no desktop.
 - **Largura: a lista usa a tela.** O container era `max-w-6xl` (1152px) dentro

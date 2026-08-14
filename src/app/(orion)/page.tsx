@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import Link from "next/link";
 import { cache, Suspense } from "react";
 import { BannerChaves } from "@/components/banner-chaves";
@@ -16,7 +15,6 @@ import {
   ONDE_NAO_DESCARTADO,
 } from "@/lib/funil";
 import { hrefDoEstagio, TOKEN_EM_ABERTO } from "@/lib/leads/filtros";
-import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
 import { metaDoMes } from "@/lib/metas";
 import type { LeadStatus } from "@prisma/client";
 import { SkeletonPulse } from "@/components/page-skeleton";
@@ -240,19 +238,21 @@ async function Resultado() {
   );
 }
 
-export default async function DashboardPage() {
-  // A `/` não pode ter `loading.tsx`: o boundary ficaria no segmento `(orion)`
-  // e cobriria a `/leads`, onde o `notFound()` do detalhe chegaria depois do
-  // 200 (ver `page-skeleton.tsx`). Em vez disso a casca pinta na hora e cada
-  // bloco chega em streaming.
-  const tema = asTema((await cookies()).get(TEMA_COOKIE)?.value);
-
+export default function DashboardPage() {
+  // A `/` não podia ter `loading.tsx` enquanto morava direto no `(orion)`: o
+  // boundary cobriria a `/leads`, onde o `notFound()` do detalhe chegaria
+  // depois do 200 (ver `page-skeleton.tsx`). Agora ela vive no grupo `(home)`,
+  // que só existe pra ela — e o `loading.tsx` cabe lá sem alcançar irmã
+  // nenhuma. A casca continua pintando na hora, com cada bloco em streaming.
   return (
     <>
-      <BannerChaves />
-      <main
-        className={`${classeDoTema(tema)} min-h-[calc(100vh-3.5rem)] px-6 py-8 lg:px-8`}
-      >
+      {/* `<Suspense>` no banner: ele é `async` e consulta o banco. Solto,
+          segurava o `<main>` inteiro — a tela ficava em branco até a consulta
+          das chaves voltar, mesmo com todo o resto já pronto pra pintar. */}
+      <Suspense fallback={null}>
+        <BannerChaves />
+      </Suspense>
+      <main className="px-6 py-8 lg:px-8">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-base text-muted">
           Funil de prospecção · visão geral
