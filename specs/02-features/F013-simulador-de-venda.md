@@ -139,7 +139,30 @@ como dado, com as regras da persona **depois** dele. Vale igual no transcript
 do avaliador, onde as falas viram linhas delimitadas em vez de `DONO: …` solto
 — prefixo que o aluno podia digitar dentro da própria fala pra forjar linha.
 
+## Emenda 2026-08-15 — conta nova consegue treinar
+
+`/treino` trocava a tela inteira por um vazio ("Sem cenários ainda — diagnostique
+um Lead") quando o aluno não tinha Lead diagnosticado. Só que o modo **"Categoria
+manual"** desta mesma spec (AC1) **não depende de Lead nenhum**: basta digitar
+"dentista".
+
+O efeito era o pior possível pra quem acabou de entrar. O Simulador é a única
+coisa do produto que funciona com a conta vazia — não gasta cota do Places, não
+precisa de site pra diagnosticar, e é onde o aluno aprende a conversa que vai
+ter que ter. E era justamente essa tela que mandava ele embora, para uma busca
+que custa dinheiro, antes de deixar ele experimentar qualquer coisa.
+
+Agora a tela sempre abre o Simulador. Sem Lead diagnosticado, só o modo manual
+aparece (o seletor de origem já se esconde sozinho), com uma linha dizendo que
+diagnosticar um Lead traz cenários com as Dores reais do negócio.
+
 ### Critérios de aceitação da emenda
+- [ ] **AC15** — Conta sem nenhum Lead diagnosticado abre o Simulador no modo
+      manual e consegue treinar até o Scorecard.
+- [ ] **AC16** — Com Leads diagnosticados, o seletor "A partir de um Lead /
+      Categoria manual" volta a aparecer, com Lead como padrão.
+
+### Critérios de aceitação da emenda de 2026-08-14
 - [ ] **AC10** — A action recusa `dores` vindas do client: o campo não existe
       mais no schema de entrada, e o cenário de `origem = lead` bate com o
       banco.

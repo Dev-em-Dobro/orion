@@ -40,13 +40,15 @@ export default async function TreinoPage() {
         </h1>
         <p className="mt-1 text-sm text-muted">
           Treine a conversa contra um dono de negócio cético e receba um
-          Scorecard no fim. Nada aqui é salvo (F013).
+          Scorecard no fim. Nada da conversa fica salvo.
         </p>
 
-        <div className="mt-4">
-          
-        </div>
-
+        {/*
+          Conta sem Lead diagnosticado treina do mesmo jeito, no modo manual
+          (F013, emenda de 2026-08-15). O vazio que ficava aqui mandava embora
+          justamente quem tinha acabado de chegar — e o Simulador é a única
+          parte do produto que funciona sem gastar cota de busca.
+        */}
         <div className="mt-6">
           {precisaIa ? (
             <EmptyState
@@ -54,14 +56,17 @@ export default async function TreinoPage() {
               descricao="O treino usa a sua chave (Anthropic, OpenAI ou Gemini). Escolha o provedor e cole a chave em Configuração."
               acao={{ href: "/configuracao", label: "Ir para Configuração" }}
             />
-          ) : opcoes.length === 0 ? (
-            <EmptyState
-              titulo="Sem cenários ainda"
-              descricao="Diagnosticar pelo menos um Lead em /leads libera cenários aqui (categoria + dores)."
-              acao={{ href: "/leads", label: "Ir para Leads" }}
-            />
           ) : (
-            <Simulador leads={opcoes} />
+            <>
+              {opcoes.length === 0 && (
+                <p className="mb-4 text-sm text-muted">
+                  Digite a categoria do negócio e comece agora. Depois de
+                  diagnosticar um Lead, dá pra treinar contra o negócio de
+                  verdade, com as Dores que o Orion achou.
+                </p>
+              )}
+              <Simulador leads={opcoes} />
+            </>
           )}
         </div>
       </main>

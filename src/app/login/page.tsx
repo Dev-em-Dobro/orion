@@ -51,9 +51,14 @@ export default function LoginPage() {
           </Suspense>
         </div>
 
+        {/*
+          F035 fechou o BYOK pra aluno novo: as chaves são da plataforma. Esta
+          frase continuava mandando o recém-chegado configurar chave própria —
+          era a primeira coisa que ele lia sobre o produto, e estava errada.
+        */}
         <p className="text-center text-xs text-muted">
-          Ao entrar, você configura as suas próprias chaves de API e prospecta
-          só os seus Leads.
+          As chaves de API já vêm incluídas — é só entrar e buscar. Cada aluno
+          prospecta só os seus Leads.
         </p>
         <p className="text-center text-xs text-muted">
           <a href="/termos" className="hover:text-zinc-400 hover:underline">

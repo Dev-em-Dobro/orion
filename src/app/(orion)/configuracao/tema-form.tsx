@@ -22,9 +22,13 @@ export function TemaForm({ atual }: { atual: Tema }) {
   return (
     <section className="card">
       <h2 className="text-sm font-semibold text-zinc-100">Tema da interface</h2>
+      {/*
+        O tema subiu pro app shell em 2026-08-14 e passou a valer em todas as
+        telas. Este aviso ainda dizia "só na tela de Leads" — quem lia não
+        trocava, achando que ia ficar pela metade.
+      */}
       <p className="mt-1 text-sm text-muted">
-        Em teste: por enquanto a troca vale só na tela de <strong>Leads</strong>.
-        As outras seguem no tema escuro.
+        Vale em todas as telas. A escolha fica salva na sua conta.
       </p>
 
       <form action={action} className="mt-4 flex flex-col gap-3">
