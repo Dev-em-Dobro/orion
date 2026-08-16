@@ -122,6 +122,28 @@ sobreviver a recarregar a página e a abrir em aba nova. Ver `lib/leads/origem.t
 - [ ] **AC8** — Isolamento (F015): o board só carrega Leads do usuário logado.
 - [ ] **AC9** — A página respeita o teto de queries da F028 (≤ 4 por request):
       uma query com `groupBy` pros contadores e uma pros cards.
+- [ ] **AC16** — Depois de soltar, o card volta ao estilo normal na coluna nova.
+      O esmaecimento é feedback **do arrasto**, e some quando o arrasto acaba —
+      nada de card permanentemente apagado. Ver "Card apagado" abaixo.
+
+## Card apagado depois de soltar (corrigido em 2026-08-16)
+
+O card chegava na coluna certa, o status persistia — e ele ficava com
+`opacity-50` **para sempre**. Lido de fora, parecia carregamento infinito da
+troca de status; não era. O dado estava salvo desde o primeiro instante.
+
+A causa é uma armadilha do drag & drop nativo com lista que se reordena:
+`dragend` **não dispara quando o elemento de origem sai do DOM durante o
+drop**. E é exatamente isso que acontece aqui — soltar move o card de coluna,
+então o `<li>` é desmontado da `<ul>` de origem e remontado sob outra `<section>`.
+O `onDragEnd` que limparia `arrastando` nunca roda, o id continua lá, e como a
+condição do estilo é `arrastando === card.id`, o card **novo** nasce apagado.
+Só um reload limpava.
+
+Quem encerra o arrasto agora é o **`onDrop` da coluna**, que é o elemento que
+permanece montado. O `onDragEnd` do card continua, e continua servindo: ele é
+quem cobre o arrasto cancelado (`Esc`) ou solto fora de qualquer coluna, onde
+não há `drop` nenhum pra disparar.
 
 ## Decisões de implementação
 - `src/app/(orion)/funil/page.tsx` (server) + `board.tsx` (client, só o

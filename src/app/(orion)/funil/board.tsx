@@ -110,6 +110,17 @@ export function Board({
               onDrop={(e) => {
                 e.preventDefault();
                 setSobre(null);
+                // Quem encerra o arrasto é a **coluna**, não o card.
+                //
+                // `dragend` não dispara quando o elemento de origem sai do DOM
+                // durante o drop — e é o que acontece aqui: soltar move o card
+                // de coluna, o `<li>` é desmontado da `<ul>` de origem e
+                // remontado sob outra `<section>`. Sem isto, `arrastando`
+                // ficava com o id preso e o card **novo** nascia com
+                // `opacity-50` pra sempre, parecendo carregamento infinito de
+                // uma troca de status que já tinha sido salva. Só um reload
+                // limpava. (F034, "Card apagado depois de soltar".)
+                setArrastando(null);
                 const [leadId, origem] = e.dataTransfer
                   .getData("text/plain")
                   .split("|");
@@ -147,6 +158,10 @@ export function Board({
                       );
                       setArrastando(card.id);
                     }}
+                    // Continua servindo pro arrasto que **não** termina em
+                    // drop: cancelado com `Esc` ou solto fora de qualquer
+                    // coluna. Nesses casos o card não sai do DOM, então o
+                    // evento chega normalmente.
                     onDragEnd={() => setArrastando(null)}
                     className={`cursor-grab rounded-lg border bg-card p-3 ${
                       destacados.has(card.id)
