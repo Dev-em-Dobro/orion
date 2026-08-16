@@ -3,6 +3,7 @@ import { cache, Suspense } from "react";
 import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
 import { FunilChart } from "@/components/funil-chart";
+import { PrimeirosPassos } from "@/components/primeiros-passos";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
@@ -110,6 +111,9 @@ async function PainelFunil() {
                   }
                 : undefined
             }
+            // F039 — o aluno novo cai aqui, não no rodapé do menu. Mesmo
+            // gatilho, segundo lugar de onde chamar.
+            extra={<PrimeirosPassos variante="secundario" />}
           />
         </div>
       ) : (

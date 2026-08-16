@@ -55,3 +55,24 @@ export function asTema(raw: string | undefined | null): Tema {
 export function classeDoTema(tema: Tema): string {
   return tema === "claro" ? "tema-claro" : "";
 }
+
+/**
+ * A mesma classe, a partir de um `document.cookie` — pro cliente.
+ *
+ * Quem pinta o tema é o shell, e só na **coluna de conteúdo**: a sidebar é
+ * escura de propósito. Overlay que cobre a tela inteira não pertence a nenhuma
+ * das duas, e sai com a cor do canto de onde foi aberto se não perguntar — o
+ * mesmo diálogo escuro pelo gatilho da sidebar e claro pelo do Dashboard.
+ * Então ele lê o cookie, que é a mesma fonte que o servidor leu.
+ *
+ * Pura, e recebe a string em vez de ler `document`: dá pra testar, e não
+ * impede o módulo de ser importado no servidor. Chamada apenas de dentro de
+ * handler ou efeito de cliente — nunca no render.
+ */
+export function classeDoTemaDoCookie(cookie: string): string {
+  const valor = cookie
+    .split("; ")
+    .find((c) => c.startsWith(`${TEMA_COOKIE}=`))
+    ?.split("=")[1];
+  return classeDoTema(asTema(valor));
+}

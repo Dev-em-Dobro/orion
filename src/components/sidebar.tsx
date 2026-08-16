@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { authClient } from "@/lib/auth/client";
 import { SKILLS_MENU } from "@/lib/skills/catalogo";
 import {
@@ -15,7 +15,10 @@ import {
   type Recurso,
 } from "@/lib/planos/catalogo";
 import { NOME_PRODUTO_PARTES } from "@/lib/produto";
-import { Icone, IconeCadeado } from "@/components/icones";
+import { Icone, IconeCadeado, IconeMapa } from "@/components/icones";
+import { PrimeirosPassos } from "@/components/primeiros-passos";
+import { TourDoMenu } from "@/components/tour-do-menu";
+import { EVENTO_TOUR } from "@/lib/tutorial/tour";
 
 type NavItem = {
   href: string;
@@ -26,6 +29,12 @@ type NavItem = {
   badge?: number;
   /** F035 — recurso de plano que o item exige. Sem ele: cadeado + /planos. */
   recurso?: Recurso;
+  /**
+   * F040 — âncora do tour. Item sem `tour` simplesmente não é visitado: é o que
+   * deixa a lista de skills (uma por aluno) fora sem regra escrita em lugar
+   * nenhum.
+   */
+  tour?: string;
 };
 
 function grupos(tarefasVencidas: number): { titulo: string; itens: NavItem[] }[] {
@@ -44,6 +53,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/",
         label: "Dashboard",
+        tour: "dashboard",
         icone: (
           <Icone
             d={
@@ -64,6 +74,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/leads",
         label: "Leads",
+        tour: "leads",
         icone: (
           <Icone
             d={
@@ -80,6 +91,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/funil",
         label: "Funil",
+        tour: "funil",
         recurso: "kanban",
         icone: (
           <Icone
@@ -96,6 +108,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/agente",
         label: "Agente",
+        tour: "agente",
         recurso: "agente",
         icone: (
           <Icone
@@ -111,6 +124,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/tarefas",
         label: "Tarefas",
+        tour: "tarefas",
         recurso: "tarefas",
         icone: (
           <Icone
@@ -126,6 +140,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/ranking",
         label: "Ranking",
+        tour: "ranking",
         icone: (
           <Icone
             d={
@@ -146,6 +161,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/treino",
         label: "Simulador de venda",
+        tour: "treino",
         icone: (
           <Icone
             d={
@@ -171,6 +187,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
             {
               href: "/skills",
               label: "Visão geral",
+              tour: "skills",
               icone: (
                 <Icone
                   d={
@@ -195,6 +212,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/planos",
         label: "Planos",
+        tour: "planos",
         icone: (
           <Icone
             d={
@@ -209,6 +227,7 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
       {
         href: "/configuracao",
         label: "Configuração",
+        tour: "configuracao",
         icone: (
           <Icone
             d={
@@ -266,6 +285,36 @@ function LogoutButton({ className }: { className?: string }) {
       className={className ?? "btn-ghost w-full justify-center"}
     >
       Sair
+    </button>
+  );
+}
+
+/**
+ * F040 — gatilho do tour, vizinho de cima dos Primeiros passos.
+ *
+ * Dois botões de tutorial lado a lado só se justificam porque respondem a
+ * perguntas diferentes, e os rótulos têm que carregar isso sozinhos: "Tour do
+ * menu" é onde fica o quê; "Primeiros passos" é em que ordem fazer.
+ */
+function BotaoTour({
+  ativo,
+  onIniciar,
+}: {
+  ativo: boolean;
+  onIniciar: (origem: HTMLElement) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => onIniciar(e.currentTarget)}
+      aria-haspopup="dialog"
+      aria-expanded={ativo}
+      className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-zinc-400 transition-colors duration-200 hover:bg-zinc-800/40 hover:text-zinc-200"
+    >
+      <span className="text-muted">
+        <IconeMapa />
+      </span>
+      Tour do menu
     </button>
   );
 }
@@ -405,6 +454,7 @@ function NavLink({
   bloqueado,
   externo,
   badge,
+  tour,
   onBloqueado,
   onNavigate,
 }: {
@@ -416,6 +466,8 @@ function NavLink({
   bloqueado?: boolean;
   externo?: boolean;
   badge?: number;
+  /** F040 — âncora do tour, no elemento que o aluno vê. */
+  tour?: string;
   /** Clique num item fechado abre o modal em vez de navegar. */
   onBloqueado?: () => void;
   onNavigate?: () => void;
@@ -458,6 +510,7 @@ function NavLink({
         type="button"
         onClick={() => onBloqueado?.()}
         aria-haspopup="dialog"
+        data-tour={tour}
         className={`${className} w-full text-left`}
       >
         {conteudo}
@@ -472,6 +525,7 @@ function NavLink({
         target="_blank"
         rel="noopener noreferrer"
         className={className}
+        data-tour={tour}
         onClick={() => onNavigate?.()}
       >
         {conteudo}
@@ -483,7 +537,12 @@ function NavLink({
   // destino. Com `router.push` dentro de `startTransition`, o React segurava a
   // tela antiga e o esqueleto não aparecia.
   return (
-    <Link href={href} onClick={() => onNavigate?.()} className={className}>
+    <Link
+      href={href}
+      onClick={() => onNavigate?.()}
+      data-tour={tour}
+      className={className}
+    >
       {conteudo}
     </Link>
   );
@@ -564,6 +623,7 @@ function NavGrupos({
                       ativo={!item.externo && !bloqueado && ativo(item.href)}
                       bloqueado={bloqueado}
                       externo={item.externo}
+                      tour={item.tour}
                       badge={bloqueado ? undefined : item.badge}
                       onBloqueado={
                         item.recurso ? () => onBloqueado(item.recurso!) : undefined
@@ -598,6 +658,12 @@ export function Sidebar({
   const [menuAberto, setMenuAberto] = useState(false);
   // Recurso do item fechado que o aluno clicou — abre o modal da F035.
   const [bloqueio, setBloqueio] = useState<Recurso | null>(null);
+  // F040 — o tour mora aqui, e não dentro do próprio gatilho, por duas razões:
+  // ele precisa **abrir o drawer** no mobile (os itens de menu só existem no
+  // DOM com ele aberto) e precisa tomar o `Escape` pra si enquanto roda.
+  const [tourAtivo, setTourAtivo] = useState(false);
+  const abriuDrawer = useRef(false);
+  const gatilhoTour = useRef<HTMLElement | null>(null);
 
   const ativo = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -612,7 +678,10 @@ export function Sidebar({
   useEffect(() => {
     if (!menuAberto) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuAberto(false);
+      // Com o tour rodando, `Escape` é dele: os dois ouvintes estão na
+      // `window`, e sem esta guarda um pressionar fechava o tour **e** o
+      // drawer — deixando o aluno numa tela que ele não pediu.
+      if (e.key === "Escape" && !tourAtivo) setMenuAberto(false);
     };
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
@@ -620,7 +689,40 @@ export function Sidebar({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", onKey);
     };
-  }, [menuAberto]);
+  }, [menuAberto, tourAtivo]);
+
+  const iniciarTour = useCallback(
+    (origem: HTMLElement | null) => {
+      gatilhoTour.current = origem;
+      // No mobile os alvos só existem com o drawer aberto — um tour disparado
+      // do painel da F039 no Dashboard não teria item nenhum pra acender.
+      if (!window.matchMedia("(min-width: 768px)").matches && !menuAberto) {
+        abriuDrawer.current = true;
+        setMenuAberto(true);
+      }
+      setTourAtivo(true);
+    },
+    [menuAberto],
+  );
+
+  // O painel da F039 começa o tour daqui de fora. Sinal sem carga, de um botão
+  // pra um ouvinte — ver `EVENTO_TOUR`.
+  useEffect(() => {
+    const onEvento = () => iniciarTour(null);
+    window.addEventListener(EVENTO_TOUR, onEvento);
+    return () => window.removeEventListener(EVENTO_TOUR, onEvento);
+  }, [iniciarTour]);
+
+  const encerrarTour = useCallback(() => {
+    setTourAtivo(false);
+    // Se foi o tour que abriu o drawer, é o fim dele que fecha. Drawer aberto
+    // pelo aluno continua aberto.
+    if (abriuDrawer.current) {
+      abriuDrawer.current = false;
+      setMenuAberto(false);
+    }
+    gatilhoTour.current?.focus();
+  }, []);
 
   const fecharMenu = () => setMenuAberto(false);
 
@@ -640,6 +742,11 @@ export function Sidebar({
           />
         </nav>
         <div className="space-y-2 border-t border-border px-4 py-3">
+          {/* F039/F040 — os dois tutoriais moram no rodapé, fora dos grupos:
+              nenhum deles é uma tela do trabalho. O tour vem primeiro porque
+              "onde fica o quê" antecede "em que ordem fazer". */}
+          <BotaoTour ativo={tourAtivo} onIniciar={iniciarTour} />
+          <PrimeirosPassos />
           <LogoutButton />
           <p className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted">
             <Link href="/termos" className="hover:text-zinc-300">
@@ -698,6 +805,8 @@ export function Sidebar({
               />
             </nav>
             <div className="space-y-2 border-t border-border px-4 py-3">
+              <BotaoTour ativo={tourAtivo} onIniciar={iniciarTour} />
+              <PrimeirosPassos />
               <LogoutButton />
               <p className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted">
                 <Link
@@ -724,6 +833,8 @@ export function Sidebar({
       {bloqueio && (
         <ModalBloqueado recurso={bloqueio} onFechar={() => setBloqueio(null)} />
       )}
+
+      {tourAtivo && <TourDoMenu plano={plano} onFim={encerrarTour} />}
     </>
   );
 }

@@ -85,6 +85,14 @@ E uma sétima, de canal, pedida em 2026-08-13:
 |---------|---------|
 | [F038](02-features/F038-abordagem-por-voz.md) — Abordagem por voz | Desde a F035 a única saída do Orion é texto frio no WhatsApp — o canal mais fácil de ignorar. A F038 gera o **roteiro falado** (ligação ou áudio) da mesma Dor, e a aba Abordagem passa a recomendá-lo acima do texto. Canal novo (`Canal.ligacao`), nenhuma lib nova, nenhum ADR: o Orion escreve o roteiro, quem liga é o aluno |
 
+E uma oitava, de entrada, achada percorrendo o app com uma conta criada do zero
+em 2026-08-15:
+
+| Feature | Por quê |
+|---------|---------|
+| [F039](02-features/F039-primeiros-passos.md) — Primeiros passos | Cada tela vazia se explica e oferece uma saída, e mesmo assim ninguém diz a **ordem** (buscar → aprofundar → abordar → funil). Quem não sabe a ordem também não sabe em que tela procurar, então explicação espalhada não resolve: um botão fixo no menu abre a sequência inteira, com o estado de cada passo lido da base do aluno. Sem tabela nova, sem lib nova, sem ADR |
+| [F040](02-features/F040-tour-do-menu.md) — Tour do menu | A F039 diz a **ordem** do trabalho e mesmo assim não diz o **mapa**: onze itens de menu sem explicação, e descrever todos em texto corrido só transfere pro aluno a tradução entre a lista e o menu. O tour acende um item por vez e fala dele — o que a F039 tinha deixado fora por exigir lib. Não exige: passo sem alvo no DOM é pulado, e `intro.js` ainda esbarraria em AGPL num produto fechado. Sem estado, sem consulta, sem lib nova, sem ADR |
+
 ---
 
 ## 2. A ideia central do revamp

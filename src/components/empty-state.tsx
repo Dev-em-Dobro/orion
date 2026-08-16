@@ -5,15 +5,26 @@ type Props = {
   descricao: string;
   acao?: { href: string; label: string };
   secundaria?: { href: string; label: string };
+  /**
+   * F039 — ação que não é link: entra na mesma linha dos botões. Existe pro
+   * gatilho dos Primeiros passos, que abre diálogo em vez de navegar.
+   */
+  extra?: React.ReactNode;
 };
 
 /** Empty state compacto pra beta (F016 onboarding). */
-export function EmptyState({ titulo, descricao, acao, secundaria }: Props) {
+export function EmptyState({
+  titulo,
+  descricao,
+  acao,
+  secundaria,
+  extra,
+}: Props) {
   return (
     <div className="rounded-xl border border-dashed border-border bg-zinc-900/40 px-6 py-10 text-center">
       <h2 className="text-base font-semibold text-zinc-100">{titulo}</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted">{descricao}</p>
-      {(acao || secundaria) && (
+      {(acao || secundaria || extra) && (
         <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
           {acao ? (
             <Link href={acao.href} className="btn-primary">
@@ -25,6 +36,7 @@ export function EmptyState({ titulo, descricao, acao, secundaria }: Props) {
               {secundaria.label}
             </Link>
           ) : null}
+          {extra}
         </div>
       )}
     </div>

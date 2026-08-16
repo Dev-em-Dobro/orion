@@ -388,7 +388,11 @@ async function main() {
     }
 
     if (c.outreach) {
-      await prisma.outreach.create({
+      // `prisma.outreach` não existe desde o rename do model pra `Abordagem`
+      // (a TABELA continua `Outreach`, via `@@map`). O seed quebrava aqui com
+      // "Cannot read properties of undefined" e nenhuma conta local nascia com
+      // Abordagem — o que esconde a fila, a cobrança e a F039 inteira.
+      await prisma.abordagem.create({
         data: {
           user_id: user.id,
           lead_id: lead.id,
