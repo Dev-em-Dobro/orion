@@ -105,18 +105,24 @@ fora de lugar era a função. Isso também transforma a preferência por `gru1` 
 escolher a região, e `gru1` é ao mesmo tempo a co-localização (o critério real)
 e o São Paulo (a preferência).
 
-### Gate antes da `main`
+### Gate antes da `main` — resolvido em 2026-08-16
 
-`vercel.json` vale pra **todos** os deploys, inclusive produção. A medição
-acima é do banco de **staging** (`f5ab45db`), e produção usa outro banco
-(`9d254ad4`), cuja região não foi verificada — as variáveis são `sensitive` e a
-Vercel não devolve o valor.
+`vercel.json` vale pra **todos** os deploys, inclusive produção, e a medição
+acima é do banco de **staging** (`f5ab45db`). Produção usa outro banco
+(`9d254ad4`) e a região dele não sai da Vercel — as variáveis são `sensitive`.
 
-Se o Neon de produção **não** estiver em `sa-east-1`, este arquivo *piora*
-produção: a função sai de perto do banco pra ficar perto do aluno, que é
-exatamente a **opção B** reprovada na tabela de alternativas. Confirmar a região
-do banco de produção antes do merge na `main`. Quando o build novo chegar lá,
-`GET /api/health` responde isso sozinho (decisão 4).
+O risco era concreto: se o Neon de produção estivesse fora de `sa-east-1`, este
+arquivo *pioraria* produção, tirando a função de perto do banco pra deixá-la
+perto do aluno — exatamente a **opção B** reprovada na tabela de alternativas.
+
+**Confirmado pelo Ricardo: o Neon de produção também está em `sa-east-1` (São
+Paulo).** Os dois bancos estão na mesma região, então `gru1` co-localiza os dois
+ambientes e o arquivo pode ir pra `main` sem ressalva.
+
+O número de produção segue não medido: ela roda um build anterior ao da decisão
+4, então o `/api/health` de lá ainda não reporta região nem `db_rtt_ms`. Ele
+passa a reportar no primeiro deploy depois do merge — e é lá que se confirma o
+ganho em produção, sem precisar acreditar em ninguém.
 
 ### Estado das outras decisões
 
