@@ -1,7 +1,10 @@
 # ADR-015 — Região de execução, pooler do banco e medição de desempenho
 
 ## Status
-Proposta — 2026-08-10 (decidir com os números da etapa 1 da
+Aceita — 2026-08-16. **Decisão 1 implementada** (`vercel.json`); 4 já estava em
+pé; 2 parcial; 3 pendente. Ver "Implementação" no fim.
+
+Proposta em 2026-08-10 (decidir com os números da etapa 1 da
 [F028](../02-features/F028-desempenho.md) em mãos).
 
 ## Contexto
@@ -75,3 +78,51 @@ tracing, não há como provar nem refutar nada disso.
 - Sample de tracing a 10% tem custo de plano no Sentry (pequeno neste volume) e
   aumenta o volume de eventos.
 - `DIRECT_URL` adiciona uma variável de ambiente a gerenciar.
+
+## Implementação (2026-08-16)
+
+Os números que faltavam pra decidir apareceram testando o staging, e eles
+confirmam o diagnóstico do contexto — não o refutam em nada:
+
+| Medida | Valor |
+|--------|-------|
+| Região da função | `iad1` (Washington) — o default que o contexto previa |
+| Região do Neon | `sa-east-1` (São Paulo) |
+| `db_rtt_ms` com o banco quente | **232 ms** (alvo do próprio health: 15 ms) |
+| `db_rtt_ms` na primeira chamada | 1.100–3.700 ms (Neon acordando) |
+
+Função e banco estavam nos **extremos opostos** do continente. Numa arquitetura
+que faz várias queries em sequência por página, esses 232 ms são pagos **por
+query** — é exatamente o "tudo lento" do relato original.
+
+**O que mudou:** `vercel.json` na raiz, com `regions: ["gru1"]`. Um arquivo de
+três linhas, sem código.
+
+A consequência negativa que o ADR mais temia — "mudar a região do Neon exige
+migrar o banco" — **não se aplicou**: o Neon já estava em São Paulo. Quem estava
+fora de lugar era a função. Isso também transforma a preferência por `gru1` de
+"se disponível no plano" em fato: o time está no plano **Pro**, que permite
+escolher a região, e `gru1` é ao mesmo tempo a co-localização (o critério real)
+e o São Paulo (a preferência).
+
+### Gate antes da `main`
+
+`vercel.json` vale pra **todos** os deploys, inclusive produção. A medição
+acima é do banco de **staging** (`f5ab45db`), e produção usa outro banco
+(`9d254ad4`), cuja região não foi verificada — as variáveis são `sensitive` e a
+Vercel não devolve o valor.
+
+Se o Neon de produção **não** estiver em `sa-east-1`, este arquivo *piora*
+produção: a função sai de perto do banco pra ficar perto do aluno, que é
+exatamente a **opção B** reprovada na tabela de alternativas. Confirmar a região
+do banco de produção antes do merge na `main`. Quando o build novo chegar lá,
+`GET /api/health` responde isso sozinho (decisão 4).
+
+### Estado das outras decisões
+
+- **2 (pooler)** — parcial. O `DATABASE_URL` já usa o host `-pooler`, mas não há
+  `DIRECT_URL` configurada: as migrações do staging foram rodadas à mão com o
+  host direto derivado na hora. Falta a variável.
+- **3 (sample do Sentry a 0.1)** — pendente.
+- **4 (`/api/health` com região e `db_rtt_ms`)** — já estava implementada, e foi
+  ela que produziu a tabela acima. Primeira vez que o ADR se pagou.
