@@ -65,6 +65,48 @@ Gerados pelo Better Auth com adapter Prisma: `User`, `Session`, `Account`,
 - [x] **AC11** ([F036](F036-endurecimento-de-seguranca.md)) — Mais de 20
       requisições em 60s do mesmo IP a `/api/auth/*` são recusadas pelo Better
       Auth. Chamadas server-side a `auth.api.*` seguem sem limite.
+- [ ] **AC12** — Num deploy de **Preview da Vercel**, o login funciona: o
+      Origin do deploy é aceito e o magic link aponta pro próprio Preview, não
+      pra produção. Em `production` nada muda — a `BETTER_AUTH_URL` continua
+      sendo a única origem confiável.
+
+## Origin em Preview da Vercel (emenda 2026-08-16)
+
+**O sintoma:** login em qualquer deploy de Preview respondia **"Invalid
+origin"**. Não era conta, não era e-mail: nenhuma branch jamais teve login
+funcionando fora de produção.
+
+**A causa:** `betterAuth()` recebia `baseURL` e nunca `trustedOrigins`. Sem a
+opção, o Better Auth confia em uma origem só — a própria `baseURL`, que na
+Vercel é a de produção em **todos** os ambientes. O Origin do deploy
+(`prospect-engine-git-<branch>-…vercel.app`) não bate, e o
+`origin-check` recusa antes de olhar o e-mail.
+
+Liberar o Origin **não bastava**. O magic link é montado a partir da `baseURL`:
+o aluno pediria o link no staging, receberia um link de produção e entraria na
+conta errada, no banco errado. As duas coisas saem juntas ou não sai nenhuma.
+
+**A decisão:** em Preview, e só em Preview, a URL do próprio deploy vira a
+`baseURL` e entra nas origens confiáveis.
+
+- **O gatilho é `VERCEL_ENV === "preview"`** — valor da plataforma, escrito no
+  ambiente da função. Não é header, não é `Host`, não vem do cliente: não há
+  requisição que consiga se declarar Preview. Produção não afrouxa em nada, e
+  esta é a razão de a regra viver aqui e não numa checagem de origem em runtime.
+- **`VERCEL_BRANCH_URL` antes de `VERCEL_URL`.** A primeira é estável por
+  branch; a segunda muda a cada deploy. Com a instável, um redeploy no meio do
+  fluxo invalidaria o magic link que já saiu por e-mail.
+- **Um domínio fixo de staging vence a URL da branch.** Se a `BETTER_AUTH_URL`
+  do escopo Preview apontar pra um host **diferente** do de produção
+  (`VERCEL_PROJECT_PRODUCTION_URL`), ela foi definida de propósito pro staging
+  e é respeitada. Igual à de produção significa que ela foi **herdada**, e aí
+  vale a URL da branch. Sem esse teste, configurar o domínio de staging no
+  painel não teria efeito nenhum.
+- As três URLs (staging, branch e deploy) entram em `trustedOrigins` no
+  Preview, então o mesmo deploy responde por qualquer uma delas.
+
+Fora da Vercel (local, CI, outro host) nada disso liga: `VERCEL_ENV` não
+existe, e o caminho é exatamente o de antes.
 
 ## Cookie velho (AC10 — corrigido em 2026-08-11)
 

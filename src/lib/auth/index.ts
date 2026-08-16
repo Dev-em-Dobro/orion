@@ -16,6 +16,10 @@ export const auth = betterAuth({
   appName: NOME_PRODUTO,
   secret: env.secret,
   baseURL: env.baseURL,
+  // Em produção é `[baseURL]`, que já era o default implícito. Em Preview da
+  // Vercel entram também a URL da branch e a do deploy — sem isso o login lá
+  // morria em "Invalid origin". Ver a emenda de 2026-08-16 na spec da F014.
+  trustedOrigins: env.trustedOrigins,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
