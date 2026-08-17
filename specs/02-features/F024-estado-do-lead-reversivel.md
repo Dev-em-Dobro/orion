@@ -149,6 +149,27 @@ número **continua** — é a única ação da feature sem volta.
 - [ ] **AC11** — Enviar a confirmação de exclusão em branco diz que falta
       digitar o número, e nunca é interpretado como zero.
 
+> **Consequência aceita (2026-08-16): excluir tira a proteção do dedupe.**
+>
+> A coleta deduplica por linha existente — `createMany({ skipDuplicates: true })`
+> sobre o unique `(user_id, place_id)` — e só cobra cota do que virou Lead
+> ([F035](F035-planos-e-limites.md) AC15). Enquanto um Lead descartado **existe**,
+> rebuscar o mesmo nicho o traz de volta e ele é ignorado de graça.
+>
+> Excluído de vez, o `place_id` some do banco: numa rebusca o mesmo
+> estabelecimento entra como **novo** e **consome cota de novo**. No Free, com 40
+> Leads/mês, limpar 20 descartados e rebuscar o mesmo nicho custa metade do mês
+> seguinte.
+>
+> **Fica assim, deliberadamente.** A alternativa era uma lápide de `place_id`
+> excluído (tabela de ignorados que o dedupe também consultasse), e ela paga uma
+> migração e um segundo lugar de verdade sobre "o que este aluno já viu" para
+> resolver um caso que só acontece com quem exclui **e** rebusca o mesmo nicho.
+> Quem escolhe apagar assume o custo de reencontrar.
+>
+> Registrado aqui porque não é dedutível pela UI e ninguém vai reencontrar
+> sozinho: sem esta nota, o próximo a topar com isso abre como bug de cota.
+
 ## Critérios de aceitação
 - [ ] **AC1** — Descartar um Lead o remove da lista padrão, da Fila do dia
       (F025) e da Central de Tarefas (F031), sem apagar nada do banco.
