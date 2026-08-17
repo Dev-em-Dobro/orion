@@ -14,6 +14,7 @@ import {
   type Plano,
   type Recurso,
 } from "@/lib/planos/catalogo";
+import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 import { NOME_PRODUTO_PARTES } from "@/lib/produto";
 import { Icone, IconeCadeado, IconeMapa } from "@/components/icones";
 import { PrimeirosPassos } from "@/components/primeiros-passos";
@@ -209,21 +210,28 @@ const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
   {
     titulo: "Conta",
     itens: [
-      {
-        href: "/planos",
-        label: "Planos",
-        tour: "planos",
-        icone: (
-          <Icone
-            d={
-              <>
-                <path d="M3 10h18M7 15h4" />
-                <rect x="3" y="5" width="18" height="14" rx="2" />
-              </>
-            }
-          />
-        ),
-      },
+      // Pausa de 2026-08-17 (F035): o item sai junto com a tela. O passo do
+      // tour não precisa de exceção — `TourDoMenu` descarta passo cujo alvo não
+      // está no DOM, que é o mesmo caminho de Skills sem skill publicada.
+      ...(PLANOS_NA_UI
+        ? [
+            {
+              href: "/planos",
+              label: "Planos",
+              tour: "planos",
+              icone: (
+                <Icone
+                  d={
+                    <>
+                      <path d="M3 10h18M7 15h4" />
+                      <rect x="3" y="5" width="18" height="14" rx="2" />
+                    </>
+                  }
+                />
+              ),
+            },
+          ]
+        : []),
       {
         href: "/configuracao",
         label: "Configuração",
@@ -422,22 +430,34 @@ function ModalBloqueado({
           </h2>
         </div>
 
+        {/* Caminho morto hoje: nenhum recurso é fechado por plano desde a
+            revisão de 2026-08-13. Segue guardado pela pausa de 2026-08-17 de
+            todo jeito — se um recurso voltar a fechar antes de `/planos`
+            voltar, o modal não pode oferecer uma tela que dá 404. */}
         <p className="mt-3 text-sm text-muted">
-          {plano
-            ? `Disponível no plano ${definicao(plano).nome} — ${precoFormatado(plano)}.`
-            : "Disponível nos planos pagos."}
+          {!PLANOS_NA_UI
+            ? "Indisponível no momento."
+            : plano
+              ? `Disponível no plano ${definicao(plano).nome} — ${precoFormatado(plano)}.`
+              : "Disponível nos planos pagos."}
         </p>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <Link
-            href={`/planos?recurso=${recurso}`}
+          {PLANOS_NA_UI && (
+            <Link
+              href={`/planos?recurso=${recurso}`}
+              onClick={onFechar}
+              className="btn-primary"
+            >
+              Ver planos
+            </Link>
+          )}
+          <button
+            type="button"
             onClick={onFechar}
-            className="btn-primary"
+            className={PLANOS_NA_UI ? "btn-ghost" : "btn-primary"}
           >
-            Ver planos
-          </Link>
-          <button type="button" onClick={onFechar} className="btn-ghost">
-            Agora não
+            {PLANOS_NA_UI ? "Agora não" : "Entendi"}
           </button>
         </div>
       </div>

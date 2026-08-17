@@ -13,6 +13,46 @@ Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 > Os **preços** continuam proposta: dependem da medição pendente em
 > [11 §7](../11-custos-e-precificacao.md#7-o-que-precisa-ser-medido-antes-de-publicar-preço).
 
+> ## Pausa de 2026-08-17 — a UI de planos sai do ar
+>
+> **Todo mundo entra no Free.** Enquanto os `product_id` da Hubla não existirem
+> (ver Status), não há plano pago pra vender — e uma tela que compara três
+> planos, com preço e "Checkout em breve", oferece ao aluno uma escolha que ele
+> não tem. Some da UI: `/planos` sai do ar e **nenhuma menção a plano aparece
+> em tela**, nem em mensagem de erro, nem nas páginas públicas.
+>
+> É **pausa, não remoção.** O interruptor é a constante `PLANOS_NA_UI` em
+> `src/lib/planos/exibicao.ts`. Nada foi apagado: cada ponto de exibição
+> pergunta pela constante, então religar a tela é trocar `false` por `true` num
+> lugar só — **mais** recriar o `loading.tsx` da rota, o único arquivo que a
+> pausa apagou (ver abaixo; o `PlanosSkeleton` continua em `page-skeleton.tsx`,
+> intacto):
+>
+> ```tsx
+> // src/app/(orion)/planos/loading.tsx
+> import { PlanosSkeleton } from "@/components/page-skeleton";
+>
+> export default function Loading() {
+>   return <PlanosSkeleton />;
+> }
+> ```
+>
+> Ele **tem** que sair junto: `loading.tsx` embrulha a página num `<Suspense>`,
+> o shell é enviado antes da página rodar, e aí o `notFound()` chega depois do
+> status — a rota respondia **200** com cara de 404. É a mesma armadilha que a
+> [F028](F028-desempenho.md) documenta, e a razão pela qual os gates de página
+> desta spec rodam fora do boundary.
+>
+> O que a pausa **não** toca — e é o ponto: os limites continuam valendo e
+> sendo cobrados (Free = 40 Leads/mês), o medidor continua na topbar mostrando
+> `usado / limite`, e `planoDoUsuario` continua derivando o plano dos
+> entitlements. Quem tiver entitlement ativo recebe o limite maior **sem ver a
+> palavra "plano"**. O que sai é o vocabulário e o upsell, não a régua.
+>
+> Consequência aceita: sem `/planos`, o aluno que estoura o limite lê o que
+> acabou e quando zera, mas não tem para onde ser mandado. É exatamente o que
+> hoje já acontecia de fato — o botão da tela dizia "Checkout em breve".
+
 ## Objetivo
 Transformar o Orion de "tudo liberado pra todo aluno" em produto com **planos**.
 
@@ -489,6 +529,11 @@ Páginas com cota de **uma operação específica** (`/agente`, `/treino`) mant�
 Tabela comparativa (a de cima), plano atual destacado, botão de checkout Hubla
 por plano. Quem já tem plano vê o que ganharia subindo.
 
+> **Fora do ar desde 2026-08-17** — ver "Pausa" no topo da spec. A rota responde
+> **404** (não redirect: a página não existe hoje, e mandar pra outro lugar
+> esconderia isso de quem tem o link salvo). A página em si continua no
+> repositório, íntegra, atrás de `PLANOS_NA_UI`.
+
 ## Critérios de aceitação
 - [ ] **AC1** — Usuário sem entitlement de plano é `free` e vê limite de 40.
 - [ ] **AC2** — Diagnosticar um Lead **sem** Diagnóstico anterior incrementa o
@@ -537,6 +582,20 @@ por plano. Quem já tem plano vê o que ganharia subindo.
       rota autenticada, fica **âmbar a partir de 80%** e **vermelho no limite**
       — sem depender de abrir o popover. Nem `/leads` nem `/` repetem o medidor
       no corpo da página.
+- [ ] **AC23** — Com `PLANOS_NA_UI = false`: `/planos` responde **404** para
+      quem está logado — quem não está cai na regra de auth do grupo `(orion)`,
+      que roda no layout, antes da página. O item "Planos" não existe no menu (e
+      o tour não visita alvo fora do DOM), e **nenhum** link do app — tela
+      autenticada, mensagem de erro de limite ou página pública — aponta pra
+      `/planos`.
+- [ ] **AC24** — Com `PLANOS_NA_UI = false`, nenhum texto de UI diz "plano":
+      nem o medidor, nem o formulário de coleta, nem as mensagens de limite. O
+      que sobra é o que é verdade sem plano — quanto você usou, de quanto, e
+      quando zera.
+- [ ] **AC25** — A pausa é só de exibição: com `PLANOS_NA_UI = false` o Free
+      continua barrado nos 40 Leads/mês e o medidor continua mostrando
+      `usado / limite`. Trocar a constante por `true` devolve a tela e os links
+      sem nenhuma outra edição.
 
 > **Nota do AC9 (exportar CSV):** o CSV era montado no navegador, a partir dos
 > cards já entregues na página — ali "gate no servidor" seria mentira. A
@@ -545,6 +604,10 @@ por plano. Quem já tem plano vê o que ganharia subindo.
 > cadeado, levando a `/planos`.
 
 ## Decisões de implementação
+- `src/lib/planos/exibicao.ts` — a constante `PLANOS_NA_UI` da pausa, e **nada
+  mais**: arquivo sem import pra poder ser lido por Client Component (o barrel
+  `@/lib/planos` puxaria Prisma). Um único interruptor em vez de um `if` por
+  arquivo é o que faz a volta ser uma linha.
 - `src/lib/planos/catalogo.ts` (limites e features por plano — dado puro),
   `competencia.ts` (mês em `America/Sao_Paulo`, puro), `resolver.ts`
   (entitlements → plano, memoizado por request), `medidor.ts` (consulta,

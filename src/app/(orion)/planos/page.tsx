@@ -7,12 +7,14 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   CATALOGO_PLANOS,
   LABEL_OPERACAO_MENSAL,
   LABEL_RECURSO,
   OPERACOES_MENSAIS,
   PLANOS,
+  PLANOS_NA_UI,
   RECURSOS,
   asPlano,
   definicao,
@@ -42,6 +44,12 @@ export default async function PlanosPage({
 }: {
   searchParams: Promise<{ recurso?: string; plano?: string }>;
 }) {
+  // Pausa de 2026-08-17 (F035): sem plano pago configurado não há o que
+  // comparar. 404 antes do `requireTenant` — a página não existe hoje, então
+  // nem o banco precisa ser consultado pra dizer isso. Fora de `<Suspense>`,
+  // pela armadilha do `notFound()` que a F028 documenta.
+  if (!PLANOS_NA_UI) notFound();
+
   const { userId } = await requireTenant();
   const [uso, sp] = await Promise.all([usoDoPlano(userId), searchParams]);
   const atual = uso.plano;
@@ -74,6 +82,11 @@ export default async function PlanosPage({
           const def = CATALOGO_PLANOS[p];
           const ehAtual = p === atual;
           const checkout = urlCheckoutPlano(p);
+          // Free visto por quem já é pago não tem rodapé: não há o que assinar,
+          // e a linha que ficava aqui existia só pra dizer que não havia nada a
+          // fazer. O `<div>` some junto — vazio ele deixaria a margem sobrando
+          // só neste card, desalinhando a base dos três.
+          const semRodape = !ehAtual && !checkout && p === "free";
           return (
             <section
               key={p}
@@ -164,25 +177,23 @@ export default async function PlanosPage({
                 </li>
               </ul>
 
-              <div className="mt-4">
-                {ehAtual ? (
-                  <span className="text-xs text-muted">
-                    Plano ativo hoje.
-                  </span>
-                ) : checkout ? (
-                  <a href={checkout} className="btn-primary inline-block">
-                    Assinar {def.nome}
-                  </a>
-                ) : p === "free" ? (
-                  <span className="text-xs text-muted">
-                    É o plano de entrada — nada a fazer.
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted">
-                    Checkout em breve.
-                  </span>
-                )}
-              </div>
+              {!semRodape && (
+                <div className="mt-4">
+                  {ehAtual ? (
+                    <span className="text-xs text-muted">
+                      Plano ativo hoje.
+                    </span>
+                  ) : checkout ? (
+                    <a href={checkout} className="btn-primary inline-block">
+                      Assinar {def.nome}
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted">
+                      Checkout em breve.
+                    </span>
+                  )}
+                </div>
+              )}
             </section>
           );
         })}

@@ -6,6 +6,7 @@
 // função, e é ela que os testes exercitam (AC5 e AC6).
 
 import { temRecurso, type Plano, type Recurso } from "@/lib/planos/catalogo";
+import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 
 /**
  * Sinal que começa o tour a partir de fora da sidebar (hoje: o painel da F039).
@@ -35,8 +36,11 @@ export type PassoDoTour = {
   recurso?: Recurso;
 };
 
-export const AVISO_BLOQUEADO =
-  "Fechado no seu plano — o cadeado no item leva para a tela de Planos.";
+// Nunca renderiza hoje (nenhum recurso é fechado por plano), mas a pausa de
+// 2026-08-17 vale aqui também: não se cita uma tela que está fora do ar.
+export const AVISO_BLOQUEADO = PLANOS_NA_UI
+  ? "Fechado no seu plano — o cadeado no item leva para a tela de Planos."
+  : "Indisponível no momento.";
 
 /**
  * Um passo por item de menu, **na ordem do menu**. A ordem do array é a ordem

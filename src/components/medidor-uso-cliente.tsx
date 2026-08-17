@@ -5,6 +5,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 
 export type ItemMensal = {
   operacao: string;
@@ -72,7 +73,7 @@ export function MedidorUsoCliente({
           onClick={() => setAberto((v) => !v)}
           aria-expanded={aberto}
           aria-haspopup="dialog"
-          aria-label={`Uso do plano: ${usado} de ${limite} Leads novos este mês. Abrir detalhe.`}
+          aria-label={`${PLANOS_NA_UI ? "Uso do plano" : "Uso do mês"}: ${usado} de ${limite} Leads novos este mês. Abrir detalhe.`}
           className="inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 transition-colors duration-200 hover:bg-card-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           {/* Trilho em `border-strong`, não `zinc-800`: sobre o fundo quase
@@ -104,8 +105,11 @@ export function MedidorUsoCliente({
         </button>
 
         {/* O upsell mora no estado FECHADO: se só aparecesse depois do clique,
-            o gatilho de 80% da F035 não existiria. */}
-        {alerta && (
+            o gatilho de 80% da F035 não existiria. Pausado em 2026-08-17 — sem
+            plano pago pra vender, "Ver planos" aos 80% só levaria a um 404. O
+            âmbar da barra continua: o aviso de que a cota está acabando é
+            verdade com ou sem plano. */}
+        {PLANOS_NA_UI && alerta && (
           <Link
             href="/planos"
             className="hidden text-sm font-medium text-primary hover:underline sm:inline"
@@ -118,7 +122,7 @@ export function MedidorUsoCliente({
       {aberto && (
         <div
           role="dialog"
-          aria-label="Uso do plano"
+          aria-label={PLANOS_NA_UI ? "Uso do plano" : "Uso do mês"}
           className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card p-4 shadow-2xl"
         >
           <p className="text-sm text-zinc-200">
@@ -127,9 +131,11 @@ export function MedidorUsoCliente({
             </strong>{" "}
             Leads novos este mês
           </p>
-          <p className="mt-0.5 text-xs text-muted">
-            Plano {planoNome}
-          </p>
+          {PLANOS_NA_UI && (
+            <p className="mt-0.5 text-xs text-muted">
+              Plano {planoNome}
+            </p>
+          )}
 
           <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
             <div
@@ -141,7 +147,7 @@ export function MedidorUsoCliente({
           {mensal.length > 0 && (
             <div className="mt-4 border-t border-border pt-3">
               <p className="text-xs font-medium tracking-wider text-zinc-400 uppercase">
-                Este mês, no plano {planoNome}
+                {PLANOS_NA_UI ? `Este mês, no plano ${planoNome}` : "Este mês"}
               </p>
               <ul className="mt-2 space-y-1">
                 {mensal.map((u) => (
@@ -168,25 +174,32 @@ export function MedidorUsoCliente({
             </div>
           )}
 
-          <div className="mt-4 border-t border-border pt-3">
-            {estourado ? (
-              <p className="text-sm text-zinc-300">
-                Limite do mês atingido. Diagnosticar, abordar e o resto do
-                Orion continuam funcionando.
-              </p>
-            ) : alerta ? (
-              <p className="text-sm text-zinc-300">
-                Faltam {restante} para o limite do mês.
-              </p>
-            ) : null}
-            <Link
-              href="/planos"
-              onClick={() => setAberto(false)}
-              className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
-            >
-              Ver planos →
-            </Link>
-          </div>
+          {/* Sem o link (pausa de 2026-08-17) este bloco pode não ter nada a
+              dizer: abaixo dos 80% o rodapé era só o "Ver planos". Aí a borda
+              de cima some junto — uma linha separando o nada do nada. */}
+          {(PLANOS_NA_UI || estourado || alerta) && (
+            <div className="mt-4 border-t border-border pt-3">
+              {estourado ? (
+                <p className="text-sm text-zinc-300">
+                  Limite do mês atingido. Diagnosticar, abordar e o resto do
+                  Orion continuam funcionando.
+                </p>
+              ) : alerta ? (
+                <p className="text-sm text-zinc-300">
+                  Faltam {restante} para o limite do mês.
+                </p>
+              ) : null}
+              {PLANOS_NA_UI && (
+                <Link
+                  href="/planos"
+                  onClick={() => setAberto(false)}
+                  className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
+                >
+                  Ver planos →
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

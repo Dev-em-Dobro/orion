@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { PaginaLegal } from "@/components/pagina-legal";
 import { OPERADOR_LEGAL } from "@/lib/legal";
+import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 import { NOME_PRODUTO } from "@/lib/produto";
 
 export const metadata: Metadata = {
@@ -58,12 +59,22 @@ export default function TermosPage() {
             Você é responsável pela segurança da sua conta (login via Google
             e/ou magic link).
           </li>
+          {/* Pausa de 2026-08-17 (F035): sem `/planos` no ar, o texto não pode
+              remeter a limites "publicados" numa tela que dá 404 — os limites
+              seguem visíveis no medidor da topbar, que é onde o aluno os lê. */}
           <li>
-            O uso das APIs de terceiros (Google, provedores de IA) está
-            incluído no seu plano, dentro dos limites publicados em{" "}
-            <a href="/planos" className="text-primary hover:underline">
-              Planos
-            </a>
+            O uso das APIs de terceiros (Google, provedores de IA) está incluído
+            {PLANOS_NA_UI ? (
+              <>
+                {" "}
+                no seu plano, dentro dos limites publicados em{" "}
+                <a href="/planos" className="text-primary hover:underline">
+                  Planos
+                </a>
+              </>
+            ) : (
+              " no seu acesso, dentro dos limites de uso mostrados no app"
+            )}
             . Se você optou por usar chaves próprias, é responsável por elas,
             pelos custos cobrados pelos provedores e pelo uso conforme os
             termos deles.

@@ -10,6 +10,7 @@ import {
   type DescarteLoteState,
 } from "@/actions/leads/descartar";
 import { exportarLeadsCsv } from "@/actions/leads/exportarCsv";
+import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 import { IconeCadeado } from "@/components/icones";
 import { LeadCard, type LeadCardProps } from "./lead-card";
 import { MandarProFunilButton } from "./mandar-pro-funil-button";
@@ -116,11 +117,24 @@ export function LeadsGrid({
               >
                 Exportar CSV
               </button>
-            ) : (
+            ) : PLANOS_NA_UI ? (
               <Link href="/planos?recurso=exportar_csv" className="btn-ghost gap-1.5">
                 <IconeCadeado />
                 Exportar CSV
               </Link>
+            ) : (
+              // Caminho morto hoje (o CSV está aberto em todo plano). Com a
+              // pausa de 2026-08-17 o cadeado não tem pra onde levar, então
+              // vira botão desabilitado em vez de link pra 404.
+              <button
+                type="button"
+                disabled
+                title="Indisponível no momento"
+                className="btn-ghost gap-1.5 cursor-not-allowed opacity-60"
+              >
+                <IconeCadeado />
+                Exportar CSV
+              </button>
             )}
             {/* Dois tempos em vez de `confirm()`: o diálogo do sistema é
                 inestilizável, some no fundo escuro e bloqueia a aba inteira. O

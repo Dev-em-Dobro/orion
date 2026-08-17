@@ -7,6 +7,7 @@ import {
   LABEL_RECURSO,
   type OperacaoMensal,
 } from "./catalogo";
+import { PLANOS_NA_UI } from "./exibicao";
 
 /**
  * Teto **mensal** de uma operação atingido. A mensagem nomeia a operação
@@ -23,10 +24,16 @@ export class LimiteDoPlanoError extends Error {
     const oQue = operacao
       ? LABEL_OPERACAO_MENSAL[operacao].toLowerCase()
       : "itens";
+    // Pausa de 2026-08-17 (F035): sem `/planos` no ar, "veja os planos" mandaria
+    // o aluno pra um 404 e nomear o plano não lhe dá escolha nenhuma. Fica o que
+    // ele pode fazer com a informação: o que acabou, e quando volta.
     super(
-      `Você usou ${usado} de ${limite} ${oQue} este mês — o limite do plano ` +
-        `${definicao(plano).nome}. O resto do Orion continua funcionando; ` +
-        "para liberar mais, veja os planos.",
+      PLANOS_NA_UI
+        ? `Você usou ${usado} de ${limite} ${oQue} este mês — o limite do plano ` +
+            `${definicao(plano).nome}. O resto do Orion continua funcionando; ` +
+            "para liberar mais, veja os planos."
+        : `Você usou ${usado} de ${limite} ${oQue} este mês — é o limite. ` +
+            "O resto do Orion continua funcionando, e a cota zera na virada do mês.",
     );
     this.name = "LimiteDoPlanoError";
   }

@@ -13,6 +13,7 @@ import {
 } from "@/lib/planos/catalogo";
 import { competenciaDe } from "@/lib/planos/competencia";
 import { LimiteDoPlanoError } from "@/lib/planos/erros";
+import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 import { QUANTIDADES } from "@/lib/leads/aprofundamento";
 
 describe("F035 — teto mensal por operação", () => {
@@ -81,15 +82,23 @@ describe("F035 — a mensagem de limite nomeia o que acabou", () => {
       const limite = limiteDaOperacao("free", op);
       const e = new LimiteDoPlanoError("free", limite, limite, op);
       expect(e.message).toContain(String(limite));
-      expect(e.message).toContain("Free");
-      // "para liberar mais, veja os planos" — o CTA não pode sumir.
-      expect(e.message).toContain("planos");
+      if (PLANOS_NA_UI) {
+        expect(e.message).toContain("Free");
+        // "para liberar mais, veja os planos" — o CTA não pode sumir.
+        expect(e.message).toContain("planos");
+      } else {
+        // AC24 da pausa de 2026-08-17: sem tela pra onde mandar, a mensagem
+        // troca o CTA pelo que o aluno pode fazer com a informação — nada de
+        // nomear plano e nada de "veja os planos" apontando pra um 404.
+        expect(e.message).not.toContain("plano");
+        expect(e.message).toContain("virada do mês");
+      }
     }
   });
 
   it("sem operação, ainda diz algo útil", () => {
     const e = new LimiteDoPlanoError("pro", 300, 300);
     expect(e.message).toContain("300");
-    expect(e.message).toContain("Pro");
+    expect(e.message).toContain(PLANOS_NA_UI ? "Pro" : "é o limite");
   });
 });

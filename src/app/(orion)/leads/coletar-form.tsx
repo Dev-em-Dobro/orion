@@ -17,6 +17,7 @@ import {
 } from "@/lib/nichos/catalogo";
 import { QUANTIDADES } from "@/lib/leads/aprofundamento";
 import { UFS } from "@/lib/localidades/ufs";
+import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 import { ComboBox } from "@/components/combobox";
 
 const initial: ColetarState = { kind: "idle" };
@@ -79,7 +80,8 @@ function DialogoCota({
         <p className="mt-3 text-sm text-muted">
           Você pediu <strong className="text-zinc-200">{pedido}</strong> Leads e
           ainda pode adicionar <strong className="text-zinc-200">{restante}</strong>{" "}
-          este mês (plano {planoNome}: {limite}/mês).
+          este mês ({PLANOS_NA_UI ? `plano ${planoNome}: ` : ""}
+          {limite}/mês).
         </p>
 
         <p className="mt-3 text-sm text-muted">
@@ -105,9 +107,11 @@ function DialogoCota({
               Buscar só {menor}
             </button>
           ) : null}
-          <Link href="/planos" className="btn-ghost">
-            Ver planos
-          </Link>
+          {PLANOS_NA_UI && (
+            <Link href="/planos" className="btn-ghost">
+              Ver planos
+            </Link>
+          )}
           <button type="button" onClick={onSeguir} className="btn-ghost">
             Continuar assim mesmo
           </button>
@@ -185,11 +189,14 @@ export function ColetarForm({
 
       {restante <= 0 && (
         <p className="alert-erro mt-4">
-          Você já usou os {limite} Leads novos do mês (plano {planoNome}). Buscar
-          agora gastaria consulta no Google sem poder salvar nada.{" "}
-          <Link href="/planos" className="underline underline-offset-2">
-            Ver planos
-          </Link>
+          Você já usou os {limite} Leads novos do mês
+          {PLANOS_NA_UI ? ` (plano ${planoNome})` : ""}. Buscar agora gastaria
+          consulta no Google sem poder salvar nada. Zera na virada do mês.{" "}
+          {PLANOS_NA_UI && (
+            <Link href="/planos" className="underline underline-offset-2">
+              Ver planos
+            </Link>
+          )}
         </p>
       )}
 
@@ -374,9 +381,11 @@ export function ColetarForm({
             <p className="text-xs text-amber-300">
               <strong>{state.foraDaCota}</strong> resultado(s) não couberam no
               limite do mês e foram descartados — ficaram os de maior potencial.{" "}
-              <Link href="/planos" className="underline underline-offset-2">
-                Ver planos
-              </Link>
+              {PLANOS_NA_UI && (
+                <Link href="/planos" className="underline underline-offset-2">
+                  Ver planos
+                </Link>
+              )}
             </p>
           )}
           {state.ampliou && (

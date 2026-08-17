@@ -18,6 +18,7 @@ import {
 } from "@/lib/planos/catalogo";
 import { competenciaDe, rotuloCompetencia } from "@/lib/planos/competencia";
 import { LimiteDoPlanoError, RecursoDoPlanoError } from "@/lib/planos/erros";
+import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 import { planoDosEntitlements } from "@/lib/planos/resolver";
 import type { Plano } from "@/lib/planos/catalogo";
 
@@ -147,11 +148,18 @@ describe("F035 — competência (America/Sao_Paulo)", () => {
 });
 
 describe("F035 — mensagens de erro", () => {
-  it("LimiteDoPlanoError diz o número, o plano e o que continua funcionando", () => {
+  it("LimiteDoPlanoError diz o número e o que continua funcionando", () => {
     const e = new LimiteDoPlanoError("free", 40, 40);
     expect(e.message).toContain("40");
-    expect(e.message).toContain("Free");
-    expect(e.message).toContain("planos");
+    expect(e.message).toContain("continua funcionando");
+    if (PLANOS_NA_UI) {
+      expect(e.message).toContain("Free");
+      expect(e.message).toContain("planos");
+    } else {
+      // AC24 (pausa de 2026-08-17): a palavra "plano" não aparece enquanto não
+      // há plano pago pra vender.
+      expect(e.message).not.toContain("plano");
+    }
     expect(e.name).toBe("LimiteDoPlanoError");
   });
 
