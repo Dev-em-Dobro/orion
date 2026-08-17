@@ -17,20 +17,27 @@ import { QUANTIDADES } from "@/lib/leads/aprofundamento";
 
 describe("F035 — teto mensal por operação", () => {
   it("o Free cabe no free tier do Google (11 §4)", () => {
-    // 60 Leads = 3 páginas de 20. Com 1.000 requisições grátis por mês na
-    // conta inteira, isso são ~333 alunos Free a custo zero de Places. Subir
-    // este número é decisão de custo, não de UI.
+    // 40 Leads = 2 páginas de 20. Com 1.000 requisições grátis por mês na
+    // conta inteira, isso são ~500 alunos Free a custo zero de Places. Era 60
+    // (3 páginas, ~333 alunos) até 2026-08-16: depois que Abordagem e Proposta
+    // zeraram, o Places virou quase todo o custo do Free, e o teto passou a ser
+    // — sem intermediário — a escolha de quantos alunos gratuitos cabem.
     const leads = limiteDaOperacao("free", "lead_novo");
-    expect(leads).toBe(60);
+    expect(leads).toBe(40);
     expect(leads % 20).toBe(0);
-    expect(Math.floor(1000 / (leads / 20))).toBeGreaterThanOrEqual(300);
+    expect(Math.floor(1000 / (leads / 20))).toBeGreaterThanOrEqual(500);
   });
 
-  it("o teto do Free é uma opção de busca inteira — sem colisão", () => {
-    // A colisão que existia: teto 50 com opções 20/60/100 fazia com que
-    // nenhuma das duas maiores coubesse num mês.
+  it("o teto do Free é um número inteiro de buscas — sem colisão", () => {
+    // A colisão que existia: teto 50 com opções 20/60/100 fazia com que NENHUMA
+    // opção coubesse num mês Free — o aluno não tinha uma escolha que desse
+    // certo. O que protege contra isso não é o teto ser uma opção (era assim
+    // com 60), e sim **existir opção que cabe e feche a conta exata**: com 40,
+    // duas buscas de 20 são exatamente um mês.
     const teto = limiteDaOperacao("free", "lead_novo");
-    expect([...QUANTIDADES]).toContain(teto);
+    const cabem = QUANTIDADES.filter((q) => q <= teto && teto % q === 0);
+    expect(cabem.length).toBeGreaterThan(0);
+    expect(Math.min(...cabem)).toBe(20);
   });
 
   it("toda opção de busca cai em página cheia do Places", () => {

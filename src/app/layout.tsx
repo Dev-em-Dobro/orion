@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Libre_Bodoni } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
 import { NOME_PRODUTO } from "@/lib/produto";
 import "./globals.css";
@@ -17,6 +17,21 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
+});
+
+// F012 (emenda visual 2026-08-16) — display serif da folha A4 da Proposta.
+//
+// `preload: false` porque ela não aparece em tela nenhuma: só é usada dentro do
+// `@media print` de `globals.css`. Sem isso o Next mandaria um `<link rel=
+// "preload">` em toda rota pra baixar uma fonte que ninguém vê até clicar em
+// "Baixar PDF" — o mesmo pedágio que a F028 tirou do medidor de uso, agora em
+// bytes. Com a regra dentro de `@media print`, o navegador só busca o arquivo
+// quando a impressão abre.
+const libreBodoni = Libre_Bodoni({
+  subsets: ["latin"],
+  weight: ["600"],
+  preload: false,
+  variable: "--font-libre-bodoni",
 });
 
 export const metadata: Metadata = {
@@ -37,7 +52,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${libreBodoni.variable}`}
     >
       <body className="font-sans antialiased">
         <AppShell>{children}</AppShell>

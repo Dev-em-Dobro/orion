@@ -1,77 +1,34 @@
-// F005/F006 — Geração da Abordagem via LlmClient (F017 / ADR-011).
+// F005/F006/F038 — geração da Abordagem. Montada em código desde 2026-08-16.
+// Spec: F005-abordagem-whatsapp.md ("Emenda 2026-08-16 — a Abordagem sai da IA")
+//
+// Era um wrapper de LLM (`llm.generateStructured`, tier strong). Virou uma
+// chamada síncrona: sem rede, sem chave, sem latência e sem custo. Por isso
+// não sobrou `AbordagemError` — não existe mais caminho de falha aqui, e um
+// erro que nunca acontece só faz o chamador tratar fantasma.
 
-import { z } from "zod";
-import type { LlmClient } from "@/lib/llm";
-import { LlmError } from "@/lib/llm";
-import {
-  systemPrompt,
-  montarContexto,
-  type ContextoLead,
-  type TipoAbordagem,
-} from "./prompt";
+import { montarAbordagem, montarRoteiro, type ContextoLead } from "./montar";
 import { removerEmojis } from "./removerEmojis";
-import { systemPromptLigacao } from "./prompt-ligacao";
 
-export class AbordagemError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
-    this.name = "AbordagemError";
-  }
-}
-
-const schema = z.object({ mensagem: z.string() });
-
-/** Gera a mensagem de Abordagem de WhatsApp para um Lead. */
-export async function gerarAbordagem(
-  ctx: ContextoLead,
-  llm: LlmClient,
-  tipo: TipoAbordagem = "primeira",
-): Promise<{ mensagem: string }> {
-  try {
-    const out = await llm.generateStructured({
-      system: systemPrompt(tipo),
-      prompt: montarContexto(ctx),
-      schema,
-      tier: "strong",
-      maxTokens: 1024,
-    });
-    return { mensagem: removerEmojis(out.mensagem.trim()) };
-  } catch (e) {
-    if (e instanceof AbordagemError) throw e;
-    if (e instanceof LlmError) {
-      throw new AbordagemError(e.status, e.message);
-    }
-    throw e;
-  }
-}
+export type { ContextoLead, DorDoLead, TipoAbordagem } from "./montar";
 
 /**
- * F038 — roteiro falado (ligação ou áudio de WhatsApp).
- *
- * Mesmo contexto e mesma saída de um campo da F005: o que muda é o system
- * prompt, porque o texto vai ser **dito**, não enviado. Quem grava o resultado
- * usa `canal = "ligacao"` — e a UI não oferece `wa.me` pra ele.
+ * `removerEmojis` fica, mesmo com o pool sendo texto nosso e sem emoji nenhum.
+ * Não é paranoia com o próprio código: `BRAND.propostaDeValor` e
+ * `BRAND.ofertaDeEntrada` são editáveis pelo aluno e entram na mensagem. Um
+ * emoji colado ali quebraria o encode do `wa.me` — que é o motivo original da
+ * regra na F005, e ele não some porque a IA saiu.
  */
-export async function gerarRoteiroLigacao(
+export function gerarAbordagem(
   ctx: ContextoLead,
-  llm: LlmClient,
-  tipo: TipoAbordagem = "primeira",
-): Promise<{ mensagem: string }> {
-  try {
-    const out = await llm.generateStructured({
-      system: systemPromptLigacao(tipo),
-      prompt: montarContexto(ctx),
-      schema,
-      tier: "strong",
-      maxTokens: 1024,
-    });
-    return { mensagem: removerEmojis(out.mensagem.trim()) };
-  } catch (e) {
-    if (e instanceof AbordagemError) throw e;
-    if (e instanceof LlmError) throw new AbordagemError(e.status, e.message);
-    throw e;
-  }
+  tipo: "primeira" | "followup" = "primeira",
+): { mensagem: string } {
+  return { mensagem: removerEmojis(montarAbordagem(ctx, tipo).trim()) };
+}
+
+/** F038 — roteiro falado (ligação ou áudio de WhatsApp). */
+export function gerarRoteiroLigacao(
+  ctx: ContextoLead,
+  tipo: "primeira" | "followup" = "primeira",
+): { mensagem: string } {
+  return { mensagem: removerEmojis(montarRoteiro(ctx, tipo).trim()) };
 }

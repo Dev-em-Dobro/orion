@@ -510,18 +510,73 @@
     top: 0;
     left: 0;
     width: 100%;
-    /* Papel: preto no branco, e serifa no corpo do texto. */
-    color: #111827;
+
+    /* F012 (emenda visual 2026-08-16) — sem isto o navegador DESCARTA todo
+       fundo colorido na impressão, e a folha sai igual à versão preto-e-branco
+       de antes: a faixa navy e o painel do investimento simplesmente somem.
+       É a linha que sustenta a AC17. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+
+    color: #1e293b;
     background: #ffffff;
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 11pt;
-    line-height: 1.55;
+    /* Inter é a fonte do app e já está self-hosted — imprime sem depender de
+       rede. O serif entra só no display (ver `.fp-display`). */
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.6;
+    /* O recuo lateral sai do `@page` e vem pra cá: é o que permite a faixa do
+       cabeçalho sangrar até a borda, cancelando este padding com margem
+       negativa. */
+    padding: 0 16mm;
   }
 
-  .folha-proposta h1,
-  .folha-proposta h2,
-  .folha-proposta .fp-sans {
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Display serif: título, parágrafo de abertura e o valor do investimento.
+     Só existe aqui dentro, e é por isso que a fonte não é baixada em navegação
+     normal (`preload: false` em `layout.tsx`). */
+  .folha-proposta .fp-display {
+    font-family: var(--font-libre-bodoni), Georgia, "Times New Roman", serif;
+    font-weight: 600;
+  }
+
+  /* Rótulos versaletes: "ESCOPO", "INVESTIMENTO", "PRAZO ESTIMADO". */
+  .folha-proposta .fp-rotulo {
+    font-size: 8.5pt;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  /* Cabeçalho que sangra: a margem negativa cancela o padding da folha. */
+  .folha-proposta .fp-capa {
+    background: #0f172a;
+    margin: 0 -16mm 10mm;
+    padding: 16mm 16mm 12mm;
+  }
+
+  /* Marcador desenhado no lugar do bullet do navegador, que muda de desenho
+     por sistema operacional — mesma regra dos ícones da UI. */
+  .folha-proposta .fp-entregaveis {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .folha-proposta .fp-entregaveis li {
+    position: relative;
+    padding-left: 6mm;
+    margin-bottom: 2mm;
+    color: #475569;
+  }
+  .folha-proposta .fp-entregaveis li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2.2mm;
+    width: 2.4mm;
+    height: 2.4mm;
+    border-radius: 50%;
+    background: #0369a1;
   }
 
   .folha-proposta a {
@@ -537,6 +592,13 @@
 
   @page {
     size: A4;
-    margin: 18mm 16mm;
+    /* Sem margem lateral: quem recua é a folha, pra faixa poder sangrar. */
+    margin: 16mm 0;
+  }
+
+  /* Só a primeira página cola no topo — é onde a faixa navy sangra. Nas
+     seguintes a margem de cima volta, senão o texto nasce grudado na borda. */
+  @page :first {
+    margin: 0 0 16mm;
   }
 }

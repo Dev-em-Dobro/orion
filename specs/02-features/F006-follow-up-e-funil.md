@@ -17,6 +17,16 @@ não há follow-up (onde mora a maior parte das respostas) e não se aprende o q
 converte. É a feature que transforma a ferramenta de "gerador de mensagem" em
 "motor de prospecção mensurável".
 
+> **Emenda 2026-08-16 — o follow-up sai da IA.** A geração do 2º toque passa a
+> ser montada em código, com pool de variantes próprio — ver a emenda da
+> [F005](F005-abordagem-whatsapp.md#emenda-2026-08-16--a-abordagem-sai-da-ia).
+>
+> A regra "não repita a primeira mensagem palavra por palavra" era instrução de
+> prompt, e portanto um pedido: o modelo não via a primeira mensagem, então
+> cumprir dependia de sorte. No montador o follow-up é **semeado com
+> deslocamento** em relação à primeira do mesmo Lead, o que torna a não-repetição
+> uma garantia estrutural e testável (AC12 da F005) em vez de uma esperança.
+
 ## Por que follow-up
 Na prospecção fria, **a maioria das respostas vem do 2º–4º toque**, não do 1º.
 Uma fila que cobra o follow-up no tempo certo é o maior alavancador de

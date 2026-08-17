@@ -32,10 +32,21 @@ export const LABEL_RECURSO: Record<Recurso, string> = {
  * como limite de produto — a diária continua existindo, mas só como freio
  * anti-loop (ver F035, "Modelo de dados").
  */
+/**
+ * Só entra aqui operação que **custa dinheiro**. É a régua da F035 desde
+ * 2026-08-16: limite existe pra conter custo, não pra criar degrau de venda.
+ *
+ * `proposta` e `abordagem` saíram no mesmo dia, quando passaram a ser montadas
+ * em código e o custo virou $0. Os dois tetos tinham deixado de fazer sentido de
+ * formas visíveis: 3 Propostas/mês contra a recomendação da F012 de gerar três
+ * opções, e 150 Abordagens contra os 300 Leads que o Pro compra — com o
+ * follow-up consumindo a mesma cota, dava 75 Leads trabalhados de 300.
+ *
+ * Os valores continuam no enum `OperacaoMensal` do banco; as linhas já gravadas
+ * viram histórico e param de ser lidas. Sem migração.
+ */
 export const OPERACOES_MENSAIS = [
   "lead_novo",
-  "abordagem",
-  "proposta",
   "objecoes",
   "agente_msg",
   "simulador_msg",
@@ -44,8 +55,6 @@ export type OperacaoMensal = (typeof OPERACOES_MENSAIS)[number];
 
 export const LABEL_OPERACAO_MENSAL: Record<OperacaoMensal, string> = {
   lead_novo: "Leads novos",
-  abordagem: "Abordagens",
-  proposta: "Propostas",
   objecoes: "Respostas a objeção",
   agente_msg: "Perguntas ao Agente",
   simulador_msg: "Mensagens no Simulador",
@@ -74,12 +83,13 @@ export const CATALOGO_PLANOS: Record<Plano, DefinicaoPlano> = {
     nome: "Free",
     precoCentavos: 0,
     limites: {
-      // 60 = 3 páginas exatas do Places e ~333 alunos dentro do free tier do
-      // Google. É também a opção do meio da busca (F033): uma busca de 60 é
-      // exatamente um mês de Free.
-      lead_novo: 60,
-      abordagem: 20,
-      proposta: 3,
+      // 40 = 2 páginas exatas do Places e ~500 alunos dentro do free tier do
+      // Google (1.000 req/mês na conta inteira). Era 60 (3 páginas, ~333
+      // alunos) até 2026-08-16: o Places é a única linha de custo que não
+      // zeramos, então o teto do Free é, na prática, a escolha de quantos
+      // alunos gratuitos cabem de graça. Duas buscas de 20 (a menor opção da
+      // F033) são um mês de Free.
+      lead_novo: 40,
       objecoes: 5,
       // Aperitivo deliberado: 5 perguntas por mês não resolvem trabalho, servem
       // pra ver o Agente responder sobre a própria base.
@@ -96,8 +106,6 @@ export const CATALOGO_PLANOS: Record<Plano, DefinicaoPlano> = {
     precoCentavos: 3900,
     limites: {
       lead_novo: 300,
-      abordagem: 150,
-      proposta: 30,
       objecoes: 50,
       agente_msg: 100,
       simulador_msg: 300,
@@ -114,8 +122,6 @@ export const CATALOGO_PLANOS: Record<Plano, DefinicaoPlano> = {
       // Caiu de 1.500 pra 800 em 2026-08-13: a 1.500 a margem no preço de
       // aluno ficava em 25% (ver 11 §5).
       lead_novo: 800,
-      abordagem: 300,
-      proposta: 60,
       objecoes: 80,
       agente_msg: 300,
       simulador_msg: 1000,

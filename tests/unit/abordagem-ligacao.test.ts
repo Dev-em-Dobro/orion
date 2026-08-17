@@ -1,14 +1,29 @@
 import { describe, expect, it } from "vitest";
 import { ehRoteiroFalado, ROTULO_CANAL } from "@/lib/abordagem/canais";
-import { montarContexto, systemPrompt } from "@/lib/abordagem/prompt";
-import { systemPromptLigacao } from "@/lib/abordagem/prompt-ligacao";
+import {
+  gerarAbordagem,
+  gerarRoteiroLigacao,
+  type ContextoLead,
+} from "@/lib/abordagem/gerarAbordagem";
 
 // F038 — abordagem por voz. Spec: /specs/02-features/F038-abordagem-por-voz.md
-const CTX = {
+//
+// Emenda de 2026-08-16: estes testes olhavam o **system prompt** ("o prompt
+// contém a frase 'nunca dite a URL'"), que era o máximo que dava pra verificar
+// quando a saída vinha de um modelo. Com a montagem em código eles passam a
+// olhar **a saída**. É a diferença entre testar o pedido e testar o resultado.
+const CTX: ContextoLead = {
   nome: "Clínica Vet Amigo",
   categoria: "veterinary_care",
   endereco: "Rua X, 100",
-  dores: ["site muito lento no celular (nota 31/100)"],
+  dores: [
+    {
+      tipo: "SITE_LENTO",
+      severidade: "ALTA",
+      detalhes: "site muito lento no celular (nota 31/100)",
+    },
+  ],
+  seed: "clh1x2y3z4a5b6c7d8e9f0",
 };
 
 describe("canais", () => {
@@ -30,56 +45,54 @@ describe("canais", () => {
   });
 });
 
-describe("systemPromptLigacao", () => {
-  it("proíbe URL na fala — ninguém soletra endereço de site (AC3)", () => {
-    const p = systemPromptLigacao("primeira");
-    expect(p).toContain("nunca dite a URL");
-    expect(p).toContain("Qualquer URL");
+describe("roteiro falado (F038)", () => {
+  const url = "https://demos.exemplo.com/vet-amigo";
+
+  it("nunca leva URL, nem quando o Lead tem demo (AC3)", () => {
+    // Antes isto era uma instrução no prompt e uma torcida. Agora o montador
+    // do roteiro simplesmente não lê `demoUrl`.
+    const { mensagem } = gerarRoteiroLigacao({ ...CTX, demoUrl: url });
+    expect(mensagem).not.toContain(url);
+    expect(mensagem).not.toContain("http");
   });
 
-  it("proíbe rubrica de teatro: a saída é só o que se fala (AC3)", () => {
-    const p = systemPromptLigacao("primeira");
-    expect(p).toContain("[pausa]");
-    expect(p).toContain("Rubrica");
+  it("marca as pausas, porque quem lê é o aluno (AC3)", () => {
+    const { mensagem } = gerarRoteiroLigacao(CTX);
+    expect(mensagem).toContain("(pausa)");
   });
 
   it("o follow-up falado é mais curto que o primeiro contato", () => {
-    expect(systemPromptLigacao("primeira")).toContain("~90 palavras");
-    expect(systemPromptLigacao("followup")).toContain("~60 palavras");
+    const primeira = gerarRoteiroLigacao(CTX, "primeira").mensagem;
+    const followup = gerarRoteiroLigacao(CTX, "followup").mensagem;
+    expect(followup.length).toBeLessThan(primeira.length);
   });
 
-  it("é um prompt diferente do de texto — não é o mesmo tom", () => {
-    expect(systemPromptLigacao("primeira")).not.toBe(systemPrompt("primeira"));
-  });
-});
-
-describe("montarContexto — site de amostra (F038)", () => {
-  it("sem demo, nenhuma linha de link: o modelo não pode inventar um", () => {
-    const ctx = montarContexto(CTX);
-    expect(ctx).not.toContain("Site de amostra");
-    expect(ctx).toContain("Clínica Vet Amigo");
-  });
-
-  it("com demo, a URL entra crua pro modelo colar sem reescrever", () => {
-    const url = "https://demos.exemplo.com/vet-amigo";
-    const ctx = montarContexto({ ...CTX, demoUrl: url });
-    expect(ctx).toContain(`Site de amostra`);
-    expect(ctx).toContain(url);
-  });
-
-  it("demoUrl null é tratado como ausente", () => {
-    expect(montarContexto({ ...CTX, demoUrl: null })).not.toContain(
-      "Site de amostra",
+  it("não é o mesmo texto da mensagem escrita — o tom é outro", () => {
+    expect(gerarRoteiroLigacao(CTX).mensagem).not.toBe(
+      gerarAbordagem(CTX).mensagem,
     );
   });
 });
 
-describe("systemPrompt de texto — link do site de amostra", () => {
-  it("manda colar a URL exatamente como veio, e não inventar sem ela", () => {
-    for (const tipo of ["primeira", "followup"] as const) {
-      const p = systemPrompt(tipo);
-      expect(p).toContain("exatamente como veio");
-      expect(p).toContain("não invente link nenhum");
-    }
+describe("site de amostra na mensagem escrita (F038 / F005 AC16)", () => {
+  const url = "https://demos.exemplo.com/vet-amigo";
+
+  it("sem demo, nenhuma URL: não há link pra inventar", () => {
+    const { mensagem } = gerarAbordagem(CTX);
+    expect(mensagem).not.toContain("http");
+    expect(mensagem).toContain("Clínica Vet Amigo");
+  });
+
+  it("com demo, a URL entra crua e em linha própria no fim", () => {
+    const { mensagem } = gerarAbordagem({ ...CTX, demoUrl: url });
+    expect(mensagem.endsWith(url)).toBe(true);
+    // Crua: reescrever link é a forma mais fácil de entregar link quebrado.
+    expect(mensagem).toContain(url);
+  });
+
+  it("demoUrl null é tratado como ausente", () => {
+    expect(gerarAbordagem({ ...CTX, demoUrl: null }).mensagem).not.toContain(
+      "http",
+    );
   });
 });

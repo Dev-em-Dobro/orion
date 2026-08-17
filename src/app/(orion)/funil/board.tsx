@@ -163,7 +163,9 @@ export function Board({
                     // coluna. Nesses casos o card não sai do DOM, então o
                     // evento chega normalmente.
                     onDragEnd={() => setArrastando(null)}
-                    className={`cursor-grab rounded-lg border bg-card p-3 ${
+                    // `relative`: é o que o alvo esticado do link usa como
+                    // referência (ver o `after:` no `<Link>` do nome).
+                    className={`relative cursor-grab rounded-lg border bg-card p-3 ${
                       destacados.has(card.id)
                         ? "border-primary ring-1 ring-primary"
                         : "border-border"
@@ -173,9 +175,20 @@ export function Board({
                       {/* `?de=funil`: sem isso a seta "voltar" do detalhe
                           largava o aluno em `/leads`, e quem estava operando o
                           kanban perdia o lugar. */}
+                      {/* Alvo esticado: o `::after` cobre o card inteiro, então
+                          clicar em qualquer ponto abre o Lead. O nome sozinho
+                          era 25% da área do card — o aluno acertava mirando no
+                          texto e errava mirando no card, que de fora é "às
+                          vezes abre, às vezes não".
+
+                          Uma âncora só, com `href` de verdade: nova aba, copiar
+                          link e leitor de tela continuam funcionando, que é o
+                          que se perderia com `onClick` no `<li>`. Envolver o
+                          card em `<a>` seria inválido — ele contém botão e
+                          select. */}
                       <Link
                         href={`/leads/${card.id}?de=funil`}
-                        className="text-sm font-medium text-zinc-100 hover:text-primary hover:underline"
+                        className="text-sm font-medium text-zinc-100 hover:text-primary hover:underline after:absolute after:inset-0 after:content-['']"
                       >
                         {card.nome}
                       </Link>
@@ -197,7 +210,10 @@ export function Board({
                       {rotuloCategoria(card.categoria)}
                     </p>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-1">
+                    {/* `relative z-10`: sobe acima do alvo esticado do card,
+                        senão o link do WhatsApp e o select viram área de "abrir
+                        o Lead" e param de funcionar. */}
+                    <div className="relative z-10 mt-2 flex flex-wrap items-center gap-1">
                       {card.waLink && (
                         <a
                           href={card.waLink}

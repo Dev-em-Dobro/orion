@@ -145,6 +145,37 @@ permanece montado. O `onDragEnd` do card continua, e continua servindo: ele é
 quem cobre o arrasto cancelado (`Esc`) ou solto fora de qualquer coluna, onde
 não há `drop` nenhum pra disparar.
 
+## O card inteiro abre o Lead (corrigido em 2026-08-16)
+
+Relato: *"clico no lead no funil e não abre a página interna dele"*. Não era
+falha intermitente nem bug de navegação — era **alvo pequeno demais**.
+
+Medido no board: o card tem 230 × 129 px; o link com o nome tem 160 × 47.
+**Só 25% da área do card navegava.** Os outros 75% — a linha da categoria, os
+badges, o espaço em branco — não faziam nada. E o cursor sobre o card é `grab`
+o tempo inteiro, então nada na tela dizia "isto abre", só "isto se arrasta".
+
+O aluno acerta o alvo quando mira no nome, erra quando mira no card. De fora,
+isso é exatamente "às vezes abre, às vezes não".
+
+**A correção é o card inteiro virar alvo**, pelo *stretched link*: o `<a>` do
+nome ganha um `::after` absoluto cobrindo o `<li>`. Uma âncora só, com `href`
+de verdade — abrir em nova aba, copiar o link e leitor de tela continuam
+funcionando, que é o que se perderia com `onClick` no `<li>`.
+
+Envolver o card inteiro em `<a>` seria a solução ingênua e está **errada**: o
+card contém o botão do WhatsApp e o select "Mover para", e conteúdo interativo
+dentro de âncora é HTML inválido — além de tornar o select inalcançável por
+teclado. Esses dois sobem de camada (`relative z-10`) e continuam clicáveis
+por cima do alvo esticado.
+
+O arrasto não muda: o `::after` é filho do `<li>`, então o `dragstart` continua
+saindo do ancestral `draggable`.
+
+- [ ] **AC17** — Clicar em **qualquer ponto** do card abre o Lead — não só no
+      nome. O botão do WhatsApp e o select "Mover para" continuam clicáveis e
+      **não** abrem o Lead.
+
 ## Decisões de implementação
 - `src/app/(orion)/funil/page.tsx` (server) + `board.tsx` (client, só o
   arrastar).

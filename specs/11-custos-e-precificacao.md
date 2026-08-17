@@ -102,21 +102,34 @@ Lead ≈ 2.000 tokens de entrada; saída conforme a operação). Câmbio assumid
 | Busca (padrão de hoje, 5 páginas) | 5 req Places | $0,175 · R$0,96 |
 | **Triagem** (score de todos, F025) | — | **$0** |
 | **Diagnóstico** de 1 Lead (F002 + F026 + F027) | 1 GET no site + 1 PSI | **$0** |
-| **Abordagem** WhatsApp ou e-mail (~300 tokens de saída) | gpt-4o | **~$0,008** · R$0,04 |
-| Abordagem no tier `fast` | gpt-4o-mini | ~$0,0005 · R$0,003 |
-| **Proposta** (F012, ~800 tokens de saída) | gpt-4o | ~$0,013 · R$0,07 |
+| **Abordagem** WhatsApp, follow-up ou roteiro de ligação | ~~gpt-4o~~ **montada em código** | **$0** |
+| **Proposta** (F012) | ~~gpt-4o~~ **montada em código** | **$0** |
 | **Objeções** (F011) | gpt-4o | ~$0,008 · R$0,04 |
 | **Simulador** (F013, por mensagem) | gpt-4o | ~$0,006 · R$0,03 |
 | **Agente** (F029, por pergunta, 1–3 chamadas) | gpt-4o | ~$0,02 · R$0,11 |
+
+> **Revisão de 2026-08-16 — Abordagem e Proposta zeraram.** As duas passaram a
+> ser montadas em código ([F005](02-features/F005-abordagem-whatsapp.md),
+> [F012](02-features/F012-gerador-de-proposta.md)). Motivo: depois da emenda de
+> precificação, a IA da Proposta só reescrevia 8 descrições fixas do catálogo, e
+> a da Abordagem só combinava 6 Dores conhecidas com uma oferta fixa — as duas
+> pontas já eram texto escrito à mão. Era LLM fazendo mala direta.
+>
+> Os valores antigos ($0,008 e $0,013) ficam registrados aqui porque a conta de
+> quanto se economizou depende deles. E fica um aviso: a
+> [F012](02-features/F012-gerador-de-proposta.md) carregava uma estimativa de
+> **R$0,15–0,25** por Proposta, de antes desta análise, que virou fonte de outras
+> contas por inércia. Estimativa velha não apagada vira número oficial.
 
 Duas leituras que orientam o resto do documento:
 
 1. **O diagnóstico — o coração do produto — é grátis.** PageSpeed é gratuito e
    a leitura do site aproveita uma requisição que já acontecia
    ([ADR-016](04-decisions/ADR-016-leitura-do-site-do-lead.md)).
-2. **O custo está na busca, não na IA.** Uma busca custa o equivalente a ~4
-   Abordagens. Limitar geração de texto protege pouco; limitar **coleta**
-   protege muito.
+2. **O custo está na busca, não na IA.** Era verdade antes e ficou mais verdade
+   depois: com Abordagem e Proposta zeradas, o Places passa a ser **46%** do
+   custo de um Pro no teto. Limitar geração de texto protegia pouco; limitar
+   **coleta** protege muito.
 
 ---
 
@@ -137,15 +150,61 @@ custo, conversa interativa de alto volume — ver §6, alavanca 3).
 
 | | Free | Pro | Agência |
 |---|---|---|---|
-| Leads novos/mês | 60 | 300 | 800 |
-| Places (req · custo) | 3 · $0,105 | 15 · $0,525 | 40 · $1,400 |
-| Abordagem (4o) | 20 · $0,160 | 150 · $1,200 | 300 · $2,400 |
-| Proposta (4o) | 3 · $0,039 | 30 · $0,390 | 60 · $0,780 |
+| Leads novos/mês | 40 | 300 | 800 |
+| Places (req · custo) | 2 · $0,070 | 15 · $0,525 | 40 · $1,400 |
+| Abordagem — **código**, sem teto | ∞ · **$0** | ∞ · **$0** | ∞ · **$0** |
+| Proposta — **código**, sem teto | ∞ · **$0** | ∞ · **$0** | ∞ · **$0** |
 | Objeções (4o) | 5 · $0,040 | 50 · $0,400 | 80 · $0,640 |
 | Agente (mini) | 5 · $0,006 | 100 · $0,120 | 300 · $0,360 |
 | Simulador (mini) | 20 · $0,007 | 300 · $0,108 | 1.000 · $0,360 |
-| **Total/mês** | **$0,357** | **$2,743** | **$5,940** |
-| **Em BRL** (câmbio 5,50) | **R$1,96** | **R$15,09** | **R$32,67** |
+| **Total/mês** | **$0,123** | **$1,153** | **$2,760** |
+| **Em BRL** (câmbio 5,50) | **R$0,68** | **R$6,34** | **R$15,18** |
+| *(antes de 2026-08-16)* | *R$1,96* | *R$15,09* | *R$32,67* |
+| **Redução** | **−65%** | **−58%** | **−54%** |
+
+> O Free caiu mais que os pagos porque levou duas mudanças no mesmo dia: a saída
+> da IA **e** o teto de Leads de 60 → 40 (2 páginas de Places em vez de 3). Ver
+> [F035](02-features/F035-planos-e-limites.md#por-que-40-no-free-revisto-em-2026-08-16-era-60).
+
+### Margem depois da mudança
+
+| | Pro (R$39) | Pro aluno (R$31,20) | Agência (R$97) | Agência aluno (R$77,60) |
+|---|---|---|---|---|
+| Antes | 61% | 52% | 66% | 58% |
+| **Agora** | **84%** | **80%** | **84%** | **80%** |
+
+O piso de margem do produto — que era o preço de aluno do Pro, a 52% — sobe pra
+**80%**. Nenhum plano fica abaixo disso.
+
+### O que sobrou, e em que proporção
+
+Composição do custo de um Pro no teto, agora que são R$6,34:
+
+| Linha | R$/mês | % | Tem teto de plano? |
+|---|---|---|---|
+| **Places / Coleta** | 2,89 | **46%** | **não** — o mensal conta Lead *novo*, duplicata não consome |
+| **Objeções** (F011) | 2,20 | **35%** | sim (50/mês no Pro) |
+| Agente (F029) | 0,66 | 10% | sim (100/mês) |
+| Simulador (F013) | 0,59 | 9% | sim (300/mês) |
+
+Duas coisas que essa tabela diz e que não eram visíveis antes:
+
+1. **Objeções virou a maior linha de IA** — sozinha vale quase o dobro de Agente
+   + Simulador somados. Enquanto Abordagem e Proposta dominavam, ela era ruído.
+
+   > **E provavelmente está superestimada.** Esta linha supõe que as 50
+   > objeções/mês do Pro batem todas no modelo. Desde a emenda de 2026-08-13 da
+   > [F011](02-features/F011-assistente-de-objecoes.md) isso é falso: a aba abre
+   > com um **catálogo escrito à mão**, sem IA e sem cota, e o modelo só atende
+   > o bloco recolhido "Outra objeção". Esta tabela nunca foi corrigida depois
+   > daquela emenda. Se a saída de escape for pouco usada — que é o que o
+   > desenho da F011 pretende —, o Pro custa perto de **R$4,20**, não R$6,34.
+   > Falta o contador pra saber; ver
+   > [relatório de custos](../docs/relatorio-de-custos-2026-08-16.md) §4.2.
+2. **Places passou a ser quase metade de tudo**, e é a única linha sem teto de
+   plano. O pior caso real não é $0,525: a cota diária permite **150**
+   requisições/mês ($5,25 · R$28,88), 10× o orçado — ver
+   [F018](02-features/F018-limites-diarios.md#custo-estimado-usuário-no-teto-30-dias).
 
 Custo fixo compartilhado: Vercel + Neon + Resend + Sentry. Nos planos atuais
 (hobby/free tiers) isso é ~$0–20/mês no total, **não por aluno** — reavaliar
@@ -158,18 +217,25 @@ aluno. Então o limite do Free não é escolha de generosidade, é divisão:
 
 | Limite do Free | Req/aluno | Alunos Free a custo **zero** de Places |
 |---|---|---|
-| 50 leads/mês | 2,5 → 3 | ~333 |
-| **60 leads/mês** | **3** | **~333** |
+| **40 leads/mês** *(atual)* | **2** | **~500** |
+| 60 leads/mês *(até 2026-08-16)* | 3 | ~333 |
 | 100 leads/mês | 5 | ~200 |
 
-**60 é o número certo, e não por acaso:** cai exato em 3 páginas (zero
-desperdício), é a opção do meio da busca da [F033](02-features/F033-busca-estruturada.md)
-— então *uma* busca de 60 é exatamente um mês de Free, que é fácil de explicar —
-e mantém ~333 alunos dentro do que o Google não cobra. Subir pra 100 corta esse
-número pela metade sem melhorar a promessa ("dá pra fechar um cliente").
+**40 é o número escolhido em 2026-08-16, e a razão mudou.** Enquanto Abordagem e
+Proposta custavam LLM, o teto do Free era um equilíbrio entre várias linhas.
+Depois que as duas zeraram, **o Places virou praticamente o custo inteiro do
+Free** — e aí o teto deixa de ser "quanto o aluno recebe" e vira, sem
+intermediário, **quantos alunos gratuitos cabem de graça**. 40 cai exato em 2
+páginas (zero desperdício) e leva o número de 333 para **~500**.
 
-Passando de ~333 alunos Free ativos, cada aluno adicional custa **$0,105/mês**
-(R$0,58) só de Places.
+O que se perdeu com isso está registrado na
+[F035](02-features/F035-planos-e-limites.md#por-que-40-no-free-revisto-em-2026-08-16-era-60):
+a frase "uma busca de 60 é um mês de Free" morreu, porque 40 não é opção da
+[F033](02-features/F033-busca-estruturada.md). A substituta é **duas buscas de
+20**, que é a menor opção e cabe inteira.
+
+Passando de ~500 alunos Free ativos, cada aluno adicional custa **$0,070/mês**
+(R$0,39) só de Places.
 
 ---
 
@@ -261,11 +327,14 @@ zero e-mail de "como faço". Cada ticket recorrente torna esse plano negativo.
 ### O Free precisa continuar sendo só de aluno
 
 Enquanto o Free for de aluno do Builders Club, ele está pago pelo R$997. Aberto
-ao público, ele vira custo puro: **R$1,96/mês por pessoa, sem nenhuma receita**,
-e depois de ~333 pessoas o Places começa a cobrar. Mil inscritos de graça custam
-R$1.960/mês.
+ao público, ele vira custo puro: **R$0,68/mês por pessoa, sem nenhuma receita**
+(R$1,96 antes de 2026-08-16 — e, dentro do free tier do Google, na verdade
+**R$0,29**, porque os primeiros **500** alunos não geram custo de Places),
+e depois de ~500 pessoas o Places começa a cobrar. Mil inscritos de graça custam
+**R$680/mês** — eram R$1.960 antes de 2026-08-16, e a queda de 65% vem da IA que
+saiu somada ao teto de 60 → 40.
 
-Se abrir pra fora, o Free vira **trial com prazo** (ex.: 14 dias ou 60 leads,
+Se abrir pra fora, o Free vira **trial com prazo** (ex.: 14 dias ou 40 leads,
 o que vier primeiro), não plano permanente.
 
 ### As regras que sustentam os planos (revisadas em 2026-08-13)

@@ -1,87 +1,83 @@
 import { describe, expect, it } from "vitest";
-import { servicosRecomendados } from "@/lib/proposta/servicos";
-import { precificar } from "@/lib/proposta/precos";
+import { item } from "@/lib/proposta/catalogo";
+import {
+  sugerirSelecao,
+  type DiagnosticoParaSugestao,
+} from "@/lib/proposta/sugestao";
+import { validar } from "@/lib/proposta/selecao";
 
-describe("servicosRecomendados", () => {
-  it("sem site → só CRIACAO_SITE", () => {
-    expect(
-      servicosRecomendados({
-        tem_site: false,
-        site_e_agregador: false,
-        tem_https: null,
-        performance_mobile: null,
-      }),
-    ).toEqual(["CRIACAO_SITE"]);
+// F012 (emenda de precificação 2026-08-16) — AC20 e AC22.
+// Substitui os testes de `servicosRecomendados` e `precificar`, removidos com
+// os módulos: preço calculado e preço escolhido não convivem (AC27).
+
+const SEM_SITE: DiagnosticoParaSugestao = {
+  tem_site: false,
+  site_e_agregador: false,
+  tem_https: null,
+  performance_mobile: null,
+};
+
+function diag(patch: Partial<DiagnosticoParaSugestao>): DiagnosticoParaSugestao {
+  return { ...SEM_SITE, ...patch };
+}
+
+const CENARIOS = [
+  SEM_SITE,
+  diag({ tem_site: true, site_e_agregador: true }),
+  diag({ tem_site: true, performance_mobile: 31, tem_https: true }),
+  diag({ tem_site: true, tem_https: false, performance_mobile: 90 }),
+  diag({ tem_site: true, tem_https: true, performance_mobile: 90 }),
+];
+
+describe("sugerirSelecao — o Diagnóstico pré-marca (AC20)", () => {
+  it("sem site: propõe o site institucional", () => {
+    expect(sugerirSelecao(SEM_SITE).itens).toContain("site_institucional");
   });
 
-  it("agregador → só CRIACAO_SITE", () => {
-    expect(
-      servicosRecomendados({
-        tem_site: true,
-        site_e_agregador: true,
-        tem_https: true,
-        performance_mobile: 40,
-      }),
-    ).toEqual(["CRIACAO_SITE"]);
+  it("só agregador conta como sem site — link-in-bio não é site próprio", () => {
+    const s = sugerirSelecao(diag({ tem_site: true, site_e_agregador: true }));
+    expect(s.itens).toContain("site_institucional");
   });
 
-  it("site lento sem HTTPS → performance + SSL", () => {
-    expect(
-      servicosRecomendados({
-        tem_site: true,
-        site_e_agregador: false,
-        tem_https: false,
-        performance_mobile: 40,
-      }),
-    ).toEqual(["OTIMIZACAO_PERFORMANCE", "SSL_SEGURANCA"]);
+  it("site no ar e lento: o trabalho é manutenção, não site novo", () => {
+    const s = sugerirSelecao(
+      diag({ tem_site: true, performance_mobile: 31, tem_https: true }),
+    );
+    expect(s.itens).not.toContain("site_institucional");
+    expect(s.itens).toContain("manutencao_site");
   });
 
-  it("site ok → PRESENCA_BASE", () => {
-    expect(
-      servicosRecomendados({
-        tem_site: true,
-        site_e_agregador: false,
-        tem_https: true,
-        performance_mobile: 90,
-      }),
-    ).toEqual(["PRESENCA_BASE"]);
-  });
-});
-
-describe("precificar", () => {
-  it("arredonda faixa para múltiplos de R$50", () => {
-    const p = precificar({
-      servicos: ["CRIACAO_SITE"],
-      categoria: "restaurant", // MEDIO → mult 1.0
-      num_avaliacoes: 50, // porte 1.0
-    });
-    expect(p.faixa_min % 50).toBe(0);
-    expect(p.faixa_max % 50).toBe(0);
-    expect(p.faixa_min).toBe(1500);
-    expect(p.faixa_max).toBe(3000);
-    expect(p.moeda).toBe("BRL");
+  it("site sem HTTPS também cai em manutenção", () => {
+    const s = sugerirSelecao(
+      diag({ tem_site: true, tem_https: false, performance_mobile: 90 }),
+    );
+    expect(s.itens).toContain("manutencao_site");
   });
 
-  it("corrige float 1500×1.15 → R$ 1.750 (não R$ 1.700)", () => {
-    // Regressão §9 lançamento: 1500*1.15 pode ser 1724.999… em IEEE-754.
-    const p = precificar({
-      servicos: ["CRIACAO_SITE"],
-      categoria: "restaurant", // MEDIO 1.0
-      num_avaliacoes: 100, // porte 1.15 → mult 1.15
-    });
-    expect(p.faixa_min).toBe(1750);
-    expect(p.faixa_max).toBe(3450); // 3000*1.15 = 3450
+  it("site saudável: landing, não site institucional", () => {
+    const s = sugerirSelecao(
+      diag({ tem_site: true, tem_https: true, performance_mobile: 90 }),
+    );
+    expect(s.itens).toContain("landing");
   });
 
-  it("aplica multiplicador de nicho ALTO", () => {
-    const p = precificar({
-      servicos: ["CRIACAO_SITE"],
-      categoria: "dentist", // ALTO 1.4
-      num_avaliacoes: 10, // porte 0.9 → mult 1.26
-    });
-    // 1500*1.26 = 1890 → 1900; 3000*1.26 = 3780 → 3800
-    expect(p.tier).toBe("ALTO");
-    expect(p.faixa_min).toBe(1900);
-    expect(p.faixa_max).toBe(3800);
+  it("sempre carrega recorrência — é o erro que a tabela mais cobra", () => {
+    for (const d of CENARIOS) {
+      const itens = sugerirSelecao(d).itens;
+      expect(itens.some((i) => item(i).tipo === "recorrencia")).toBe(true);
+    }
+  });
+
+  it("a sugestão nasce válida — o aluno não abre a tela com erro na cara", () => {
+    for (const d of CENARIOS) {
+      expect(validar(sugerirSelecao(d))).toEqual([]);
+    }
+  });
+
+  it("o valor sugerido acompanha o que foi marcado, e não é zero", () => {
+    for (const d of CENARIOS) {
+      const s = sugerirSelecao(d);
+      expect(s.valor + s.mensal).toBeGreaterThan(0);
+    }
   });
 });

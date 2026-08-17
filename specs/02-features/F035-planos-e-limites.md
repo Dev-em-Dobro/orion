@@ -43,9 +43,9 @@ derivados da análise de margem em [11 §4–5](../11-custos-e-precificacao.md).
 |---|---|---|---|
 | Preço cheio (BRL/mês) | R$0 | R$39 | R$97 |
 | Preço aluno (−20%) | R$0 | R$31,20 | R$77,60 |
-| **Leads novos / mês** | **60** | 300 | 800 |
-| **Abordagem WhatsApp / mês** | **20** | 150 | 300 |
-| **Proposta ([F012](F012-gerador-de-proposta.md)) / mês** | **3** | 30 | 60 |
+| **Leads novos / mês** | **40** | 300 | 800 |
+| **Abordagem WhatsApp ([F005](F005-abordagem-whatsapp.md))** | **Ilimitada** | Ilimitada | Ilimitada |
+| **Proposta ([F012](F012-gerador-de-proposta.md))** | **Ilimitada** | Ilimitada | Ilimitada |
 | **Objeções ([F011](F011-assistente-de-objecoes.md)) / mês** | **5** | 50 | 80 |
 | **Agente Orion ([F029](F029-agente-orion.md)) / mês** | **5** | 100 | 300 |
 | **Simulador ([F013](F013-simulador-de-venda.md)) / mês** | **20 msg** | 300 | 1.000 |
@@ -57,13 +57,127 @@ derivados da análise de margem em [11 §4–5](../11-custos-e-precificacao.md).
 **Custo nosso no teto:** R$1,96 (Free) · R$15,09 (Pro) · R$32,67 (Agência).
 Margem: 61%/66% no preço cheio, 52%/58% no preço de aluno.
 
-### Por que 60 no Free, e não 50 nem 100
-O free tier do Google são **1.000 requisições/mês na conta inteira**. A 3
-requisições por aluno (60 leads = 3 páginas exatas), cabem ~333 alunos Free a
-custo zero; a 100 leads (5 páginas) caem pra ~200. E 60 é a **opção do meio da
-busca** ([F033](F033-busca-estruturada.md)): uma busca de 60 é exatamente um mês
-de Free, o que é fácil de explicar e some com a colisão que 50 criava (nenhuma
-das opções de busca cabia no teto).
+### Por que a Abordagem não tem teto (2026-08-16)
+
+Mesma decisão da Proposta, um degrau antes no funil: **ilimitada nos três
+planos**, fora de `OPERACOES_MENSAIS`.
+
+**O teto contradizia o teto de Leads.** O Pro comprava 300 Leads novos e podia
+abordar 150 — metade da base entrava no funil sem poder ser contatada. Lead que
+não pode virar conversa não é Lead, é linha em tabela; vender 300 e liberar 150
+é vender duas coisas que não conversam.
+
+**E a conta real era pior**, porque o follow-up consome a mesma cota. A
+[F006](F006-follow-up-e-funil.md) diz que a maior parte das respostas vem do
+2º–4º toque — então 150 Abordagens com um follow-up cada dão **75 Leads
+trabalhados** dos 300 comprados. O plano financiava o dobro do que deixava
+executar.
+
+**O número 150 nunca foi decisão de produto.** Ele veio da linha de custo da
+[11 §4](../11-custos-e-precificacao.md#4-custo-por-alunomês) (`150 · $1,200`),
+quando cada Abordagem custava $0,008 de `gpt-4o`. Com a
+[F005](F005-abordagem-whatsapp.md) montando o texto em código, o custo é **$0** e
+o número perdeu a origem.
+
+**E não era freio de spam.** Esse é o argumento que parece bom e não é: o Orion
+**não envia**. A F005 registra que disparo automático é proibido pela visão — o
+aluno copia o texto e manda pelo `wa.me`, à mão, um a um. O teto nunca limitou
+quantas mensagens saem; limitava quantos rascunhos a ferramenta escreve. Quem
+quisesse disparar em massa escreveria a mensagem por conta própria e o Orion não
+saberia. O que contém abuso aqui continua sendo o teto de **Leads** e o envio
+manual, não uma cota de geração de texto.
+
+### Por que a Proposta não tem teto (2026-08-16)
+
+A Proposta sai da tabela de limites: **ilimitada nos três planos**. Sai também de
+`OPERACOES_MENSAIS` — operação sem teto não é operação limitada, e mantê-la ali
+com um número simbólico seria escada de preço fingida.
+
+**Custa R$0.** Desde que a [F012](F012-gerador-de-proposta.md) passou a montar o
+texto em código, gerar uma Proposta é leitura no banco mais concatenação de
+string. Não há chamada de API pra proteger.
+
+**O teto do Free brigava com o manual do próprio produto.** A F012 recomenda,
+com todas as letras: *"se ele quiser apresentar três opções, gera três
+propostas"*. Com 3/mês, seguir essa recomendação consumia o mês inteiro **num
+único cliente** — o aluno montava as três opções pro primeiro Lead que qualificou
+e acabava agosto. Limite que impede o fluxo recomendado pela spec não é limite,
+é bug de produto.
+
+**E é a etapa errada pra limitar.** A Proposta é a última coisa antes do
+`ganho`. Pôr teto ali é pôr teto na capacidade de **fechar**, que é exatamente o
+que o aluno pagou pra fazer — cobra-se mais de quem está tendo sucesso. O lugar
+natural do teto é a **entrada** (Leads novos), e ele continua lá.
+
+Duas notas pra evitar mal-entendido:
+
+- **"Ilimitada" é literal, não figura de linguagem.** A Proposta não é limitada
+  pelo número de Leads: nada impede gerar várias pro mesmo Lead (a Action não
+  persiste nada — F012 AC7), e a F012 recomenda fazer isso. Tirar o teto tira o
+  teto mesmo.
+- **O funil já limita na prática.** A aba de Proposta só abre em `qualificado`,
+  `proposta` ou `ganho`. O aluno não gera Proposta pra Lead que não respondeu —
+  o que segura o volume é quantos Leads chegam lá, e isso é consequência do teto
+  de Leads, não de um teto próprio.
+
+`/planos` continua listando a Proposta (AC22), agora como linha de **Ilimitada**
+em vez de número. É argumento de venda melhor que "3/mês", e é verdade.
+
+### A régua que sobrou: cobra-se o que custa
+
+Depois de Abordagem e Proposta saírem, todo teto que resta corresponde a um custo
+real nosso — e nenhum custo real ficou sem teto:
+
+| Operação | Custo unitário | Tem teto |
+|---|---|---|
+| Leads novos | Places, $0,035/req | **sim** — é o teto do produto |
+| Objeções (fora do catálogo) | `gpt-4o`, $0,008 | sim |
+| Agente | `gpt-4o-mini` | sim |
+| Simulador | `gpt-4o-mini` | sim |
+| Abordagem | **$0** — código | **não** |
+| Proposta | **$0** — código | **não** |
+| Diagnóstico | **$0** — PageSpeed é free tier | **não** (já era assim) |
+
+A regra fica explícita, e ela decide os próximos casos sem discussão nova:
+**limite existe para conter custo, não para criar degrau de venda.** Onde o custo
+é zero, o teto só serve pra fazer o produto brigar com o próprio manual — foi o
+que aconteceu com a Proposta (3/mês contra a recomendação de gerar três opções) e
+com a Abordagem (150 contra 300 Leads).
+
+O que o plano vende passa a ser, com uma frase só: **quantos negócios você
+descobre por mês.** O resto do funil é ilimitado, porque o resto do funil não nos
+custa nada.
+
+> **Consequência aceita:** a diferença entre Free e Pro fica concentrada em
+> `lead_novo` (40 vs 300) e nas três operações de IA. É menos linha de tabela
+> pra mostrar em `/planos`, e isso é bom — a comparação vira "quantos negócios
+> você quer alcançar", em vez de seis números que o aluno não sabe pesar.
+
+### Por que 40 no Free (revisto em 2026-08-16, era 60)
+
+O free tier do Google são **1.000 requisições/mês na conta inteira**, e a busca
+traz 20 Leads por página ([F033](F033-busca-estruturada.md)). O teto do Free é,
+portanto, uma escolha de **quantos alunos cabem de graça**:
+
+| Teto do Free | Páginas/aluno | Alunos Free a custo **zero** |
+|---|---|---|
+| 100 | 5 | ~200 |
+| 60 *(anterior)* | 3 | ~333 |
+| **40** *(atual)* | **2** | **~500** |
+
+**40 é o teto que faz o Free escalar.** Meio milhar de alunos gratuitos sem pagar
+um centavo de Places é a diferença entre o Free ser canal de aquisição e ser
+conta a pagar — e o Places é a única linha de custo do produto que não zeramos.
+
+**O que se perde:** com 60, a explicação era "uma busca de 60 é exatamente um mês
+de Free", porque 60 é a opção do meio da F033. Com 40 essa frase morre — 40 não é
+opção de busca. A substituta é igualmente simples: **duas buscas de 20 são um mês
+de Free.** A opção de 20 é a menor da F033, então o aluno Free tem uma escolha
+que cabe inteira, que é o que a revisão do 50 tinha ido buscar.
+
+**O que não muda:** as opções de 60 e 100 continuam não cabendo num mês Free, e
+continuam sendo oferecidas. O diálogo de confirmação abaixo já trata isso, e a
+decisão de mostrar o que não cabe segue valendo — é aí que o limite vende.
 
 ### Por que Agência caiu de 1.500 para 800
 A 1.500 leads o custo vai a R$58,55/mês: 39% de margem no preço cheio e **25%**
@@ -103,7 +217,7 @@ mesmos estabelecimentos: o aluno não ganhou nada na segunda.
 
 **2. A busca para na cota, sem perder o que já trouxe.** As opções de quantidade
 da [F033](F033-busca-estruturada.md) são **20 · 60 · 100**, e o teto do Free é
-**50/mês** — as duas maiores não cabem inteiras num mês Free. Então:
+**40/mês** — as duas maiores não cabem inteiras num mês Free. Então:
 
 - A busca coleta até onde a cota alcança e **grava o que coube**.
 - O resultado diz o que aconteceu: *"38 Leads novos · 12 não couberam no limite
@@ -111,7 +225,7 @@ da [F033](F033-busca-estruturada.md) são **20 · 60 · 100**, e o teto do Free 
 - **Nunca** rejeita a busca inteira por não caber: o aluno já pagou a chamada ao
   Places, jogar fora o resultado é queimar dinheiro nosso e tempo dele.
 
-> Efeito colateral aceito: no Free, buscar 100 num mês zerado entrega 50 e avisa.
+> Efeito colateral aceito: no Free, buscar 100 num mês zerado entrega 40 e avisa.
 > A alternativa — esconder as opções que não cabem — foi descartada: o aluno
 > precisa **ver** que existe mais, e é justamente aí que o limite vende.
 
@@ -125,7 +239,7 @@ abre um diálogo em vez de sair buscando:
 │  🔒  Sua cota do mês não cobre essa busca    │
 │                                              │
 │  Você pediu 100 Leads e ainda pode adicionar │
-│  10 este mês (plano Free: 50/mês).           │
+│  10 este mês (plano Free: 40/mês).           │
 │                                              │
 │  Se continuar, o Orion vai buscar os 100 no  │
 │  Google, guardar os 10 primeiros e           │
@@ -167,7 +281,7 @@ Três consequências deliberadas:
 
 ### Bônus BYOK
 Aluno em `key_mode = byok` **num plano pago** tem o limite mensal **dobrado**.
-No Free, não — senão o limite de 50 vira 100 só trocando de chave, e a decisão
+No Free, não — senão o limite de 40 vira 80 só trocando de chave, e a decisão
 (1) diz o contrário.
 
 ### Fonte do plano: Hubla
@@ -285,6 +399,20 @@ Agente e Simulador passam a ter as duas: a diária continua barrando um loop
 acidental, e a mensal é o que diferencia Free de Pro. Quem bate primeiro vence —
 no Free, com 5 perguntas/mês, a mensal sempre chega antes.
 
+> **2026-08-16 — Proposta e Abordagem passam a ter só a mensal.** Ver a
+> [F018](F018-limites-diarios.md#limites-modo-orion). Resumo: "quem bate primeiro
+> vence" estava entregando a vitória pro lado errado. Com 5/dia contra 150
+> Abordagens/mês, o Pro precisava de **30 dias** no talo pra receber o que esta
+> tabela vende; a diária tinha virado o limite de produto, e o teto que a linha
+> "Abordagem WhatsApp / mês" anuncia era inalcançável na prática.
+>
+> A regra que fica: **operação cujo teto mensal já limita o consumo de API não
+> precisa de cota diária.** Vale pra Proposta e Abordagem (1 chamada de LLM cada,
+> teto mensal por plano). Não vale pra Coleta nem Diagnóstico, onde o mensal conta
+> **entrega** (Lead novo, primeiro Diagnóstico) e não **consumo**: duplicata e
+> re-diagnóstico gastam API cobrando zero de cota, então ali a diária é a única
+> trava real.
+
 `User` **não** ganha coluna de plano: o plano é **derivado** dos entitlements,
 como já é feito com a compra verificada (F019.1). Uma coluna seria um segundo
 lugar pra verdade morar.
@@ -311,7 +439,7 @@ Na transação que cria o `Diagnostico` ([F002](F002-diagnostico-de-presenca-dig
 Chamado **antes** de diagnosticar (individual e em lote):
 - Dentro do limite → segue.
 - No limite → lança `LimiteDoPlanoError` com o texto pronto pra UI:
-  *"Você diagnosticou 50 Leads este mês — o limite do plano Free. Sua busca e
+  *"Você adicionou 40 Leads este mês — o limite do plano Free. Sua busca e
   sua fila continuam funcionando; para aprofundar mais Leads, veja os planos."*
 - O lote da F025 **para no limite** e devolve `{ processados, restantes,
   limiteAtingido: true }` — sem perder o que já processou.
@@ -362,7 +490,7 @@ Tabela comparativa (a de cima), plano atual destacado, botão de checkout Hubla
 por plano. Quem já tem plano vê o que ganharia subindo.
 
 ## Critérios de aceitação
-- [ ] **AC1** — Usuário sem entitlement de plano é `free` e vê limite de 50.
+- [ ] **AC1** — Usuário sem entitlement de plano é `free` e vê limite de 40.
 - [ ] **AC2** — Diagnosticar um Lead **sem** Diagnóstico anterior incrementa o
       medidor do mês; **re-diagnosticar o mesmo Lead não** incrementa.
 - [ ] **AC3** — Diagnóstico manual e aprofundamento em lote contam **igual**.
@@ -370,7 +498,7 @@ por plano. Quem já tem plano vê o que ganharia subindo.
       específico com CTA, **sem** criar Diagnóstico e **sem** consumir chave de
       API.
 - [ ] **AC5** — **BYOK não isenta**: aluno Free com `key_mode = byok` é barrado
-      nos mesmos 50.
+      nos mesmos 40.
 - [ ] **AC6** — Aluno **pago** em BYOK tem o limite dobrado (Pro: 600).
 - [ ] **AC7** — Coleta e Triagem funcionam normalmente com o medidor estourado
       (o aluno continua vendo score estimado e a base cresce).

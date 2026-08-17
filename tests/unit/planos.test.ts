@@ -22,11 +22,12 @@ import { planoDosEntitlements } from "@/lib/planos/resolver";
 import type { Plano } from "@/lib/planos/catalogo";
 
 describe("F035 — catálogo", () => {
-  it("AC1 — free é o padrão e vale 60 Leads novos/mês", () => {
-    // 60 = 3 páginas exatas do Places e ~333 alunos dentro do free tier do
-    // Google (11 §4). Mudar isso é mudar a conta de custo.
-    expect(CATALOGO_PLANOS.free.limites.lead_novo).toBe(60);
-    expect(limiteMensal("free")).toBe(60);
+  it("AC1 — free é o padrão e vale 40 Leads novos/mês", () => {
+    // 40 = 2 páginas exatas do Places e ~500 alunos dentro do free tier do
+    // Google (11 §4). Era 60 (~333 alunos) até 2026-08-16. Mudar isso é mudar
+    // quantos alunos gratuitos cabem sem custo — não é ajuste de número.
+    expect(CATALOGO_PLANOS.free.limites.lead_novo).toBe(40);
+    expect(limiteMensal("free")).toBe(40);
     expect(melhorPlano([])).toBe("free");
   });
 
@@ -95,7 +96,7 @@ describe("F035 — catálogo", () => {
 // compensar. `limiteMensal` passou a depender só do plano.
 describe("F035 — teto mensal de Leads novos", () => {
   it("depende só do plano", () => {
-    expect(limiteMensal("free")).toBe(60);
+    expect(limiteMensal("free")).toBe(40);
     expect(limiteMensal("pro")).toBe(300);
     expect(limiteMensal("agencia")).toBe(800);
   });
@@ -147,8 +148,8 @@ describe("F035 — competência (America/Sao_Paulo)", () => {
 
 describe("F035 — mensagens de erro", () => {
   it("LimiteDoPlanoError diz o número, o plano e o que continua funcionando", () => {
-    const e = new LimiteDoPlanoError("free", 60, 60);
-    expect(e.message).toContain("60");
+    const e = new LimiteDoPlanoError("free", 40, 40);
+    expect(e.message).toContain("40");
     expect(e.message).toContain("Free");
     expect(e.message).toContain("planos");
     expect(e.name).toBe("LimiteDoPlanoError");

@@ -87,7 +87,7 @@ describe("limites diários (F018)", () => {
     prismaMock.dailyUsage.findUnique.mockResolvedValue(null);
     prismaMock.dailyUsage.create.mockResolvedValue({ contador: 1 });
 
-    const uso = await reservarCota(userId, "abordagem");
+    const uso = await reservarCota(userId, "coleta");
 
     expect(uso.usado).toBe(1);
     expect(uso.restante).toBe(4);
@@ -131,13 +131,13 @@ describe("limites diários (F018)", () => {
   it("estornarCota devolve 1 com o piso no WHERE", async () => {
     prismaMock.dailyUsage.updateMany.mockResolvedValue({ count: 1 });
 
-    await estornarCota(userId, "abordagem");
+    await estornarCota(userId, "simulador_msg");
 
     expect(prismaMock.dailyUsage.updateMany).toHaveBeenCalledWith({
       where: {
         user_id: userId,
         data: hoje,
-        operacao: "abordagem",
+        operacao: "simulador_msg",
         contador: { gt: 0 },
       },
       data: { contador: { decrement: 1 } },
@@ -156,7 +156,7 @@ describe("limites diários (F018)", () => {
 
   it("consumirCota (compat) só lê uso atual", async () => {
     prismaMock.dailyUsage.findUnique.mockResolvedValue({ contador: 2 });
-    const uso = await consumirCota(userId, "abordagem");
+    const uso = await consumirCota(userId, "simulador_msg");
     expect(uso.usado).toBe(2);
   });
 
@@ -171,8 +171,20 @@ describe("limites diários (F018)", () => {
     expect(lista).toHaveLength(OPERACOES_COTA.length);
     const coleta = lista.find((u) => u.operacao === "coleta");
     expect(coleta?.usado).toBe(2);
-    const proposta = lista.find((u) => u.operacao === "proposta");
-    expect(proposta?.usado).toBe(0);
+    const agente = lista.find((u) => u.operacao === "agente_msg");
+    expect(agente?.usado).toBe(0);
+  });
+
+  // 2026-08-16 — Proposta e Abordagem saíram da cota diária: as duas já têm
+  // teto mensal por plano (F035), e 5/dia contra 150 Abordagens/mês fazia a
+  // diária virar o limite de produto pra quem tinha pago pra não ser barrado.
+  // Coleta e Diagnóstico ficam porque lá o mensal conta entrega, não consumo:
+  // busca duplicada e re-diagnóstico gastam API cobrando zero de cota.
+  it("só tem cota diária a operação que o teto mensal não limita", () => {
+    expect(OPERACOES_COTA).not.toContain("proposta");
+    expect(OPERACOES_COTA).not.toContain("abordagem");
+    expect(OPERACOES_COTA).toContain("coleta");
+    expect(OPERACOES_COTA).toContain("diagnostico");
   });
 });
 

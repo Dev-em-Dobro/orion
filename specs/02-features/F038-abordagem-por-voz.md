@@ -17,6 +17,18 @@ ligar ele ficava sem o que falar e voltava pro texto.
 **A voz passa a ser o caminho recomendado da aba**, e o texto vira a
 alternativa de baixo atrito logo abaixo.
 
+> **Emenda 2026-08-16 — o roteiro sai da IA junto com a Abordagem.**
+> `gerarRoteiroLigacao` era LLM pelo mesmo motivo que `gerarAbordagem`: mesma
+> Dor, mesmo contexto, só o system prompt mudava. Passa a ser montado em código,
+> com pool de variantes próprio — ver a emenda da
+> [F005](F005-abordagem-whatsapp.md#emenda-2026-08-16--a-abordagem-sai-da-ia).
+>
+> O roteiro **não herda os pools da mensagem escrita**. Texto que vai ser dito
+> tem prosódia diferente de texto que vai ser lido: frase mais curta, sem
+> subordinada longa, e uma pausa marcada antes do CTA. Reaproveitar as frases do
+> WhatsApp entregaria um roteiro que soa como alguém lendo um recado — que é
+> exatamente o que a F038 existe pra evitar.
+
 ## Decisão: canal novo (`ligacao`), não um `tipo` de WhatsApp
 
 `Abordagem.canal` ganha o valor **`ligacao`**. A alternativa — gravar o roteiro

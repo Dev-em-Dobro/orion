@@ -35,6 +35,7 @@ import { CorrigirStatusForm } from "../corrigir-status-form";
 import { DescartarButton, RestaurarButton } from "../descarte-buttons";
 import { DesfechoButtons } from "../desfecho-buttons";
 import { DiagnosticarButton } from "../diagnosticar-button";
+import { sugerirSelecao } from "@/lib/proposta/sugestao";
 import { GerarAbordagemButton } from "../gerar-abordagem-button";
 import { GerarPropostaButton } from "../gerar-proposta-button";
 import { MarcarEnviadaButton } from "../marcar-enviada-button";
@@ -563,7 +564,16 @@ async function CorpoAba({
                 </p>
               </div>
             ) : (
-              <GerarPropostaButton leadId={lead.id} nomeDoLead={lead.nome} />
+              <GerarPropostaButton
+                leadId={lead.id}
+                nomeDoLead={lead.nome}
+                // F012 AC20 — o Diagnóstico pré-marca; o aluno ajusta. Sem
+                // Diagnóstico a aba nem chega aqui, mas o `undefined` mantém a
+                // tela funcional (abre com tudo desmarcado).
+                sugestao={
+                  diagnostico ? sugerirSelecao(diagnostico) : undefined
+                }
+              />
             ))}
     </>
   );

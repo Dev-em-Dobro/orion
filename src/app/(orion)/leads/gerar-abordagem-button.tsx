@@ -12,7 +12,7 @@ import {
   type CanalGeravel,
   type GerarAbordagemState,
 } from "@/actions/leads/gerarAbordagem";
-import type { TipoAbordagem } from "@/lib/abordagem/prompt";
+import type { TipoAbordagem } from "@/lib/abordagem/gerarAbordagem";
 import { MarcarEnviadaButton } from "./marcar-enviada-button";
 
 const initial: GerarAbordagemState = { kind: "idle" };

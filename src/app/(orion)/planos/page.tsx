@@ -100,18 +100,48 @@ export default async function PlanosPage({
               {/* F035 (2026-08-13) — a tabela virou de limites, não de
                   recursos: nada é bloqueado por plano, então listar ✓/— por
                   feature não dizia mais nada. */}
+              {/* A lista segue a ordem do FUNIL, não a de OPERACOES_MENSAIS:
+                  descobrir → abordar → propor, e só depois as ferramentas de
+                  apoio. Por isso `lead_novo` é renderizado à parte, com as duas
+                  linhas ilimitadas logo abaixo — enterrar "Ilimitada" embaixo de
+                  "Mensagens no Simulador" jogaria fora o argumento de venda. */}
               <ul className="mt-4 flex-1 space-y-1.5 text-sm">
-                {OPERACOES_MENSAIS.map((op) => (
-                  <li key={op} className="flex justify-between gap-3">
-                    <span className="text-muted">
-                      {LABEL_OPERACAO_MENSAL[op]}
-                    </span>
-                    <strong className="font-mono">
-                      {limiteDaOperacao(p, op)}
-                      <span className="font-normal text-muted">/mês</span>
-                    </strong>
-                  </li>
-                ))}
+                <li className="flex justify-between gap-3">
+                  <span className="text-muted">
+                    {LABEL_OPERACAO_MENSAL.lead_novo}
+                  </span>
+                  <strong className="font-mono">
+                    {limiteDaOperacao(p, "lead_novo")}
+                    <span className="font-normal text-muted">/mês</span>
+                  </strong>
+                </li>
+                {/* Abordagem e Proposta saíram de OPERACOES_MENSAIS quando
+                    viraram ilimitadas (F035, 2026-08-16), mas continuam na
+                    tabela: a AC22 pede que nenhum recurso fique de fora, e
+                    "Ilimitada" vende melhor que os "150/mês" e "3/mês" que
+                    estavam aqui — que, além de tudo, contradiziam o teto de
+                    Leads logo acima. */}
+                <li className="flex justify-between gap-3">
+                  <span className="text-muted">Abordagens</span>
+                  <strong className="text-primary">Ilimitada</strong>
+                </li>
+                <li className="flex justify-between gap-3">
+                  <span className="text-muted">Propostas</span>
+                  <strong className="text-primary">Ilimitada</strong>
+                </li>
+                {OPERACOES_MENSAIS.filter((op) => op !== "lead_novo").map(
+                  (op) => (
+                    <li key={op} className="flex justify-between gap-3">
+                      <span className="text-muted">
+                        {LABEL_OPERACAO_MENSAL[op]}
+                      </span>
+                      <strong className="font-mono">
+                        {limiteDaOperacao(p, op)}
+                        <span className="font-normal text-muted">/mês</span>
+                      </strong>
+                    </li>
+                  ),
+                )}
                 {/* "Aprofunda" é jargão nosso e esta é a tela onde o aluno
                     decide pagar — comparar planos por uma linha que ele não
                     entende é comparar no escuro. A explicação já existia em

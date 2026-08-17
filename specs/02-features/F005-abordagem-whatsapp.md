@@ -47,6 +47,87 @@ O que move a taxa de fechamento — codificado em `src/lib/abordagem/prompt.ts`:
 9. **Mensurar e aprender.** `Abordagem.enviado` + `Lead.status` (`contatado`/
    `respondeu`) fecham o loop pra saber o que converte.
 
+## Emenda 2026-08-16 — a Abordagem sai da IA
+
+A mensagem passa a ser **montada em código**, por combinação de variantes.
+Vale para os três textos que a Action produz: primeira, follow-up
+([F006](F006-follow-up-e-funil.md)) e roteiro de ligação
+([F038](F038-abordagem-por-voz.md)).
+
+**As nove táticas acima continuam valendo** — elas deixam de ser instrução de
+prompt e passam a ser **estrutura do montador**. A diferença é que instrução de
+prompt é pedido (e o modelo às vezes ignora: a regra "sem emoji" precisou de um
+`removerEmojis` de reforço), enquanto estrutura é garantia. O limite de palavras,
+o CTA único e a ausência de emoji passam a ser **verificáveis por teste**, o que
+nenhum deles era.
+
+### O risco que isto cria, e como ele é tratado
+
+A tática 6 — *"sem cara de massa: varia a abertura"* — é a única que um template
+ingênuo destrói. Com 6 `TipoDor` e um texto fixo por Dor, todo dentista com site
+lento receberia a **mesma mensagem, byte por byte**. Isso é exatamente o que a
+tática existe pra evitar, e é o motivo de a Abordagem ser um caso mais difícil
+que a Proposta (que vai pra um cliente só — ver [F012](F012-gerador-de-proposta.md)).
+
+**Mitigação: rotação determinística de variantes.** A mensagem é montada de
+slots independentes, cada um com um pool próprio:
+
+```
+[abertura por TipoDor] + [ponte] + [CTA] (+ [linha do demo, F038])
+```
+
+O índice de cada slot sai de um **hash do `lead_id`**, com deslocamento
+diferente por slot — então os slots variam de forma independente, e o mesmo
+Lead sempre gera o mesmo texto (determinismo, sem `Math.random()`, testável).
+
+Espaço resultante: **4 aberturas × 3 pontes × 3 CTAs = 36 mensagens distintas
+por Dor**, 216 no total.
+
+### O que a rotação resolve e o que ela não resolve
+
+Honestidade sobre o alcance, porque 216 é um número finito:
+
+- **Resolve o caso que importa:** cada negócio recebe **uma** abordagem. O
+  destinatário não tem com o que comparar. E o follow-up é semeado com
+  deslocamento em relação à primeira, então **nunca** repete o texto anterior
+  pro mesmo Lead — que era a única repetição garantida no desenho antigo.
+- **Não resolve a colisão entre alunos.** Dois alunos prospectando a mesma
+  cidade têm `lead_id` diferentes para o mesmo negócio, logo sorteiam
+  independentemente: a chance de o mesmo dono receber o mesmo texto duas vezes é
+  de **1 em 36**. Com a base de alunos crescendo, cresce junto.
+- **Não substitui revisão de copy.** Os 216 textos são escritos à mão uma vez.
+  Se convertem pior que os gerados, o conserto é editar `frases.ts` — o que é
+  mais barato e mais auditável que ajustar um prompt e torcer.
+
+Se a colisão entre alunos virar problema medido (e não suposto), o caminho é
+ampliar os pools, não voltar a IA: dobrar as aberturas leva o espaço a 432 e
+custa a escrita de 6 frases.
+
+### Critérios de aceitação da emenda
+
+- [ ] **AC10** — Gerar Abordagem **não** faz chamada de LLM: nenhuma chave de
+      provedor é lida, e a Action funciona com a API do provedor fora do ar.
+- [ ] **AC11** — Determinismo: o mesmo Lead gera a mesma mensagem em duas
+      execuções. Leads diferentes com a **mesma** Dor geram mensagens
+      diferentes sempre que caírem em índices diferentes.
+- [ ] **AC12** — O follow-up do mesmo Lead **nunca** é igual à primeira
+      mensagem.
+- [ ] **AC13** — A mensagem respeita o teto de palavras por tipo (primeira
+      ≤70, follow-up ≤45) — testado sobre **todas** as combinações do pool, não
+      por amostra.
+- [ ] **AC14** — Nenhuma combinação do pool contém emoji ou símbolo decorativo.
+- [ ] **AC15** — Sem Dor detectada, a mensagem usa a abertura neutra (valor de
+      captar/atender) e **não inventa** problema — o mesmo contrato do prompt
+      antigo.
+- [ ] **AC16** — A URL do demo (F038) só aparece quando `demoUrl` existe, colada
+      exatamente como veio e em linha própria no fim; sem demo, nenhuma linha e
+      nenhuma promessa de enviar depois.
+- [ ] **AC17** — A Abordagem **não tem teto de plano**: gerar não chama
+      `verificarLimiteMensal` nem `consumirMensal`, e o follow-up também não.
+      Ver [F035](F035-planos-e-limites.md#por-que-a-abordagem-não-tem-teto-2026-08-16)
+      — o teto de 150/mês contradizia os 300 Leads do Pro, e com o follow-up
+      consumindo a mesma cota dava 75 Leads trabalhados de 300 comprados.
+
 ## Input (UI)
 Botão **Gerar Abordagem** em cada linha de `/leads` (habilitado quando o Lead
 tem ao menos um Diagnóstico — sem Diagnóstico não há Dor concreta pra citar).
@@ -133,5 +214,10 @@ no envio manual (fora do escopo desta feature).
   `Lead.dores.detalhes` após o Diagnóstico.
 
 ## Custo estimado
-~R$0,05 por Abordagem (Opus 4.8) — ver [contrato](../03-contracts/claude-messages.md).
-A ~100/mês ≈ **R$5/mês**, dentro do teto da visão.
+
+**$0** — a Abordagem é montada em código desde a emenda de 2026-08-16. Não há
+chamada de LLM.
+
+Era a maior linha de IA do produto: R$0,04 × 150/mês no Pro = **R$6,60**, ou 66%
+de todo o custo de LLM de um aluno no teto. Ver
+[11 §4](../11-custos-e-precificacao.md#4-custo-por-alunomês).
