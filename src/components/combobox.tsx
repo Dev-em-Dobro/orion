@@ -40,14 +40,20 @@ export function ComboBox({
   const [ativo, setAtivo] = useState(0);
   const caixa = useRef<HTMLDivElement>(null);
   const listaId = useId();
+  const dicaId = useId();
 
-  const filtradas = useMemo(() => {
+  // `total` é o tamanho ANTES do corte: sem ele o painel não tem como dizer o
+  // que escondeu. O filtro roda sobre `opcoes` inteira — o teto é só de
+  // desenho, nunca de busca (F033 AC14).
+  const { filtradas, total } = useMemo(() => {
     const termo = valor.trim().toLowerCase();
     const base = termo
       ? opcoes.filter((o) => o.toLowerCase().includes(termo))
       : opcoes;
-    return base.slice(0, maxVisiveis);
+    return { filtradas: base.slice(0, maxVisiveis), total: base.length };
   }, [opcoes, valor, maxVisiveis]);
+
+  const cortou = total > filtradas.length;
 
   // Clique fora fecha. Sem isso o painel fica aberto por cima do resto do
   // formulário depois que a pessoa desiste dele.
@@ -110,45 +116,63 @@ export function ComboBox({
         role="combobox"
         aria-expanded={aberto}
         aria-controls={listaId}
+        aria-describedby={aberto && cortou ? dicaId : undefined}
         aria-autocomplete="list"
         autoComplete="off"
         className="input-base"
       />
 
       {aberto && filtradas.length > 0 && (
-        <ul
-          id={listaId}
-          role="listbox"
-          // `max-h-64 overflow-auto`: o ponto todo do componente. `top-full`
-          // ancora embaixo do campo, e `z-20` passa por cima dos campos
-          // vizinhos sem cobrir modal (que é z-[60]).
-          className="absolute top-full right-0 left-0 z-20 mt-1 max-h-64 overflow-auto rounded-lg border border-border bg-card py-1 shadow-lg"
-        >
-          {filtradas.map((o, i) => (
-            <li key={o}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={i === ativo}
-                // `onMouseDown` e não `onClick`: o clique tira o foco do input
-                // antes, e o `mousedown` de fora fecharia o painel na frente
-                // da escolha.
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  escolher(o);
-                }}
-                onMouseEnter={() => setAtivo(i)}
-                className={`block w-full px-3 py-1.5 text-left text-sm ${
-                  i === ativo
-                    ? "bg-card-raised text-zinc-100"
-                    : "text-zinc-300"
-                }`}
-              >
-                {o}
-              </button>
-            </li>
-          ))}
-        </ul>
+        // O painel virou uma casca em volta do `<ul>` por causa do rodapé: ele
+        // precisa ficar FORA da lista (listbox só aceita `option` dentro) e
+        // FORA da rolagem (aviso que some ao rolar é aviso que não existe).
+        <div className="absolute top-full right-0 left-0 z-20 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+          <ul
+            id={listaId}
+            role="listbox"
+            // `max-h-64 overflow-auto`: o ponto todo do componente. `top-full`
+            // no pai ancora embaixo do campo, e `z-20` passa por cima dos campos
+            // vizinhos sem cobrir modal (que é z-[60]).
+            className="max-h-64 overflow-auto py-1"
+          >
+            {filtradas.map((o, i) => (
+              <li key={o}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={i === ativo}
+                  // `onMouseDown` e não `onClick`: o clique tira o foco do input
+                  // antes, e o `mousedown` de fora fecharia o painel na frente
+                  // da escolha.
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    escolher(o);
+                  }}
+                  onMouseEnter={() => setAtivo(i)}
+                  className={`block w-full px-3 py-1.5 text-left text-sm ${
+                    i === ativo
+                      ? "bg-card-raised text-zinc-100"
+                      : "text-zinc-300"
+                  }`}
+                >
+                  {o}
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {/* F033 AC12 — o corte deixa de ser silencioso. Só aparece quando há
+              o que esconder: sem corte, a linha seria ruído dizendo "mostrando
+              12 de 12". */}
+          {cortou && (
+            <p
+              id={dicaId}
+              className="border-t border-border px-3 py-1.5 text-xs text-muted"
+            >
+              {filtradas.length} de {total} · digite para filtrar
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

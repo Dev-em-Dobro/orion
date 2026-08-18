@@ -155,6 +155,31 @@ resolvesse. Trocado por um combobox próprio (`src/components/combobox.tsx`):
 painel ancorado **embaixo** do campo, teto de altura com rolagem, navegação por
 setas/Enter/Escape (padrão de combobox da WAI-ARIA). **Sem lib nova** → sem ADR.
 
+**4. A lista de cidades parecia parar na letra B** *(2026-08-17)*. O combobox
+desenha no máximo **60 opções** (`maxVisiveis`, teto pra lista de 853 municípios
+não custar render) — e não dizia isso. Em SP o 60º item é "Barra Bonita", então
+a rolagem terminava ali e a leitura óbvia era "a base de municípios está pela
+metade". Não estava: o JSON tem os 645 de SP, e o **filtro roda sobre a lista
+inteira** antes do corte — digitar "Campinas" sempre funcionou.
+
+O teto atinge **22 das 27 UFs** (escapam RO, AC, AP, RR e DF). O erro não era
+truncar; era truncar **calado**. O painel passa a dizer quantas está mostrando
+de quantas, e o que fazer com isso:
+
+> `60 de 645 · digite para filtrar`
+
+Sem o "mostrando": o painel tem ~220px e a frase inteira quebrava em duas
+linhas. No contexto de uma lista aberta, "60 de 645" não é ambíguo.
+
+Fica **fora** do `<ul role="listbox">` (listbox só aceita `option` dentro) e
+**fora** da área de rolagem, colado no rodapé do painel: um aviso que some
+quando você rola é um aviso que não existe. O `input` ganha `aria-describedby`
+apontando pra ele quando há corte.
+
+Mesma régua que a coleta já aplica quando avisa "X resultado(s) não couberam no
+limite do mês e foram descartados". Corte que o usuário não vê é corte que ele
+lê como bug — e desta vez leu mesmo.
+
 ### Critérios de aceitação da emenda
 - [ ] **AC9** — O nicho começa em "Selecione o nicho" e a busca não envia sem
       escolha.
@@ -162,6 +187,13 @@ setas/Enter/Escape (padrão de combobox da WAI-ARIA). **Sem lib nova** → sem A
       continuam preenchidos como estavam.
 - [ ] **AC11** — O painel de cidade abre abaixo do campo, com altura máxima e
       rolagem, e é operável por teclado.
+- [ ] **AC12** — Quando a lista é cortada pelo teto de renderização, o painel
+      informa **quantas de quantas** está mostrando e que dá pra filtrar
+      digitando. Sem corte, não aparece aviso nenhum.
+- [ ] **AC13** — O aviso não rola junto com as opções: continua visível no
+      rodapé do painel em qualquer posição da rolagem.
+- [ ] **AC14** — O filtro considera a lista **completa**, não as 60 desenhadas:
+      em SP, digitar "Campinas" (item 88) encontra.
 
 ## Critérios de aceitação
 - [ ] **AC1** — Selecionar UF habilita o select de município com os municípios
