@@ -14,9 +14,9 @@
 
 | | |
 |---|---|
-| Commits | **78** |
-| Arquivos | **373** (+31.356 / −3.264) |
-| Migrações novas | **14** |
+| Commits | **78** → **83** depois do merge da `main` e do revert da F016 (2026-08-18) |
+| Arquivos | **373** (+31.356 / −3.264) → **379** |
+| Migrações novas | ~~14~~ → **13** (a 14ª saiu com o revert da F016; ver §3.2) |
 | `schema.prisma` | +181 linhas |
 | Features | **F024–F040** (o `specs/10-revamp-do-fluxo.md` cobre F024–F034; F035–F040 nasceram depois e não estão no plano mestre) |
 
@@ -53,6 +53,11 @@ contagem, em vez de deixar o cast estourar cru no meio do deploy.
 ```sql
 SELECT count(*) FROM "Outreach" WHERE canal = 'email';
 ```
+
+> **Medido em produção em 2026-08-18: `0`.** ✅ Este item não cancela o dia.
+> (Base de prod na mesma leitura: 56 usuários, 7.570 Leads, 253 Abordagens,
+> última migração aplicada `20260727150000_user_purchase_verification` — Fase 2,
+> como esperado.)
 
 - **0** → segue o jogo.
 - **> 0** → **pare**. Isso é decisão de produto, não de infra: uma Abordagem com
@@ -96,6 +101,51 @@ No staging, em 2026-08-17: **1 conta em `byok`, 34 em `orion`** — e 32 das de
 `orion` ainda tinham chave do Google guardada, sem uso. Se prod tiver a mesma
 proporção, o número de gente que sente a mudança é pequeno; o número de
 credenciais que saem do banco, não.
+
+> **Medido em produção em 2026-08-18 — a proporção NÃO se repetiu.**
+>
+> | `key_mode` | contas | google | anthropic | openai | gemini | screenshotone |
+> |---|---|---|---|---|---|---|
+> | `orion` | 29 | 28 | 8 | 6 | 21 | 4 |
+> | `byok`  | **9** | 9 | 1 | 3 | 8 | 0 |
+>
+> São **9 contas em `byok`**, não 1 — e **não são contas dormentes**. Todas as 9
+> tiveram sessão nos últimos 14 dias, e somam **~2.287 dos 7.570 Leads da base
+> (≈30%)**, incluindo as de 942, 447, 274 e 203 Leads. Ou seja: a migração 14
+> cai justamente sobre os alunos que mais usam o app.
+>
+> Como **não existe plano pago no dia** (`HUBLA_PRODUCT_ID_PRO` ausente,
+> confirmado no `vercel env pull` de 2026-08-18, e `/planos` pausada pela F035),
+> a saída "quem precisa de mais volume sobe de plano" **não existe para essas 9
+> pessoas**. Elas perdem a chave própria, caem nos limites do Free e não têm para
+> onde subir. É o pré-requisito deste parágrafo falhando — **decisão de produto
+> pendente antes do deploy**.
+>
+> ### Resolvido em 2026-08-18: a F016 sai deste deploy
+>
+> `git revert 5717a5e` (commit `b6573c0`). O "fim do BYOK" era o **último commit
+> de código** da branch — nada foi construído em cima dele, e o revert saiu limpo
+> (12 arquivos, sem conflito). Com isso:
+>
+> - **a migração 14 deixa de existir** — a fila cai de 14 para **13**;
+> - some a única migração **irreversível e danosa** do lote;
+> - os 9 alunos mantêm a chave própria;
+> - **o staging nunca tinha aplicado essa migração** (conferido em 2026-08-18),
+>   então o revert não cria drift nenhum — e revela que ela **nunca rodou em
+>   lugar nenhum**. Era a única do lote sem ensaio.
+>
+> Encerra-se o BYOK depois, quando houver plano pago para oferecer em troca.
+>
+> ### E o que o revert NÃO resolve — o teto de 40
+>
+> Descoberto ao conferir o código em 2026-08-18: **BYOK nunca isentou do teto
+> mensal**. O bônus que levantava o limite morreu no commit `caa34c5`, muito
+> anterior ao revertido — `5717a5e` não toca em `src/lib/planos/`. O teto é
+> cobrado em `coletar.ts:91` olhando **só o plano**, e `exibicao.ts:10` é
+> explícito: *"os limites são cobrados do mesmo jeito nos dois estados"*.
+>
+> Ou seja, o problema real é maior que o BYOK e atinge **os 56 alunos**: Free =
+> **40 Leads novos/mês** contra uma base que faz ~200/aluno/mês. Ver §5.1.
 
 **Se houver conta em `byok` em produção, avise essas pessoas antes.** Elas
 colaram uma chave que vai deixar de existir, e ficam limitadas ao Free até
@@ -144,6 +194,18 @@ A ADR-015 já aponta pra **B** como o estado desejado ("o endpoint direto fica
 reservado às migrações"), e registra a ausência como pendência. Se houver tempo,
 faça B antes do dia — vira uma decisão a menos sob pressão.
 
+> ⚠️ **Achado de 2026-08-18, independente do deploy:** o `DATABASE_URL` do
+> `.env` **local** aponta para o banco de **produção**
+> (`ep-misty-pine-acg0rke9-pooler`, confirmado pelo estado de migração e por
+> tráfego vivo — sessão no mesmo dia). O `.env` tem `DATABASE_URL_LOCAL` e
+> `DATABASE_URL_STAGING` guardados à parte, mas o que vale é o `DATABASE_URL`.
+>
+> Isso significa que, hoje, `npm run dev` lê e escreve em produção, e
+> **`npm run db:migrate` (= `prisma migrate dev`) pode resetar o banco de
+> produção**. `npm run dev:setup` também roda `migrate deploy` contra ele.
+> Trocar o `DATABASE_URL` local para o valor de `DATABASE_URL_LOCAL` **antes**
+> de qualquer trabalho local. Isso não é passo do deploy — é anterior a ele.
+
 ### 3.5. Variáveis de ambiente de produção
 
 Conferidas em 2026-08-17. Nenhuma **bloqueia** o deploy; duas caem em default
@@ -172,6 +234,17 @@ npm test && npx tsc --noEmit && npm run build
 Se o merge conflitar em algo não-trivial, **isso é trabalho de outro dia**, não
 do dia do deploy.
 
+> **Feito em 2026-08-18.** Merge da `origin/main` **sem conflito** (commit
+> `93eacf5`, ainda **não empurrado**). Portões depois do merge:
+>
+> - `npm test` → **477 testes em 54 arquivos, todos passam** ✅
+> - `npm run build` → **passa** ✅
+> - `npx tsc --noEmit` → **8 erros, todos em `tests/`, nenhum em `src/`**, e
+>   pré-existentes (o merge só tocou `scripts/` e `specs/`). Não bloqueiam o
+>   build, mas ficam como dívida.
+>
+> O que sobe passou de 78 para **82 commits** / 379 arquivos.
+
 ---
 
 ## 4. As 14 migrações, e o risco de cada uma
@@ -194,10 +267,22 @@ Na ordem em que rodam. Todas já rodaram no staging — é a evidência de que o
 | 11 | `canal_ligacao` | `Canal += 'ligacao'` | Baixo |
 | 12 | **`outreach_vira_abordagem`** | `RENAME VALUE 'outreach' → 'abordagem'` em `QuotaOperacao` e `OperacaoMensal` | **Alto — quebra o código que está em prod agora.** Ver §5 |
 | 13 | **`canal_email_sai_do_enum`** | Recria o tipo `Canal` sem `email` | **Alto — aborta se §3.1 não deu 0** |
-| 14 | **`fim_do_byok_apaga_chaves`** | Zera as chaves cifradas dos 5 provedores e força `key_mode='orion'` | **Alto — irreversível.** Só DADO, nenhuma coluna cai. Ciphertext apagado não volta nem com a master key. Ver §3.2 |
+| ~~14~~ | ~~`fim_do_byok_apaga_chaves`~~ | ~~Zera as chaves cifradas dos 5 provedores~~ | **REMOVIDA em 2026-08-18** pelo revert do §3.2. Não vai a produção |
 
 Todas as colunas `NOT NULL` adicionadas têm `DEFAULT`. Nenhuma falha por tabela
 populada.
+
+**São 13 migrações, não 14.** As 13 restantes já rodaram no staging. Sobram
+**duas** de risco alto (12 e 13), e nenhuma delas é irreversível por perda de
+dado — a 12 se desfaz com `RENAME VALUE` ao contrário, a 13 exige backup (e o
+§3.1 já garantiu que ela não aborta).
+
+> **Ressalva sobre o valor do staging como ensaio** (medido em 2026-08-18): o
+> banco de staging contém **duas migrações que não existem no repo** —
+> `20260727200000_f021_pipeline_crm` e `20260803120000_f022_proposta_persistida`,
+> das branches F021/F022 que o §1 declara **fora de escopo**. O schema ensaiado
+> lá **não é** o que produção terá. As 13 passaram, o que é evidência boa sobre
+> os `ALTER TYPE`; mas "rodou no staging" vale um pouco menos do que parecia.
 
 ---
 
@@ -226,13 +311,60 @@ Não existe ordem "segura" sem parada. Existem três saídas:
 
 **Decidir qual antes do dia, e anotar aqui.**
 
+> **Decidido em 2026-08-18: opção 1, janela curta assumida.** O volume medido em
+> produção sustenta a escolha — **28 sessões em 7 dias** (≈4/dia). Escolher um
+> horário de baixo uso e não parar entre o passo 4 e o 5 do §6.
+
+---
+
+## 5.1. O teto de 40 Leads/mês — o que quase passou batido
+
+Isto não é risco de migração; é o revamp mudando o tamanho do produto. Ficou
+visível em 2026-08-18 e **precisa ser resolvido antes do deploy**, não depois.
+
+**O que o revamp traz:** a F035 cobra teto **mensal** por plano. Free = **40
+Leads novos/mês**, cobrados em `coletar.ts:91`. Não existe ramo que consulte
+`key_mode` — BYOK não isenta ninguém (o bônus morreu em `caa34c5`).
+
+**Contra o que isso bate:** a base criou **1.385 Leads em 7 dias** com ~28 alunos
+ativos — da ordem de **200 Leads/aluno/mês**. O teto de 40 é **5× menor que o uso
+real**. E quem estoura encontra `/planos` respondendo **404** (pausa da F035),
+sem nada para assinar.
+
+**Decisão de 2026-08-18 — 1 mês de Pro para todos.** Registrada na
+[F035](../specs/02-features/F035-planos-e-limites.md), seção "Período de teste do
+Pro". Sem código novo: uma variável de ambiente e um lote de entitlements.
+
+| Passo | Comando | Desfaz com |
+|---|---|---|
+| Conferir a lista | `DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs --dry-run` | — |
+| Conceder aos 56 | `DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs` | `--revogar` |
+| Ligar | `HUBLA_PRODUCT_ID_PRO=trial-pro-2026-09` em Production | **apagar a variável** |
+
+**Ordem: isto vem ANTES do §6.** Os entitlements são inertes para a Fase 2, que
+não tem lógica de plano — gravá-los antes é seguro, e faz o revamp acordar com
+todo mundo já no Pro, sem nenhum minuto de teto de 40.
+
+**O interruptor de emergência do dia:** se algo cheirar mal depois do deploy,
+apagar `HUBLA_PRODUCT_ID_PRO` devolve todo mundo ao Free **na hora, sem deploy**
+(`resolver.ts:62`). Vale o contrário também — é a variável que liga.
+
+**Prazo:** o teste vence em **2026-09-18**. Se até lá não existir produto pago na
+Hubla, todos voltam a 40 com a `/planos` ainda em 404. O teste compra o mês para
+construir isso; ele não substitui a decisão.
+
 ---
 
 ## 6. Execução
 
-Só entra aqui com o §3 inteiro verde.
+Só entra aqui com o §3 inteiro verde **e o §5.1 já executado**.
 
 ```bash
+# 0. ANTES de tudo (§5.1): teste do Pro já concedido e ligado
+DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs --dry-run   # confere
+DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs             # concede
+#    + HUBLA_PRODUCT_ID_PRO=trial-pro-2026-09 em Production, no painel da Vercel
+
 # 1. Confirmar de novo, agora perto da hora, que nada mudou
 SELECT count(*) FROM "Outreach" WHERE canal = 'email';   -- tem que ser 0
 
@@ -242,7 +374,7 @@ SELECT count(*) FROM "Outreach" WHERE canal = 'email';   -- tem que ser 0
 # 3. Ver o que falta aplicar, sem aplicar
 DATABASE_URL="<host DIRETO de prod, sem -pooler>" npx prisma migrate status
 
-# 4. Aplicar as 14
+# 4. Aplicar as 13
 DATABASE_URL="<host DIRETO de prod, sem -pooler>" npx prisma migrate deploy
 
 # 5. Código: o merge na main dispara o deploy de Production sozinho
@@ -314,3 +446,14 @@ Não bloqueia o deploy, mas some da cabeça de todo mundo se não ficar escrito:
 - **Medir o §8 do plano mestre** — TTFB p95 < 800 ms em `/leads` com 500 Leads,
   > 80% dos Leads abordados recebendo follow-up. São os números que dizem se o
   revamp funcionou; sem medir, o deploy foi só uma troca de código.
+- **⏰ 2026-09-18 — o teste do Pro vence** (§5.1). Até lá: criar os `product_id`
+  pagos na Hubla e religar a `/planos` (flag `PLANOS_NA_UI` + recriar o
+  `loading.tsx`, ver F035). Se a data chegar sem isso, os 56 alunos voltam a 40
+  Leads/mês sem ter o que assinar — o mesmo precipício, um mês depois.
+- **Encerrar o BYOK** (F016), que saiu deste deploy pelo revert do §3.2. Faz
+  sentido junto com o plano pago: é ele que dá a saída aos 9 alunos que hoje usam
+  chave própria. A migração `fim_do_byok_apaga_chaves` terá que ser recriada — e
+  continua sendo irreversível.
+- **`ANTHROPIC_API_KEY` em Production** — presente, mas a camada multi-provider
+  usa `ORION_OPENAI_API_KEY` para o modo Orion. Conferir se a da Anthropic ainda
+  tem uso ou se é resquício.
