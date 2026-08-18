@@ -198,6 +198,9 @@ Agora há **usuários externos + chaves + dados** — o risco muda de patamar.
   "sem workers"). Partida (configurável por env/plano): ~50 coletas/dia,
   ~200 diagnósticos/dia, ~100 gerações LLM/dia. Monitorar no PostHog e afrouxar
   conforme o uso real.
+- **Nome do produto:** **Orion** (o caçador da mitologia grega / a constelação —
+  "caça" os Leads e "varre o céu" atrás deles). O app fica em **subdomínio Dev em
+  Dobro** (ex.: `orion.devemdobro.com`).
 
 ### 2026-07-15
 - **Domínio:** subdomínio Dev em Dobro

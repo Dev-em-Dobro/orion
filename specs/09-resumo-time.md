@@ -13,10 +13,10 @@ continua nas specs (00, 07, 08 e F014–F017). Atualizar quando o plano mudar.
 ---
 
 ## O que é
-Um **motor de prospecção** que acha **negócios locais que já precisam de um dev**
-e entrega o contato com a **Dor diagnosticada** e a **mensagem de abordagem
-pronta**. Em vez de cuspir uma lista crua de contatos (como os scrapers), ele
-**qualifica** cada Lead.
+O **Orion** é um **motor de prospecção** que acha **negócios locais que já
+precisam de um dev** e entrega o contato com a **Dor diagnosticada** e a
+**mensagem de abordagem pronta**. Em vez de cuspir uma lista crua de contatos
+(como os scrapers), ele **qualifica** cada Lead.
 
 ## Como funciona (o fluxo)
 1. **Coleta** negócios por região/categoria via Google Places — dado público. `[F001]`
