@@ -104,23 +104,15 @@ function rowGoogle(plaintext = "google-key-abcdef") {
 
 describe("chaves resolver/repositorio/testar + for-user", () => {
   const prevKey = process.env.BYOK_MASTER_KEY;
-  const prevFlag = process.env.BYOK_NOVOS_ALUNOS;
 
   beforeEach(() => {
     process.env.BYOK_MASTER_KEY = KEY_B64;
-    // F016 (2026-08-17) — o BYOK saiu do produto, mas a máquina fica guardada
-    // (ver "O que fica no código, e por quê"). Este arquivo é o que prova que
-    // ela ainda funciona se a flag reabrir, então ele liga a flag. O mundo real
-    // — flag desligada — é o teste do AC9, no fim.
-    process.env.BYOK_NOVOS_ALUNOS = "1";
     vi.clearAllMocks();
   });
 
   afterEach(() => {
     if (prevKey === undefined) delete process.env.BYOK_MASTER_KEY;
     else process.env.BYOK_MASTER_KEY = prevKey;
-    if (prevFlag === undefined) delete process.env.BYOK_NOVOS_ALUNOS;
-    else process.env.BYOK_NOVOS_ALUNOS = prevFlag;
     vi.unstubAllGlobals();
   });
 
@@ -280,27 +272,5 @@ describe("chaves resolver/repositorio/testar + for-user", () => {
     });
     const client = await createLlmForUser("u1");
     expect(client.provider).toBe("anthropic");
-  });
-
-  // F016 AC9 — o comportamento de produção. A flag manda, não o dado: uma linha
-  // que sobreviveu à migração com `key_mode = 'byok'` não faz o app ir procurar
-  // chave do aluno. Sem isso, o aluno cairia em `ChaveAusenteError` — apontando
-  // pra uma tela de chaves que não existe mais.
-  it("AC9 — com o BYOK desligado, key_mode='byok' resolve pela chave da plataforma", async () => {
-    delete process.env.BYOK_NOVOS_ALUNOS;
-    const prevOrion = process.env.ORION_GOOGLE_API_KEY;
-    process.env.ORION_GOOGLE_API_KEY = "chave-da-plataforma";
-    // A linha existe, tem chave cifrada, e o modo diz "byok" — o pior caso.
-    prismaMock.userApiKeys.findUnique.mockResolvedValue(
-      rowGoogle("chave-do-aluno"),
-    );
-
-    expect(await obterChave("u1", "google")).toBe("chave-da-plataforma");
-    expect(await exigirChave("u1", "google")).toBe("chave-da-plataforma");
-    // E nem chega a ler a linha: sem BYOK não há o que decifrar.
-    expect(prismaMock.userApiKeys.findUnique).not.toHaveBeenCalled();
-
-    if (prevOrion === undefined) delete process.env.ORION_GOOGLE_API_KEY;
-    else process.env.ORION_GOOGLE_API_KEY = prevOrion;
   });
 });

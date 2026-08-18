@@ -18,6 +18,7 @@ import { LABEL_LLM_PROVIDER, salvarProviderLlm } from "@/lib/llm";
 import {
   byokDisponivel,
   LABEL_KEY_MODE,
+  obterModoChave,
   salvarModoChave,
 } from "@/lib/chaves";
 import type { KeyMode } from "@prisma/client";
@@ -137,10 +138,11 @@ export async function salvarModoChaveAction(
     const { userId } = await requireTenant();
     const alvo = parsed.data as KeyMode;
 
-    // F016 — a flag fecha no servidor, não só na UI. Desde 2026-08-17 vale pra
-    // todos: nem quem já estava em BYOK volta pra ele.
+    // F035 — a flag fecha no servidor, não só na UI: quem não está em BYOK não
+    // entra nele enquanto `BYOK_NOVOS_ALUNOS` estiver desligada.
     if (alvo === "byok") {
-      if (!byokDisponivel()) {
+      const atual = await obterModoChave(userId);
+      if (!byokDisponivel(atual)) {
         return {
           kind: "erro",
           mensagem:

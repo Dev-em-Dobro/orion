@@ -36,12 +36,11 @@ export default async function ConfiguracaoPage() {
     obterModoChave(userId),
   ]);
   const chavesVisiveis = chaves.filter((c) => c.tipo !== "screenshotone");
-  // F016 (2026-08-17) — com a flag desligada **ninguém** vê o seletor de modo
-  // nem os campos de chave: o Orion usa as chaves da plataforma e não há o que
-  // configurar. A flag vem antes do dado de propósito — uma linha que ficou em
-  // `key_mode = 'byok'` não pode fazer a tela prometer um modo que não existe.
-  const mostrarByok = byokDisponivel();
-  const modoByok = mostrarByok && modo === "byok";
+  const modoByok = modo === "byok";
+  // F035 — com a flag desligada, só quem JÁ está em BYOK vê o seletor de modo
+  // e os campos de chave. Para o resto, o Orion usa as chaves da plataforma e
+  // não há o que configurar.
+  const mostrarByok = byokDisponivel(modo);
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">

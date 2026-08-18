@@ -42,24 +42,22 @@ export default function PrivacidadePage() {
             e-mail, nome (quando o provedor OAuth informar), identificadores de
             sessão e metadados de autenticação (Better Auth).
           </li>
-          {/* F016 (2026-08-17) — o BYOK acabou e as chaves salvas foram
-              apagadas. Uma política que ainda diga "guardamos a sua chave
-              cifrada" descreve um tratamento de dado que não existe mais, o que
-              é o tipo de imprecisão que a LGPD cobra. */}
           <li>
             <strong className="font-medium text-zinc-100">
-              Chaves de API:
+              Chaves de API (apenas contas com chave própria):
             </strong>{" "}
+            por padrão o {produto} usa as chaves da plataforma e não há chave
+            sua para guardar. Contas que já haviam configurado chaves próprias
+            continuam com elas{" "}
             <strong className="font-medium text-zinc-100">
-              não guardamos nenhuma chave sua.
+              cifradas em repouso
             </strong>{" "}
-            O {produto} usa as chaves da própria plataforma para falar com
-            Google e com os provedores de IA. As chaves que alunos haviam
-            configurado no modo antigo foram{" "}
+            (AES-256-GCM com chave-mestra do servidor) e{" "}
             <strong className="font-medium text-zinc-100">
-              apagadas em 17/08/2026
-            </strong>
-            , junto com o encerramento desse modo.
+              nunca exibidas em claro
+            </strong>{" "}
+            de volta na interface. Servem só para chamar os provedores em seu
+            nome, e você pode removê-las quando quiser.
           </li>
           <li>
             <strong className="font-medium text-zinc-100">
@@ -171,8 +169,8 @@ export default function PrivacidadePage() {
         <h2 className="text-base font-semibold text-zinc-100">7. Segurança</h2>
         <p>
           Adotamos medidas técnicas e organizacionais razoáveis: isolamento
-          multi-tenant por usuário, secrets de sessão sem default e HTTPS na
-          hospedagem. Nenhum sistema é 100% seguro —
+          multi-tenant por usuário, cifra das chaves BYOK, secrets de sessão
+          sem default, HTTPS na hospedagem. Nenhum sistema é 100% seguro —
           reporte incidentes para {emailPrivacidade}.
         </p>
       </section>
