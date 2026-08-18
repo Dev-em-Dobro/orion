@@ -349,20 +349,31 @@ BYOK_NOVOS_ALUNOS=0   # padrão a partir de agora
   nada sobre chaves — o subtítulo da página já diz que o modo é Orion e que há
   limites diários; um card explicando as chaves incluídas seria ruído sobre algo
   que o aluno não configura.
-- **Quem já configurou continua.** Aluno com `key_mode = "byok"` e chave salva
-  segue funcionando e segue vendo os campos pra trocar ou remover a chave dele.
-  Desligar por baixo quebraria quem depende disso hoje.
-- Uma vez que um aluno grandfathered **sai** do BYOK, não consegue voltar
-  enquanto a flag estiver desligada. O aviso disso aparece na tela antes de ele
-  trocar o modo.
-- Ligar a flag de novo (`=1`) reabre pra todo mundo, sem deploy de código.
+- ~~**Quem já configurou continua.**~~ **Revogado em 2026-08-17** — ver
+  [F016, "Encerramento"](F016-configuracao-de-chaves.md). O grandfathering
+  acabou: BYOK sai do produto pra todos, e as chaves salvas são apagadas.
+- ~~Uma vez que um aluno grandfathered sai do BYOK, não consegue voltar~~ —
+  revogado junto: não há mais em que estar nem de onde sair.
+- Ligar a flag de novo (`=1`) reabre pra todo mundo, sem deploy de código —
+  **mas não devolve as chaves apagadas.**
 
 ### O que isso quebra, e a spec assume
 
 O **bônus de +100% de limite por BYOK** morre com o modelo. Ele existia porque
 BYOK zerava nosso custo variável; sem BYOK novo, não há o que compensar. A
 coluna "Bônus BYOK" saiu da tabela de planos, e `limiteMensal()` deixa de somar
-o bônus — **exceto** para os grandfathered, que mantêm o que já tinham.
+o bônus — ~~**exceto** para os grandfathered, que mantêm o que já tinham~~.
+
+> **Correção de 2026-08-17.** A exceção acima nunca existiu no código:
+> `limiteMensal()` sempre devolveu o teto puro do plano, e `usuarioEmByok()`
+> ficou exportada e **nunca chamada**. A spec prometia uma coisa e o app fazia
+> outra — e ninguém tinha percebido porque só apareceria pra um aluno
+> grandfathered batendo no limite.
+>
+> Resolvido pela raiz: com o fim do BYOK (F016), não há mais grandfathered, e a
+> exceção some por não ter mais a quem se aplicar. O **AC6 abaixo fica
+> revogado**, e o AC5 ("BYOK não isenta") passa a ser a regra única — que é o
+> que o código sempre fez.
 
 E o custo variável **vira nosso**: a
 [11 — Custos](../11-custos-e-precificacao.md) partia de "BYOK ≈ $0 pra nós" como
@@ -544,7 +555,9 @@ por plano. Quem já tem plano vê o que ganharia subindo.
       API.
 - [ ] **AC5** — **BYOK não isenta**: aluno Free com `key_mode = byok` é barrado
       nos mesmos 40.
-- [ ] **AC6** — Aluno **pago** em BYOK tem o limite dobrado (Pro: 600).
+- [ ] ~~**AC6**~~ — *Revogado em 2026-08-17.* Nunca foi implementado, e com o
+      fim do BYOK (F016) não há mais aluno em BYOK pra dobrar limite de. O AC5
+      vale sozinho.
 - [ ] **AC7** — Coleta e Triagem funcionam normalmente com o medidor estourado
       (o aluno continua vendo score estimado e a base cresce).
 - [ ] **AC8** — Virada de mês zera o consumo (competência nova), sem job
@@ -564,9 +577,10 @@ por plano. Quem já tem plano vê o que ganharia subindo.
       de limite direto, sem gastar requisição.
 - [ ] **AC18** — Agente Orion: **5 perguntas/mês** no Free, contadas por
       competência (não por dia). A 6ª devolve erro com CTA de plano.
-- [ ] **AC19** — Com `BYOK_NOVOS_ALUNOS=0`, aluno em modo `orion` não vê a opção
-      BYOK nem campos de chave; aluno com `key_mode = "byok"` **continua** vendo
-      e gerenciando as chaves dele.
+- [ ] **AC19** — Com `BYOK_NOVOS_ALUNOS=0`, **nenhum** aluno vê a opção BYOK nem
+      campos de chave. *(A segunda metade — "aluno com `key_mode = byok`
+      continua vendo e gerenciando as chaves dele" — foi revogada em 2026-08-17
+      pelo encerramento da [F016](F016-configuracao-de-chaves.md).)*
 - [ ] **AC20** — Nenhum caminho da UI gera Abordagem de e-mail; a Server Action
       recusa `canal = "email"` mesmo se chamada direto.
 - [ ] **AC21** — Simulador de venda: **20 mensagens/mês** no Free, contadas por

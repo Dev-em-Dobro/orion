@@ -10,7 +10,6 @@ export { LABEL_KEY_MODE, obterModoChave, salvarModoChave } from "./modo";
 export {
   byokAbertoParaNovos,
   byokDisponivel,
-  trocaEhIrreversivel,
 } from "./byok-flag";
 export { ChaveAusenteError, ChaveOperacaoError } from "./erros";
 export {

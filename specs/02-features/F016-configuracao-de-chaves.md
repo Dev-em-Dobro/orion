@@ -1,7 +1,43 @@
 # F016 — Configuração de chaves do aluno (BYOK)
 
 ## Status
-Implementada — 2026-07-14
+**Encerrada — 2026-08-17.** Implementada em 2026-07-14, fechada para novos
+alunos em 2026-08-13 ([F035](F035-planos-e-limites.md), "Fim do BYOK"), e agora
+retirada do produto **para todos**, inclusive quem já tinha configurado.
+
+> ## Encerramento de 2026-08-17
+>
+> **Todo mundo usa as chaves da plataforma.** Não há mais modo BYOK: nem pra
+> novo aluno, nem pra quem já estava (o *grandfathering* de 2026-08-13 termina
+> aqui). Quem precisa de mais volume sobe de plano — não traz a própria chave.
+>
+> Por que fechar de vez, e não deixar os antigos: **o modelo de plano não fecha
+> com dois tipos de aluno.** A F035 cobra por volume porque volume custa; um
+> aluno com chave própria não custa, e o produto passou a ter que responder duas
+> perguntas diferentes sobre limite. Um caminho só é mais simples de explicar,
+> de sustentar e de precificar — e é o que a tela de planos vende.
+>
+> ### O que acontece com as chaves já salvas
+>
+> **São apagadas.** Migração zera as colunas cifradas de todos os provedores
+> (`google`, `anthropic`, `openai`, `gemini`, `screenshotone`), o `last4`, o
+> `status`, e força `key_mode = 'orion'` em todas as linhas.
+>
+> Não é limpeza cosmética: guardar credencial de um terceiro que o app **não
+> usa** é passivo, não é zelo. O levantamento de 2026-08-17 no staging achou 33
+> chaves do Google guardadas — e **32 delas eram de contas já em modo `orion`**,
+> ou seja, chaves paradas sem nenhuma finalidade desde antes desta decisão. A
+> LGPD chama isso de dado sem finalidade; a gente devia ter apagado antes.
+>
+> ### O que fica no código, e por quê
+>
+> A **máquina continua**, desligada: a camada de cifra ([ADR-009](../04-decisions/ADR-009-cifra-chaves-byok.md)),
+> o resolver por `key_mode` e a flag `BYOK_NOVOS_ALUNOS`. Mesmo padrão da pausa
+> de planos da F035 — desligar é uma linha, arrancar é uma reescrita, e o custo
+> de manter código morto e testado é menor que o de recriá-lo.
+>
+> O que **não** volta sozinho é o dado: reabrir a flag devolve a tela, não as
+> chaves. Cada aluno colaria a dele de novo.
 
 ## Objetivo
 Dar ao aluno um menu **`/configuracao`** com duas formas de operar:
@@ -73,6 +109,25 @@ state explicativo). Reaproveitar o tutorial existente do Google Places
       features na hora.
 - [x] **AC8** — Sem chaves essenciais: banner + empty states apontam pra
       `/configuracao` (e tutorial Google quando faltar Places).
+
+### Critérios do encerramento (2026-08-17)
+Os AC1–AC8 acima descrevem o que a feature **fazia**. Ficam como registro; o que
+vale a partir daqui:
+
+- [ ] **AC9** — Com `BYOK_NOVOS_ALUNOS` desligada, **nenhuma** conta usa chave
+      própria: `obterChave`/`exigirChave` devolvem a chave da plataforma mesmo
+      se a linha em `user_api_keys` disser `key_mode = 'byok'`. O dado não manda
+      no comportamento — a flag manda.
+- [ ] **AC10** — `/configuracao` não mostra seletor de modo, campo de chave,
+      "Testar chave" nem chave mascarada. Nenhuma tela do app menciona chave
+      própria.
+- [ ] **AC11** — Depois da migração, nenhuma linha de `user_api_keys` tem
+      `ciphertext`, `iv`, `auth_tag`, `last4` ou `status` diferente do vazio
+      inicial, e toda linha está em `key_mode = 'orion'` — nos cinco provedores.
+- [ ] **AC12** — Nenhuma mensagem de erro oferece BYOK como saída. A da cota
+      diária (F018) passa a apontar só o que existe: esperar o dia virar.
+- [ ] **AC13** — Ligar `BYOK_NOVOS_ALUNOS=1` devolve a tela e o fluxo sem
+      deploy. **Não** devolve as chaves apagadas — cada aluno cola de novo.
 
 ## Decisões de implementação
 - `src/lib/seguranca/cifra.ts` (ADR-009) para cifrar/decifrar.

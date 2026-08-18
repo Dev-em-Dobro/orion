@@ -5,9 +5,19 @@ Implementada — 2026-07-27
 
 ## Objetivo
 Proteger as **chaves compartilhadas da Orion** (modo padrão) com cotas
-diárias por aluno e exibir o consumo na UI. O **BYOK**
+diárias por aluno e exibir o consumo na UI. ~~O **BYOK**
 ([F016](F016-configuracao-de-chaves.md)) permanece disponível via toggle — sem
-cotas **diárias** no modo BYOK.
+cotas **diárias** no modo BYOK.~~
+
+> **Atualização 2026-08-17 — o BYOK acabou** ([F016](F016-configuracao-de-chaves.md),
+> "Encerramento"). Não existe mais "modo padrão" contra "modo BYOK": **existe um
+> modo só**, e as chaves são sempre da plataforma. Com isso a cota diária desta
+> spec deixa de ter exceção — vale pra todo mundo, sempre.
+>
+> Consequência direta na UI: a mensagem de cota estourada oferecia "ative o modo
+> BYOK em Configuração" como saída. Não há mais essa saída, e continuar
+> oferecendo seria mandar o aluno pra uma tela que não existe mais. A mensagem
+> passa a dizer só o que é verdade: volte amanhã.
 
 > **Atualização 2026-08-10 — [F035](F035-planos-e-limites.md).** A frase
 > "preparar upgrade futuro (remover limite via plano pago)" deixou de valer
