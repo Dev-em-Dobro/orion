@@ -53,6 +53,64 @@ Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 > acabou e quando zera, mas não tem para onde ser mandado. É exatamente o que
 > hoje já acontecia de fato — o botão da tela dizia "Checkout em breve".
 
+> ## Período de teste do Pro (2026-08-18 → 2026-09-18)
+>
+> **Todos os alunos existentes ganham 1 mês de Pro.** Decidido em 2026-08-18, ao
+> descobrir o que o revamp faria com a base se subisse como estava.
+>
+> ### O problema que isto resolve
+>
+> A pausa acima tira a `/planos` da UI mas **mantém a régua**: Free = 40 Leads
+> novos/mês, cobrados em `coletar.ts`. Medido em produção em 2026-08-18, a base
+> criou **1.385 Leads em 7 dias** com ~28 alunos ativos — da ordem de **200
+> Leads/aluno/mês, 5× o teto**. Subir o revamp sem mais nada não seria "limitar":
+> seria cortar o uso real da base em ~95%, e mandar quem estourasse para uma tela
+> que responde 404.
+>
+> O teto de 40 não está errado — ele é a divisão do free tier do Google
+> ([11 §4](../../11-custos-e-precificacao.md#o-free-tier-do-google-é-o-que-decide-o-limite-do-free)).
+> O que está errado é aplicá-lo a uma base que **nunca teve teto mensal** e que
+> não tem plano pago para assinar. O teste separa as duas coisas: o revamp entrega
+> agora, a cobrança começa quando houver o que cobrar.
+>
+> ### Como funciona — sem código novo
+>
+> A frase da pausa ("quem tiver entitlement ativo recebe o limite maior sem ver a
+> palavra 'plano'") é exatamente o mecanismo. Basta:
+>
+> 1. `HUBLA_PRODUCT_ID_PRO=trial-pro-2026-09` na Vercel (Production);
+> 2. um `HublaEntitlement` `ativo` com esse `product_id` para o e-mail de cada
+>    aluno — `scripts/conceder-trial-pro.mjs` faz o lote.
+>
+> `PLANOS_NA_UI` continua `false`: o aluno vê o medidor ler `x/300` em vez de
+> `x/40` e **não vê a palavra "plano" em lugar nenhum**. É a pausa funcionando
+> como projetada, não uma exceção a ela.
+>
+> ### O interruptor de emergência
+>
+> **Apagar `HUBLA_PRODUCT_ID_PRO` da Vercel devolve todo mundo ao Free na hora,
+> sem deploy** — `mapaProdutoPlano()` volta a ser vazio e `planoDoUsuario`
+> curto-circuita em `free` (`resolver.ts:62`). É o mesmo motivo pelo qual a
+> ausência da variável era o estado desejado antes: a variável **é** o
+> interruptor. Encerrar pelo caminho normal é `--revogar` no script.
+>
+> ### Custo aceito
+>
+> Um Pro no teto custa **R$6,34/mês** ([11 §4](../../11-custos-e-precificacao.md#4-custo-por-alunomês)),
+> e ~46% disso é Places. Com 56 alunos no Pro seriam 840 requisições/mês —
+> **dentro das 1.000 grátis** que o Google dá na conta inteira. Então o custo
+> provável do mês inteiro fica em **R$100–130**, não nos R$355 do pior caso da
+> tabela. É barato o bastante para não ser decisão difícil.
+>
+> ### O que isto NÃO resolve
+>
+> **O precipício é adiado, não removido.** Em 2026-09-18 todos voltam a 40 com a
+> `/planos` ainda em 404, a menos que os `product_id` reais existam na Hubla até
+> lá. O teste compra um mês para construir isso — e essa é a única razão de ele
+> ter prazo em vez de ser permanente. Se a data chegar sem produto pago, a decisão
+> volta à mesa: ou existe plano, ou o teto do Free sobe de vez (e aí é [11 §4](../../11-custos-e-precificacao.md)
+> que precisa ser reescrito, não esta seção).
+
 ## Objetivo
 Transformar o Orion de "tudo liberado pra todo aluno" em produto com **planos**.
 
