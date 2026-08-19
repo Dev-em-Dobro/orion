@@ -3,9 +3,32 @@
 /**
  * Regex alinhada ao Better Auth (`matchesOriginPattern` + allowRelativePaths):
  * path relativo + query simples. Rejeita `//`, absoluto e `?` aninhado.
+ *
+ * O plugin magic-link faz `decodeURIComponent` de novo no verify. `%5B` passa
+ * neste regex, mas vira `[` depois do decode e o Better Auth responde
+ * INVALID_CALLBACK_URL. Por isso validamos também a forma decodificada.
  */
 const CALLBACK_RELATIVO_OK =
   /^\/(?!\/|\\|%2f|%5c)[\w\-.\+/@]*(?:\?[\w\-.\+/=&%@]*)?$/i;
+
+function aceitoNoVerifyBetterAuth(url: string): boolean {
+  if (!CALLBACK_RELATIVO_OK.test(url)) return false;
+  try {
+    return CALLBACK_RELATIVO_OK.test(decodeURIComponent(url));
+  } catch {
+    return false;
+  }
+}
+
+function soPathnameSeguro(valor: string): string {
+  try {
+    const u = new URL(valor, "https://orion.local");
+    const soPath = u.pathname || "/";
+    return aceitoNoVerifyBetterAuth(soPath) ? soPath : "/";
+  } catch {
+    return "/";
+  }
+}
 
 /**
  * Normaliza `callbackUrl` da query / middleware para um path relativo
@@ -27,15 +50,8 @@ export function sanitizarCallbackUrl(raw: string | null | undefined): string {
   }
 
   if (!valor.startsWith("/")) return "/";
-  if (!CALLBACK_RELATIVO_OK.test(valor)) {
-    // Query “suja” (ex.: segundo `?`): mantém só o pathname.
-    try {
-      const u = new URL(valor, "https://orion.local");
-      const soPath = u.pathname || "/";
-      return CALLBACK_RELATIVO_OK.test(soPath) ? soPath : "/";
-    } catch {
-      return "/";
-    }
+  if (!aceitoNoVerifyBetterAuth(valor)) {
+    return soPathnameSeguro(valor);
   }
   return valor;
 }

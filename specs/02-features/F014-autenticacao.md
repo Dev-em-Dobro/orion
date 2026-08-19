@@ -49,8 +49,12 @@ Gerados pelo Better Auth com adapter Prisma: `User`, `Session`, `Account`,
       clicar autentica. `errorCallbackURL` **não** aninha o `callbackUrl`
       (Better Auth faz `decodeURIComponent` de novo no verify → dois `?` →
       `INVALID_CALLBACK_URL`). Erros usam `/login?error=…` simples.
-      `callbackURL` pós-sucesso pode manter path+query (`/leads?site=…`).
-      abrir o link autentica e abre sessão. Link expirado/reusado → erro claro.
+      `callbackURL` pós-sucesso pode manter path+query simples (`/leads?site=…`).
+      Query com caracteres que o Better Auth rejeita **após** o segundo
+      `decodeURIComponent` (ex.: colchetes de UTM `[LI28]` / `%5B` de campanhas
+      ActiveCampaign) cai para o pathname, senão o verify responde
+      `INVALID_CALLBACK_URL`. Abrir o link autentica e abre sessão. Link
+      expirado/reusado → erro claro.
 - [x] **AC4** — `requireUser()` devolve o usuário logado nas Server Actions e
       lança (tratado como erro amigável) quando não há sessão.
 - [x] **AC5** — Logout encerra a sessão e volta a barrar as rotas protegidas.
