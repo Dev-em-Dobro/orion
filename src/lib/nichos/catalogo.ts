@@ -18,6 +18,12 @@ export type Nicho = {
    * `includedType` do Places. Só quando o nicho mapeia um `primaryType` único
    * e confiável — onde o playbook diz "(varia)", fica ausente e a busca corre
    * sem filtro de tipo.
+   *
+   * **O valor tem que existir na Table A do Places.** Nome plausível não basta:
+   * `psychologist` e `nutritionist` parecem certos, não estão na tabela, e o
+   * Google responde 400 derrubando a busca inteira. A lista fechada do que vale
+   * está em `/specs/03-contracts/google-places.md` e
+   * `tests/unit/nichos-localidades.test.ts` falha se este arquivo sair dela.
    */
   includedType?: string;
   /** Tipos que o Places pode devolver para este nicho (alimenta o Tier). */
@@ -70,16 +76,23 @@ export const NICHOS: Nicho[] = [
     slug: "psicologo",
     label: "Psicólogo / clínica de psicologia",
     termoBusca: "psicólogo",
-    includedType: "psychologist",
-    primaryTypes: ["psychologist"],
+    // Sem `includedType`: `psychologist` NÃO existe na Table A do Places e
+    // derrubava toda busca deste nicho com 400 (F033, emenda de 2026-08-19).
+    // `medical_clinic` é o que o Places devolve de verdade — 59 de 60
+    // resultados em GO/PR/SP quando a emenda foi medida. Está aqui pro Tier
+    // resolver; `psychologist` fica como leitura, nunca como filtro.
+    primaryTypes: ["medical_clinic", "psychologist"],
     tier: "ALTO",
   },
   {
     slug: "nutricionista",
     label: "Nutricionista",
     termoBusca: "nutricionista",
-    includedType: "nutritionist",
-    primaryTypes: ["nutritionist", "doctor"],
+    // Mesmo caso do psicólogo: `nutritionist` não existe na Table A.
+    // `consultant` é o que o Places devolve de verdade (59 de 60 em GO/PR/SP).
+    // Genérico de propósito — ver a nota no playbook sobre o que isso promove
+    // junto, e por que preferimos isso a deixar o nicho inteiro em BAIXO.
+    primaryTypes: ["consultant", "nutritionist", "doctor"],
     tier: "ALTO",
   },
   {

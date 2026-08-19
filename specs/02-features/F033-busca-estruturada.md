@@ -195,6 +195,78 @@ lê como bug — e desta vez leu mesmo.
 - [ ] **AC14** — O filtro considera a lista **completa**, não as 60 desenhadas:
       em SP, digitar "Campinas" (item 88) encontra.
 
+## Emenda 2026-08-19 — dois nichos do dropdown nunca puderam buscar
+
+Escolher **Psicólogo** e mandar buscar devolvia isto, em vermelho, dentro do
+card de busca:
+
+> `Places API (400): { "error": { "code": 400, "message": "Invalid included_type: 'psychologist'. See full list of supported types at https://developers.google.com/maps/documentation/places/web-service/supported_types#table1", "status": "INVALID_ARGUMENT" } }`
+
+Dois defeitos independentes, um em cima do outro.
+
+**1. O tipo não existe.** O catálogo mandava `includedType: "psychologist"`, e
+`psychologist` não está na Table A da Places API — a única tabela cujos valores
+o Text Search aceita na request. O Google rejeita a chamada inteira com 400.
+Não era o nicho "trazendo poucos resultados": **nenhuma** busca de Psicólogo
+jamais funcionou, desde que o nicho entrou no dropdown.
+
+Auditando o catálogo contra a Table A apareceu o segundo: **Nutricionista**
+mandava `nutritionist`, que também não existe. Estava quebrado do mesmo jeito e
+ninguém tinha reportado — a lista tem 23 nichos e ninguém testou os 23.
+
+O erro é fácil de cometer e caro de perceber: `psychologist` e `nutritionist`
+são palavras plausíveis, e as vizinhas de verdade existem (`physiotherapist`,
+`dentist`). O catálogo tinha guarda pra coerência interna — `includedType`
+precisa estar em `primaryTypes` — mas nada dizia que o valor precisa existir do
+lado do Google. Uma constante errada passava por todos os testes e só falhava em
+produção, na cara do aluno.
+
+Correção: os dois nichos ficam **sem `includedType`** e buscam pelo `textQuery`,
+caminho que Dermatologista, Oftalmologista e Arquiteto já usam. O contrato
+[google-places](../03-contracts/google-places.md) passa a carregar a lista
+fechada de tipos válidos, e um teste falha se o catálogo sair dela.
+
+**O que o Places devolve nestes dois nichos** — medido contra a API em
+2026-08-19, 20 resultados por cidade em GO, PR e SP:
+
+| Nicho         | `primaryType` real       | Tier antes | Tier agora |
+|---------------|--------------------------|------------|------------|
+| Psicólogo     | `medical_clinic` (59/60) | BAIXO      | ALTO       |
+| Nutricionista | `consultant` (59/60)     | BAIXO      | ALTO       |
+
+O `primaryTypes` dos dois estava escrito por dedução, não por medição, e errado
+nos dois casos — os dois nichos são ALTO no playbook e produziam Lead BAIXO.
+Psicólogo passa a listar `medical_clinic`, que a Clínica médica já reivindica
+como ALTO. Nutricionista passa a listar `consultant`.
+
+`consultant` é genérico, e promovê-lo tem preço: qualquer Lead que o Places
+classifique assim entra como ALTO, inclusive vindo de Arquiteto e Engenharia,
+que buscam sem `includedType`. Foi escolha consciente (registrada no playbook):
+Tier errado no nicho certo esconde Lead bom, Tier generoso em nicho vizinho só
+adianta triagem. Se sobrar consultor genérico na Fila, o conserto é dar
+`includedType` a Arquiteto/Engenharia — não rebaixar a Nutricionista.
+
+**2. O aluno lia o JSON do Google.** Mesmo com o tipo certo, a tela mostrava o
+corpo de erro cru — `INVALID_ARGUMENT`, link pra doc do Google, chaves e aspas.
+Para o aluno, que não tem chave, não escolheu tipo nenhum e não pode consertar
+nada disso, é ruído que parece culpa dele. A quem o texto **serviria** — nós —
+ele nunca chegava: ficava na tela do aluno e não no Sentry.
+
+Os erros do Places passam por `mensagemDeErroPlaces()`, que separa o que o aluno
+pode resolver (chave, cota) do que só nós resolvemos (400). O detalhe cru vai
+pro Sentry via `reportarErro`. Régua e tabela no
+[contrato](../03-contracts/google-places.md#erros-relevantes).
+
+### Critérios de aceitação da emenda
+- [ ] **AC15** — Todo `includedType` do catálogo consta na lista de tipos
+      válidos do contrato; um valor fora dela **quebra o teste**, não a busca do
+      aluno. Buscar Psicólogo e Nutricionista coleta Leads, e esses Leads
+      entram em Tier **ALTO** — que é como o playbook classifica os dois.
+- [ ] **AC16** — Nenhum erro do Places chega à UI com o corpo cru do Google:
+      400 vira aviso curto (e vai pro Sentry com o detalhe), 401/403 e 429 viram
+      instrução do que fazer. A UI nunca mostra `INVALID_ARGUMENT`, `{` ou URL
+      de doc do Google.
+
 ## Critérios de aceitação
 - [ ] **AC1** — Selecionar UF habilita o select de município com os municípios
       daquela UF; sem UF, o de município fica desabilitado com dica.

@@ -70,6 +70,58 @@ um tipo único e confiável (`dentista` → `dentist`); **omitido** no modo "Out
 - Valor inválido → **400 `INVALID_ARGUMENT`**; tratado como bug nosso (o valor
   sai de constante, não de input do aluno).
 
+##### O valor tem que sair da Table A — e só dela
+
+`includedType` só aceita valores da **Table A** da
+[lista de tipos de lugar](https://developers.google.com/maps/documentation/places/web-service/place-types).
+Table A é a tabela que a doc autoriza "as the value of the `includedType`
+parameter" do Text Search; **Table B só volta em resposta** e não pode ser
+mandada na request.
+
+Não basta o tipo *parecer* certo. `psychologist` e `nutritionist` são nomes
+plausíveis, existem como profissão e **não existem na Table A** — mandar
+qualquer um dos dois derruba a busca inteira com 400 (ver a correção de
+2026-08-19 na [F033](../02-features/F033-busca-estruturada.md)). Em saúde a
+Table A oferece só estes: `chiropractor`, `dental_clinic`, `dentist`, `doctor`,
+`drugstore`, `general_hospital`, `hospital`, `massage`, `massage_spa`,
+`medical_center`, `medical_clinic`, `medical_lab`, `pharmacy`,
+`physiotherapist`, `sauna`, `skin_care_clinic`, `spa`, `tanning_studio`,
+`wellness_center`, `yoga_studio`.
+
+Nicho sem tipo correspondente na Table A **fica sem `includedType`** — a busca
+corre pelo `textQuery`, que já carrega o termo em português. É o mesmo caminho
+já usado por Dermatologista e Oftalmologista. Inventar um tipo aproximado é pior
+que não filtrar: ou dá 400, ou filtra fora o que o aluno queria.
+
+Esta é a lista fechada dos valores em uso, conferida contra a Table A em
+**2026-08-19**. `src/lib/nichos/catalogo.ts` não pode conter um `includedType`
+fora dela — `tests/unit/nichos-localidades.test.ts` lê este bloco e falha se
+divergir. Ao adicionar um nicho novo, confira o tipo na doc e acrescente aqui
+**antes** de mexer no catálogo.
+
+<!-- TIPOS-VALIDOS:INICIO -->
+```
+accounting
+barber_shop
+car_repair
+dentist
+gym
+lawyer
+medical_clinic
+pet_store
+physiotherapist
+real_estate_agency
+restaurant
+school
+skin_care_clinic
+veterinary_care
+```
+<!-- TIPOS-VALIDOS:FIM -->
+
+> A Table A cresce: `medical_clinic`, `medical_center` e `general_hospital`
+> entraram no release de **12/02/2026** (a doc marca os novos com `*`). Um tipo
+> ausente hoje pode existir amanhã — reconferir na doc, não na memória.
+
 ### Resposta (sucesso 200)
 ```json
 {
@@ -96,14 +148,25 @@ Campos `nationalPhoneNumber` e `websiteUri` podem estar **ausentes**
 (não vêm como `null`, simplesmente não aparecem no objeto).
 
 ### Erros relevantes
-| Status | Causa típica                           | Tratamento                              |
-|--------|----------------------------------------|-----------------------------------------|
-| 400    | FieldMask ausente ou inválida          | Bug nosso — propagar mensagem ao dev    |
-| 401/403| Chave inválida ou API não habilitada   | Erro descritivo na UI                   |
-| 429    | Quota excedida                         | Erro descritivo na UI, sugerir aguardar |
-| 5xx    | Indisponibilidade Google               | Erro genérico na UI                     |
 
-Corpo de erro:
+O corpo cru do Google **nunca** chega à tela do aluno. Ele vai pro Sentry
+(ADR-013), onde o dev precisa dele; na UI entra a coluna "O aluno lê", escrita
+pra quem não sabe o que é FieldMask. Quem faz a tradução é
+`mensagemDeErroPlaces()` em `src/lib/places/erros.ts`.
+
+| Status | Causa típica                          | De quem é | O aluno lê                                                |
+|--------|---------------------------------------|-----------|-----------------------------------------------------------|
+| 400    | FieldMask ou `includedType` inválido  | **Nosso** | "Falha ao buscar este nicho... já fomos avisados"; sem culpar o aluno nem mandar consertar nada |
+| 401/403| Chave inválida ou API não habilitada  | Do aluno  | O que conferir no Google Cloud, com link pra Configuração   |
+| 429    | Quota excedida                        | Do aluno  | Que estourou a cota do Google e que volta a funcionar depois |
+| 5xx    | Indisponibilidade Google              | De ninguém| Que o problema é no Google e vale tentar de novo             |
+
+A régua: **erro que o aluno pode resolver vira instrução; erro que só nós
+resolvemos vira aviso curto + relato no Sentry.** Despejar
+`{"error":{"code":400,...}}` num card falha nos dois lados — não diz ao aluno o
+que fazer, e não garante que o dev fique sabendo.
+
+Corpo de erro (o que vai pro Sentry, não pra tela):
 ```json
 { "error": { "code": 400, "message": "...", "status": "INVALID_ARGUMENT" } }
 ```

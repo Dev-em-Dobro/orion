@@ -35,8 +35,8 @@ Saúde e estética de ticket alto, jurídico/serviços profissionais e imobiliá
 | Dermatologista                    | `doctor`, `dermatologist`          |
 | Clínica médica / especialista     | `doctor`, `medical_clinic`         |
 | Fisioterapia / pilates            | `physiotherapist`                  |
-| Psicólogo / clínica de psicologia | `psychologist`                     |
-| Nutricionista                     | `nutritionist`, `doctor`           |
+| Psicólogo / clínica de psicologia | `medical_clinic`, `psychologist`   |
+| Nutricionista                     | `consultant`, `nutritionist`, `doctor` |
 | Clínica veterinária / hospital vet| `veterinary_care`                  |
 | Oftalmologista / clínica de olhos | `doctor`                           |
 | Advogado / escritório de advocacia| `lawyer`                           |
@@ -59,6 +59,26 @@ Movimento alto, mas margem/ticket de projeto menor ou maturidade digital irregul
 | Escola de idiomas / curso      | `school`                                 |
 | Oficina mecânica / funilaria   | `car_repair`                             |
 | Estúdio de tatuagem            | (varia — confirmar no retorno)           |
+
+> **`consultant` é ALTO por causa da Nutricionista, e isso pega mais gente.**
+> Nutricionista volta do Places como `consultant` em 59 de 60 resultados
+> (medido em GO/PR/SP, 2026-08-19), e sem esse mapa o nicho inteiro caía em
+> BAIXO contrariando a linha acima. O tipo é genérico: **qualquer** Lead que o
+> Places classifique como `consultant` passa a entrar como ALTO, inclusive
+> vindo de Arquiteto ou Engenharia, que buscam sem `includedType`. Foi escolha
+> consciente — Tier errado no nicho certo custa mais que Tier generoso em nicho
+> vizinho, porque o primeiro esconde Lead bom e o segundo só adianta triagem.
+> Se aparecer consultor genérico demais na Fila, o conserto é dar
+> `includedType` a Arquiteto/Engenharia, não rebaixar a Nutricionista.
+
+> **A coluna `primaryType` é o que o Places *devolve*, não o que a gente
+> *manda*.** Parte destes nomes (`psychologist`, `nutritionist`,
+> `dermatologist`, `architect`, `optician`) não existe na Table A da Places API:
+> serve como leitura de "o que esperar no retorno", mas **não pode virar
+> `includedType`** na busca — mandar um deles derruba a consulta com 400 (F033,
+> emenda de 2026-08-19). A lista dos que valem como filtro está no
+> [contrato](../03-contracts/google-places.md#includedtype-f033); nicho sem tipo
+> na Table A busca só pelo termo, e é assim mesmo.
 
 ### Tier BAIXO — deprioriza (default para nicho não mapeado)
 Baixa verba, baixa percepção de Dor, alta sensibilidade a preço.

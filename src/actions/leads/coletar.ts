@@ -6,7 +6,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { exigirChave } from "@/lib/chaves";
+import { exigirChave, obterModoChave } from "@/lib/chaves";
+import { reportarErro } from "@/lib/observabilidade";
 import { estornarCota, reservarCota } from "@/lib/limites";
 import {
   consumirMensal,
@@ -19,6 +20,7 @@ import {
   PlacesError,
   textSearch,
 } from "@/lib/places/textSearch";
+import { mensagemDeErroPlaces } from "@/lib/places/erros";
 import { NICHOS_POR_SLUG } from "@/lib/nichos/catalogo";
 import { municipioPertence, ufValida } from "@/lib/localidades";
 import { lerBusca, primeiroErro } from "@/lib/leads/busca";
@@ -166,12 +168,22 @@ export async function coletarLeads(
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };
     if (e instanceof PlacesError) {
-      const detalhe = e.message.slice(0, 300);
-      return {
-        kind: "erro",
-        mensagem:
-          e.status === 0 ? detalhe : `Places API (${e.status}): ${detalhe}`,
-      };
+      // A tradução depende de quem é a chave (F033, emenda de 2026-08-19): a
+      // mesma 403 pede coisas opostas em BYOK e no modo Orion. A consulta do
+      // modo só roda aqui, no caminho de erro — o caminho feliz não paga por ela.
+      const modo = userId ? await obterModoChave(userId) : "orion";
+      const { mensagem, reportar } = mensagemDeErroPlaces(e, modo);
+      if (reportar) {
+        // O corpo cru do Google vive aqui, não na tela do aluno.
+        reportarErro(e, {
+          origem: "coletarLeads",
+          status: e.status,
+          detalhe: e.message.slice(0, 300),
+          includedType: nicho?.includedType ?? "(nenhum)",
+          nicho: slug,
+        });
+      }
+      return { kind: "erro", mensagem };
     }
     return {
       kind: "erro",
