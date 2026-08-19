@@ -163,10 +163,6 @@ sobra a **opção A** do §3.4: rodar `migrate deploy` à mão exportando o endp
 
 Funciona — foi o que fizeram no staging. Só exige não errar o copiar-colar.
 
-> ⚠️ **Antes de qualquer comando local:** o `DATABASE_URL` do `.env` da máquina
-> do Ricardo aponta pra **produção**. `npm run db:migrate` ali dentro pode
-> resetar o banco de prod. Trocar pelo valor de `DATABASE_URL_LOCAL` primeiro.
-
 ---
 
 ## Parte 3 — subir à tarde
@@ -179,7 +175,7 @@ ordem, com o terminal aberto.
 Resumo do que vai acontecer:
 
 1. Conceder o trial Pro e ligar a variável (Parte 2, item 1) — **antes de tudo**;
-2. Reconfirmar no banco de prod: `SELECT count(*) FROM "Outreach" WHERE canal = 'email';` tem que dar **0**;
+2. Reconfirmar no banco de prod: `SELECT count(*) FROM "Outreach" WHERE canal = 'email';` tem que dar **0** (por quê, abaixo);
 3. Criar a branch de backup no Neon e anotar o nome;
 4. `npx prisma migrate status` com o host direto — ver o que falta, sem aplicar;
 5. `npx prisma migrate deploy` — aplica as **13** migrações;
@@ -189,6 +185,37 @@ Resumo do que vai acontecer:
 banco já renomeou o enum (`outreach` → `abordagem`) e o código antigo ainda
 grava o valor velho. Escolher horário de baixo uso (a base faz ~4 sessões/dia) e
 **não parar no meio**.
+
+#### Por que conferir o `canal = 'email'` antes (passo 2)
+
+O canal e-mail foi **desfeito** no revamp (F027), e a migração 13
+(`canal_email_sai_do_enum`) tira `email` do enum `Canal`. Postgres não remove
+valor de enum: o tipo é recriado e a coluna convertida com
+`USING canal::text::"Canal"` — e **essa conversão falha se sobrar uma linha com
+`'email'`**.
+
+A migração antecipa essa falha de propósito: ela conta primeiro e levanta uma
+exceção legível com o número, em vez de deixar o erro cru do cast aparecer no
+meio do deploy. Isso é escolha de projeto, não defeito — está escrito no SQL:
+
+> uma Abordagem com `canal=email` é **registro de contato que foi feito**.
+> Apagar ou reescrever pra `whatsapp` seria mentir sobre o histórico do aluno.
+
+**Por que conferir ANTES em vez de deixar a migração reclamar na hora:** a 13
+roda logo depois da **12** (`outreach_vira_abordagem`), que é a de risco alto.
+Se a 13 abortar, a 12 **já aplicou** — o banco já só conhece `'abordagem'`, o
+código da Fase 2 ainda em produção ainda grava `'outreach'`, e nenhum código
+novo subiu. Ou seja: você fica **parado dentro da janela**, que é o pior lugar
+possível pra estar. Dois segundos de `SELECT` evitam isso.
+
+**O que esperar:** **0**. O canal e-mail nunca foi implementado em produção — o
+valor existe no enum desde a F005, mas quem o ligaria era a F027, que foi
+desfeita antes de chegar lá. Medido em 18/08: `0`. A reconferência perto da hora
+é formalidade barata, não desconfiança.
+
+**Se vier > 0, pare.** Não é problema de infra, é decisão de produto: as saídas
+são arquivar, exportar, ou manter `email` no enum (e adiar a migração 13). Não
+existe saída que apague o histórico.
 
 ### Verificação depois
 
