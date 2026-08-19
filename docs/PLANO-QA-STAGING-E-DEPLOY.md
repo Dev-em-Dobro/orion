@@ -93,12 +93,50 @@ Verificado em 19/08 pela manhã.
 `HUBLA_PRODUCT_ID_PRO` **não existe em Production** (conferido hoje: só
 `HUBLA_PRODUCT_ID` está lá), e os entitlements não foram concedidos.
 
-Sem isso, no minuto em que o revamp subir, os **56 alunos** caem no Free =
-**40 Leads novos/mês**, contra um uso real de **~200/aluno/mês**. Quem estourar
-encontra `/planos` em 404, sem nada pra assinar.
+#### Por que dar 1 mês de Pro de cortesia pra todo mundo
+
+O revamp traz uma coisa que produção não tem: **teto mensal**. Free = 40 Leads
+novos/mês. O número não é chute nem maldade — é o free tier do Google dividido
+pelos alunos ([11 §4](../specs/11-custos-e-precificacao.md)). Como régua, está
+certo.
+
+O problema é **em quem ela cai**. Medido em produção em 18/08: a base criou
+**1.385 Leads em 7 dias** com ~28 alunos ativos — da ordem de **200 Leads por
+aluno por mês, 5× o teto**. Subir o revamp sem mais nada não seria "limitar":
+seria **cortar o uso real da base em ~95%, da noite pro dia**, em gente que
+nunca teve teto nenhum.
+
+E o aluno que estourasse não teria saída: `/planos` responde **404** de
+propósito, porque não existe plano pago pra vender enquanto os `product_id`
+reais não estiverem na Hubla. Ou seja, ele bateria num muro que diz "acabou" e
+não oferece nada. Cobrar antes de ter o que vender é a pior ordem possível.
+
+O mês de cortesia **separa as duas coisas**: o revamp entrega agora, a cobrança
+começa quando houver o que cobrar.
+
+**Custa pouco.** Um Pro no teto dá R$6,34/mês. 56 alunos no Pro = 840
+requisições Places/mês, **dentro das 1.000 grátis** da conta. O mês inteiro sai
+por R$100–130 — barato o bastante pra não ser decisão difícil.
+
+**O aluno não vê nada disso.** `PLANOS_NA_UI` continua `false`: o medidor da
+topbar passa a ler `x/300` em vez de `x/40`, e a palavra "plano" não aparece em
+lugar nenhum. Não é exceção à pausa da F035 — é a pausa funcionando como foi
+projetada.
+
+**E não resolve, adia.** Em **18/09** todos voltam pros 40 com a `/planos` ainda
+em 404, a menos que os `product_id` de verdade existam na Hubla até lá. É por
+isso que tem prazo em vez de ser permanente: o mês compra tempo pra construir o
+produto pago, não substitui a decisão.
+
+Detalhamento completo na
+[F035, "Período de teste do Pro"](../specs/02-features/F035-planos-e-limites.md).
+
+#### Como ligar
 
 O runbook §5.1 é explícito: **isto roda ANTES do §6**, e é o que faz o revamp
-acordar com todo mundo já no Pro.
+acordar com todo mundo já no Pro — sem nenhum minuto de teto de 40. Os
+entitlements são inertes para a Fase 2, que não tem lógica de plano, então
+gravá-los antes do deploy é seguro.
 
 ```bash
 DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs --dry-run   # confere a lista
@@ -106,8 +144,9 @@ DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs             # concede 
 # + criar HUBLA_PRODUCT_ID_PRO=trial-pro-2026-09 em Production, no painel da Vercel
 ```
 
-Desfaz com `--revogar`, ou apagando a variável (devolve todo mundo ao Free na
-hora, sem deploy).
+Desfaz com `--revogar`, ou **apagando a variável** — que devolve todo mundo ao
+Free na hora, sem deploy. É também o interruptor de emergência do dia: se algo
+cheirar mal depois que subir, some com a variável.
 
 ### 2. Backup do Neon não foi criado ⛔
 
