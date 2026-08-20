@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { normalizarEmailHubla, temEntitlementAtivo } from "@/lib/hubla";
 import { productIdHubla } from "./env";
+import { productIdsAcessoCompra } from "@/lib/tmb";
 import { CompraJaVinculadaError, CompraNaoEncontradaError, CompraRequiredError } from "./erros";
 
 export type StatusCompra = {
@@ -35,7 +36,9 @@ async function carregarUserCompra(userId: string): Promise<UserCompra | null> {
 async function entitlementAtivoParaEmail(email: string): Promise<boolean> {
   const normalizado = normalizarEmailHubla(email);
   if (!normalizado) return false;
-  return temEntitlementAtivo(normalizado, productIdHubla());
+  const ids = productIdsAcessoCompra();
+  if (ids.length === 0) return false;
+  return temEntitlementAtivo(normalizado, ids);
 }
 
 async function gravarVerificacao(
