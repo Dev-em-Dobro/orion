@@ -548,7 +548,9 @@ Vira a tela de trabalho de verdade, com **abas**:
 | **Objeções** | Painel de objeções | F011 |
 | **Proposta** | Gerar/ver proposta | F012 |
 
-- **Header fixo**: `[92 Alto] Nome do Lead` + status + `Corrigir status` (F024).
+- **Header fixo**: `[92 Alto] Nome do Lead` + badge de status (somente leitura).
+  Mudança de estágio é no funil ([F034](F034-funil-kanban.md) / F024 emenda
+  2026-08-20) — o detalhe não tem mais "Corrigir status".
 - **Navegação `1/10 ‹ ›`** entre os Leads do contexto de onde o aluno veio
   (fila ou filtro atual), preservando os parâmetros na URL. É o que permite
   trabalhar a fila inteira sem voltar pra lista.

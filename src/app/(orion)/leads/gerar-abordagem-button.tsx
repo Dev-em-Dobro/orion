@@ -87,7 +87,7 @@ export function GerarAbordagemButton({
                 href={state.waLink}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+                className="btn-abordagem-primary"
               >
                 Abrir no WhatsApp
               </a>
@@ -95,7 +95,7 @@ export function GerarAbordagemButton({
             <button
               type="button"
               onClick={() => void copiar(state.mensagem)}
-              className="btn-ghost"
+              className="btn-abordagem"
             >
               {copiado ? "Copiado" : ehLigacao ? "Copiar roteiro" : "Copiar texto"}
             </button>

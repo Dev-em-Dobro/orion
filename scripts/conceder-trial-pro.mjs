@@ -1,4 +1,4 @@
-// F035 — período de teste do Pro (spec: "Período de teste do Pro (2026-08-18 → 2026-09-18)").
+// F035 — período de teste do Pro (spec: "Período de teste do Pro (2026-08-18 → 2026-11-16)").
 // Concede (ou revoga) o entitlement do teste para TODOS os alunos existentes.
 //
 // Uso:
@@ -6,7 +6,7 @@
 //   node scripts/conceder-trial-pro.mjs                      # concede
 //   node scripts/conceder-trial-pro.mjs --revogar            # encerra o teste
 //
-//   productId default: trial-pro-2026-09 (ou --product-id=<id>)
+//   productId default: trial-pro-2026-11 (ou --product-id=<id>)
 //
 // Espelha scripts/conceder-acesso.mjs, que faz um e-mail por vez. A diferença é
 // só o laço e o dry-run — a gravação é idêntica, de propósito.
@@ -21,7 +21,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const PRODUCT_ID_PADRAO = "trial-pro-2026-09";
+const PRODUCT_ID_PADRAO = "trial-pro-2026-11";
 
 /** Mesma normalização de src/lib/hubla/normalizar.ts (trim + lowercase). */
 function normalizarEmail(raw) {

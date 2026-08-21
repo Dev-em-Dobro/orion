@@ -23,7 +23,7 @@ export function CopiarButton({
   }
 
   return (
-    <button type="button" onClick={() => void copiar()} className="btn-ghost">
+    <button type="button" onClick={() => void copiar()} className="btn-abordagem">
       {copiado ? "Copiado" : rotulo}
     </button>
   );

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { AppShellClient } from "@/components/app-shell-client";
+import { AvisoTrialPro } from "@/components/aviso-trial-pro-server";
 import { MedidorUso } from "@/components/medidor-uso";
 import { SidebarWithStatus } from "@/components/sidebar-with-status";
 import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
@@ -18,7 +19,8 @@ import { asTema, classeDoTema, TEMA_COOKIE } from "@/lib/tema";
  * o custo de trocar bloqueio por streaming aqui é zero de layout shift.
  */
 function MedidorPlaceholder() {
-  return <span className="inline-block h-11 w-32" aria-hidden />;
+  // Largura um pouco maior: com flag PRO o botão ganha ~40px.
+  return <span className="inline-block h-11 w-40" aria-hidden />;
 }
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
@@ -39,11 +41,18 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     </Suspense>
   );
 
+  const avisoTrial = (
+    <Suspense fallback={null}>
+      <AvisoTrialPro />
+    </Suspense>
+  );
+
   return (
     <AppShellClient
       classeTema={classeDoTema(tema)}
       sidebar={<SidebarWithStatus medidor={medidor} />}
       medidor={medidor}
+      avisoTrial={avisoTrial}
     >
       {children}
     </AppShellClient>

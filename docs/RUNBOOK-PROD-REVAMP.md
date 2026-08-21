@@ -331,7 +331,8 @@ ativos — da ordem de **200 Leads/aluno/mês**. O teto de 40 é **5× menor que
 real**. E quem estoura encontra `/planos` respondendo **404** (pausa da F035),
 sem nada para assinar.
 
-**Decisão de 2026-08-18 — 1 mês de Pro para todos.** Registrada na
+**Decisão de 2026-08-18 — Pro para todos; emenda 2026-08-20 — 90 dias
+(vence 2026-11-16).** Registrada na
 [F035](../specs/02-features/F035-planos-e-limites.md), seção "Período de teste do
 Pro". Sem código novo: uma variável de ambiente e um lote de entitlements.
 
@@ -339,7 +340,7 @@ Pro". Sem código novo: uma variável de ambiente e um lote de entitlements.
 |---|---|---|
 | Conferir a lista | `DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs --dry-run` | — |
 | Conceder aos 56 | `DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs` | `--revogar` |
-| Ligar | `HUBLA_PRODUCT_ID_PRO=trial-pro-2026-09` em Production | **apagar a variável** |
+| Ligar | `HUBLA_PRODUCT_ID_PRO=trial-pro-2026-11` em Production | **apagar a variável** |
 
 **Ordem: isto vem ANTES do §6.** Os entitlements são inertes para a Fase 2, que
 não tem lógica de plano — gravá-los antes é seguro, e faz o revamp acordar com
@@ -349,9 +350,10 @@ todo mundo já no Pro, sem nenhum minuto de teto de 40.
 apagar `HUBLA_PRODUCT_ID_PRO` devolve todo mundo ao Free **na hora, sem deploy**
 (`resolver.ts:62`). Vale o contrário também — é a variável que liga.
 
-**Prazo:** o teste vence em **2026-09-18**. Se até lá não existir produto pago na
-Hubla, todos voltam a 40 com a `/planos` ainda em 404. O teste compra o mês para
-construir isso; ele não substitui a decisão.
+**Prazo:** o teste vence em **2026-11-16** (90 dias a partir de 2026-08-18). Se
+até lá não existir produto pago na Hubla, todos voltam a 40 com a `/planos`
+ainda em 404. O teste compra o trimestre para construir isso; ele não substitui
+a decisão.
 
 ---
 
@@ -363,7 +365,7 @@ Só entra aqui com o §3 inteiro verde **e o §5.1 já executado**.
 # 0. ANTES de tudo (§5.1): teste do Pro já concedido e ligado
 DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs --dry-run   # confere
 DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs             # concede
-#    + HUBLA_PRODUCT_ID_PRO=trial-pro-2026-09 em Production, no painel da Vercel
+#    + HUBLA_PRODUCT_ID_PRO=trial-pro-2026-11 em Production, no painel da Vercel
 
 # 1. Confirmar de novo, agora perto da hora, que nada mudou
 SELECT count(*) FROM "Outreach" WHERE canal = 'email';   -- tem que ser 0
@@ -446,10 +448,11 @@ Não bloqueia o deploy, mas some da cabeça de todo mundo se não ficar escrito:
 - **Medir o §8 do plano mestre** — TTFB p95 < 800 ms em `/leads` com 500 Leads,
   > 80% dos Leads abordados recebendo follow-up. São os números que dizem se o
   revamp funcionou; sem medir, o deploy foi só uma troca de código.
-- **⏰ 2026-09-18 — o teste do Pro vence** (§5.1). Até lá: criar os `product_id`
-  pagos na Hubla e religar a `/planos` (flag `PLANOS_NA_UI` + recriar o
-  `loading.tsx`, ver F035). Se a data chegar sem isso, os 56 alunos voltam a 40
-  Leads/mês sem ter o que assinar — o mesmo precipício, um mês depois.
+- **⏰ 2026-11-16 — o teste do Pro vence** (§5.1, 90 dias). Até lá: criar os
+  `product_id` pagos na Hubla e religar a `/planos` (flag `PLANOS_NA_UI` +
+  recriar o `loading.tsx`, ver F035). Se a data chegar sem isso, os alunos
+  voltam a 40 Leads/mês sem ter o que assinar — o mesmo precipício, três meses
+  depois.
 - **Encerrar o BYOK** (F016), que saiu deste deploy pelo revert do §3.2. Faz
   sentido junto com o plano pago: é ele que dá a saída aos 9 alunos que hoje usam
   chave própria. A migração `fim_do_byok_apaga_chaves` terá que ser recriada — e

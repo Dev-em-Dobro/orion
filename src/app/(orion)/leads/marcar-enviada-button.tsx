@@ -23,9 +23,9 @@ export function MarcarEnviadaButton({
   }
 
   return (
-    <form action={action} className="mt-1">
+    <form action={action} className="contents">
       <input type="hidden" name="abordagem_id" value={abordagemId} />
-      <button type="submit" disabled={pending} className="btn-ghost">
+      <button type="submit" disabled={pending} className="btn-abordagem">
         {pending ? "Marcando..." : rotulo}
       </button>
       {state.kind === "erro" && (

@@ -59,6 +59,7 @@ export async function MedidorUso({ className }: { className?: string }) {
       limite={uso.limite}
       fracao={uso.fracao}
       restante={uso.restante}
+      plano={uso.plano}
       planoNome={def.nome}
       mensal={itens}
     />

@@ -22,6 +22,12 @@ export {
 } from "./catalogo";
 export { competenciaDe, rotuloCompetencia } from "./competencia";
 export { PLANOS_NA_UI } from "./exibicao";
+export {
+  TRIAL_PRO_FIM_ISO,
+  TRIAL_PRO_MESES,
+  rotuloFimTrialPro,
+  trialProAtivoNoAmbiente,
+} from "./trial";
 export { LimiteDoPlanoError, RecursoDoPlanoError } from "./erros";
 export { exigirRecurso, podeUsar, redirectSeRecursoBloqueado } from "./gate";
 export { usoDoPlano, type UsoDoPlano } from "./medidor";

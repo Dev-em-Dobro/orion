@@ -5,6 +5,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import type { Plano } from "@/lib/planos/catalogo";
 import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 
 export type ItemMensal = {
@@ -17,6 +18,11 @@ export type ItemMensal = {
 /** A partir daqui o medidor muda de cor e oferece o upgrade (F035). */
 const AVISO = 0.8;
 
+const BADGE_PLANO: Partial<Record<Plano, string>> = {
+  pro: "PRO",
+  agencia: "AGÊNCIA",
+};
+
 function corDaBarra(fracao: number, estourado: boolean): string {
   if (estourado) return "bg-red-500";
   return fracao >= AVISO ? "bg-amber-400" : "bg-primary";
@@ -27,6 +33,7 @@ export function MedidorUsoCliente({
   limite,
   fracao,
   restante,
+  plano,
   planoNome,
   mensal,
   className,
@@ -35,6 +42,8 @@ export function MedidorUsoCliente({
   limite: number;
   fracao: number;
   restante: number;
+  /** Flag PRO/AGÊNCIA mesmo com `PLANOS_NA_UI = false` (teste F035). */
+  plano: Plano;
   planoNome: string;
   mensal: ItemMensal[];
   className?: string;
@@ -46,6 +55,7 @@ export function MedidorUsoCliente({
   const alerta = fracao >= AVISO;
   const cor = corDaBarra(fracao, estourado);
   const pct = Math.round(fracao * 100);
+  const badge = BADGE_PLANO[plano];
 
   // Escape e clique fora fecham. Sem isso o popover fica preso aberto pra quem
   // navega por teclado.
@@ -73,7 +83,7 @@ export function MedidorUsoCliente({
           onClick={() => setAberto((v) => !v)}
           aria-expanded={aberto}
           aria-haspopup="dialog"
-          aria-label={`${PLANOS_NA_UI ? "Uso do plano" : "Uso do mês"}: ${usado} de ${limite} Leads novos este mês. Abrir detalhe.`}
+          aria-label={`${PLANOS_NA_UI ? "Uso do plano" : "Uso do mês"}${badge ? ` ${badge}` : ""}: ${usado} de ${limite} Leads novos este mês. Abrir detalhe.`}
           className="inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 transition-colors duration-200 hover:bg-card-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           {/* Trilho em `border-strong`, não `zinc-800`: sobre o fundo quase
@@ -102,6 +112,15 @@ export function MedidorUsoCliente({
             {/* `zinc-500` sobre o fundo dava 4,1:1 — reprova. `muted` dá 7,7:1. */}
             <span className="text-muted">/{limite}</span>
           </span>
+          {/* AC26 — flag do plano pago mesmo com a loja pausada. Sem link. */}
+          {badge && (
+            <span
+              aria-hidden
+              className="rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-primary"
+            >
+              {badge}
+            </span>
+          )}
         </button>
 
         {/* O upsell mora no estado FECHADO: se só aparecesse depois do clique,
@@ -130,6 +149,11 @@ export function MedidorUsoCliente({
               {usado} / {limite}
             </strong>{" "}
             Leads novos este mês
+            {badge && !PLANOS_NA_UI && (
+              <span className="ml-2 inline-block rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 align-middle text-[10px] font-semibold tracking-wide text-primary">
+                {badge}
+              </span>
+            )}
           </p>
           {PLANOS_NA_UI && (
             <p className="mt-0.5 text-xs text-muted">

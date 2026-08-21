@@ -93,7 +93,7 @@ Verificado em 19/08 pela manhã.
 `HUBLA_PRODUCT_ID_PRO` **não existe em Production** (conferido hoje: só
 `HUBLA_PRODUCT_ID` está lá), e os entitlements não foram concedidos.
 
-#### Por que dar 1 mês de Pro de cortesia pra todo mundo
+#### Por que dar 90 dias de Pro de cortesia pra todo mundo
 
 O revamp traz uma coisa que produção não tem: **teto mensal**. Free = 40 Leads
 novos/mês. O número não é chute nem maldade — é o free tier do Google dividido
@@ -111,22 +111,23 @@ propósito, porque não existe plano pago pra vender enquanto os `product_id`
 reais não estiverem na Hubla. Ou seja, ele bateria num muro que diz "acabou" e
 não oferece nada. Cobrar antes de ter o que vender é a pior ordem possível.
 
-O mês de cortesia **separa as duas coisas**: o revamp entrega agora, a cobrança
-começa quando houver o que cobrar.
+Os **90 dias** de cortesia **separam as duas coisas**: o revamp entrega agora, a
+cobrança começa quando houver o que cobrar. (Emenda 2026-08-20: era 1 mês;
+alongado pra dar tempo de montar o produto pago.)
 
 **Custa pouco.** Um Pro no teto dá R$6,34/mês. 56 alunos no Pro = 840
-requisições Places/mês, **dentro das 1.000 grátis** da conta. O mês inteiro sai
-por R$100–130 — barato o bastante pra não ser decisão difícil.
+requisições Places/mês, **dentro das 1.000 grátis** da conta. ~R$100–130/mês
+(×3 ≈ R$300–390 no período) — barato o bastante pra não ser decisão difícil.
 
 **O aluno não vê nada disso.** `PLANOS_NA_UI` continua `false`: o medidor da
 topbar passa a ler `x/300` em vez de `x/40`, e a palavra "plano" não aparece em
 lugar nenhum. Não é exceção à pausa da F035 — é a pausa funcionando como foi
 projetada.
 
-**E não resolve, adia.** Em **18/09** todos voltam pros 40 com a `/planos` ainda
-em 404, a menos que os `product_id` de verdade existam na Hubla até lá. É por
-isso que tem prazo em vez de ser permanente: o mês compra tempo pra construir o
-produto pago, não substitui a decisão.
+**E não resolve, adia.** Em **16/11/2026** todos voltam pros 40 com a `/planos`
+ainda em 404, a menos que os `product_id` de verdade existam na Hubla até lá. É
+por isso que tem prazo em vez de ser permanente: o trimestre compra tempo pra
+construir o produto pago, não substitui a decisão.
 
 Detalhamento completo na
 [F035, "Período de teste do Pro"](../specs/02-features/F035-planos-e-limites.md).
@@ -141,7 +142,7 @@ gravá-los antes do deploy é seguro.
 ```bash
 DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs --dry-run   # confere a lista
 DATABASE_URL="<prod>" node scripts/conceder-trial-pro.mjs             # concede aos 56
-# + criar HUBLA_PRODUCT_ID_PRO=trial-pro-2026-09 em Production, no painel da Vercel
+# + criar HUBLA_PRODUCT_ID_PRO=trial-pro-2026-11 em Production, no painel da Vercel
 ```
 
 Desfaz com `--revogar`, ou **apagando a variável** — que devolve todo mundo ao

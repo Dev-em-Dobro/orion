@@ -95,8 +95,23 @@ disponível); Leads existentes ficam com `motivo_descarte = null`.
   É a única exclusão destrutiva da feature, e só alcança descartados.
 
 ### No detalhe `/leads/[id]`
-- Bloco **Corrigir status**: select com todos os estados + botão. Regressão
-  pede confirmação explícita.
+- **Descartar / Restaurar** continuam no rodapé (fora das abas).
+- **Corrigir status** **não** aparece mais no detalhe — o estágio do Lead
+  muda só no funil kanban ([F034](F034-funil-kanban.md)). A action
+  `corrigirStatus` permanece (o board chama ela); a UI de select no
+  detalhe saiu.
+
+## Emenda 2026-08-20 — estágio só no funil
+
+O detalhe do Lead tinha um segundo lugar pra mudar status (select +
+"Corrigir status"), em paralelo ao kanban. Dois caminhos pra a mesma
+coisa geravam dúvida e layout torto no rodapé. A partir desta emenda, o
+**funil** é a superfície de estágio; o detalhe só descarta/restaura.
+
+### Critérios da emenda
+- [ ] **AC12** — `/leads/[id]` não mostra o bloco "Corrigir status".
+- [ ] **AC13** — Mover card no `/funil` continua corrigindo o status
+      (regressão inclusa), com Diagnósticos/Dores/Abordagens intactos.
 
 ## Fluxo
 
@@ -177,8 +192,9 @@ número **continua** — é a única ação da feature sem volta.
       conversão do dashboard (F010).
 - [ ] **AC3** — Restaurar devolve o Lead à lista: `priorizado` se ele já tinha
       score confirmado, `novo` caso contrário.
-- [ ] **AC4** — Corrigir status aceita regressão (ex.: `contatado` →
-      `priorizado`) e mantém Diagnósticos, Dores e Abordagens intactos.
+- [ ] **AC4** — Corrigir status (via funil / action) aceita regressão
+      (ex.: `contatado` → `priorizado`) e mantém Diagnósticos, Dores e
+      Abordagens intactos.
 - [ ] **AC5** — Toda mudança de status (descartar, restaurar, corrigir,
       desfecho da F006, promoção automática da F025) grava `status_em`.
 - [ ] **AC6** — Uma nova coleta que reencontre um `place_id` descartado **não**

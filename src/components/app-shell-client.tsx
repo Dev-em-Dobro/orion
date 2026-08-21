@@ -6,6 +6,7 @@ export function AppShellClient({
   children,
   sidebar,
   medidor,
+  avisoTrial,
   classeTema,
 }: {
   children: React.ReactNode;
@@ -13,6 +14,8 @@ export function AppShellClient({
   /** F035 — medidor de uso da topbar (desktop). No mobile ele vai no header
    *  do próprio `Sidebar`, que já existe ali. */
   medidor?: React.ReactNode;
+  /** F035 AC27 — banner do free trial Pro (só quando o ambiente é trial). */
+  avisoTrial?: React.ReactNode;
   /** F032 — `tema-claro` ou vazio, decidido no servidor pelo cookie. */
   classeTema?: string;
 }) {
@@ -50,6 +53,7 @@ export function AppShellClient({
         <header className="sticky top-0 z-30 hidden h-14 items-center justify-end gap-3 border-b border-border bg-background/95 px-6 backdrop-blur md:flex lg:px-8">
           {medidor}
         </header>
+        {avisoTrial}
         {children}
       </div>
     </>

@@ -31,7 +31,6 @@ import {
 import { asOrigem, destinoDeVolta, type Origem } from "@/lib/leads/origem";
 import { Ajuda } from "../ajuda";
 import { CopiarButton } from "../copiar-button";
-import { CorrigirStatusForm } from "../corrigir-status-form";
 import { DescartarButton, RestaurarButton } from "../descarte-buttons";
 import { DesfechoButtons } from "../desfecho-buttons";
 import { DiagnosticarButton } from "../diagnosticar-button";
@@ -49,6 +48,7 @@ export const dynamic = "force-dynamic";
 const fmtData = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
   timeStyle: "short",
+  timeZone: "America/Sao_Paulo",
 });
 
 type SearchParams = Promise<{
@@ -471,7 +471,7 @@ async function CorpoAba({
                               href={wa}
                               target="_blank"
                               rel="noreferrer"
-                              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary-hover"
+                              className="btn-abordagem-primary"
                             >
                               Abrir no WhatsApp
                             </a>
@@ -695,7 +695,7 @@ export default async function LeadByIdPage({
         </Suspense>
       </div>
 
-      {/* F024 — correção de estado, fora das abas: vale pra qualquer uma. */}
+      {/* F024 — descarte/restauração no detalhe; estágio muda só no funil. */}
       <section className="mt-8 space-y-2 border-t border-border pt-4">
         {lead.status === "descartado" ? (
           <>
@@ -707,10 +707,7 @@ export default async function LeadByIdPage({
             <RestaurarButton leadId={lead.id} />
           </>
         ) : (
-          <>
-            <CorrigirStatusForm leadId={lead.id} statusAtual={lead.status} />
-            <DescartarButton leadId={lead.id} voltarPara={volta.href} />
-          </>
+          <DescartarButton leadId={lead.id} voltarPara={volta.href} />
         )}
       </section>
     </main>

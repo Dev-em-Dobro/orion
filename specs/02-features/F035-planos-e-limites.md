@@ -53,10 +53,11 @@ Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 > acabou e quando zera, mas não tem para onde ser mandado. É exatamente o que
 > hoje já acontecia de fato — o botão da tela dizia "Checkout em breve".
 
-> ## Período de teste do Pro (2026-08-18 → 2026-09-18)
+> ## Período de teste do Pro (2026-08-18 → 2026-11-16)
 >
-> **Todos os alunos existentes ganham 1 mês de Pro.** Decidido em 2026-08-18, ao
-> descobrir o que o revamp faria com a base se subisse como estava.
+> **Todos os alunos existentes ganham 90 dias de Pro.** Decidido em 2026-08-18
+> (prazo inicial: 1 mês); **emenda de 2026-08-20** alonga o teste para **90 dias**
+> (vence em **2026-11-16**), pra dar tempo de montar o produto pago na Hubla.
 >
 > ### O problema que isto resolve
 >
@@ -73,18 +74,35 @@ Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 > não tem plano pago para assinar. O teste separa as duas coisas: o revamp entrega
 > agora, a cobrança começa quando houver o que cobrar.
 >
-> ### Como funciona — sem código novo
+> ### Como funciona
 >
-> A frase da pausa ("quem tiver entitlement ativo recebe o limite maior sem ver a
-> palavra 'plano'") é exatamente o mecanismo. Basta:
+> A frase da pausa ("quem tiver entitlement ativo recebe o limite maior") é o
+> mecanismo da régua. Basta:
 >
-> 1. `HUBLA_PRODUCT_ID_PRO=trial-pro-2026-09` na Vercel (Production);
+> 1. `HUBLA_PRODUCT_ID_PRO=trial-pro-2026-11` na Vercel (Production);
 > 2. um `HublaEntitlement` `ativo` com esse `product_id` para o e-mail de cada
 >    aluno — `scripts/conceder-trial-pro.mjs` faz o lote.
 >
-> `PLANOS_NA_UI` continua `false`: o aluno vê o medidor ler `x/300` em vez de
-> `x/40` e **não vê a palavra "plano" em lugar nenhum**. É a pausa funcionando
-> como projetada, não uma exceção a ela.
+> `PLANOS_NA_UI` continua `false`: `/planos` segue em 404 e não há upsell nem
+> checkout. O medidor lê `x/300` em vez de `x/40`.
+>
+> ### O que o aluno VÊ do teste (emenda 2026-08-20)
+>
+> A pausa original dizia "sem a palavra plano". No teste isso escondia demais:
+> o aluno ganhava 300 Leads e não sabia por quê. Exceção **só** para estes dois
+> sinais — não religa a loja:
+>
+> 1. **Flag PRO** no medidor da topbar (fechado e no popover), quando o plano
+>    resolvido é `pro` ou `agencia`. Rótulo curto (`PRO` / `AGÊNCIA`), sem link
+>    pra `/planos` e sem a palavra "plano".
+> 2. **Aviso de free trial** (banner dismissível no shell autenticado) enquanto
+>    `HUBLA_PRODUCT_ID_PRO` for o id do teste (`trial-pro-*`) **e** o aluno
+>    estiver em `pro`: informa que tem **3 meses** de acesso Pro liberado, com
+>    data de fim **2026-11-16**. Fechar grava no `localStorage` e não volta a
+>    aparecer naquele browser.
+>
+> Fora esses dois pontos, a pausa segue: nada de "Ver planos", nada de menu
+> Planos, nada de CTA de checkout.
 >
 > ### O interruptor de emergência
 >
@@ -99,17 +117,18 @@ Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 > Um Pro no teto custa **R$6,34/mês** ([11 §4](../../11-custos-e-precificacao.md#4-custo-por-alunomês)),
 > e ~46% disso é Places. Com 56 alunos no Pro seriam 840 requisições/mês —
 > **dentro das 1.000 grátis** que o Google dá na conta inteira. Então o custo
-> provável do mês inteiro fica em **R$100–130**, não nos R$355 do pior caso da
-> tabela. É barato o bastante para não ser decisão difícil.
+> mensal estimado fica em **R$100–130** (× ~3 meses do teste ≈ R$300–390 no
+> período). É barato o bastante para não ser decisão difícil.
 >
 > ### O que isto NÃO resolve
 >
-> **O precipício é adiado, não removido.** Em 2026-09-18 todos voltam a 40 com a
-> `/planos` ainda em 404, a menos que os `product_id` reais existam na Hubla até
-> lá. O teste compra um mês para construir isso — e essa é a única razão de ele
-> ter prazo em vez de ser permanente. Se a data chegar sem produto pago, a decisão
-> volta à mesa: ou existe plano, ou o teto do Free sobe de vez (e aí é [11 §4](../../11-custos-e-precificacao.md)
-> que precisa ser reescrito, não esta seção).
+> **O precipício é adiado, não removido.** Em **2026-11-16** todos voltam a 40
+> com a `/planos` ainda em 404, a menos que os `product_id` reais existam na
+> Hubla até lá. O teste compra **90 dias** para construir isso — e essa é a
+> única razão de ele ter prazo em vez de ser permanente. Se a data chegar sem
+> produto pago, a decisão volta à mesa: ou existe plano, ou o teto do Free sobe
+> de vez (e aí é [11 §4](../../11-custos-e-precificacao.md) que precisa ser
+> reescrito, não esta seção).
 
 ## Objetivo
 Transformar o Orion de "tudo liberado pra todo aluno" em produto com **planos**.
@@ -646,14 +665,21 @@ por plano. Quem já tem plano vê o que ganharia subindo.
       o tour não visita alvo fora do DOM), e **nenhum** link do app — tela
       autenticada, mensagem de erro de limite ou página pública — aponta pra
       `/planos`.
-- [ ] **AC24** — Com `PLANOS_NA_UI = false`, nenhum texto de UI diz "plano":
-      nem o medidor, nem o formulário de coleta, nem as mensagens de limite. O
-      que sobra é o que é verdade sem plano — quanto você usou, de quanto, e
-      quando zera.
+- [ ] **AC24** — Com `PLANOS_NA_UI = false`, nenhum texto de UI diz "plano"
+      (exceto a flag `PRO`/`AGÊNCIA` e o aviso de trial da emenda de
+      2026-08-20 — ver AC26/AC27): nem o formulário de coleta, nem as mensagens
+      de limite, nem upsell. O que sobra é uso (`usado / limite`) + os dois
+      sinais do teste quando cabem.
 - [ ] **AC25** — A pausa é só de exibição: com `PLANOS_NA_UI = false` o Free
       continua barrado nos 40 Leads/mês e o medidor continua mostrando
       `usado / limite`. Trocar a constante por `true` devolve a tela e os links
       sem nenhuma outra edição.
+- [ ] **AC26** — Aluno com plano `pro` (ou `agencia`) vê a flag correspondente
+      no medidor da topbar, com `PLANOS_NA_UI = false` e sem link pra `/planos`.
+- [ ] **AC27** — Com `HUBLA_PRODUCT_ID_PRO` no prefixo `trial-pro-` e aluno em
+      `pro`, o shell autenticado mostra o aviso de 3 meses de acesso Pro
+      (fim em 2026-11-16). Dismissível; após fechar, não reaparece no mesmo
+      browser. Sem o prefixo de trial (ou no Free), o aviso não renderiza.
 
 > **Nota do AC9 (exportar CSV):** o CSV era montado no navegador, a partir dos
 > cards já entregues na página — ali "gate no servidor" seria mentira. A
@@ -666,6 +692,9 @@ por plano. Quem já tem plano vê o que ganharia subindo.
   mais**: arquivo sem import pra poder ser lido por Client Component (o barrel
   `@/lib/planos` puxaria Prisma). Um único interruptor em vez de um `if` por
   arquivo é o que faz a volta ser uma linha.
+- `src/lib/planos/trial.ts` — janela e copy do free trial Pro; `trialProAtivoNoAmbiente()`
+  liga o banner só com `HUBLA_PRODUCT_ID_PRO` no prefixo `trial-pro-`.
+- `src/components/aviso-trial-pro-server.tsx` + `aviso-trial-pro.tsx` — AC27.
 - `src/lib/planos/catalogo.ts` (limites e features por plano — dado puro),
   `competencia.ts` (mês em `America/Sao_Paulo`, puro), `resolver.ts`
   (entitlements → plano, memoizado por request), `medidor.ts` (consulta,
