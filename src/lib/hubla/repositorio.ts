@@ -111,11 +111,15 @@ export async function temEntitlementAtivo(
   productId?: string | null | readonly string[],
 ): Promise<boolean> {
   const normalizado = email.trim().toLowerCase();
-  const ids = Array.isArray(productId)
-    ? productId.map((id) => id.trim()).filter(Boolean)
-    : productId
-      ? [productId.trim()]
-      : null;
+  // `typeof` e não `Array.isArray`: com `string | readonly string[]` o false
+  // branch do `Array.isArray` não elimina o array readonly no TS estrito —
+  // e o build de prod cai em `productId.trim()`.
+  const ids =
+    productId == null
+      ? null
+      : typeof productId === "string"
+        ? [productId.trim()].filter(Boolean)
+        : productId.map((id) => id.trim()).filter(Boolean);
 
   const row = await prisma.hublaEntitlement.findFirst({
     where: {
