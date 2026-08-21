@@ -1,4 +1,4 @@
-export { CompraNaoEncontradaError, CompraRequiredError } from "./erros";
+export { CompraJaVinculadaError, CompraNaoEncontradaError, CompraRequiredError } from "./erros";
 export { productIdHubla, urlCheckoutBuildersClub } from "./env";
 export {
   requireCompraAtiva,

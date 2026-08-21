@@ -1,5 +1,12 @@
 # 00 — Product Vision
 
+> **Fase 3 (a partir de 2026-08-10) — revamp do fluxo.** O produto deixa de ser
+> um balcão de ferramentas manuais e passa a ser um **motor com opinião**:
+> diagnóstico e priorização automáticos depois da busca, **Fila do dia**,
+> abordagem por WhatsApp **e e-mail**, e **cobrança ativa** do que ficou parado.
+> O plano completo está em [10 — Revamp do Fluxo](10-revamp-do-fluxo.md)
+> (features F024–F031). O que muda nesta visão está marcado abaixo.
+
 > **Fase 2 (a partir de 2026-07-13).** Este documento passou a descrever o
 > produto **para alunos**: app hospedado, com **login**, **multi-tenant** e
 > chaves de API do próprio aluno (**BYOK**). A premissa anterior — "ferramenta
@@ -25,29 +32,44 @@ ruim, lento, ou sem site) antes de iniciar uma abordagem.
 O aluno faz login e configura as próprias chaves uma vez (BYOK). A partir daí, um
 sistema que:
 1. Coleta estabelecimentos por região/categoria via Google Places API
-2. Diagnostica a presença digital de cada um (site, HTTPS, performance mobile)
-3. Detecta **Dores** concretas (sem site, site lento, sem HTTPS, etc.)
-4. Calcula um **score** (0–100) e prioriza
-5. Gera mensagens de outreach personalizadas via Claude API
-6. Mostra tudo numa dashboard simples onde o aluno marca o status manualmente
+2. **Tria na hora** (sem custo) e **diagnostica sozinho os melhores** —
+   site, HTTPS, performance mobile e sinal de atendimento automatizado
+   ([F025](02-features/F025-fila-do-dia.md), [F026](02-features/F026-sinal-atendimento-automatizado.md))
+3. Detecta **Dores** concretas (sem site, site lento, sem HTTPS, WhatsApp sem
+   automação, etc.)
+4. Calcula um **score** (0–100) e prioriza — **automaticamente**, sem clique
+5. Entrega a **Fila do dia**: os melhores Leads prontos pra abordar
+6. Gera a Abordagem personalizada via IA, em **WhatsApp ou e-mail**
+7. **Cobra o que ficou parado** (follow-up, desfecho não registrado) numa
+   Central de Tarefas ([F031](02-features/F031-central-de-tarefas.md))
+8. Mostra tudo numa dashboard simples onde o aluno marca o status — e agora
+   também **corrige e descarta** ([F024](02-features/F024-estado-do-lead-reversivel.md))
 
 ## Resultado esperado
 **10 Leads prontos por semana, por aluno, sem prospecção manual ativa.**
 
 "**Lead pronto**" = score acima de um threshold definido + Diagnóstico executado +
-ao menos uma Dor detectada + Outreach gerado e pronto pra enviar. (Termo
+ao menos uma Dor detectada + Abordagem gerada e pronto pra enviar. (Termo
 deliberadamente distinto do status de funil `qualificado`, que é a qualificação
 de venda *depois* da resposta — ver [domain model](01-domain-model.md).)
 
 ## Restrições
 - **LGPD** (agora com usuários externos): dos Leads, só **dado público** (Google
-  Places) — sem enriquecimento via dados pessoais e **sem disparo automático**
-  (envio segue manual). Dos alunos, há PII de login e as chaves de API: **cifra
-  das chaves em repouso**, **isolamento por usuário** e **Termos de Uso +
-  Política de Privacidade** deixam de ser opcionais.
+  Places **e o site que o próprio Lead publicou lá** — ver
+  [ADR-016](04-decisions/ADR-016-leitura-do-site-do-lead.md)) — sem
+  enriquecimento via dados pessoais e **sem disparo automático** (envio segue
+  manual, inclusive no e-mail). Dos alunos, há PII de login e as chaves de API:
+  **cifra das chaves em repouso**, **isolamento por usuário** e **Termos de Uso
+  + Política de Privacidade** deixam de ser opcionais.
 - **Custo / chaves**: modo **Orion** (padrão) — custo de API nas chaves do
   servidor, com **limites diários** por aluno (F018). Modo **BYOK** — custo
-  de API do aluno, sem cotas F018. Hospedagem + banco continuam compartilhados.
+  de API do aluno, sem as cotas **diárias** da F018. Hospedagem + banco
+  continuam compartilhados.
+  > **A partir da [F035](02-features/F035-planos-e-limites.md):** existe também
+  > um **limite mensal por plano** (Free: 50 Leads diagnosticados/mês) que vale
+  > nos **dois modos — inclusive BYOK**. O que se vende é o valor entregue, não
+  > o repasse de API. Modelo de custo e preços em
+  > [11 — Custos e Precificação](11-custos-e-precificacao.md).
 - **Multi-tenant hospedado**: login obrigatório e toda query escopada por
   `user_id` (isolamento testado). Deixou de ser "ferramenta interna sem auth".
 - **Tempo**: operações síncronas de até ~30s são aceitáveis (sem workers na
@@ -81,18 +103,40 @@ Em produção serverless exige a API de screenshot externa (entra no BYOK — F0
   itens de Fase 2 já decididos (multi-provider LLM — F017; persistência da Dor —
   F004) e o backlog de polish.
 
-## Em escopo agora (Fase 2)
+## Em escopo agora (Fase 3 — [revamp do fluxo](10-revamp-do-fluxo.md))
+- **Desempenho** ([F028](02-features/F028-desempenho.md)) — primeiro de todos.
+- **Estado do Lead reversível**: descartar, restaurar, corrigir status ([F024](02-features/F024-estado-do-lead-reversivel.md)).
+- **Fila do dia**: triagem, aprofundamento e priorização automáticos ([F025](02-features/F025-fila-do-dia.md)).
+- **Sinal de atendimento automatizado** no WhatsApp ([F026](02-features/F026-sinal-atendimento-automatizado.md)).
+- **Abordagem por e-mail**, preparado na plataforma e enviado pelo aluno ([F027](02-features/F027-abordagem-por-email.md)).
+- **Central de Tarefas** in-app, sem cron ([F031](02-features/F031-central-de-tarefas.md)).
+- **Menu Skills** ([F030](02-features/F030-menu-skills.md)) e **Agente Orion** ([F029](02-features/F029-agente-orion.md)).
+- **Interface nova**: grid de cards e detalhe com abas ([F032](02-features/F032-interface-do-orion.md)),
+  **busca estruturada** com nicho controlado ([F033](02-features/F033-busca-estruturada.md))
+  e **funil kanban** ([F034](02-features/F034-funil-kanban.md)).
+
+### Entregue na Fase 2
 - **Login / autenticação** por aluno (Better Auth).
 - **Multi-tenant**: dados escopados por `user_id`, isolamento testado.
 - **Configuração de chaves do aluno (BYOK)** na UI, cifradas em repouso.
 
 ## Fora de escopo
-- Envio automático de mensagens (WhatsApp/email API) — LGPD; envio segue **manual**
+- Envio automático de mensagens (WhatsApp/email API) — LGPD; envio segue
+  **manual**. O e-mail da [F027](02-features/F027-abordagem-por-email.md) é
+  **preparado** no Orion e disparado pelo cliente de e-mail do aluno; o Orion
+  **não** opera servidor de saída pra prospecção
+- Rastreamento de abertura/clique em e-mail (pixel, link encurtado) — por
+  princípio: é o que transforma abordagem em spam
 - App mobile nativo (a UI **é** responsiva)
 - Analytics **histórico/temporal** do funil: SLA de 1ª resposta, conversão ao
   longo do tempo, CAC, top objeções — exigem event log / campos de evento que
   não existem (o dashboard read-only da F010 **está** em escopo)
 - Integração com CRM externo (HubSpot, Pipedrive)
-- Scraping fora do Google Places
-- Enriquecimento via LinkedIn, Receita Federal, etc.
-- Workers, filas, jobs agendados (ADR-002 — reavaliar sob carga multi-usuário)
+- Scraping de terceiros. A única leitura de conteúdo permitida é o **HTML da
+  home do site que o próprio Lead cadastrou no Places**, sem crawl e sem
+  persistir o HTML ([ADR-016](04-decisions/ADR-016-leitura-do-site-do-lead.md))
+- Enriquecimento via LinkedIn, Receita Federal, Hunter, Apollo, etc.
+- Workers, filas, jobs agendados (ADR-002 — mantido: a cobrança da
+  [F031](02-features/F031-central-de-tarefas.md) é in-app, calculada quando o
+  aluno abre o app; alcançar quem sumiu exigiria cron + e-mail, e isso é ADR
+  novo)

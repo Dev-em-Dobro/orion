@@ -16,9 +16,9 @@ evitar). No fim: [tabela comparativa](#tabela-comparativa) e
 
 ### O que é
 Plataforma "tudo-em-um" de vendas B2B: base de dados de contatos + prospecção +
-sequências de outreach multicanal + discador + enriquecimento + mini-CRM. Vende
+sequências de abordagem multicanal + discador + enriquecimento + mini-CRM. Vende
 a ideia de **substituir 5 ferramentas** (provedor de dados, plataforma de
-outreach, discador, enriquecimento e CRM). Base própria: **230M+ contatos** e
+abordagem, discador, enriquecimento e CRM). Base própria: **230M+ contatos** e
 **30M+ empresas**.
 
 ### Modelo e preço (snapshot jul/2026)
@@ -38,7 +38,7 @@ créditos por lookup; **créditos expiram mensalmente, sem rollover**.
 ### Pontos positivos
 - **Base enorme** (230M+ contatos) com um dos conjuntos de filtros mais
   profundos da categoria — bom para segmentação B2B fina.
-- **Consolidação real**: dados + outreach + discador + CRM leve num lugar só;
+- **Consolidação real**: dados + abordagem + discador + CRM leve num lugar só;
   cases citam +70% de leads, 4× eficiência de SDR e −64% de custo de stack.
 - **Extensão Chrome** que puxa leads verificados direto do LinkedIn.
 - Integrações limpas com **HubSpot e Salesforce**.
@@ -61,7 +61,7 @@ créditos por lookup; **créditos expiram mensalmente, sem rollover**.
   advogado de bairro) — o ICP do prospect-engine mal aparece na base.
 
 ### Relevância pro prospect-engine
-Concorrente **indireto**. Referência de **UX de filtros** e de **outreach
+Concorrente **indireto**. Referência de **UX de filtros** e de **abordagem
 multicanal**, mas o ICP é outro (B2B corporativo global vs. local BR). A lição
 principal é o **anti-padrão de acurácia**: prometer "verificado" e entregar 70%
 queima confiança. O prospect-engine, usando **dado público do Google Places** e
@@ -109,7 +109,7 @@ ROI anunciado: +41% close rate, +45% win rate, −80% custo de prospecção,
 - **Coaching ao vivo** (objeção em 0,8s) e **roleplay de onboarding** são
   diferenciais fortes para *times*.
 - Integração com os CRMs usados no Brasil (RD Station incluso).
-- Outreach multicanal com WhatsApp — canal que importa no BR.
+- Abordagem multicanal com WhatsApp — canal que importa no BR.
 
 ### Pontos negativos
 - **Caro e enterprise**: piso de R$ 1.347/mês (anual) → ~R$ 16k/ano. Fora de
@@ -184,7 +184,7 @@ mapleads.online não confirmado** — posiciona-se fortemente como "grátis".
 Concorrente **direto na etapa de coleta** — e o mais próximo do que o
 prospect-engine faz na F001. A diferença de posicionamento é a **tese inteira**
 do projeto: onde o MapLeads faz *scraping cru + disparo em massa*, o
-prospect-engine faz *API oficial + diagnóstico de Dor + score + outreach
+prospect-engine faz *API oficial + diagnóstico de Dor + score + abordagem
 personalizado e manual*. É a melhor referência para dizer **"o que NÃO ser"**:
 não virar mais um extrator-e-spammer; o valor está em **qualificar**, não em
 juntar contato.
@@ -199,7 +199,7 @@ juntar contato.
 | Fonte de dados | Base própria 230M+ | Base B2B + canais | **Scraping** Maps/FB/IG | **Google Places (API oficial)** |
 | Diagnóstico de presença digital | Não | Não | Não | **Sim (core)** |
 | Score/priorização por Dor | Não (por ICP/intent) | Parcial (ICP) | Não | **Sim** |
-| Outreach | Multicanal automatizado | Multicanal 24/7 + coach | E-mail IA + WhatsApp massa | **Gerado por Claude, envio manual** |
+| Abordagem | Multicanal automatizado | Multicanal 24/7 + coach | E-mail IA + WhatsApp massa | **Gerado por Claude, envio manual** |
 | Público | SDR/RevOps corporativo | Times de vendas | Quem quer lista rápida | **Freelancer dev solo** |
 | Preço | US$ 0 → 119+/assento/mês | R$ 1.347+/mês (anual) | Grátis/baixo (a confirmar) | **~R$ 50/mês (custo de API)** |
 | LGPD / compliance | GDPR/SOC2 (mas dado B2B) | Automação = risco consent. | Scraping = risco alto | **Só dado público + envio manual** |
@@ -228,9 +228,9 @@ juntar contato.
   um operador, síncrono e sem infra pesada (ADR-002).
 
 **A tese que nenhum concorrente ataca (nosso fosso):**
-> Entregar **contato + Dor concreta diagnosticada + Outreach pronto**, por
+> Entregar **contato + Dor concreta diagnosticada + Abordagem pronta**, por
 > **dado público via API oficial**, dentro da **LGPD**, a **custo marginal** e
-> para **um operador**. Coleta é commodity (MapLeads); outreach automatizado é
+> para **um operador**. Coleta é commodity (MapLeads); abordagem automatizado é
 > caro e arriscado (Apollo/LPH). O **diagnóstico que qualifica** é o que
 > ninguém entrega — e é o core desta ferramenta.
 

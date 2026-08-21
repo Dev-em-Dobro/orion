@@ -3,7 +3,8 @@
 import { prisma } from "@/lib/db";
 import { normalizarEmailHubla, temEntitlementAtivo } from "@/lib/hubla";
 import { productIdHubla } from "./env";
-import { CompraNaoEncontradaError, CompraRequiredError } from "./erros";
+import { productIdsAcessoCompra } from "@/lib/tmb";
+import { CompraJaVinculadaError, CompraNaoEncontradaError, CompraRequiredError } from "./erros";
 
 export type StatusCompra = {
   verificada: boolean;
@@ -35,7 +36,9 @@ async function carregarUserCompra(userId: string): Promise<UserCompra | null> {
 async function entitlementAtivoParaEmail(email: string): Promise<boolean> {
   const normalizado = normalizarEmailHubla(email);
   if (!normalizado) return false;
-  return temEntitlementAtivo(normalizado, productIdHubla());
+  const ids = productIdsAcessoCompra();
+  if (ids.length === 0) return false;
+  return temEntitlementAtivo(normalizado, ids);
 }
 
 async function gravarVerificacao(
@@ -78,6 +81,17 @@ export async function tentarAutoVerificar(userId: string): Promise<boolean> {
     const email = normalizarEmailHubla(bruto);
     if (!email) continue;
     if (!(await entitlementAtivoParaEmail(email))) continue;
+
+    const outro = await prisma.user.findFirst({
+      where: {
+        purchaseEmail: email,
+        purchaseVerifiedAt: { not: null },
+        NOT: { id: userId },
+      },
+      select: { id: true },
+    });
+    if (outro) continue;
+
     await gravarVerificacao(userId, email);
     return true;
   }
@@ -148,6 +162,18 @@ export async function verificarCompraManual(
   const ativo = await entitlementAtivoParaEmail(email);
   if (!ativo) {
     throw new CompraNaoEncontradaError();
+  }
+
+  const outro = await prisma.user.findFirst({
+    where: {
+      purchaseEmail: email,
+      purchaseVerifiedAt: { not: null },
+      NOT: { id: userId },
+    },
+    select: { id: true },
+  });
+  if (outro) {
+    throw new CompraJaVinculadaError();
   }
 
   await gravarVerificacao(userId, email);

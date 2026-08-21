@@ -1,10 +1,55 @@
 # F011 — Assistente de Resposta a Objeções
 
 ## Status
-Proposta — 2026-07-11
+Proposta — 2026-07-11 · **emendada em 2026-08-13** (ver abaixo).
+
+## Emenda 2026-08-13 — catálogo primeiro, IA como saída de escape
+
+O desenho original abria a aba com um `textarea` vazio: o aluno tinha que colar
+a objeção pra receber alguma coisa. **Tela vazia é a pior primeira tela de uma
+aba de vendas.** Ela cobra do aluno exatamente o que ele não tem — repertório —
+e ainda cobra latência e cota de IA pra devolver as mesmas oito objeções que
+todo dono de negócio local dá.
+
+A aba **Objeções** passa a abrir com um **catálogo curado** de objeções comuns
+(`src/lib/objecoes/catalogo.ts`), escrito à mão e versionado como código:
+
+- **Instantâneo.** Sem chamada de modelo, sem cota, sem espera. O aluno abre a
+  aba **durante** a conversa no WhatsApp e já tem o que colar.
+- **Consistente.** É o mesmo repertório pra toda a turma, revisável em PR. Uma
+  resposta ruim se conserta uma vez, pra todo mundo.
+- **Ensina, não só entrega.** Cada objeção traz **o que está por trás dela** e a
+  **pergunta-chave** que vira o jogo — o aluno aprende a tática, em vez de
+  colar texto que não entende.
+
+A personalização que importa é barata e não precisa de modelo: `{negocio}` no
+texto é trocado pelo nome do Lead na renderização.
+
+**A IA continua**, agora no lugar certo: um bloco secundário **"Outra
+objeção"**, recolhido, pra quando o Lead disser algo fora do catálogo. Mesmo
+contrato, mesmo prompt, mesma Server Action — só deixou de ser a porta de
+entrada. Nada foi removido; o que mudou foi a ordem.
+
+**Ordem do catálogo = ordem de frequência.** "Já tenho site" é a primeira
+porque é a objeção nº 1 de quem vende site pra negócio local, e é a mais fácil
+de responder errado (o aluno tende a atacar o site do cliente). A resposta certa
+não discute o site: pergunta se ele **traz cliente**, e se o dono **já mediu**
+isso. Quase sempre não mediu — e é aí que a conversa vira.
+
+### Critérios de aceitação da emenda
+- [ ] **AC10** — A aba Objeções abre com a lista de objeções comuns **sem
+      nenhuma chamada de IA** e sem consumir cota.
+- [ ] **AC11** — "Já tenho site" é a primeira do catálogo, e sua resposta
+      pergunta se o site gera demanda e se o dono mediu isso.
+- [ ] **AC12** — Cada objeção expõe o que está por trás dela, a pergunta-chave
+      e ao menos duas respostas prontas, cada uma com botão de copiar.
+- [ ] **AC13** — `{negocio}` é substituído pelo nome do Lead no texto copiado,
+      não só no exibido.
+- [ ] **AC14** — O bloco "Outra objeção" (IA) continua funcional, recolhido por
+      padrão, com o mesmo contrato de erro de antes.
 
 ## Objetivo
-Quando o Lead **responde** ao Outreach com uma objeção ou pergunta
+Quando o Lead **responde** à Abordagem com uma objeção ou pergunta
 ("achei caro", "já tenho site", "não tenho tempo", "me manda por e-mail"),
 gerar **2–3 respostas sugeridas** — curtas, em PT-BR, prontas pra colar no
 WhatsApp — que **acolhem** a objeção, **reancoram** na Dor concreta do
@@ -36,7 +81,7 @@ Codificadas em `src/lib/objecoes/prompt.ts` — o que move o fechamento:
 4. **CTA único e fácil** por resposta — uma pergunta de sim/não.
 5. **Brevidade.** WhatsApp: **≤ ~60 palavras**, 2–4 frases.
 6. **Honestidade.** Não prometer resultado garantido, não inventar dados que
-   não temos sobre o Lead (mesma disciplina da [F005](F005-outreach-whatsapp.md)).
+   não temos sobre o Lead (mesma disciplina da [F005](F005-abordagem-whatsapp.md)).
 7. **PT-BR coloquial**, sem "Prezado"; usa o nome do negócio quando couber.
 8. **Variar o ângulo** entre as 2–3 respostas — não repetir a mesma tática.
 
@@ -88,7 +133,7 @@ operador cola a mensagem do Lead + botão **Sugerir respostas**.
 - [ ] **AC5** — `mensagem_do_lead` vazia ou < 2 chars (Zod) → erro de campo na
       UI, sem chamada externa.
 - [ ] **AC6** — A action **não** altera `Lead.status` nem cria registro algum
-      (nenhum `Outreach`, nenhuma entidade nova).
+      (nenhum `Abordagem`, nenhuma entidade nova).
 - [ ] **AC7** — Falha da Claude API (429/5xx/refusal → `parsed_output` nulo) →
       `{ erro }` na UI, sem quebrar a app.
 - [ ] **AC8** — `lead_id` inválido (Zod) ou inexistente → `{ erro }` específico
@@ -101,14 +146,14 @@ operador cola a mensagem do Lead + botão **Sugerir respostas**.
   output (array de 2–3 `{ abordagem, texto }`); lança `ObjecaoError`. Sem dep de
   Next. Modelo **`claude-opus-4-8`** (qualidade de escrita importa, como na F005).
 - `src/lib/dores/derivarDoDiagnostico.ts` — **extrair** a derivação hoje inline
-  no passo 4 da [F005](F005-outreach-whatsapp.md) para um helper puro reusado por
+  no passo 4 da [F005](F005-abordagem-whatsapp.md) para um helper puro reusado por
   F005/F011/F012 (e por F003 quando migrar). Quando a F004 (Dores persistidas)
   existir, o helper passa a ler as Dores — sem mudar as chamadas.
 - Server Action `src/actions/leads/responderObjecao.ts`, fina — orquestra
   `lib/objecoes` + Prisma (só leitura).
 - UI `src/app/leads/responder-objecao-panel.tsx` — textarea + botão + cards, no
-  padrão de `gerar-outreach-button.tsx`.
-- Lib nova? Não — reusa `@anthropic-ai/sdk` ([ADR-005](../04-decisions/ADR-005-anthropic-sdk-outreach.md)). **Sem ADR.**
+  padrão de `gerar-abordagem-button.tsx`.
+- Lib nova? Não — reusa `@anthropic-ai/sdk` ([ADR-005](../04-decisions/ADR-005-anthropic-sdk-abordagem.md)). **Sem ADR.**
 
 ## Fora do escopo (F011)
 - **Persistência** das objeções/respostas (histórico de conversa) — exigiria

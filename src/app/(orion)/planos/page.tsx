@@ -1,0 +1,212 @@
+// F035 — comparativo de planos e checkout.
+// Spec: /specs/02-features/F035-planos-e-limites.md ("/planos")
+//
+// A cobrança continua na Hubla (fora do escopo da F035): aqui é só a
+// comparação e o link. Sem `product_id` configurado no ambiente, o botão vira
+// "em breve" em vez de um link quebrado.
+
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import {
+  CATALOGO_PLANOS,
+  LABEL_OPERACAO_MENSAL,
+  LABEL_RECURSO,
+  OPERACOES_MENSAIS,
+  PLANOS,
+  PLANOS_NA_UI,
+  RECURSOS,
+  asPlano,
+  definicao,
+  limiteDaOperacao,
+  precoAlunoFormatado,
+  precoFormatado,
+  urlCheckoutPlano,
+  usoDoPlano,
+  type Recurso,
+} from "@/lib/planos";
+import { requireTenant } from "@/lib/db/scoped";
+import { APROFUNDAR_EXPLICACAO } from "@/lib/leads/aprofundamento";
+import { Dica } from "@/components/dica";
+
+export const metadata: Metadata = { title: "Planos" };
+
+export const dynamic = "force-dynamic";
+
+function asRecurso(raw: string | undefined): Recurso | null {
+  return raw && (RECURSOS as readonly string[]).includes(raw)
+    ? (raw as Recurso)
+    : null;
+}
+
+export default async function PlanosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ recurso?: string; plano?: string }>;
+}) {
+  // Pausa de 2026-08-17 (F035): sem plano pago configurado não há o que
+  // comparar. 404 antes do `requireTenant` — a página não existe hoje, então
+  // nem o banco precisa ser consultado pra dizer isso. Fora de `<Suspense>`,
+  // pela armadilha do `notFound()` que a F028 documenta.
+  if (!PLANOS_NA_UI) notFound();
+
+  const { userId } = await requireTenant();
+  const [uso, sp] = await Promise.all([usoDoPlano(userId), searchParams]);
+  const atual = uso.plano;
+  const bloqueado = asRecurso(sp.recurso);
+  const destacado = asPlano(sp.plano);
+
+  return (
+    <main className="mx-auto max-w-5xl px-6 py-10">
+      <h1 className="text-2xl font-bold tracking-tight">Planos</h1>
+      <p className="mt-1 text-sm text-muted">
+        <strong>Nada é bloqueado por plano.</strong> Central de Tarefas, funil
+        kanban, exportar CSV, Agente e Simulador estão em todos — o que muda é{" "}
+        <strong>quanto</strong> de cada um cabe no mês.
+      </p>
+
+      {bloqueado && (
+        <p className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+          <strong>{LABEL_RECURSO[bloqueado]}</strong> não está no plano{" "}
+          {definicao(atual).nome}. Escolha um plano abaixo para liberar.
+        </p>
+      )}
+
+      <p className="mt-4 text-xs text-muted">
+        Você está no plano <strong>{definicao(atual).nome}</strong> — usou{" "}
+        {uso.usado} de {uso.limite} Leads novos este mês.
+      </p>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        {PLANOS.map((p) => {
+          const def = CATALOGO_PLANOS[p];
+          const ehAtual = p === atual;
+          const checkout = urlCheckoutPlano(p);
+          // Free visto por quem já é pago não tem rodapé: não há o que assinar,
+          // e a linha que ficava aqui existia só pra dizer que não havia nada a
+          // fazer. O `<div>` some junto — vazio ele deixaria a margem sobrando
+          // só neste card, desalinhando a base dos três.
+          const semRodape = !ehAtual && !checkout && p === "free";
+          return (
+            <section
+              key={p}
+              className={`card flex flex-col ${
+                ehAtual || destacado === p ? "ring-1 ring-primary" : ""
+              }`}
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="text-lg font-semibold">{def.nome}</h2>
+                {ehAtual && (
+                  <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] text-primary">
+                    seu plano
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-2xl font-bold">{precoFormatado(p)}</p>
+              {precoAlunoFormatado(p) && (
+                <p className="mt-0.5 text-xs text-primary">
+                  {precoAlunoFormatado(p)} para aluno do Builders Club
+                </p>
+              )}
+              <p className="mt-1 text-xs text-muted">{def.resumo}</p>
+
+              {/* F035 (2026-08-13) — a tabela virou de limites, não de
+                  recursos: nada é bloqueado por plano, então listar ✓/— por
+                  feature não dizia mais nada. */}
+              {/* A lista segue a ordem do FUNIL, não a de OPERACOES_MENSAIS:
+                  descobrir → abordar → propor, e só depois as ferramentas de
+                  apoio. Por isso `lead_novo` é renderizado à parte, com as duas
+                  linhas ilimitadas logo abaixo — enterrar "Ilimitada" embaixo de
+                  "Mensagens no Simulador" jogaria fora o argumento de venda. */}
+              <ul className="mt-4 flex-1 space-y-1.5 text-sm">
+                <li className="flex justify-between gap-3">
+                  <span className="text-muted">
+                    {LABEL_OPERACAO_MENSAL.lead_novo}
+                  </span>
+                  <strong className="font-mono">
+                    {limiteDaOperacao(p, "lead_novo")}
+                    <span className="font-normal text-muted">/mês</span>
+                  </strong>
+                </li>
+                {/* Abordagem e Proposta saíram de OPERACOES_MENSAIS quando
+                    viraram ilimitadas (F035, 2026-08-16), mas continuam na
+                    tabela: a AC22 pede que nenhum recurso fique de fora, e
+                    "Ilimitada" vende melhor que os "150/mês" e "3/mês" que
+                    estavam aqui — que, além de tudo, contradiziam o teto de
+                    Leads logo acima. */}
+                <li className="flex justify-between gap-3">
+                  <span className="text-muted">Abordagens</span>
+                  <strong className="text-primary">Ilimitada</strong>
+                </li>
+                <li className="flex justify-between gap-3">
+                  <span className="text-muted">Propostas</span>
+                  <strong className="text-primary">Ilimitada</strong>
+                </li>
+                {OPERACOES_MENSAIS.filter((op) => op !== "lead_novo").map(
+                  (op) => (
+                    <li key={op} className="flex justify-between gap-3">
+                      <span className="text-muted">
+                        {LABEL_OPERACAO_MENSAL[op]}
+                      </span>
+                      <strong className="font-mono">
+                        {limiteDaOperacao(p, op)}
+                        <span className="font-normal text-muted">/mês</span>
+                      </strong>
+                    </li>
+                  ),
+                )}
+                {/* "Aprofunda" é jargão nosso e esta é a tela onde o aluno
+                    decide pagar — comparar planos por uma linha que ele não
+                    entende é comparar no escuro. A explicação já existia em
+                    `APROFUNDAR_EXPLICACAO`, só não chegava aqui. */}
+                <li className="flex justify-between gap-3 border-t border-border pt-1.5">
+                  <span className="flex items-center gap-1 text-muted">
+                    Aprofunda por busca
+                    <Dica
+                      titulo="O que é aprofundar?"
+                      texto={APROFUNDAR_EXPLICACAO}
+                    />
+                  </span>
+                  <strong className="font-mono">{def.aprofundarPorBusca}</strong>
+                </li>
+                {/* Tudo liberado em todo plano — dizer isso explicitamente vale
+                    mais que uma lista de ✓ iguais nas três colunas. */}
+                <li className="pt-1 text-xs text-muted">
+                  Central de Tarefas, Funil kanban, Exportar CSV, Simulador de
+                  venda e Diagnóstico automático: <strong>em todos os planos</strong>.
+                </li>
+              </ul>
+
+              {!semRodape && (
+                <div className="mt-4">
+                  {ehAtual ? (
+                    <span className="text-xs text-muted">
+                      Plano ativo hoje.
+                    </span>
+                  ) : checkout ? (
+                    <a href={checkout} className="btn-primary inline-block">
+                      Assinar {def.nome}
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted">
+                      Checkout em breve.
+                    </span>
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      <p className="mt-6 text-xs text-muted">
+        Os limites são mensais e zeram na virada do mês (horário de Brasília). O
+        que o Orion vende é o Lead diagnosticado e com abordagem pronta, não o
+        repasse de API — as chaves são da plataforma.{" "}
+        <Link href="/configuracao" className="text-primary hover:underline">
+          Ver configuração
+        </Link>
+      </p>
+    </main>
+  );
+}

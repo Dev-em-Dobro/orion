@@ -11,7 +11,7 @@ registros de **Dor** no banco, escopados por `user_id` ([F015](F015-multi-tenant
 Hoje a entidade `Dor` existe no schema e no
 [domain model](../01-domain-model.md), mas nenhum fluxo a cria: F005/F011/F012/F013
 derivam texto em runtime a partir do Diagnóstico. Esta feature fecha o modelo:
-as Dores passam a ser a **fonte de verdade** para Outreach, proposta, objeções e
+as Dores passam a ser a **fonte de verdade** para Abordagem, proposta, objeções e
 simulador.
 
 ## Linguagem
@@ -35,6 +35,7 @@ grava Dores.
 | `website` ausente **ou** `tem_site = false` | `SEM_SITE` | `ALTA` | não tem site / presença digital própria |
 | `site_e_agregador = true` | `SITE_AGREGADOR` | `ALTA` | só tem link-in-bio / rede social, sem site próprio |
 | `performance_mobile !== null` **e** `< 50` | `SITE_LENTO` | `ALTA` se `< 30`, senão `MEDIA` | site muito lento no celular (nota N/100 no Google PageSpeed) |
+| `performance_mobile = null` **e** `tempo_carregamento_ms ≥ 3000` | `SITE_LENTO` | `ALTA` se `≥ 5000`, senão `MEDIA` | site levou Ns pra carregar (o PageSpeed nem conseguiu medir) |
 | `tem_https = false` | `SEM_HTTPS` | `MEDIA` | site sem HTTPS (sem cadeado de segurança) |
 
 Regras:
@@ -42,14 +43,50 @@ Regras:
 1. `SEM_SITE` e `SITE_AGREGADOR` são **exclusivos** entre si e **não empilham**
    com `SITE_LENTO` / `SEM_HTTPS` (não há site próprio mensurável).
 2. Com site próprio, `SITE_LENTO` e `SEM_HTTPS` podem coexistir.
-3. Site no ar sem essas Dores → **zero** registros de Dor (proposta/outreach
+3. As duas linhas de `SITE_LENTO` são **mutuamente exclusivas**: a segunda só
+   vale quando o PageSpeed não respondeu. Nunca saem duas Dores de site lento.
+4. Site no ar sem essas Dores → **zero** registros de Dor (proposta/abordagem
    usam fallback de copy “sem problema técnico grave”, como hoje).
-4. `SEM_RESPOSTA_REVIEWS` permanece no enum do domínio, **sem detector** nesta
+5. `SEM_RESPOSTA_REVIEWS` permanece no enum do domínio, **sem detector** nesta
    feature (extensão futura).
+
+### Emenda 2026-08-14 — o site pior que todos era o único sem Dor
+
+**O que estava errado.** `SITE_LENTO` só existia quando o PageSpeed devolvia
+nota. Só que o PSI **desiste** justamente nos piores sites: ele roda um
+Lighthouse de verdade e estoura o tempo quando a página não carrega. O
+resultado era uma inversão perversa — quanto pior o site do Lead, **menos**
+Dor o Orion enxergava:
+
+| Lead | carregamento medido | `performance_mobile` | Dores antes |
+|---|---|---|---|
+| Agência COW | **6.079 ms** | `null` | **0** |
+| Agência SPR | 4.582 ms | `null` | 0 |
+| Agência 3G Planning | 3.849 ms | `null` | 0 |
+| E21 | 3.098 ms | `null` | 0 |
+
+Não é caso de borda: numa base de 43 agências, **26 tinham site sem nota de
+performance**. E o dado para provar a Dor **já estava gravado** — a F002 mede
+`tempo_carregamento_ms` desde sempre, para saber quanto o corpo demorou a
+baixar, e ninguém o usava para nada.
+
+**A regra nova.** Quando o PSI não responde, o tempo medido pela própria F002
+vira a evidência. Limiar de **3 s** para existir Dor e **5 s** para ela ser
+`ALTA`, espelhando a escada que já existia para a nota (`< 50` / `< 30`).
+
+**Por que fallback e não sinal concorrente.** Quando o PSI responde, ele ganha:
+mede num mobile emulado, com rede emulada, e é isso que o cliente vive. O
+`tempo_carregamento_ms` é o nosso servidor baixando o corpo inteiro — bom para
+dizer "isto está inaceitável", ruim para discordar de uma medição melhor. Ele
+preenche um cego, não abre uma segunda opinião.
+
+**O que o aluno ganha na conversa.** Sai de "seu site tem nota 40 no PageSpeed"
+(que ele pode não entender) para "seu site levou 6 segundos pra abrir" — que é
+o mesmo fato, dito no idioma de quem perde cliente.
 
 ## Input / saída (UI)
 Sem UI nova. O botão **Diagnosticar** (F002) passa a também persistir Dores.
-Consumidores (Outreach, Proposta, Objeções, Treino) leem `Lead.dores` (tenant)
+Consumidores (Abordagem, Proposta, Objeções, Treino) leem `Lead.dores` (tenant)
 em vez de derivar do Diagnóstico.
 
 ## Fluxo
@@ -68,12 +105,19 @@ em vez de derivar do Diagnóstico.
       tenant); não acumula Dores contraditórias.
 - [x] **AC3** — Toda leitura/escrita de Dor filtra por `user_id` da sessão (F015);
       Lead de outro aluno → 404 / “não encontrado”.
-- [x] **AC4** — Outreach (F005), Proposta (F012), Objeções (F011) e seed do
+- [x] **AC4** — Abordagem (F005), Proposta (F012), Objeções (F011) e seed do
       Simulador (F013) usam Dores persistidas (`detalhes`), não derivação ad-hoc
       do Diagnóstico na action.
 - [x] **AC5** — Detecção é função pura em `src/lib/dores/`, coberta por testes
       unitários (Vitest).
 - [x] **AC6** — `SEM_RESPOSTA_REVIEWS` não é criado automaticamente.
+- [ ] **AC7** — Site com `performance_mobile = null` e `tempo_carregamento_ms
+      ≥ 3000` gera `SITE_LENTO`; `≥ 5000` gera com severidade `ALTA`.
+- [ ] **AC8** — Nunca saem duas Dores `SITE_LENTO` no mesmo Lead: quando o PSI
+      respondeu, a regra de tempo não dispara.
+- [ ] **AC9** — Site com `performance_mobile = null` e carregamento abaixo de
+      3 s continua **sem** `SITE_LENTO` (medição rápida não é evidência de
+      lentidão só porque o PSI falhou).
 
 ## Decisões de implementação
 - `src/lib/dores/detectar.ts` — detector puro.

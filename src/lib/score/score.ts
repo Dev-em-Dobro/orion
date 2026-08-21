@@ -10,9 +10,21 @@ export type DiagnosticoParaScore = {
   site_e_agregador: boolean;
   tem_https: boolean | null;
   performance_mobile: number | null;
+  /**
+   * F003 (emenda 2026-08-14) — desempata o `performance_mobile = null`.
+   * Opcional: Diagnóstico antigo ou site fora do ar não tem tempo medido.
+   */
+  tempo_carregamento_ms?: number | null;
 };
 
 const TIER_SCORE: Record<Tier, number> = { ALTO: 100, MEDIO: 55, BAIXO: 20 };
+
+/**
+ * F003 — corte de "Lead qualificado". Fonte única do 60: faixa visual da UI
+ * (F032), chip "Score 60+" (F032) e contagem de "com potencial" da Triagem
+ * (F025) leem daqui.
+ */
+export const SCORE_QUALIFICADO = 60;
 
 function porteScore(num_avaliacoes: number | null): number {
   if (num_avaliacoes === null || num_avaliacoes <= 20) return 20;
@@ -40,8 +52,16 @@ export function necessidade(diag: DiagnosticoParaScore): number {
 
   let n = 20;
   const perf = diag.performance_mobile;
-  if (perf === null) n += 25;
-  else if (perf < 50) n += 50;
+  if (perf === null) {
+    // F003 (emenda 2026-08-14) — `null` estava achatando em +25 duas coisas
+    // muito diferentes: o site que não deu pra medir e o que levou 6 segundos
+    // pra abrir. O PSI desiste justamente nos piores, então quando a F002
+    // mediu o carregamento e ele é ruim, isso É necessidade.
+    const ms = diag.tempo_carregamento_ms;
+    if (ms !== null && ms !== undefined && ms >= 5000) n += 50;
+    else if (ms !== null && ms !== undefined && ms >= 3000) n += 35;
+    else n += 25; // desconhecido de verdade
+  } else if (perf < 50) n += 50;
   else if (perf < 80) n += 25;
   // perf >= 80 → +0
 

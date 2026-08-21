@@ -5,6 +5,8 @@
 import { createLlmForUser } from "@/lib/llm";
 import { entradaSchema } from "@/lib/simulador/validacao";
 import { avaliarSimulacao } from "@/lib/simulador/avaliar";
+import { CenarioInvalidoError } from "@/lib/simulador/cenario";
+import { conferirHistorico, resolverCenario } from "@/lib/simulador/entrada";
 import { SimuladorError } from "@/lib/simulador/simular";
 import type { Scorecard } from "@/lib/simulador/avaliar";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
@@ -28,10 +30,20 @@ export async function avaliarSimulacaoAction(
   const parsed = entradaSchema.safeParse(input);
   if (!parsed.success) return { ok: false, erro: "Input inválido" };
 
-  const { cenario, historico } = parsed.data;
-  const turnosAluno = historico.filter((t) => t.papel === "aluno").length;
+  const turnosAluno = parsed.data.historico.filter(
+    (t) => t.papel === "aluno",
+  ).length;
   if (turnosAluno < 2) {
     return { ok: false, erro: "Converse um pouco antes de avaliar" };
+  }
+
+  let cenario, historico;
+  try {
+    cenario = await resolverCenario(userId, parsed.data.cenario);
+    historico = conferirHistorico(userId, parsed.data.historico);
+  } catch (e) {
+    if (e instanceof CenarioInvalidoError) return { ok: false, erro: e.message };
+    throw e;
   }
 
   try {

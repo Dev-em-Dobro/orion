@@ -26,7 +26,7 @@ Adotar **Neon** (neon.tech) como provedor de Postgres.
   Pra uso esporádico, é desperdício.
 - **SQLite + Turso**: tentador pela simplicidade, mas perde JSONB e
   full-text search nativos do Postgres, que provavelmente serão úteis
-  pra detalhes de Dor e busca em Outreach.
+  pra detalhes de Dor e busca em Abordagem.
 - **RDS / Cloud SQL**: custo e setup completamente desproporcionais.
 
 ## Consequências

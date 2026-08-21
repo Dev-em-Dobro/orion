@@ -15,7 +15,12 @@ import {
   type VisaoChave,
 } from "@/lib/chaves";
 import { LABEL_LLM_PROVIDER, salvarProviderLlm } from "@/lib/llm";
-import { LABEL_KEY_MODE, salvarModoChave } from "@/lib/chaves";
+import {
+  byokDisponivel,
+  LABEL_KEY_MODE,
+  obterModoChave,
+  salvarModoChave,
+} from "@/lib/chaves";
 import type { KeyMode } from "@prisma/client";
 import { mensagemEscopo, requireTenant } from "@/lib/db/scoped";
 
@@ -131,7 +136,22 @@ export async function salvarModoChaveAction(
 
   try {
     const { userId } = await requireTenant();
-    const modo = await salvarModoChave(userId, parsed.data as KeyMode);
+    const alvo = parsed.data as KeyMode;
+
+    // F035 — a flag fecha no servidor, não só na UI: quem não está em BYOK não
+    // entra nele enquanto `BYOK_NOVOS_ALUNOS` estiver desligada.
+    if (alvo === "byok") {
+      const atual = await obterModoChave(userId);
+      if (!byokDisponivel(atual)) {
+        return {
+          kind: "erro",
+          mensagem:
+            "O modo BYOK não está mais disponível — o Orion passou a usar as chaves da plataforma.",
+        };
+      }
+    }
+
+    const modo = await salvarModoChave(userId, alvo);
     revalidatePath("/configuracao");
     revalidatePath("/");
     revalidatePath("/leads");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { linkWhatsapp } from "@/lib/outreach/whatsappLink";
+import { linkWhatsapp } from "@/lib/abordagem/whatsappLink";
 
 describe("linkWhatsapp", () => {
   it("usa api.whatsapp.com (não wa.me) e preserva emoji no text", () => {

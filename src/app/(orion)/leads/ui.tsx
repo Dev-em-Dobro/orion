@@ -2,7 +2,7 @@
 // (client). Sem hooks nem "use client" → usável dos dois lados.
 import type { LeadStatus } from "@prisma/client";
 
-export { linkWhatsapp } from "@/lib/outreach/whatsappLink";
+export { linkWhatsapp } from "@/lib/abordagem/whatsappLink";
 
 export const STATUS_BADGE: Record<LeadStatus, string> = {
   novo: "bg-zinc-500/15 text-zinc-300",
@@ -14,17 +14,16 @@ export const STATUS_BADGE: Record<LeadStatus, string> = {
   proposta: "bg-indigo-500/15 text-indigo-300",
   ganho: "bg-emerald-500/15 text-emerald-300",
   perdido: "bg-red-500/15 text-red-300",
+  // F024 — apagado de propósito: descartado não disputa atenção na lista.
+  descartado: "bg-zinc-700/40 text-muted",
 };
 
-export function scoreBadge(score: number) {
-  if (score >= 60) return "bg-emerald-500/15 text-emerald-300";
-  if (score >= 30) return "bg-amber-500/15 text-amber-300";
-  return "bg-zinc-500/15 text-zinc-400";
-}
+// F032 — a lógica pura vive em `@/lib/leads/faixa` (testável sem JSX).
+export { faixaDeScore, scoreBadge } from "@/lib/leads/faixa";
 
 export function SimNao({ valor }: { valor: boolean | null | undefined }) {
   if (valor === null || valor === undefined) {
-    return <span className="text-zinc-600">—</span>;
+    return <span className="text-muted">—</span>;
   }
   return valor ? (
     <span className="text-emerald-400">✓</span>

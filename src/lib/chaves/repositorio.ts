@@ -1,5 +1,6 @@
 // Persistência de UserApiKeys — cifra na escrita; nunca devolve plaintext.
 
+import { cache } from "react";
 import type { ChaveApiStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { obterModoChave } from "./modo";
@@ -35,32 +36,44 @@ export async function listarVisaoChaves(userId: string): Promise<VisaoChave[]> {
   }));
 }
 
-/** Essenciais faltando — Google + chave do provedor de IA ativo (só modo BYOK). */
-export async function chavesEssenciaisFaltando(
-  userId: string,
-): Promise<TipoChave[]> {
-  const modo = await obterModoChave(userId);
-  if (modo === "orion") return [];
+/**
+ * Essenciais faltando — Google + chave do provedor de IA ativo (só modo BYOK).
+ *
+ * F028 (H5) — memoizado por request: a página de Leads e o `BannerChaves`
+ * chamavam isto separadamente, duplicando as consultas a `user_api_keys` em
+ * toda visita.
+ *
+ * Pendente (não é este commit): em modo BYOK a função ainda faz três leituras
+ * da **mesma linha** — `obterModoChave`, `listarVisaoChaves` e o raw de
+ * `llm_provider`. Dá pra ser uma. Em modo Orion (o padrão) já sai na primeira.
+ */
+export const chavesEssenciaisFaltando = cache(
+  async function chavesEssenciaisFaltando(
+    userId: string,
+  ): Promise<TipoChave[]> {
+    const modo = await obterModoChave(userId);
+    if (modo === "orion") return [];
 
-  const visao = await listarVisaoChaves(userId);
-  const faltando: TipoChave[] = [];
+    const visao = await listarVisaoChaves(userId);
+    const faltando: TipoChave[] = [];
 
-  const google = visao.find((v) => v.tipo === "google");
-  if (!google || google.status === "faltando") faltando.push("google");
+    const google = visao.find((v) => v.tipo === "google");
+    if (!google || google.status === "faltando") faltando.push("google");
 
-  const rows = await prisma.$queryRaw<{ llm_provider: string }[]>`
-    SELECT "llm_provider" FROM "user_api_keys" WHERE "user_id" = ${userId} LIMIT 1
-  `;
-  const slotIa = (rows[0]?.llm_provider ?? "anthropic") as TipoChave;
-  const ia = visao.find((v) => v.tipo === slotIa);
-  if (!ia || ia.status === "faltando") {
-    if (slotIa === "anthropic" || slotIa === "openai" || slotIa === "gemini") {
-      faltando.push(slotIa);
+    const rows = await prisma.$queryRaw<{ llm_provider: string }[]>`
+      SELECT "llm_provider" FROM "user_api_keys" WHERE "user_id" = ${userId} LIMIT 1
+    `;
+    const slotIa = (rows[0]?.llm_provider ?? "anthropic") as TipoChave;
+    const ia = visao.find((v) => v.tipo === slotIa);
+    if (!ia || ia.status === "faltando") {
+      if (slotIa === "anthropic" || slotIa === "openai" || slotIa === "gemini") {
+        faltando.push(slotIa);
+      }
     }
-  }
 
-  return faltando;
-}
+    return faltando;
+  },
+);
 
 /** Salva (cifra) uma chave. Retorna visão atualizada do slot. */
 export async function salvarChave(

@@ -95,6 +95,84 @@ describe("detectarDores", () => {
     });
   });
 
+  // F004 (emenda 2026-08-14) — AC7/AC8/AC9. O PSI desiste justamente nos piores
+  // sites, e a Dor sumia junto: a Agência COW levava 6s pra abrir e saía do
+  // Diagnóstico com ZERO Dores.
+  describe("SITE_LENTO por tempo medido (PSI sem resposta)", () => {
+    const base = {
+      tem_site: true,
+      site_e_agregador: false,
+      tem_https: true,
+      performance_mobile: null,
+    };
+
+    it("AC7 — ALTA a partir de 5s", () => {
+      const dores = detectarDores(
+        { ...base, tempo_carregamento_ms: 6079 },
+        siteProprio,
+      );
+      expect(dores).toEqual([
+        {
+          tipo: "SITE_LENTO",
+          severidade: "ALTA",
+          detalhes:
+            "site levou 6,1s pra carregar (o PageSpeed nem conseguiu medir)",
+        },
+      ]);
+    });
+
+    it("AC7 — MEDIA entre 3s e 5s", () => {
+      const dores = detectarDores(
+        { ...base, tempo_carregamento_ms: 3849 },
+        siteProprio,
+      );
+      expect(dores[0]).toMatchObject({
+        tipo: "SITE_LENTO",
+        severidade: "MEDIA",
+      });
+    });
+
+    it("AC9 — abaixo de 3s não vira Dor", () => {
+      const dores = detectarDores(
+        { ...base, tempo_carregamento_ms: 2999 },
+        siteProprio,
+      );
+      expect(dores).toEqual([]);
+    });
+
+    it("AC9 — sem tempo medido não vira Dor (ignorância não é lentidão)", () => {
+      expect(
+        detectarDores({ ...base, tempo_carregamento_ms: null }, siteProprio),
+      ).toEqual([]);
+      expect(detectarDores(base, siteProprio)).toEqual([]);
+    });
+
+    it("AC8 — com nota do PSI, o tempo não gera uma segunda Dor", () => {
+      const dores = detectarDores(
+        {
+          ...base,
+          performance_mobile: 20,
+          tempo_carregamento_ms: 9000,
+        },
+        siteProprio,
+      );
+      expect(dores.filter((d) => d.tipo === "SITE_LENTO")).toHaveLength(1);
+      expect(dores[0]?.detalhes).toContain("nota 20/100");
+    });
+
+    it("AC8 — PSI aprovando o site ganha do tempo alto do nosso servidor", () => {
+      const dores = detectarDores(
+        {
+          ...base,
+          performance_mobile: 85,
+          tempo_carregamento_ms: 9000,
+        },
+        siteProprio,
+      );
+      expect(dores).toEqual([]);
+    });
+  });
+
   it("SEM_HTTPS — MEDIA", () => {
     expect(
       detectarDores(

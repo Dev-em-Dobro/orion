@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import { PaginaLegal } from "@/components/pagina-legal";
 import { OPERADOR_LEGAL } from "@/lib/legal";
+import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 import { NOME_PRODUTO } from "@/lib/produto";
 
 export const metadata: Metadata = {
@@ -31,14 +32,21 @@ export default function TermosPage() {
         <p>
           O {produto} ajuda a: (a) coletar estabelecimentos a partir de
           fontes públicas (ex.: Google Places); (b) diagnosticar presença
-          digital; (c) priorizar Leads; (d) gerar textos de Outreach e
+          digital; (c) priorizar Leads; (d) gerar textos de Abordagem e
           conteúdos auxiliares via modelos de IA, usando as{" "}
           <strong className="font-medium text-zinc-100">
-            suas próprias chaves de API
-          </strong>{" "}
-          (modelo BYOK). O envio de mensagens a terceiros continua{" "}
-          <strong className="font-medium text-zinc-100">manual</strong> — o
-          app não dispara WhatsApp/e-mail em nome do Lead.
+            chaves de API da plataforma
+          </strong>
+          , dentro dos limites do seu plano. Contas que já haviam configurado
+          chaves próprias continuam podendo usá-las.
+        </p>
+        <p>
+          O único canal de abordagem é o{" "}
+          <strong className="font-medium text-zinc-100">WhatsApp</strong>, e o
+          envio a terceiros é{" "}
+          <strong className="font-medium text-zinc-100">manual</strong>: o app
+          prepara o texto e você envia pelo seu próprio aplicativo. O {produto}{" "}
+          não dispara mensagem em nome do Lead nem opera servidor de envio.
         </p>
       </section>
 
@@ -51,11 +59,25 @@ export default function TermosPage() {
             Você é responsável pela segurança da sua conta (login via Google
             e/ou magic link).
           </li>
+          {/* Pausa de 2026-08-17 (F035): sem `/planos` no ar, o texto não pode
+              remeter a limites "publicados" numa tela que dá 404 — os limites
+              seguem visíveis no medidor da topbar, que é onde o aluno os lê. */}
           <li>
-            Você é responsável pelas chaves de API que cola no app, pelos
-            custos cobrados pelos provedores (Google, Anthropic, OpenAI,
-            Gemini, ScreenshotOne etc.) e pelo uso conforme os termos desses
-            provedores.
+            O uso das APIs de terceiros (Google, provedores de IA) está incluído
+            {PLANOS_NA_UI ? (
+              <>
+                {" "}
+                no seu plano, dentro dos limites publicados em{" "}
+                <a href="/planos" className="text-primary hover:underline">
+                  Planos
+                </a>
+              </>
+            ) : (
+              " no seu acesso, dentro dos limites de uso mostrados no app"
+            )}
+            . Se você optou por usar chaves próprias, é responsável por elas,
+            pelos custos cobrados pelos provedores e pelo uso conforme os
+            termos deles.
           </li>
           <li>
             Você não deve usar o serviço para spam, assédio, fraude ou qualquer
@@ -86,7 +108,7 @@ export default function TermosPage() {
         <p>
           O serviço pode estar em beta: funcionalidades, limites e estabilidade
           podem mudar. Não garantimos disponibilidade ininterrupta nem
-          resultados comerciais a partir dos Outreaches gerados.
+          resultados comerciais a partir dos Abordagens gerados.
         </p>
       </section>
 

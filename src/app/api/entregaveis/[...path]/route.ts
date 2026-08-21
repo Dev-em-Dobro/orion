@@ -42,6 +42,12 @@ export async function GET(_request: NextRequest, { params }: Params) {
       "Content-Type": arquivo.contentType,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
+      ...(arquivo.contentType.startsWith("text/html")
+        ? {
+            "Content-Security-Policy":
+              "default-src 'self' 'unsafe-inline' data: blob:; connect-src 'none'; form-action 'none'; frame-ancestors 'self'; base-uri 'none'",
+          }
+        : {}),
     },
   });
 }

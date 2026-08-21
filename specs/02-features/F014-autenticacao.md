@@ -57,18 +57,116 @@ Gerados pelo Better Auth com adapter Prisma: `User`, `Session`, `Account`,
       expirado/reusado → erro claro.
 - [x] **AC4** — `requireUser()` devolve o usuário logado nas Server Actions e
       lança (tratado como erro amigável) quando não há sessão.
+- [x] **AC10** — **Cookie inválido não vira tela de erro.** Cookie presente mas
+      sem sessão válida no banco redireciona pro login com o cookie limpo,
+      igual a não ter cookie nenhum. Ver "Cookie velho" abaixo.
 - [x] **AC5** — Logout encerra a sessão e volta a barrar as rotas protegidas.
 - [x] **AC6** — Segredo de sessão (`BETTER_AUTH_SECRET`) e `BETTER_AUTH_URL`
       lidos de env do servidor; ausência → erro descritivo no boot, nunca
       valores default. Credenciais Google (`GOOGLE_CLIENT_*`) são **opcionais**
       no boot: se ausentes, OAuth Google fica desabilitado (magic link segue);
       se presentes, o provider é habilitado sem defaults inventados.
+- [x] **AC11** ([F036](F036-endurecimento-de-seguranca.md)) — Mais de 20
+      requisições em 60s do mesmo IP a `/api/auth/*` são recusadas pelo Better
+      Auth. Chamadas server-side a `auth.api.*` seguem sem limite.
+- [ ] **AC12** — Num deploy de **Preview da Vercel**, o login funciona: o
+      Origin do deploy é aceito e o magic link aponta pro próprio Preview, não
+      pra produção. Em `production` nada muda — a `BETTER_AUTH_URL` continua
+      sendo a única origem confiável.
+
+## Origin em Preview da Vercel (emenda 2026-08-16)
+
+**O sintoma:** login em qualquer deploy de Preview respondia **"Invalid
+origin"**. Não era conta, não era e-mail: nenhuma branch jamais teve login
+funcionando fora de produção.
+
+**A causa:** `betterAuth()` recebia `baseURL` e nunca `trustedOrigins`. Sem a
+opção, o Better Auth confia em uma origem só — a própria `baseURL`, que na
+Vercel é a de produção em **todos** os ambientes. O Origin do deploy
+(`prospect-engine-git-<branch>-…vercel.app`) não bate, e o
+`origin-check` recusa antes de olhar o e-mail.
+
+Liberar o Origin **não bastava**. O magic link é montado a partir da `baseURL`:
+o aluno pediria o link no staging, receberia um link de produção e entraria na
+conta errada, no banco errado. As duas coisas saem juntas ou não sai nenhuma.
+
+**A decisão:** em Preview, e só em Preview, a URL do próprio deploy vira a
+`baseURL` e entra nas origens confiáveis.
+
+- **O gatilho é `VERCEL_ENV === "preview"`** — valor da plataforma, escrito no
+  ambiente da função. Não é header, não é `Host`, não vem do cliente: não há
+  requisição que consiga se declarar Preview. Produção não afrouxa em nada, e
+  esta é a razão de a regra viver aqui e não numa checagem de origem em runtime.
+- **`VERCEL_BRANCH_URL` antes de `VERCEL_URL`.** A primeira é estável por
+  branch; a segunda muda a cada deploy. Com a instável, um redeploy no meio do
+  fluxo invalidaria o magic link que já saiu por e-mail.
+- **Um domínio fixo de staging vence a URL da branch.** Se a `BETTER_AUTH_URL`
+  do escopo Preview apontar pra um host **diferente** do de produção
+  (`VERCEL_PROJECT_PRODUCTION_URL`), ela foi definida de propósito pro staging
+  e é respeitada. Igual à de produção significa que ela foi **herdada**, e aí
+  vale a URL da branch. Sem esse teste, configurar o domínio de staging no
+  painel não teria efeito nenhum.
+- As três URLs (staging, branch e deploy) entram em `trustedOrigins` no
+  Preview, então o mesmo deploy responde por qualquer uma delas.
+
+Fora da Vercel (local, CI, outro host) nada disso liga: `VERCEL_ENV` não
+existe, e o caminho é exatamente o de antes.
+
+## Cookie velho (AC10 — corrigido em 2026-08-11)
+
+O middleware é **otimista**: só verifica se o cookie de sessão existe, porque
+validar contra o banco no edge custaria uma consulta por requisição. Quem valida
+de fato é `requireUser()`, que **lança**.
+
+Faltava alguém convertendo esse lançamento em redirect. Resultado medido:
+
+| Requisição a `/` | Antes | Depois |
+|------------------|-------|--------|
+| Sem cookie | 307 → `/login` | 307 → `/login` |
+| Cookie inválido | **500** (tela "Algo deu errado") | 307 → `/login` |
+
+Acontece sempre que o cookie sobrevive à sessão: banco recriado no
+desenvolvimento, sessão revogada em outro dispositivo, `BETTER_AUTH_SECRET`
+trocado. O aluno via tela de erro sem saída — recarregar não resolvia, porque o
+cookie continuava lá.
+
+**Limpar o cookie é obrigatório, não opcional.** Só redirecionar pro `/login`
+faria loop infinito: o middleware vê cookie em `/login` e devolve pra `/`, que
+lança de novo. Por isso o destino é `/api/auth/sessao-invalida`, um route
+handler — página e layout no App Router **não podem escrever cookie**, só
+Server Action e route handler podem.
+
+O gate mora no layout de `(orion)`, antes de qualquer JSX. Dentro de
+`<Suspense>` o redirect chegaria depois do shell e viraria 200 — a mesma
+armadilha de streaming documentada na [F028](F028-desempenho.md).
+
+## Rate limit (F036 — 2026-08-13)
+
+Login sem senha troca "adivinhar a senha" por "pedir muitos links". Nada limitava
+quantas vezes um IP podia disparar magic link ou bater no callback — e cada
+disparo é um e-mail enviado pela conta de e-mail transacional do projeto.
+
+Config do Better Auth: **20 requisições por 60s, por IP**, nas rotas
+`/api/auth/*`.
+
+**O que isso não cobre, e é de propósito:** o limite vive no `onRequest` do
+router HTTP do Better Auth. Chamada **server-side direta** a `auth.api.*` — que
+é o que `requireUser()` faz a cada render de página protegida — não passa por
+ali e não é limitada. Certo assim: essas chamadas já exigem cookie de sessão,
+não são superfície anônima, e limitá-las derrubaria navegação legítima.
+
+Ajuste dos números por spec. Referência pra calibrar: um login por magic link
+consome ~3 requisições (envio, verify, callback).
 
 ## Decisões de implementação
 - `src/lib/auth/` — config do Better Auth (adapter Prisma, providers) +
   `requireUser()`. Sem dep de Next na parte de domínio; o wiring de sessão fica
   na borda (middleware/route handlers).
 - Middleware de proteção de rotas em `src/middleware.ts`.
+- `src/app/(orion)/layout.tsx` — gate de sessão; `AuthError` vira redirect.
+- `src/app/api/auth/sessao-invalida/route.ts` — limpa os cookies do Better Auth
+  (inclusive o `session_data` do cookie cache e as variantes `__Secure-`) e
+  manda pro `/login?error=sessao_expirada`.
 - `src/app/login/page.tsx` (client: Google + magic link).
 - Lib nova? **Sim** — `better-auth` ([ADR-007](../04-decisions/ADR-007-better-auth.md))
   e `nodemailer` para SMTP Resend

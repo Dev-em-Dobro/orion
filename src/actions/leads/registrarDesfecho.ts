@@ -8,6 +8,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { mensagemEscopo, requireLeadOwned } from "@/lib/db/scoped";
 import { podeRegistrarDesfecho } from "@/lib/funil";
+import { mudarStatus } from "@/lib/leads/status";
 
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
@@ -40,7 +41,7 @@ export async function registrarDesfecho(
 
     await prisma.lead.update({
       where: { id: lead.id },
-      data: { status: parsed.data.desfecho },
+      data: mudarStatus(parsed.data.desfecho),
     });
 
     revalidatePath("/leads");

@@ -1,43 +1,224 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireTenant } from "@/lib/db/scoped";
 import { chavesEssenciaisFaltando } from "@/lib/chaves";
-import { valor as calcularValor } from "@/lib/score/score";
-import { classificarWebsite } from "@/lib/diagnostico/agregador";
-import { filaDeFollowUp } from "@/lib/followup";
-import { ESTAGIOS_EM_ABERTO } from "@/lib/funil";
-import { demoUrlFor } from "@/lib/demos";
+import { STATUS_DESCARTADO } from "@/lib/funil";
+import {
+  parseFiltroLista,
+  queryDoFiltro,
+  temFiltro,
+  whereFiltroLista,
+  type FiltroLista,
+} from "@/lib/leads/filtros";
 import { BannerChaves } from "@/components/banner-chaves";
 import { EmptyState } from "@/components/empty-state";
-import { UsoDiarioBanner } from "@/components/uso-diario";
+import { GridLeadsSkeleton, SkeletonPulse } from "@/components/page-skeleton";
 import { AjudaScore } from "./ajuda-score";
+import { ChipsFiltro } from "./chips-filtro";
 import { ColetarForm } from "./coletar-form";
-import { GerarOutreachButton } from "./gerar-outreach-button";
-import { LeadRow } from "./lead-row";
-import {
-  FiltrosLista,
-  PAGE_SIZE,
-  PaginacaoLeads,
-} from "./lista-controles";
-import { linkWhatsapp } from "./ui";
-import {
-  parseFiltroSite,
-  ROTULO_FILTRO_SITE,
-  whereFiltroSite,
-} from "@/lib/leads/filtroSite";
+import { ExcluirDescartadosForm } from "./excluir-descartados-form";
+import { INCLUDE_CARD, paraCardProps } from "./card-props";
+import { definicao, podeUsar, restanteDaOperacao } from "@/lib/planos";
+import { LeadsGrid } from "./leads-grid";
+import type { LeadCardProps } from "./lead-card";
+import { FiltrosLista, PAGE_SIZE, PaginacaoLeads } from "./lista-controles";
 
 // Sempre reflete o banco do aluno logado (F015) — sem cache cross-tenant.
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Leads" };
 
-const fmtData = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short",
-  timeStyle: "short",
-});
+export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{
   categoria?: string;
   site?: string;
   page?: string;
+  score?: string;
+  telefone?: string;
+  atendimento?: string;
+  estagio?: string;
+  status?: string;
 }>;
+
+/**
+ * F028 (H6) — cada bloco busca os próprios dados dentro de um `<Suspense>`,
+ * então a casca (título, cota, esqueleto) pinta na hora e o conteúdo pesado
+ * chega em streaming. `requireUser` e `chavesEssenciaisFaltando` são
+ * memoizados por request, então dividir em blocos não multiplica consulta.
+ */
+
+async function BlocoColeta() {
+  const { userId } = await requireTenant();
+  const faltando = await chavesEssenciaisFaltando(userId);
+
+  if (faltando.includes("google")) {
+    return (
+      <EmptyState
+        titulo="Configure a chave Google pra coletar Leads"
+        descricao="A busca usa a Places API da sua conta. Cole a chave em Configuração — há um tutorial curto se você ainda não criou."
+        acao={{ href: "/configuracao", label: "Ir para Configuração" }}
+        secundaria={{
+          href: "/configuracao/tutorial-google",
+          label: "Como criar a chave Google",
+        }}
+      />
+    );
+  }
+  // F035 — a cota do mês vem do servidor: o formulário precisa dela pra avisar
+  // ANTES de gastar a consulta ao Places.
+  const cota = await restanteDaOperacao(userId, "lead_novo");
+  return (
+    <ColetarForm
+      restante={cota.restante}
+      limite={cota.limite}
+      planoNome={definicao(cota.plano).nome}
+    />
+  );
+}
+
+// F031 — o painel "Follow-up pendente" saiu daqui em 2026-08-13. Era a mesma
+// regra da Tarefa `MANDAR_FOLLOWUP` (mesma janela de 3 dias), então o mesmo
+// Lead atrasado aparecia no painel, no badge da sidebar e em `/tarefas` — com
+// três contagens diferentes na tela, porque o painel cortava em 20 e mostrava
+// o número já cortado. A cobrança agora tem um lugar só: `/tarefas`.
+
+async function BlocoLista({
+  filtro,
+  pageRequested,
+}: {
+  filtro: FiltroLista;
+  pageRequested: number;
+}) {
+  const { userId, whereUser } = await requireTenant();
+  const whereLista = { ...whereUser, ...whereFiltroLista(filtro) };
+  // F035 — o botão de exportar aparece sempre; o plano decide se ele
+  // funciona ou leva pra /planos.
+  const podeExportar = await podeUsar(userId, "exportar_csv");
+
+  const buscarPagina = (p: number) =>
+    prisma.lead.findMany({
+      where: whereLista,
+      orderBy: [{ score: "desc" }, { created_at: "desc" }],
+      skip: (p - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: INCLUDE_CARD,
+    });
+
+  // Uma rodada só (F028): nada aqui depende do resultado do vizinho.
+  const [categoriasRows, total, leadsPagina, descartados] = await Promise.all([
+    prisma.lead.groupBy({
+      by: ["categoria"],
+      where: { ...whereUser, status: { not: STATUS_DESCARTADO } },
+      orderBy: { categoria: "asc" },
+    }),
+    prisma.lead.count({ where: whereLista }),
+    buscarPagina(pageRequested),
+    prisma.lead.count({ where: { ...whereUser, status: STATUS_DESCARTADO } }),
+  ]);
+
+  const categorias = categoriasRows
+    .map((r) => r.categoria)
+    .filter((c) => c.length > 0);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const page = Math.min(pageRequested, totalPages);
+  // Página pedida além do fim: rebusca só nesse caso raro.
+  const leads = page === pageRequested ? leadsPagina : await buscarPagina(page);
+
+  const filtroAtivo = temFiltro(filtro) || filtro.descartados;
+  const temAlgumLead =
+    total > 0
+      ? true
+      : filtroAtivo
+        ? (await prisma.lead.count({
+            where: { ...whereUser, status: { not: STATUS_DESCARTADO } },
+          })) > 0
+        : false;
+
+  const cards: LeadCardProps[] = leads.map((lead) =>
+    paraCardProps(lead, `/leads/${lead.id}?${queryDoFiltro(filtro, { page })}`),
+  );
+
+  return (
+    <>
+      {filtro.descartados && (
+        <div className="mt-8 rounded-xl border border-border bg-zinc-900/40 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-zinc-300">
+              Vendo <strong>{descartados}</strong> Lead(s) descartado(s).
+              Restaurar devolve o Lead à lista.
+            </p>
+            <Link href="/leads" className="btn-ghost">
+              ← Voltar aos ativos
+            </Link>
+          </div>
+          {descartados > 0 && (
+            <div className="mt-3 border-t border-border pt-3">
+              <ExcluirDescartadosForm quantidade={descartados} />
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="mt-8">
+        {temAlgumLead && (
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+            <ChipsFiltro filtro={filtro} descartados={descartados} />
+            <FiltrosLista categorias={categorias} filtro={filtro} />
+          </div>
+        )}
+
+        <p className="text-sm text-muted">
+          {total} Lead(s)
+          {total > 0 && (
+            <span className="text-muted">
+              {" "}
+              · ordenado por Score
+              <AjudaScore foco="score" colocacao="abaixo-esquerda" />
+            </span>
+          )}
+        </p>
+
+        {!temAlgumLead && (
+          <div className="mt-3">
+            {/* O texto antigo mandava "informe um termo e uma localização" —
+                instrução impossível de seguir desde a F033, que trocou o campo
+                livre por nicho em lista, estado e cidade. */}
+            <EmptyState
+              titulo="Nenhum Lead ainda"
+              descricao="Use a busca acima: escolha o nicho, o estado e a cidade. O Orion coleta, tria e diagnostica os melhores sozinho."
+            />
+          </div>
+        )}
+
+        {temAlgumLead && total === 0 && (
+          <div className="mt-3">
+            <EmptyState
+              titulo="Nenhum Lead com esses filtros"
+              descricao="Ajuste os filtros acima ou limpe para ver todos."
+              acao={{ href: "/leads", label: "Ver todos os Leads" }}
+            />
+          </div>
+        )}
+
+        {cards.length > 0 && (
+          <>
+            <div className="mt-3">
+              <LeadsGrid leads={cards} podeExportar={podeExportar} />
+            </div>
+            <PaginacaoLeads
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              query={queryDoFiltro(filtro)}
+            />
+          </>
+        )}
+      </div>
+    </>
+  );
+}
 
 export default async function LeadsPage({
   searchParams,
@@ -45,292 +226,43 @@ export default async function LeadsPage({
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
-  const categoriaRaw = params.categoria?.trim() ?? "";
-  const siteFiltro = parseFiltroSite(params.site);
-
-  const { whereUser, userId } = await requireTenant();
-
-  const [categoriasRows, totalTenant, faltandoChaves, leadsFollowUp] =
-    await Promise.all([
-      prisma.lead.findMany({
-        where: whereUser,
-        select: { categoria: true },
-        distinct: ["categoria"],
-        orderBy: { categoria: "asc" },
-      }),
-      prisma.lead.count({ where: whereUser }),
-      chavesEssenciaisFaltando(userId),
-      prisma.lead.findMany({
-        where: { ...whereUser, status: "contatado" },
-        include: {
-          outreaches: {
-            where: { enviado: true },
-            orderBy: { enviado_em: "desc" },
-            take: 1,
-          },
-        },
-      }),
-    ]);
-
-  const categorias = categoriasRows
-    .map((r) => r.categoria)
-    .filter((c) => c.length > 0);
-
-  const categoriaValida =
-    categoriaRaw.length > 0 && categorias.includes(categoriaRaw)
-      ? categoriaRaw
-      : null;
-
-  const whereLista = {
-    ...whereUser,
-    ...(categoriaValida ? { categoria: categoriaValida } : {}),
-    ...(siteFiltro ? whereFiltroSite(siteFiltro) : {}),
-  };
-
-  const total =
-    categoriaValida || siteFiltro
-      ? await prisma.lead.count({ where: whereLista })
-      : totalTenant;
-
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const filtro = parseFiltroLista(params);
   const pageRaw = Number.parseInt(params.page ?? "1", 10);
   const pageRequested =
     Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
-  const page = Math.min(pageRequested, totalPages);
-  const skip = (page - 1) * PAGE_SIZE;
-
-  const leads =
-    total === 0
-      ? []
-      : await prisma.lead.findMany({
-          where: whereLista,
-          orderBy: [{ score: "desc" }, { created_at: "desc" }],
-          skip,
-          take: PAGE_SIZE,
-          include: {
-            diagnosticos: { orderBy: { executado_em: "desc" }, take: 1 },
-            outreaches: { orderBy: { gerado_em: "desc" } },
-          },
-        });
-
-  const semGoogle = faltandoChaves.includes("google");
-  const followUp = filaDeFollowUp(leadsFollowUp);
-
-  const linhas = leads.map((lead) => {
-    const classif = lead.website ? classificarWebsite(lead.website) : null;
-    return {
-      lead,
-      classif,
-      valor: calcularValor({
-        categoria: lead.categoria,
-        num_avaliacoes: lead.num_avaliacoes,
-      }),
-    };
-  });
-
-  const temFiltroAtivo = categoriaValida !== null || siteFiltro !== null;
-  const semResultadosFiltro = totalTenant > 0 && total === 0 && temFiltroAtivo;
 
   return (
     <>
-      <BannerChaves />
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
-        <p className="mt-1 text-sm text-muted">
-          Coleta (F001), Diagnóstico (F002), priorização por score (F003),
-          Outreach de WhatsApp (F005) e follow-up (F006). Clique no nome para
-          ver detalhes, mensagem e ações.
-        </p>
+      <Suspense fallback={null}>
+        <BannerChaves />
+      </Suspense>
+      {/* F032 — sem `max-w`: a lista usa a tela. O texto é que ganha teto
+          próprio (`max-w-prose`), porque linha longa demais não se lê.
 
-        <div className="mt-4">
-          <UsoDiarioBanner
-            operacoes={["coleta", "proposta", "outreach"]}
-          />
+          O tema não mora mais aqui: quem veste a coluna de conteúdo inteira é
+          o `AppShell`, pra o `loading.tsx` das rotas nascer na mesma cor. */}
+      <main className="@container px-6 py-8 lg:px-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
+          {/* Sem `max-w-prose`: o teto de 65ch quebrava a frase em duas linhas.
+              Sem `nowrap` também — no mobile ela ainda precisa quebrar. */}
+          <p className="mt-1 text-sm text-muted">
+            Busque, diagnostique e aborde. Clique no Lead para ver o diagnóstico
+            completo, a abordagem e a proposta.
+          </p>
         </div>
 
         <div className="mt-6">
-          {semGoogle ? (
-            <EmptyState
-              titulo="Configure a chave Google pra coletar Leads"
-              descricao="A busca usa a Places API da sua conta. Cole a chave em Configuração — há um tutorial curto se você ainda não criou."
-              acao={{ href: "/configuracao", label: "Ir para Configuração" }}
-              secundaria={{
-                href: "/configuracao/tutorial-google",
-                label: "Como criar a chave Google",
-              }}
-            />
-          ) : (
-            <ColetarForm />
-          )}
+          {/* O esqueleto tem a altura real do formulário: reservar 24 pra um
+              bloco de ~248 empurrava a lista inteira quando ele chegava. */}
+          <Suspense fallback={<SkeletonPulse className="h-[15.5rem] w-full" />}>
+            <BlocoColeta />
+          </Suspense>
         </div>
 
-        {followUp.length > 0 && (
-          <div className="mt-8 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-            <p className="text-sm font-semibold text-amber-300">
-              Follow-up pendente ({followUp.length})
-            </p>
-            <ul className="mt-2 space-y-2">
-              {followUp.map(({ lead, dias }) => (
-                <li
-                  key={lead.id}
-                  className="flex flex-wrap items-center gap-2 text-sm"
-                >
-                  <span className="font-medium">{lead.nome}</span>
-                  <span className="text-amber-200/60">{dias}d sem resposta</span>
-                  <GerarOutreachButton leadId={lead.id} tipo="followup" />
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <div className="mt-8">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-sm text-muted">
-                {total} Lead(s)
-                {categoriaValida ? (
-                  <span className="text-zinc-500">
-                    {" "}
-                    · categoria “{categoriaValida}”
-                  </span>
-                ) : null}
-                {siteFiltro ? (
-                  <span className="text-zinc-500">
-                    {" "}
-                    · site “{ROTULO_FILTRO_SITE[siteFiltro]}”
-                  </span>
-                ) : null}
-              </p>
-              {total > 0 && (
-                <p className="mt-0.5 text-xs text-zinc-500">
-                  Ordenado por Score (depois data). Até {PAGE_SIZE} por página.
-                  Score 0 = ainda não priorizado — Diagnosticar → Priorizar.
-                </p>
-              )}
-            </div>
-            {totalTenant > 0 ? (
-              <FiltrosLista
-                categorias={categorias}
-                categoriaAtual={categoriaValida}
-                siteAtual={siteFiltro}
-              />
-            ) : null}
-          </div>
-
-          {totalTenant === 0 ? (
-            <div className="mt-3">
-              <EmptyState
-                titulo={
-                  semGoogle
-                    ? "Nenhum Lead ainda — faltam chaves"
-                    : "Nenhum Lead ainda"
-                }
-                descricao={
-                  semGoogle
-                    ? "Depois de configurar o Google, use o formulário de coleta acima pra buscar estabelecimentos."
-                    : "Use o formulário acima: informe um termo (ex.: barbearia) e uma localização (ex.: Curitiba PR)."
-                }
-                acao={
-                  semGoogle
-                    ? { href: "/configuracao", label: "Configurar chaves" }
-                    : undefined
-                }
-              />
-            </div>
-          ) : null}
-
-          {semResultadosFiltro ? (
-            <div className="mt-3">
-              <EmptyState
-                titulo="Nenhum Lead com esses filtros"
-                descricao="Ajuste categoria ou tipo de site, ou limpe os filtros para ver todos."
-                acao={{ href: "/leads", label: "Ver todos os Leads" }}
-              />
-            </div>
-          ) : null}
-
-          {linhas.length > 0 && (
-            <>
-              <div className="mt-3 overflow-x-auto rounded-xl border border-border bg-card">
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-left text-xs tracking-wide text-zinc-400 uppercase">
-                      <th className="px-3 py-3 font-medium">Nome</th>
-                      <th className="px-3 py-3 font-medium">Categoria</th>
-                      <th className="px-3 py-3 font-medium">Status</th>
-                      <th className="px-3 py-3 font-medium">
-                        <span className="inline-flex items-center gap-1.5">
-                          Score
-                          <AjudaScore foco="score" colocacao="abaixo-esquerda" />
-                        </span>
-                      </th>
-                      <th className="px-3 py-3 font-medium">Avaliações</th>
-                      <th className="px-3 py-3 font-medium">Site</th>
-                      <th className="px-3 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {linhas.map(({ lead, valor, classif }) => {
-                      const diag = lead.diagnosticos[0];
-                      const ultimoOutreach = lead.outreaches[0];
-                      const waLink = ultimoOutreach
-                        ? linkWhatsapp(lead.telefone, ultimoOutreach.conteudo)
-                        : null;
-                      return (
-                        <LeadRow
-                          key={lead.id}
-                          id={lead.id}
-                          nome={lead.nome}
-                          categoria={lead.categoria}
-                          endereco={lead.endereco}
-                          telefone={lead.telefone}
-                          website={lead.website}
-                          nota={lead.nota}
-                          numAvaliacoes={lead.num_avaliacoes}
-                          status={lead.status}
-                          score={lead.score}
-                          valor={valor.valor}
-                          tier={valor.tier}
-                          ehAgregador={classif?.ehAgregador ?? false}
-                          agregadorTipo={
-                            classif?.ehAgregador ? classif.tipo : null
-                          }
-                          diag={
-                            diag
-                              ? {
-                                  temSite: diag.tem_site,
-                                  siteEhAgregador: diag.site_e_agregador,
-                                  temHttps: diag.tem_https,
-                                  performanceMobile: diag.performance_mobile,
-                                }
-                              : null
-                          }
-                          diagnosticadoEm={
-                            diag ? fmtData.format(diag.executado_em) : null
-                          }
-                          outreachConteudo={ultimoOutreach?.conteudo ?? null}
-                          outreachEnviado={ultimoOutreach?.enviado ?? false}
-                          outreachCount={lead.outreaches.length}
-                          waLink={waLink}
-                          emAberto={ESTAGIOS_EM_ABERTO.includes(lead.status)}
-                          demoUrl={demoUrlFor(lead.place_id)}
-                        />
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <PaginacaoLeads
-                page={page}
-                totalPages={totalPages}
-                total={total}
-                categoria={categoriaValida}
-                site={siteFiltro}
-              />
-            </>
-          )}
-        </div>
+        <Suspense fallback={<GridLeadsSkeleton />}>
+          <BlocoLista filtro={filtro} pageRequested={pageRequested} />
+        </Suspense>
       </main>
     </>
   );

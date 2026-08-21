@@ -4,6 +4,12 @@
 Handoff — 2026-07-13. Documento de comunicação pro time; a fonte da verdade
 continua nas specs (00, 07, 08 e F014–F017). Atualizar quando o plano mudar.
 
+> **Atualização 2026-08-10 — Fase 3.** A Fase 2 (login, multi-tenant, BYOK) está
+> na `main`. O plano em vigor agora é o
+> **[revamp do fluxo](10-revamp-do-fluxo.md)** (F024–F031): priorização
+> automática, Fila do dia, canal e-mail, cobrança de tarefas, Skills e Agente.
+> As "próximas tarefas" listadas abaixo são da Fase 2 e ficam como histórico.
+
 ---
 
 ## O que é
@@ -17,7 +23,7 @@ precisam de um dev** e entrega o contato com a **Dor diagnosticada** e a
 2. **Diagnostica** a presença digital: tem site? HTTPS? é rápido no mobile? `[F002/F008]`
 3. **Detecta Dores** concretas: sem site, site lento, sem HTTPS… `[F002→F004]`
 4. **Prioriza** com um score de 0–100. `[F003]`
-5. **Gera o outreach** de WhatsApp pronto e personalizado, via Claude. `[F005]`
+5. **Gera a abordagem** de WhatsApp pronto e personalizado, via Claude. `[F005]`
 6. **Acompanha o funil** e ajuda a fechar: follow-up, objeções, proposta, roleplay
    de venda. `[F006/F010/F011/F012/F013]`
 
@@ -27,7 +33,7 @@ Resultado: **"Leads prontos"** — contato + Dor + abordagem, prontos pra enviar
 ## O diferencial
 Os concorrentes ou fazem **scraping cru + disparo em massa** (MapLeads) ou são
 **caros/enterprise** (Apollo, Leads Per Hour). Nenhum entrega *contato + Dor
-diagnosticada + outreach pronto*, por dado público (API oficial), dentro da LGPD,
+diagnosticada + abordagem pronta*, por dado público (API oficial), dentro da LGPD,
 a custo marginal. **O diagnóstico que qualifica é o núcleo.**
 Ver [concorrentes](06-referencias/concorrentes.md).
 
@@ -57,7 +63,7 @@ completo. Ver [roadmap](07-lancamento-para-alunos.md).
 - [x] Domínio: `orion-lead-hunter.devemdobro.com` (Cloudflare + Vercel).
 
 ### 1. F015 — Multi-tenant (fundação de dados) — *fazer primeiro*
-- [ ] `user_id` (FK) em Lead, Diagnóstico, Dor, Outreach + índices + migração com backfill.
+- [ ] `user_id` (FK) em Lead, Diagnóstico, Dor, Abordagem + índices + migração com backfill.
 - [ ] Toda query/Server Action filtra por `user_id` da sessão (helper único).
 - [ ] `place_id` passa a ser `unique(user_id, place_id)`.
 - [ ] **Teste de isolamento** (aluno A nunca vê dado de B).
@@ -73,7 +79,7 @@ completo. Ver [roadmap](07-lancamento-para-alunos.md).
 - [ ] Modelo `UserApiKeys` **cifrado** (AES-256-GCM).
 - [ ] Tela `/configuracao`: input por chave, "testar chave", máscara, status.
 - [ ] **Refactor central**: trocar `process.env.*` pela chave do aluno logado nas
-      libs (places, pagespeed, outreach, conteúdo, diagnóstico-ux, proposta,
+      libs (places, pagespeed, abordagem, conteúdo, diagnóstico-ux, proposta,
       objeções, simulador).
 - Spec: [F016](02-features/F016-configuracao-de-chaves.md) · [ADR-009](04-decisions/ADR-009-cifra-chaves-byok.md)
 

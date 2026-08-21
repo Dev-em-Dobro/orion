@@ -5,7 +5,7 @@ Implementada — 2026-07-14
 
 ## Objetivo
 Escopar **todos** os dados por aluno: cada `User` ([F014](F014-autenticacao.md))
-vê e manipula só os **seus** Leads, Diagnósticos, Dores e Outreaches. É a
+vê e manipula só os **seus** Leads, Diagnósticos, Dores e Abordagens. É a
 **fundação de dados** da Fase 2 — sem isso, um aluno veria os Leads de outro.
 
 Decisão de arquitetura em [ADR-008](../04-decisions/ADR-008-multi-tenant.md)
@@ -13,7 +13,7 @@ Decisão de arquitetura em [ADR-008](../04-decisions/ADR-008-multi-tenant.md)
 
 ## Mudança no schema
 Adicionar `user_id` (FK → `User`, **not null**) + índice por `user_id` em:
-**Lead, Diagnóstico, Dor, Outreach** e `UserApiKeys` ([F016](F016-configuracao-de-chaves.md)).
+**Lead, Diagnóstico, Dor, Abordagem** e `UserApiKeys` ([F016](F016-configuracao-de-chaves.md)).
 A [01-domain-model](../01-domain-model.md) passa a refletir `user_id` nessas
 entidades (atualizar junto desta migração).
 
@@ -23,7 +23,7 @@ conta do operador atual (backfill), depois a coluna vira not null.
 ## Regra de acesso
 Toda query e Server Action obtém `user_id` via `requireUser()`
 ([F014](F014-autenticacao.md)) e **filtra por ele** — em: coletar, diagnosticar,
-priorizar, listar, outreach, follow-up (F006), desfecho, proposta (F012),
+priorizar, listar, abordagem, follow-up (F006), desfecho, proposta (F012),
 objeções (F011), simulador (F013), dashboard (F010) e treino. Criações gravam o
 `user_id` da sessão.
 
@@ -35,9 +35,9 @@ Revisar `revalidatePath`/`revalidateTag` e qualquer memoização pra **não
 compartilhar** dados entre usuários (chavear cache por `user_id` quando houver).
 
 ## Critérios de aceitação
-- [x] **AC1** — `Lead`, `Diagnóstico`, `Dor`, `Outreach` e `UserApiKeys` têm
+- [x] **AC1** — `Lead`, `Diagnóstico`, `Dor`, `Abordagem` e `UserApiKeys` têm
       `user_id` not null com índice; a migração faz backfill sem perder dado.
-- [x] **AC2** — Coletar/diagnosticar/priorizar/outreach criam registros com o
+- [x] **AC2** — Coletar/diagnosticar/priorizar/abordagem criam registros com o
       `user_id` da sessão.
 - [x] **AC3** — **Teste de isolamento:** logado como aluno A, nenhuma rota,
       action ou dashboard retorna dado do aluno B (nem por id direto na URL).
@@ -55,7 +55,7 @@ compartilhar** dados entre usuários (chavear cache por `user_id` quando houver)
   (impacta a F001, "ignorados por já existir" passa a ser por aluno).
 - Helper único de escopo por tenant consumido por todas as actions
   (`src/lib/db/scoped.ts` — `requireTenant` / `requireLeadOwned` /
-  `requireOutreachOwned`).
+  `requireAbordagemOwned`).
 - Páginas de domínio com `dynamic = "force-dynamic"` + `where: { user_id }`;
   `revalidatePath` só invalida caminho — o render sempre filtra pela sessão
   (sem cache cross-tenant de payload).
@@ -70,6 +70,28 @@ Pré-requisitos (nessa ordem):
 3. Chromium do Playwright (uma vez): `npx playwright install chromium`
 4. **Parar** qualquer `npm run dev` na porta 3000 — o Playwright sobe o
    servidor sozinho com `E2E_SESSION_HELPER=1` (sem isso o login e2e dá 404)
+
+### O helper de sessão e o que o segura (F036 — 2026-08-13)
+
+`POST /api/e2e/session` emite cookie de sessão **sem login**, pra qualquer
+`userId`. Existe só pro Playwright deste teste. A única trava era a env
+`E2E_SESSION_HELPER=1` — uma env vazada num ambiente hospedado virava emissor de
+sessão pra qualquer conta.
+
+Passa a exigir, **em conjunto**:
+
+| Condição | Se falhar |
+|----------|-----------|
+| `E2E_SESSION_HELPER === "1"` | `404` |
+| `NODE_ENV !== "production"` | `404` |
+| `VERCEL_ENV` não é `production` nem `preview` | `404` |
+| `E2E_SESSION_SECRET` definida ⇒ header `x-e2e-secret` igual | `401` |
+
+`404` e não `403`: a resposta de rota inexistente não conta que o helper existe.
+
+O segredo é **opcional** de propósito — no local, sem a env, o teste roda como
+sempre; em qualquer ambiente compartilhado, defini-la fecha a porta mesmo que as
+travas de ambiente falhem.
 
 ```bash
 npm run test:e2e:isolamento

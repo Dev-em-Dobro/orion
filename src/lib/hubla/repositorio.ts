@@ -108,14 +108,20 @@ export async function processarWebhookHubla(
 /** Consulta entitlement ativo por e-mail (para F019.1). */
 export async function temEntitlementAtivo(
   email: string,
-  productId?: string | null,
+  productId?: string | null | readonly string[],
 ): Promise<boolean> {
   const normalizado = email.trim().toLowerCase();
+  const ids = Array.isArray(productId)
+    ? productId.map((id) => id.trim()).filter(Boolean)
+    : productId
+      ? [productId.trim()]
+      : null;
+
   const row = await prisma.hublaEntitlement.findFirst({
     where: {
       email: normalizado,
       status: "ativo",
-      ...(productId ? { product_id: productId } : {}),
+      ...(ids && ids.length > 0 ? { product_id: { in: ids } } : {}),
     },
   });
   return row !== null;

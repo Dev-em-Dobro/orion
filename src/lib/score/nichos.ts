@@ -1,45 +1,29 @@
 // F003 — Mapa nicho → Tier. Fonte única: /specs/05-playbook/nichos-alto-valor.md.
 // Mudar a classificação de um nicho é mudança de estratégia → editar o playbook antes.
+//
+// F033 — os tipos deixaram de ser duas listas soltas aqui: derivam do catálogo
+// de nichos, que também alimenta o dropdown da busca. Uma fonte só evita o
+// playbook, o dropdown e o Tier divergirem.
 
-export type Tier = "ALTO" | "MEDIO" | "BAIXO";
+import { NICHOS } from "@/lib/nichos/catalogo";
+import type { Tier } from "@/lib/nichos/tier";
 
-// `categoria` vem do Places (primaryType). Confirmar contra o que a API
-// devolve e ajustar o playbook quando aparecer tipo não previsto.
-const ALTO = new Set<string>([
-  "dentist",
-  "dental_clinic",
-  "skin_care_clinic",
-  "dermatologist",
-  "doctor",
-  "medical_clinic",
-  "physiotherapist",
-  "psychologist",
-  "nutritionist",
-  "veterinary_care",
-  "lawyer",
-  "accounting",
-  "architect",
-  "real_estate_agency",
-]);
+export type { Tier };
 
-const MEDIO = new Set<string>([
-  "restaurant",
-  "cafe",
-  "gym",
-  "fitness_center",
-  "hair_salon",
-  "barber_shop",
-  "spa",
-  "pet_store",
-  "optician",
-  "school",
-  "car_repair",
-]);
+/**
+ * `primaryType` → Tier. O primeiro nicho que reivindica um tipo vence, e o
+ * catálogo lista ALTO antes de MÉDIO — então "doctor", que aparece em vários
+ * nichos de saúde, fica ALTO.
+ */
+const POR_TIPO: Map<string, Tier> = new Map();
+for (const nicho of NICHOS) {
+  for (const tipo of nicho.primaryTypes) {
+    const chave = tipo.toLowerCase();
+    if (!POR_TIPO.has(chave)) POR_TIPO.set(chave, nicho.tier);
+  }
+}
 
 /** Classifica a categoria do Lead. Não mapeada → BAIXO (conservador). */
 export function tierDoNicho(categoria: string): Tier {
-  const c = categoria.toLowerCase();
-  if (ALTO.has(c)) return "ALTO";
-  if (MEDIO.has(c)) return "MEDIO";
-  return "BAIXO";
+  return POR_TIPO.get(categoria.toLowerCase()) ?? "BAIXO";
 }

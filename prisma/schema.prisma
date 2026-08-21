@@ -1,5 +1,5 @@
 // Espelha /specs/01-domain-model.md.
-// Linguagem ubíqua: Lead, Diagnostico, Dor, Outreach. Snake_case nos campos
+// Linguagem ubíqua: Lead, Diagnostico, Dor, Abordagem. Snake_case nos campos
 // para bater com a tabela do domain model (CLAUDE.md regra explícita).
 
 generator client {
@@ -21,6 +21,9 @@ enum LeadStatus {
   proposta
   ganho
   perdido
+  // F024 — nunca vale a pena abordar. Terminal lateral e reversível; não é
+  // resultado de venda (isso é `perdido`), é limpeza de base.
+  descartado
 }
 
 enum TipoDor {
@@ -29,6 +32,18 @@ enum TipoDor {
   SITE_LENTO
   SEM_HTTPS
   SEM_RESPOSTA_REVIEWS
+  // F026 — nenhum sinal de chatbot/atendente automatico no site publico.
+  SEM_ATENDIMENTO_AUTOMATIZADO
+}
+
+// F026 — sinal inferido do site publico. `nao_detectado` significa "nao
+// encontramos sinal", nunca "nao tem": um bot pode rodar so dentro do
+// WhatsApp, sem vestigio no site.
+enum AtendimentoAutomatizado {
+  detectado
+  indicios
+  nao_detectado
+  nao_avaliado
 }
 
 enum Severidade {
@@ -37,9 +52,22 @@ enum Severidade {
   ALTA
 }
 
+// F038 — `ligacao` e o roteiro falado: o aluno le na ligacao ou grava como
+// audio. O Orion nunca disca nem envia.
+// `email` saiu do enum em 2026-08-13, junto com o resto da F027. A migracao que
+// o removeu FALHA de proposito se existir Abordagem com esse canal: registro de
+// contato feito e historico, nao lixo.
 enum Canal {
   whatsapp
-  email
+  // F038 — roteiro falado: o aluno le na ligacao ou grava como audio.
+  ligacao
+}
+
+// F027 — de onde veio o e-mail do Lead. `site` = publicado pelo proprio
+// negocio (ADR-016); `manual` = o aluno digitou.
+enum EmailOrigem {
+  site
+  manual
 }
 
 model Lead {
@@ -49,22 +77,41 @@ model Lead {
   endereco       String
   telefone       String?
   website        String?
+  // F027 — e-mail comercial publicado no site do proprio Lead.
+  email          String?
+  email_origem   EmailOrigem?
   categoria      String
   nota           Float?
   num_avaliacoes Int?
   place_id       String
   status         LeadStatus @default(novo)
+  // F024 — quando o status atual foi assumido. Base das cobranças da F031;
+  // `updated_at` não serve, porque muda com qualquer escrita no Lead.
+  status_em      DateTime   @default(now())
+  // F024 — por que o aluno descartou (≤ 140 chars, validado no Zod).
+  motivo_descarte String?
   score          Int        @default(0)
+  // F025 — `true` enquanto o score vem da Triagem (sem Diagnóstico); `false`
+  // quando é confirmado por Diagnóstico real.
+  score_estimado Boolean    @default(true)
   created_at     DateTime   @default(now())
   updated_at     DateTime   @updatedAt
 
   user         User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
   diagnosticos Diagnostico[]
   dores        Dor[]
-  outreaches   Outreach[]
+  abordagens   Abordagem[]
+  adiamentos   TarefaAdiamento[]
 
   @@unique([user_id, place_id])
   @@index([user_id])
+  // F028 — ordenação da lista /leads (score desc, depois created_at desc).
+  @@index([user_id, score(sort: Desc), created_at(sort: Desc)])
+  // F028 — funil, fila do dia e Central de Tarefas filtram por status.
+  @@index([user_id, status])
+  /// F037 — o ranking agrupa por status+data SEM escopo de usuário; sem este
+  /// índice a consulta varre a tabela inteira de todos os alunos.
+  @@index([status, status_em])
 }
 
 model Diagnostico {
@@ -77,6 +124,9 @@ model Diagnostico {
   performance_mobile    Int?
   tem_https             Boolean?
   tempo_carregamento_ms Int?
+  // F026 — atendimento automatizado (chatbot) detectado no site.
+  atendimento_automatizado AtendimentoAutomatizado @default(nao_avaliado)
+  atendimento_evidencia    String?
   executado_em          DateTime @default(now())
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -84,6 +134,8 @@ model Diagnostico {
 
   @@index([lead_id])
   @@index([user_id])
+  // F028 — "último Diagnóstico do Lead" é a leitura mais frequente.
+  @@index([lead_id, executado_em(sort: Desc)])
 }
 
 model Dor {
@@ -101,11 +153,15 @@ model Dor {
   @@index([user_id])
 }
 
-model Outreach {
+model Abordagem {
   id         String    @id @default(cuid())
   user_id    String
   lead_id    String
   canal      Canal
+  /// Sobrevivente da F027 (canal e-mail, removido em 2026-08-13). Sempre
+  /// null desde entao; mantido porque apagar coluna e irreversivel e o dado
+  /// antigo nao incomoda ninguem.
+  assunto    String?
   conteudo   String
   gerado_em  DateTime  @default(now())
   enviado    Boolean   @default(false)
@@ -116,6 +172,46 @@ model Outreach {
 
   @@index([lead_id])
   @@index([user_id])
+  // F028 — fila de follow-up (F006): "última Abordagem enviada" por Lead.
+  @@index([lead_id, enviado, enviado_em(sort: Desc)])
+  /// O model virou `Abordagem` em 2026-08-13 (linguagem ubíqua — "outreach"
+  /// ninguém fala). A TABELA continua `Outreach`: renomear tabela é migração
+  /// destrutiva com janela de indisponibilidade, e o nome físico não é lido
+  /// por ninguém. Se um dia valer alinhar, é um `ALTER TABLE ... RENAME TO`
+  /// isolado — não precisa vir junto com o rename de código.
+  @@map("Outreach")
+}
+
+// F031 — cobrancas derivadas do estado. A Tarefa em si nao e persistida; so
+// o que o aluno adiou ou dispensou.
+enum TipoTarefa {
+  CONFIRMAR_RESPOSTA
+  MANDAR_FOLLOWUP
+  ENVIAR_ABORDAGEM
+  AVANCAR_RESPONDEU
+  COBRAR_PROPOSTA
+  APROFUNDAR_FILA
+}
+
+model TarefaAdiamento {
+  id            String     @id @default(cuid())
+  user_id       String
+  /// Null nas tarefas agregadas (APROFUNDAR_FILA).
+  lead_id       String?
+  tipo          TipoTarefa
+  /// Timestamp do fato que originou a Tarefa. Se o marco mudar, ela volta.
+  marco         DateTime
+  adiada_ate    DateTime?
+  dispensada_em DateTime?
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  user User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  lead Lead? @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, lead_id, tipo])
+  @@index([user_id])
+  @@map("tarefa_adiamento")
 }
 
 // F016 / ADR-009 — chaves BYOK cifradas (AES-256-GCM). Um registro por User.
@@ -138,9 +234,13 @@ enum KeyMode {
 
 enum QuotaOperacao {
   coleta
+  // F025 — aprofundamento consome PageSpeed da chave Orion.
+  diagnostico
   proposta
-  outreach
+  abordagem
   simulador_msg
+  // F029 — uma por pergunta ao Agente.
+  agente_msg
 }
 
 model UserApiKeys {
@@ -224,12 +324,69 @@ model User {
   leads          Lead[]
   diagnosticos   Diagnostico[]
   dores          Dor[]
-  outreaches     Outreach[]
+  abordagens     Abordagem[]
   apiKeys        UserApiKeys?
   dailyUsages    DailyUsage[]
+  adiamentos     TarefaAdiamento[]
+  usosMensais    UsoMensal[]
+  usosMensaisOp  UsoMensalOperacao[]
+  perfilPublico  PerfilPublico?
 
   @@unique([email])
   @@map("user")
+}
+
+// F035 — medidor mensal do plano. O plano em si **não** mora aqui: é derivado
+// dos HublaEntitlement ativos (spec F035, "Fonte do plano"). Uma coluna de
+// plano no User seria um segundo lugar pra verdade morar.
+model UsoMensal {
+  id                   String   @id @default(cuid())
+  user_id              String
+  /// Competência "AAAA-MM" no fuso America/Sao_Paulo. Derivada da data, nunca
+  /// virada por cron — a troca de mês é uma chave nova (F035 AC8).
+  competencia          String
+  /// Régua da v1 (Lead que recebeu o primeiro Diagnóstico). Congelada em
+  /// 2026-08-13, quando o medidor passou a contar Lead **novo** — mantida
+  /// porque o consumo já medido foi apurado com ela.
+  leads_diagnosticados Int      @default(0)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, competencia])
+  @@index([user_id])
+  @@map("uso_mensal")
+}
+
+/// F035 (2026-08-13) — teto **mensal** por operação, que é o que define o
+/// plano. Uma linha por (aluno, competência, operação), no mesmo formato do
+/// `DailyUsage`: operação nova não pede migração, só um valor no enum.
+enum OperacaoMensal {
+  /// Lead criado pela coleta. Duplicata ignorada pelo dedupe **não** conta.
+  lead_novo
+  abordagem
+  proposta
+  objecoes
+  agente_msg
+  simulador_msg
+}
+
+model UsoMensalOperacao {
+  id          String         @id @default(cuid())
+  user_id     String
+  /// "AAAA-MM" em America/Sao_Paulo, igual ao `UsoMensal`.
+  competencia String
+  operacao    OperacaoMensal
+  contador    Int            @default(0)
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, competencia, operacao])
+  @@index([user_id, competencia])
+  @@map("uso_mensal_operacao")
 }
 
 model DailyUsage {
@@ -326,4 +483,22 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+/// F037 — como o Aluno aparece publicamente (o "Builder"). Sem linha = fora do
+/// ranking: o consentimento é opt-in, nunca opt-out.
+/// Spec: /specs/02-features/F037-ranking-de-builders.md
+model PerfilPublico {
+  user_id       String    @id
+  /// Aceite explícito de aparecer no Ranking de Builders.
+  ranking_optin Boolean   @default(false)
+  /// Nome de exibição escolhido pelo aluno. Nunca derivado do e-mail.
+  nome_exibicao String
+  optin_em      DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("perfil_publico")
 }

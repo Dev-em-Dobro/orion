@@ -8,7 +8,7 @@ Gerar uma análise de UX/UI do site de um Lead a partir de **screenshots
 reais** (desktop e mobile) avaliados pela Claude API com visão. O
 resultado é o artefato do "diagnóstico gratuito" da oferta: uma lista de
 problemas concretos, em linguagem de dono de negócio, pronta pra ser
-enviada ao Lead e alimentar a conversa de Outreach.
+enviada ao Lead e alimentar a conversa de Abordagem.
 
 Complementa a F002: o Diagnóstico de presença digital mede o site por
 fora (existe? HTTPS? performance); a F008 olha o site como um usuário —

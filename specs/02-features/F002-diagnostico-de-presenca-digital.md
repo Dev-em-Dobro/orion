@@ -22,6 +22,11 @@ score (F003). É o segundo passo do funil.
 > (não é site próprio), grava `site_e_agregador = true` e **não** chama
 > `verificarSite` nem o PSI. Ver Fluxo passo 2.3, Regras de medição e AC10.
 
+> **Delta F036 (2026-08-13)** — o GET do `verificarSite` passou a recusar
+> destinos que não sejam **host público**: o Diagnóstico não pode virar o meio
+> de o servidor buscar rede interna. Ver "Hosts permitidos" abaixo, AC11 e a
+> [F036](F036-endurecimento-de-seguranca.md).
+
 ## Input (UI)
 Botão **Diagnosticar** em cada linha da lista em `/leads`. Sem form.
 
@@ -83,6 +88,34 @@ Diagnóstico (quando houver): site (✓/✗), HTTPS (✓/✗/—),
 | `tempo_carregamento_ms` | Duração total do GET (request → corpo recebido) da URL original até a final; `null` se `tem_site = false` |
 | `performance_mobile`    | `lighthouseResult.categories.performance.score × 100`, arredondado; `null` se sem site ou PSI falhar |
 
+## Hosts permitidos (F036 — anti-SSRF)
+
+O `website` vem do Google Places, mas **quem escolhe a URL final é o redirect**:
+o `verificarSite` segue até 5 saltos. Um site que responde
+`302 → http://169.254.169.254/` faz o servidor buscar o endpoint de metadata da
+nuvem. Por isso a validação roda **antes de cada `fetch` do laço**, não só na
+URL de entrada.
+
+`urlPermitidaParaFetch(url)` recusa:
+
+| Recusa | Exemplo |
+|--------|---------|
+| Protocolo fora de `http:`/`https:` | `file:///etc/passwd` |
+| Usuário/senha embutidos | `http://a:b@host` |
+| Porta diferente de 80/443 | `http://host:6379` |
+| Host de loopback/descoberta | `localhost`, `*.localhost`, `*.local`, `*.internal`, `metadata.google.internal` |
+| IP literal privado | `127.*`, `10.*`, `172.16–31.*`, `192.168.*`, `169.254.*`, `0.0.0.0`, `::1`, `fc*`, `fd*`, `fe80*` |
+| Hostname cujo DNS resolve pra IP privado | `interno.exemplo.com → 10.0.0.5` |
+| DNS que falha ou devolve lista vazia | domínio morto |
+
+A resolução usa `all: true` e exige que **todos** os registros sejam públicos —
+um único A privado reprova o host.
+
+**Efeito no Diagnóstico:** URL recusada é tratada como site que não resolve —
+`tem_site = false`, demais campos `null`, PSI não é chamado. Sem mensagem
+específica na UI, de propósito: não há ação do aluno pra "o site do Lead aponta
+pra rede interna".
+
 ## Duração da operação
 Pior caso: ~10s (site) + ~30s (PSI) ≈ **40s**, levemente acima da
 guideline de 30s da visão de produto. Aceito porque: é raro (mediana do
@@ -115,6 +148,10 @@ Se incomodar na prática, reduzir o timeout do PSI via spec.
       `Diagnostico` com `site_e_agregador = true`, `tem_site = true`,
       `performance_mobile = null`; **PSI e `verificarSite` não são chamados**.
       Ver [F009](F009-sinal-site-agregador.md).
+- [x] **AC11** (F036) — URL que aponta pra `localhost`, IP privado, link-local,
+      porta fora de 80/443 ou host cujo DNS resolva pra IP privado **não é
+      buscada**, em nenhum salto da cadeia de redirects. Resultado:
+      `tem_site = false`, sem chamada ao PSI e sem erro na tela.
 
 ## Decisões de implementação
 - `src/lib/pagespeed/performanceMobile.ts` — cliente PSI, sem dep de Next
@@ -122,7 +159,9 @@ Se incomodar na prática, reduzir o timeout do PSI via spec.
   [`/specs/03-contracts/pagespeed-insights.md`](../03-contracts/pagespeed-insights.md)).
 - `src/lib/diagnostico/verificarSite.ts` — `fetch` nativo +
   `AbortController`; mede tempo e resolve URL final. Sem lib nova
-  (sem ADR necessário).
+  (sem ADR necessário). Exporta também `urlPermitidaParaFetch` (F036), a guarda
+  de host chamada dentro do laço de redirects — `node:dns/promises` e
+  `node:net`, ambos nativos.
 - Server Action em `src/actions/leads/diagnosticar.ts`, fina — orquestra
   `lib/` + Prisma.
 - Variável de ambiente: `PAGESPEED_API_KEY` (pode ser a mesma chave

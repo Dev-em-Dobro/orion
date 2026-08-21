@@ -36,7 +36,7 @@ export function OnboardingChaves({ chaves, faltando, provider }: Props) {
     {
       tipo: provider,
       dica: (
-        <span className="text-zinc-500">
+        <span className="text-muted">
           Provedor ativo: {LABEL_LLM_PROVIDER[provider]}
         </span>
       ),
@@ -48,7 +48,7 @@ export function OnboardingChaves({ chaves, faltando, provider }: Props) {
       <h2 className="text-sm font-semibold text-amber-100">
         Primeiros passos — configure as chaves
       </h2>
-      <p className="mt-1 text-sm text-amber-100/80">
+      <p className="mt-1 text-sm text-amber-100">
         Sem elas o app não chama Places nem IA. O custo fica na{" "}
         <strong className="font-medium text-amber-50">sua</strong> conta dos
         provedores.
@@ -67,7 +67,7 @@ export function OnboardingChaves({ chaves, faltando, provider }: Props) {
                 {LABEL_CHAVE[item.tipo]}
               </span>
               {!ok && item.dica ? (
-                <span className="text-amber-100/70">— {item.dica}</span>
+                <span className="text-amber-100">— {item.dica}</span>
               ) : null}
             </li>
           );

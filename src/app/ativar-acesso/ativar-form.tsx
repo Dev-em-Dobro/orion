@@ -52,7 +52,7 @@ export function AtivarAcessoForm({
           defaultValue={emailCompra ?? ""}
           className="input"
         />
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
           Use o e-mail cadastrado na Hubla ao comprar o Builders Club. Pode ser
           diferente do e-mail de login.
         </p>

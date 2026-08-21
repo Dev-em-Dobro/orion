@@ -2,16 +2,21 @@
 
 // F002 — Diagnóstico de presença digital.
 // Spec: /specs/02-features/F002-diagnostico-de-presenca-digital.md
+//
+// Casca: valida, resolve chave e delega. A execução vive em
+// `src/lib/diagnostico/executar.ts` (compartilhada com o lote da F025) e a
+// persistência em `src/lib/diagnostico/persistir.ts`.
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
 import { exigirChave } from "@/lib/chaves";
+import { estornarCota, reservarCota } from "@/lib/limites";
 import { mensagemEscopo, requireLeadOwned } from "@/lib/db/scoped";
-import { classificarWebsite } from "@/lib/diagnostico/agregador";
-import { verificarSite } from "@/lib/diagnostico/verificarSite";
-import { performanceMobile } from "@/lib/pagespeed/performanceMobile";
-import { detectarDores, substituirDoresDoLead } from "@/lib/dores";
+import {
+  executarDiagnostico,
+  resumoDiagnostico,
+} from "@/lib/diagnostico/executar";
+import { persistirDiagnostico } from "@/lib/diagnostico/persistir";
 
 const schema = z.object({
   lead_id: z.string().cuid("lead_id inválido"),
@@ -31,95 +36,47 @@ export async function diagnosticarLead(
     return { kind: "erro", mensagem: "lead_id inválido" };
   }
 
+  let reservou = false;
+  let userId: string | null = null;
+
   try {
-    const { lead, userId } = await requireLeadOwned(parsed.data.lead_id);
-    const googleKey = await exigirChave(userId, "google");
+    const { lead, userId: uid } = await requireLeadOwned(parsed.data.lead_id);
+    userId = uid;
 
-    let tem_site = false;
-    let site_e_agregador = false;
-    let tem_https: boolean | null = null;
-    let tempo_carregamento_ms: number | null = null;
-    let performance_mobile: number | null = null;
+    // F035 (2026-08-13) — o teto **mensal** saiu daqui: passou a ser cobrado na
+    // coleta, que é onde está o custo (Places). Diagnosticar usa PageSpeed, que
+    // é grátis.
+    //
+    // A cota **diária** (F018), essa fica — e passou a ser reservada aqui
+    // também. Até 2026-08-13 só o lote reservava, e o botão individual só
+    // aparecia pra Lead sem Diagnóstico, então o conjunto era finito. Com o
+    // "Rediagnosticar" sempre disponível, sem isto viraria um loop de chamadas
+    // externas sem teto nenhum.
+    await reservarCota(uid, "diagnostico");
+    reservou = true;
 
-    if (lead.website) {
-      const classif = classificarWebsite(lead.website);
-      if (classif.ehAgregador) {
-        tem_site = true;
-        site_e_agregador = true;
-        tem_https = classif.temHttps;
-      } else {
-        const site = await verificarSite(lead.website);
-        if (site.temSite) {
-          tem_site = true;
-          tem_https = site.temHttps;
-          tempo_carregamento_ms = site.tempoMs;
-          try {
-            performance_mobile = await performanceMobile(
-              site.urlFinal,
-              googleKey,
-            );
-          } catch {
-            performance_mobile = null;
-          }
-        }
-      }
-    }
+    const googleKey = await exigirChave(uid, "google");
 
-    await prisma.$transaction([
-      prisma.diagnostico.create({
-        data: {
-          user_id: userId,
-          lead_id: lead.id,
-          tem_site,
-          site_e_agregador,
-          tem_https,
-          tempo_carregamento_ms,
-          performance_mobile,
-        },
-      }),
-      ...(lead.status === "novo"
-        ? [
-            prisma.lead.update({
-              where: { id: lead.id },
-              data: { status: "enriquecido" },
-            }),
-          ]
-        : []),
-    ]);
-
-    // F004 — Dores do último Diagnóstico (substitui conjunto anterior).
-    await substituirDoresDoLead(
-      userId,
-      lead.id,
-      detectarDores(
-        {
-          tem_site,
-          site_e_agregador,
-          tem_https,
-          performance_mobile,
-        },
-        lead.website,
-      ),
+    const { dados, email } = await executarDiagnostico(
+      lead.website,
+      googleKey,
     );
+    await persistirDiagnostico({ userId: uid, lead, dados, email });
 
     revalidatePath("/leads");
+    revalidatePath(`/leads/${lead.id}`);
+    revalidatePath("/");
 
-    const resumo = !lead.website
-      ? "sem site"
-      : site_e_agregador
-        ? "presença só em agregador/rede social — sem site próprio"
-        : !tem_site
-          ? "site fora do ar"
-          : [
-              "site ok",
-              tem_https ? "HTTPS ok" : "sem HTTPS",
-              performance_mobile === null
-                ? "performance indisponível"
-                : `performance mobile ${performance_mobile}`,
-            ].join(" · ");
-
-    return { kind: "ok", resumo: `Diagnóstico concluído: ${resumo}.` };
+    return {
+      kind: "ok",
+      resumo: `Diagnóstico concluído: ${resumoDiagnostico(dados, lead.website)}.`,
+    };
   } catch (e) {
+    // Diagnóstico que falhou não gastou PageSpeed: devolve a cota, senão a
+    // tentativa frustrada custa o mesmo que a bem-sucedida.
+    if (reservou && userId) {
+      await estornarCota(userId, "diagnostico").catch(() => undefined);
+    }
     const escopo = mensagemEscopo(e);
     if (escopo) return { kind: "erro", mensagem: escopo };
     throw e;

@@ -1,28 +1,45 @@
 import { describe, expect, it } from "vitest";
 import {
-  faixaBRL,
   formatarPropostaTexto,
   milhar,
+  precoFechado,
 } from "@/lib/proposta/formatar";
-import type { Precificacao } from "@/lib/proposta/precos";
+import { selecaoVazia, type Selecao } from "@/lib/proposta/selecao";
 import type { PropostaTexto } from "@/lib/proposta/gerarProposta";
-import { cenarioSchema, entradaSchema } from "@/lib/simulador/validacao";
+import { pedidoCenarioSchema, entradaSchema } from "@/lib/simulador/validacao";
 import { colunasDe, lerEnvelope, lerLast4, lerStatus } from "@/lib/chaves/campos";
 import { mensagemChaveAusente } from "@/lib/chaves/tipos";
 import type { UserApiKeys } from "@prisma/client";
 
 describe("formatar proposta", () => {
-  const prec: Precificacao = {
-    servicos: ["CRIACAO_SITE"],
-    tier: "MEDIO",
-    faixa_min: 1500,
-    faixa_max: 3000,
-    moeda: "BRL",
+  // F012 (emenda 2026-08-16): o cliente vê preço FECHADO. `faixaBRL` saiu
+  // junto com `precos.ts` — faixa é ferramenta de quem vende (AC23).
+  const prec: Selecao = {
+    ...selecaoVazia(),
+    itens: ["site_institucional", "manutencao_site"],
+    valor: 2400,
+    mensal: 150,
+    prazo: "3 a 4 semanas",
   };
 
-  it("milhar e faixaBRL", () => {
+  it("milhar e preço fechado", () => {
     expect(milhar(2400)).toBe("2.400");
-    expect(faixaBRL(prec)).toBe("R$ 1.500 – R$ 3.000");
+    expect(precoFechado(2400, 150)).toBe("R$ 2.400 + R$ 150/mês");
+    expect(precoFechado(2400, 0)).toBe("R$ 2.400");
+    expect(precoFechado(0, 150)).toBe("R$ 150/mês");
+  });
+
+  it("nunca escreve faixa pro cliente (AC23)", () => {
+    const proposta: PropostaTexto = {
+      resumo: "X",
+      escopo: [],
+      entregaveis: [],
+      observacoes: "",
+    };
+    // "R$ 1.500 – R$ 3.000" na mesma linha é o padrão de faixa que não pode
+    // mais existir em nada que chegue ao cliente.
+    const texto = formatarPropostaTexto(proposta, prec);
+    expect(texto).not.toMatch(/R\$[^\n]*[–-]\s*R\$/);
   });
 
   it("monta texto colável com observações", () => {
@@ -30,13 +47,13 @@ describe("formatar proposta", () => {
       resumo: "Site institucional",
       escopo: [{ item: "Home", descricao: "Página inicial" }],
       entregaveis: ["Deploy"],
-      prazo_estimado: "2 semanas",
       observacoes: "  sem entrada  ",
     };
     const t = formatarPropostaTexto(proposta, prec);
     expect(t).toContain("Proposta — Site institucional");
     expect(t).toContain("- Home: Página inicial");
-    expect(t).toContain("Investimento sugerido: R$ 1.500 – R$ 3.000");
+    expect(t).toContain("Prazo estimado: 3 a 4 semanas");
+    expect(t).toContain("Investimento: R$ 2.400 + R$ 150/mês");
     expect(t).toContain("sem entrada");
   });
 
@@ -45,7 +62,6 @@ describe("formatar proposta", () => {
       resumo: "X",
       escopo: [],
       entregaveis: [],
-      prazo_estimado: "1 semana",
       observacoes: "   ",
     };
     expect(formatarPropostaTexto(proposta, prec)).not.toMatch(/\n\n\s*$/);
@@ -53,10 +69,21 @@ describe("formatar proposta", () => {
 });
 
 describe("simulador validacao", () => {
-  it("aceita cenário válido", () => {
-    const r = cenarioSchema.safeParse({
-      categoria: "dentist",
-      dores: ["sem site"],
+  // Desde a emenda de 2026-08-14 o pedido diz **qual** cenário, não qual
+  // conteúdo — quem monta o system prompt é o servidor.
+  it("aceita pedido válido por Lead", () => {
+    const r = pedidoCenarioSchema.safeParse({
+      origem: "lead",
+      lead_id: "clx123",
+      dificuldade: "medio",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("aceita pedido válido manual", () => {
+    const r = pedidoCenarioSchema.safeParse({
+      origem: "manual",
+      categoria: "dentista",
       dificuldade: "medio",
     });
     expect(r.success).toBe(true);
@@ -64,11 +91,7 @@ describe("simulador validacao", () => {
 
   it("rejeita histórico vazio", () => {
     const r = entradaSchema.safeParse({
-      cenario: {
-        categoria: "cafe",
-        dores: [],
-        dificuldade: "facil",
-      },
+      cenario: { origem: "manual", categoria: "cafe", dificuldade: "facil" },
       historico: [],
     });
     expect(r.success).toBe(false);

@@ -8,7 +8,9 @@ export {
 export { QuotaExcedidaError } from "./erros";
 export {
   consumirCota,
+  estornarCota,
   listarUsoDiario,
   obterUsoDiario,
+  reservarCota,
   verificarCota,
 } from "./servico";

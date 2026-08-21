@@ -4,18 +4,28 @@
 Proposta — 2026-06-12
 
 ## Objetivo
-Fazer o funil **avançar e ser medido** depois da Outreach gerada (F005). Três
+Fazer o funil **avançar e ser medido** depois da Abordagem gerada (F005). Três
 capacidades:
-1. **Marcar Outreach como enviada** → `Outreach.enviado = true` + `enviado_em`,
+1. **Marcar Abordagem como enviada** → `Abordagem.enviado = true` + `enviado_em`,
    e promove o Lead `priorizado/enriquecido → contatado`.
 2. **Registrar o desfecho** → Lead `respondeu` / `ganho` / `perdido`.
 3. **Fila de follow-up** → Leads `contatado` há **+3 dias** sem desfecho, com
    geração de uma mensagem de **follow-up** (2º toque).
 
-Sem a F006 o funil para em "Outreach gerada": não se sabe o que foi enviado,
+Sem a F006 o funil para em "Abordagem gerada": não se sabe o que foi enviado,
 não há follow-up (onde mora a maior parte das respostas) e não se aprende o que
 converte. É a feature que transforma a ferramenta de "gerador de mensagem" em
 "motor de prospecção mensurável".
+
+> **Emenda 2026-08-16 — o follow-up sai da IA.** A geração do 2º toque passa a
+> ser montada em código, com pool de variantes próprio — ver a emenda da
+> [F005](F005-abordagem-whatsapp.md#emenda-2026-08-16--a-abordagem-sai-da-ia).
+>
+> A regra "não repita a primeira mensagem palavra por palavra" era instrução de
+> prompt, e portanto um pedido: o modelo não via a primeira mensagem, então
+> cumprir dependia de sorte. No montador o follow-up é **semeado com
+> deslocamento** em relação à primeira do mesmo Lead, o que torna a não-repetição
+> uma garantia estrutural e testável (AC12 da F005) em vez de uma esperança.
 
 ## Por que follow-up
 Na prospecção fria, **a maioria das respostas vem do 2º–4º toque**, não do 1º.
@@ -24,19 +34,19 @@ fechamento que existe nesta fase — e exige zero infra nova (é lista filtrada 
 geração síncrona, dentro do ADR-002).
 
 ## Conceitos
-- **`Outreach.enviado_em`** (novo campo — ver [domain model](../01-domain-model.md)):
-  timestamp de quando a Outreach foi marcada como enviada. Base da janela.
+- **`Abordagem.enviado_em`** (novo campo — ver [domain model](../01-domain-model.md)):
+  timestamp de quando a Abordagem foi marcada como enviada. Base da janela.
 - **Aguardando resposta**: Lead com `status = contatado` (ainda não
   `respondeu/ganho/perdido`).
 - **Janela de follow-up**: `FOLLOWUP_DIAS = 3` (constante). Um Lead entra na fila
-  quando está `contatado` **e** a **última Outreach enviada** tem `enviado_em`
+  quando está `contatado` **e** a **última Abordagem enviada** tem `enviado_em`
   há **≥ 3 dias**. Marcar um follow-up como enviado reinicia a janela.
 
 ## Transições de status (resumo)
 | Ação                      | De                         | Para        |
 |---------------------------|----------------------------|-------------|
-| Marcar Outreach enviada   | `priorizado`/`enriquecido` | `contatado` |
-| Marcar Outreach enviada   | qualquer outro             | (inalterado)|
+| Marcar Abordagem enviada   | `priorizado`/`enriquecido` | `contatado` |
+| Marcar Abordagem enviada   | qualquer outro             | (inalterado)|
 | Registrar desfecho        | `contatado`/`respondeu`    | `respondeu`/`ganho`/`perdido` |
 
 Marcar enviada **nunca regride** o funil (ex.: um follow-up enviado num Lead já
@@ -47,7 +57,7 @@ Na página `/leads`:
 - **Painel "Follow-up pendente (N)"** acima da tabela: lista os Leads na janela,
   com "N dias sem resposta" e um botão **Gerar follow-up**.
 - Na área de ações de cada linha:
-  - Resultado da Outreach (F005) ganha um botão **Marcar como enviada**.
+  - Resultado da Abordagem (F005) ganha um botão **Marcar como enviada**.
   - Botões de desfecho **Respondeu / Ganho / Perdido** quando o Lead está
     `contatado` ou `respondeu`.
 
@@ -56,9 +66,9 @@ A mensagem de follow-up usa o mesmo fluxo da F005 (texto + link
 (2º toque). Mesmas regras de tom da F005: **sem emojis**.
 
 ## Fluxo
-### Marcar enviada — `marcarEnviado({ outreach_id })`
-1. Valida (Zod). Outreach inexistente → `{ erro }`.
-2. `update Outreach`: `enviado = true`, `enviado_em = now`.
+### Marcar enviada — `marcarEnviado({ abordagem_id })`
+1. Valida (Zod). Abordagem inexistente → `{ erro }`.
+2. `update Abordagem`: `enviado = true`, `enviado_em = now`.
 3. Se o Lead está `priorizado` ou `enriquecido` → `contatado` (senão inalterado).
 4. `revalidatePath('/leads')`.
 
@@ -68,24 +78,24 @@ A mensagem de follow-up usa o mesmo fluxo da F005 (texto + link
 3. `revalidatePath('/leads')`.
 
 ### Gerar follow-up
-Reusa a Server Action da F005 com `tipo = "followup"` — gera novo `Outreach`
+Reusa a Server Action da F005 com `tipo = "followup"` — gera novo `Abordagem`
 (`canal = whatsapp`, `enviado = false`) com o **prompt de follow-up** (mais
 curto, leve, sem cobrança, **sem emoji**, retoma o gancho e re-oferece o
 diagnóstico gratuito).
 Não muda status; o avanço ocorre ao marcar enviada.
 
 ## Critérios de aceitação
-- [ ] **AC1** — Marcar uma Outreach como enviada seta `enviado = true` e
+- [ ] **AC1** — Marcar uma Abordagem como enviada seta `enviado = true` e
       `enviado_em`; Lead `priorizado` vira `contatado`.
 - [ ] **AC2** — Marcar enviada num Lead já `contatado`/`respondeu`/`ganho` **não**
       altera o status (só atualiza `enviado_em`).
 - [ ] **AC3** — Registrar `ganho`/`perdido`/`respondeu` muda o `status` do Lead
       conforme o botão.
-- [ ] **AC4** — Um Lead `contatado` cuja última Outreach enviada tem `enviado_em`
+- [ ] **AC4** — Um Lead `contatado` cuja última Abordagem enviada tem `enviado_em`
       há ≥ 3 dias aparece no painel "Follow-up pendente"; com < 3 dias, não.
 - [ ] **AC5** — Lead `respondeu`/`ganho`/`perdido` **não** aparece no painel de
       follow-up (saiu da janela).
-- [ ] **AC6** — Gerar follow-up cria um novo `Outreach` com texto distinto do 1º
+- [ ] **AC6** — Gerar follow-up cria um novo `Abordagem` com texto distinto do 1º
       toque (prompt de follow-up), sem mudar o status do Lead.
 - [ ] **AC7** — Marcar o follow-up como enviado atualiza `enviado_em` e tira o
       Lead da fila (reinicia a janela).
@@ -93,12 +103,12 @@ Não muda status; o avanço ocorre ao marcar enviada.
       sem efeitos colaterais.
 
 ## Decisões de implementação
-- `Outreach.enviado_em DateTime?` no schema (migração própria).
+- `Abordagem.enviado_em DateTime?` no schema (migração própria).
 - `src/actions/leads/marcarEnviado.ts` e `registrarDesfecho.ts` — finas.
-- F005 (`gerarOutreachAction`) ganha um parâmetro `tipo` (`primeira | followup`);
-  `src/lib/outreach/prompt.ts` ganha o `SYSTEM_PROMPT_FOLLOWUP`.
+- F005 (`gerarAbordagemAction`) ganha um parâmetro `tipo` (`primeira | followup`);
+  `src/lib/abordagem/prompt.ts` ganha o `SYSTEM_PROMPT_FOLLOWUP`.
 - Painel e botões em `src/app/leads/` no padrão dos botões existentes.
-- Janela de follow-up calculada no server component a partir da última Outreach
+- Janela de follow-up calculada no server component a partir da última Abordagem
   enviada (`enviado_em desc, take: 1`). `FOLLOWUP_DIAS = 3`.
 
 ## Fora do escopo (F006)
@@ -107,7 +117,7 @@ Não muda status; o avanço ocorre ao marcar enviada.
 - Limite de nº de follow-ups por Lead / cadência multi-toque elaborada — v1 é
   "está na janela → pode cobrar".
 - Métricas históricas de conversão (taxa por nicho/Dor) — F-analytics futura.
-- Outreach por e-mail.
+- Abordagem por e-mail.
 
 ## Custo estimado
 Marcar enviada e desfecho: $0 (só banco). Follow-up: ~R$0,05 (uma geração

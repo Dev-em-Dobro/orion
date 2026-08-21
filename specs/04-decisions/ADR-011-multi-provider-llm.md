@@ -4,7 +4,7 @@
 Aceito — 2026-07-15 (implementação na [F017](../02-features/F017-multi-provider-llm.md))
 
 ## Contexto
-Hoje **tudo** usa o `@anthropic-ai/sdk` ([ADR-005](ADR-005-anthropic-sdk-outreach.md))
+Hoje **tudo** usa o `@anthropic-ai/sdk` ([ADR-005](ADR-005-anthropic-sdk-abordagem.md))
 com **structured output** (Zod/JSON Schema) e **visão** (F008). A Fase 2 quer que
 o aluno escolha entre **Anthropic, OpenAI e Gemini** ([F017](../02-features/F017-multi-provider-llm.md)),
 usando a **própria chave** (BYOK). Suportar 3 provedores exige uma **camada de

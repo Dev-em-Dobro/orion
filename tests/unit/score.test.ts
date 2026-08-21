@@ -104,6 +104,41 @@ describe("necessidade", () => {
       }),
     ).toBe(45);
   });
+
+  // F003 (emenda 2026-08-14) — o `null` do PSI achatava em +25 tanto o site que
+  // não deu pra medir quanto o que levava 6s pra abrir.
+  describe("perf null desempatado pelo tempo medido", () => {
+    const base = {
+      tem_site: true,
+      site_e_agregador: false,
+      tem_https: true,
+      performance_mobile: null,
+    };
+
+    it("carregamento >= 5s pesa como perf < 50 (+50)", () => {
+      expect(necessidade({ ...base, tempo_carregamento_ms: 6079 })).toBe(70);
+    });
+
+    it("carregamento entre 3s e 5s pesa +35", () => {
+      expect(necessidade({ ...base, tempo_carregamento_ms: 3849 })).toBe(55);
+    });
+
+    it("abaixo de 3s ou sem medição continua +25", () => {
+      expect(necessidade({ ...base, tempo_carregamento_ms: 800 })).toBe(45);
+      expect(necessidade({ ...base, tempo_carregamento_ms: null })).toBe(45);
+      expect(necessidade(base)).toBe(45);
+    });
+
+    it("soma com a falta de HTTPS, e o teto continua 100", () => {
+      expect(
+        necessidade({
+          ...base,
+          tem_https: false,
+          tempo_carregamento_ms: 6079,
+        }),
+      ).toBe(90);
+    });
+  });
 });
 
 describe("calcularScore", () => {

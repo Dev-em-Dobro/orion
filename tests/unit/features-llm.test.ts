@@ -7,12 +7,11 @@ import {
 } from "@/lib/simulador/prompt";
 import { avaliarSimulacao } from "@/lib/simulador/avaliar";
 import { simularTurno, SimuladorError } from "@/lib/simulador/simular";
-import { systemPrompt, montarContexto } from "@/lib/outreach/prompt";
-import { gerarOutreach, OutreachError } from "@/lib/outreach/gerarOutreach";
+// Abordagem e Proposta saíram deste arquivo em 2026-08-16: as duas deixaram de
+// usar LLM. A cobertura delas vive em `abordagem-montagem.test.ts`,
+// `abordagem-ligacao.test.ts` e `proposta-montagem.test.ts`.
 import { montarContextoObjecao } from "@/lib/objecoes/prompt";
 import { responderObjecao, ObjecaoError } from "@/lib/objecoes/responderObjecao";
-import { montarContextoProposta } from "@/lib/proposta/prompt";
-import { gerarProposta, PropostaError } from "@/lib/proposta/gerarProposta";
 import { montarTema } from "@/lib/conteudo/prompt";
 import { sugerirVideos, ConteudoError } from "@/lib/conteudo/sugerirVideos";
 import { analisarUx, AnaliseUxError } from "@/lib/diagnostico-ux/analisarUx";
@@ -28,28 +27,7 @@ function fakeLlm(partial: Partial<LlmClient> = {}): LlmClient {
 }
 
 describe("prompts (builders)", () => {
-  it("outreach system + contexto", () => {
-    expect(systemPrompt("primeira")).toMatch(/PRIMEIRA mensagem/);
-    expect(systemPrompt("followup")).toMatch(/FOLLOW-UP/);
-    expect(
-      montarContexto({
-        nome: "Clínica X",
-        categoria: "dentist",
-        endereco: "Rua 1",
-        dores: ["sem site"],
-      }),
-    ).toContain("- sem site");
-    expect(
-      montarContexto({
-        nome: "Y",
-        categoria: "cafe",
-        endereco: "Rua 2",
-        dores: [],
-      }),
-    ).toMatch(/nenhum problema técnico/);
-  });
-
-  it("objecao / proposta / conteudo / simulador", () => {
+  it("objecao / conteudo / simulador", () => {
     expect(
       montarContextoObjecao({
         nome: "A",
@@ -58,15 +36,6 @@ describe("prompts (builders)", () => {
         mensagemDoLead: "tá caro",
       }),
     ).toContain("tá caro");
-
-    expect(
-      montarContextoProposta({
-        nome: "A",
-        categoria: "cafe",
-        dores: ["lento"],
-        servicos: ["OTIMIZACAO_PERFORMANCE"],
-      }),
-    ).toContain("Otimização de performance");
 
     expect(montarTema("prospecção local")).toContain("Tema/foco");
 
@@ -82,7 +51,9 @@ describe("prompts (builders)", () => {
         { papel: "aluno", texto: "oi" },
         { papel: "dono", texto: "fala" },
       ]),
-    ).toContain("TREINANDO: oi");
+      // Tag fechada, não prefixo solto: `TREINANDO:` o aluno digitava dentro
+      // da própria fala e forjava linha (emenda de 2026-08-14).
+    ).toContain("<treinando>oi</treinando>");
     expect(MAX_TURNOS).toBe(20);
   });
 });
@@ -95,25 +66,7 @@ describe("wrappers LLM (mock client)", () => {
     dores: ["sem site"],
   };
 
-  it("gerarOutreach ok e LlmError → OutreachError", async () => {
-    const llm = fakeLlm({
-      generateStructured: vi.fn().mockResolvedValue({ mensagem: "  oi  " }),
-    });
-    expect(await gerarOutreach(lead, llm, "primeira")).toEqual({
-      mensagem: "oi",
-    });
-
-    const bad = fakeLlm({
-      generateStructured: vi
-        .fn()
-        .mockRejectedValue(new LlmError(429, "quota")),
-    });
-    await expect(gerarOutreach(lead, bad)).rejects.toBeInstanceOf(
-      OutreachError,
-    );
-  });
-
-  it("responderObjecao / gerarProposta / sugerirVideos / analisarUx", async () => {
+  it("responderObjecao / sugerirVideos / analisarUx", async () => {
     const llm = fakeLlm({
       generateStructured: vi.fn().mockResolvedValue({
         respostas: [{ abordagem: "preço", texto: "entendo" }],
@@ -125,22 +78,6 @@ describe("wrappers LLM (mock client)", () => {
         llm,
       ),
     ).toMatchObject({ respostas: [{ texto: "entendo" }] });
-
-    const llmP = fakeLlm({
-      generateStructured: vi.fn().mockResolvedValue({
-        resumo: "r",
-        escopo: [],
-        entregaveis: [],
-        prazo_estimado: "1 semana",
-        observacoes: "",
-      }),
-    });
-    expect(
-      await gerarProposta(
-        { ...lead, servicos: ["CRIACAO_SITE"] },
-        llmP,
-      ),
-    ).toMatchObject({ resumo: "r" });
 
     const llmC = fakeLlm({
       generateStructured: vi.fn().mockResolvedValue({
@@ -185,9 +122,6 @@ describe("wrappers LLM (mock client)", () => {
     await expect(
       responderObjecao({ ...lead, mensagemDoLead: "x" }, fail),
     ).rejects.toBeInstanceOf(ObjecaoError);
-    await expect(
-      gerarProposta({ ...lead, servicos: ["PRESENCA_BASE"] }, fail),
-    ).rejects.toBeInstanceOf(PropostaError);
     await expect(sugerirVideos("t", fail)).rejects.toBeInstanceOf(
       ConteudoError,
     );

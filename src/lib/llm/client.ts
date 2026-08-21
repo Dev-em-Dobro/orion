@@ -59,7 +59,7 @@ function languageModel(
   return createGoogle({ apiKey })(id);
 }
 
-/** Opções Google: sem thinking (Outreach/prosa estruturada não precisa). */
+/** Opções Google: sem thinking (Abordagem/prosa estruturada não precisa). */
 function opcoesGoogle() {
   return {
     google: {

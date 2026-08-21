@@ -46,3 +46,21 @@ export const SENTRY_ENV =
   process.env.VERCEL_ENV?.trim() ||
   process.env.NODE_ENV ||
   "development";
+
+/**
+ * F028 / ADR-015 §3 — adendo ao ADR-013, que fixou o tracing em 0 ("só erros
+ * no beta"). Sem tracing não há como verificar os ACs numéricos de desempenho.
+ * Produção passa a 0.1 (10% das requisições); dev fica em 0 pra não poluir.
+ * Override por `SENTRY_TRACES_SAMPLE_RATE` (0..1).
+ *
+ * O scrub de cookies/Authorization/chaves (`beforeSendScrub`) continua valendo
+ * integralmente — a restrição do ADR-013 sobre BYOK e magic link não muda.
+ */
+export function tracesSampleRate(): number {
+  const bruto = process.env.SENTRY_TRACES_SAMPLE_RATE?.trim();
+  if (bruto) {
+    const n = Number(bruto);
+    if (Number.isFinite(n) && n >= 0 && n <= 1) return n;
+  }
+  return SENTRY_ENV === "production" ? 0.1 : 0;
+}

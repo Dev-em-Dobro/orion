@@ -1,5 +1,5 @@
 // Configuração da marca — o único lugar pra personalizar os textos gerados
-// pela IA (Outreach e Ideias de Vídeo) com a sua empresa e a sua oferta.
+// pela IA (Abordagem e Ideias de Vídeo) com a sua empresa e a sua oferta.
 //
 // Rodar a ferramenta NÃO exige mudar nada aqui: os valores abaixo são padrões
 // genéricos que já funcionam. Edite quando quiser que as mensagens saiam com a

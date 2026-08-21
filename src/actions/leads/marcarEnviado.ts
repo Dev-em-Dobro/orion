@@ -1,15 +1,16 @@
 "use server";
 
-// F006 — Marcar Outreach como enviada e avançar o funil.
+// F006 — Marcar Abordagem como enviada e avançar o funil.
 // Spec: /specs/02-features/F006-follow-up-e-funil.md
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { mensagemEscopo, requireOutreachOwned } from "@/lib/db/scoped";
+import { mensagemEscopo, requireAbordagemOwned } from "@/lib/db/scoped";
+import { mudarStatus } from "@/lib/leads/status";
 
 const schema = z.object({
-  outreach_id: z.string().cuid("outreach_id inválido"),
+  abordagem_id: z.string().cuid("abordagem_id inválido"),
 });
 
 export type MarcarEnviadoState =
@@ -21,28 +22,28 @@ export async function marcarEnviado(
   _prev: MarcarEnviadoState,
   formData: FormData,
 ): Promise<MarcarEnviadoState> {
-  const parsed = schema.safeParse({ outreach_id: formData.get("outreach_id") });
+  const parsed = schema.safeParse({ abordagem_id: formData.get("abordagem_id") });
   if (!parsed.success) {
-    return { kind: "erro", mensagem: "outreach_id inválido" };
+    return { kind: "erro", mensagem: "abordagem_id inválido" };
   }
 
   try {
-    const { outreach } = await requireOutreachOwned(parsed.data.outreach_id);
+    const { abordagem } = await requireAbordagemOwned(parsed.data.abordagem_id);
 
     const promove =
-      outreach.lead.status === "priorizado" ||
-      outreach.lead.status === "enriquecido";
+      abordagem.lead.status === "priorizado" ||
+      abordagem.lead.status === "enriquecido";
 
     await prisma.$transaction([
-      prisma.outreach.update({
-        where: { id: outreach.id },
+      prisma.abordagem.update({
+        where: { id: abordagem.id },
         data: { enviado: true, enviado_em: new Date() },
       }),
       ...(promove
         ? [
             prisma.lead.update({
-              where: { id: outreach.lead_id },
-              data: { status: "contatado" },
+              where: { id: abordagem.lead_id },
+              data: mudarStatus("contatado"),
             }),
           ]
         : []),

@@ -58,9 +58,9 @@ Novo lib → **ADR Better Auth** (métodos, sessão, adapter Prisma).
 **Fundação de dados.** Hoje todas as queries são globais; precisam ser escopadas
 por `user_id`. É pré-requisito de tudo (sem isso, um aluno vê os Leads do outro).
 
-- [ ] `user_id` (FK) em **Lead, Diagnostico, Dor, Outreach** (+ índices) e migração.
+- [ ] `user_id` (FK) em **Lead, Diagnostico, Dor, Abordagem** (+ índices) e migração.
 - [ ] Toda query/Server Action filtra por `user_id` da sessão (coletar, diagnosticar,
-      priorizar, outreach, follow-up, desfecho, proposta, objeções, dashboard, treino).
+      priorizar, abordagem, follow-up, desfecho, proposta, objeções, dashboard, treino).
 - [ ] Dashboard de funil (F010) e `/treino` passam a ler só os dados do aluno logado.
 - [ ] Revisar `revalidatePath` e caches pra não vazar entre usuários.
 - [ ] Teste de isolamento (aluno A nunca acessa dado de B).
@@ -84,7 +84,7 @@ Tarefas:
       status (configurada / inválida / faltando).
 - [ ] **Refactor central:** trocar `process.env.GOOGLE_PLACES_API_KEY /
       PAGESPEED_API_KEY / ANTHROPIC_API_KEY` por leitura da chave **do usuário atual**
-      em: `places/textSearch`, `pagespeed/performanceMobile`, `outreach`, `conteudo`,
+      em: `places/textSearch`, `pagespeed/performanceMobile`, `abordagem`, `conteudo`,
       `diagnostico-ux`, `proposta`, `objecoes`, `simulador`. (Hoje as libs leem
       `process.env` direto — passar a chave por parâmetro/contexto.)
 - [ ] Onboarding: se faltam chaves essenciais, guiar o aluno pro `/configuracao`
@@ -151,9 +151,9 @@ Agora há **usuários externos + chaves + dados** — o risco muda de patamar.
 - [x] **Termos de Uso + Política de Privacidade** — rotas públicas `/termos` e
       `/privacidade` (contato em `src/lib/legal.ts`).
 - [x] LGPD: privacidade descreve PII de conta, chaves BYOK cifradas, Leads só
-      com **dado público** (Places); envio de Outreach permanece manual.
+      com **dado público** (Places); envio de Abordagem permanece manual.
 - [x] Limites anti-abuso do recurso **compartilhado** — F018: cotas diárias no
-      modo Orion (coleta, proposta, outreach, simulador); BYOK sem cotas.
+      modo Orion (coleta, proposta, abordagem, simulador); BYOK sem cotas.
 - [x] Chaves Orion por padrão (`ORION_*` env) + toggle BYOK em `/configuracao`.
 
 ## 9. Dívida técnica / polish

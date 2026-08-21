@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { BannerChaves } from "@/components/banner-chaves";
 import { SugerirForm } from "./sugerir-form";
+
+export const metadata: Metadata = { title: "Ideias de vídeo" };
 
 export default function ConteudoPage() {
   return (

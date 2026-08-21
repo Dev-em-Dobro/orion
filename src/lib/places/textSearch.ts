@@ -77,7 +77,7 @@ function mapPlace(p: RawPlace): PlacesResult {
 async function fetchPage(
   query: string,
   apiKey: string,
-  pageToken?: string,
+  opcoes: { includedType?: string; pageToken?: string } = {},
 ): Promise<SearchTextResponse> {
   const body: Record<string, unknown> = {
     textQuery: query,
@@ -85,7 +85,10 @@ async function fetchPage(
     regionCode: "BR",
     maxResultCount: PLACES_PAGE_SIZE,
   };
-  if (pageToken) body.pageToken = pageToken;
+  // F033 — restringe ao tipo do nicho escolhido. Menos ruído, e `primaryType`
+  // previsível ⇒ o Tier da F003 para de cair em BAIXO silencioso.
+  if (opcoes.includedType) body.includedType = opcoes.includedType;
+  if (opcoes.pageToken) body.pageToken = opcoes.pageToken;
 
   const res = await fetch(ENDPOINT, {
     method: "POST",
@@ -105,14 +108,29 @@ async function fetchPage(
   return (await res.json()) as SearchTextResponse;
 }
 
+export type OpcoesBusca = {
+  /** F033 — tipo do nicho escolhido. Ausente = busca sem filtro de tipo. */
+  includedType?: string;
+  /** F033 — páginas a ler (20 resultados cada). Default 1. */
+  paginas?: number;
+};
+
 /**
- * Text Search com paginação (`nextPageToken`) até esgotar ou
- * `PLACES_MAX_PAGES`. Deduplica por `id` entre páginas.
+ * Text Search com paginação (`nextPageToken`). Deduplica por `id` entre
+ * páginas.
+ *
+ * F033 — o número de páginas passou a ser **escolha do aluno** (20/40/60).
+ * Antes toda coleta paginava até `PLACES_MAX_PAGES`, querendo ou não: 5
+ * requisições Enterprise por busca em vez de 1.
+ *
+ * Se `includedType` não devolver nada, refaz **uma** vez sem ele — o filtro
+ * não pode deixar o aluno sem resposta. `ampliou` conta essa história pra UI.
  */
 export async function textSearch(
   query: string,
   apiKey: string,
-): Promise<PlacesResult[]> {
+  opcoes: OpcoesBusca = {},
+): Promise<PlacesResult[] & { ampliou?: boolean }> {
   if (!apiKey) {
     throw new PlacesError(
       0,
@@ -120,19 +138,34 @@ export async function textSearch(
     );
   }
 
-  const porId = new Map<string, PlacesResult>();
-  let pageToken: string | undefined;
+  const paginas = Math.min(
+    Math.max(1, Math.trunc(opcoes.paginas ?? 1)),
+    PLACES_MAX_PAGES,
+  );
 
-  for (let page = 0; page < PLACES_MAX_PAGES; page++) {
-    const data = await fetchPage(query, apiKey, pageToken);
-    for (const raw of data.places ?? []) {
-      if (!raw.id || porId.has(raw.id)) continue;
-      porId.set(raw.id, mapPlace(raw));
+  const buscar = async (includedType?: string) => {
+    const porId = new Map<string, PlacesResult>();
+    let pageToken: string | undefined;
+
+    for (let page = 0; page < paginas; page++) {
+      const data = await fetchPage(query, apiKey, { includedType, pageToken });
+      for (const raw of data.places ?? []) {
+        if (!raw.id || porId.has(raw.id)) continue;
+        porId.set(raw.id, mapPlace(raw));
+      }
+      const next = data.nextPageToken?.trim();
+      if (!next) break;
+      pageToken = next;
     }
-    const next = data.nextPageToken?.trim();
-    if (!next) break;
-    pageToken = next;
-  }
+    return [...porId.values()];
+  };
 
-  return [...porId.values()];
+  const comTipo = await buscar(opcoes.includedType);
+  if (comTipo.length > 0 || !opcoes.includedType) return comTipo;
+
+  const ampliado = await buscar(undefined) as PlacesResult[] & {
+    ampliou?: boolean;
+  };
+  ampliado.ampliou = true;
+  return ampliado;
 }

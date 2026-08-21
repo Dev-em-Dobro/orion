@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { entregavelPorSlug } from "@/lib/entregaveis/catalogo";
 import { urlInternaEntregavel } from "@/lib/entregaveis/servir";
+import { Visor } from "./visor";
 
 export const dynamic = "force-dynamic";
 
@@ -44,12 +45,12 @@ export default async function EntregavelPage({ params }: Props) {
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Link
             href="/entregaveis"
-            className="shrink-0 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+            className="shrink-0 text-sm text-muted transition-colors hover:text-zinc-300"
           >
             <span className="sm:hidden">←</span>
             <span className="hidden sm:inline">← Materiais</span>
           </Link>
-          <span className="hidden text-zinc-600 sm:inline" aria-hidden>
+          <span className="hidden text-muted sm:inline" aria-hidden>
             /
           </span>
           <h1 className="min-w-0 truncate text-sm font-semibold text-zinc-100">
@@ -59,7 +60,7 @@ export default async function EntregavelPage({ params }: Props) {
         {item.kitZip ? (
           <a
             href={`/api/entregaveis/download/${item.slug}`}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900/80 px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900/80 px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-zinc-100"
             download={item.kitZip.nomeArquivo}
           >
             <IconeDownload />
@@ -69,12 +70,7 @@ export default async function EntregavelPage({ params }: Props) {
         ) : null}
       </header>
 
-      <iframe
-        src={src}
-        title={item.titulo}
-        className="min-h-0 w-full flex-1 border-0 bg-[#0b0d10]"
-        sandbox="allow-scripts allow-same-origin allow-downloads allow-popups"
-      />
+      <Visor src={src} titulo={item.titulo} />
     </div>
   );
 }

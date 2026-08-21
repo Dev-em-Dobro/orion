@@ -88,9 +88,36 @@ Na prática:
 
 1. Vá em **APIs e serviços → Credenciais → Criar credenciais → Chave de API**.
 2. Copie a chave gerada (começa com `AIza...`).
-3. **Restrinja a chave** (importante pra segurança): clique em **Editar/​Restringir**:
-   - **Restrições de API:** deixe marcadas **apenas** a *Places API (New)* e a
-     *PageSpeed Insights API*. Se a chave vazar, ela não serve pra mais nada.
+3. **Restrinja a chave** (importante pra segurança): clique em **Editar/​Restringir**.
+   São **duas** seções, e só uma delas serve aqui.
+
+   - **Restrições de aplicativo → escolha `Nenhuma`.**
+
+     Parece errado marcar "nenhuma" numa tela de segurança, mas as outras
+     opções quebram o app:
+
+     | opção | por que não |
+     |---|---|
+     | **Sites (referenciadores HTTP)** | Só funciona pra chamada feita **pelo navegador**, que manda o cabeçalho `Referer`. O Orion chama o Google **do servidor** — não existe `Referer`, e toda chamada volta **403**. |
+     | **Endereços IP** | Certa em teoria, mas exige saber o IP de saída. Em produção (Vercel) a função sai por um **pool de IPs que muda**; IP fixo é recurso Enterprise. Rodando só na sua máquina até dá, mas IP residencial troca sozinho e a chave para de funcionar sem aviso. |
+     | **Apps Android / iOS** | Não se aplica. |
+
+     O que torna `Nenhuma` aceitável aqui: a chave **nunca chega ao
+     navegador**. Ela fica cifrada no banco (AES-256-GCM) e só é decifrada no
+     servidor, na hora da chamada. A tela de Configuração mostra só os 4
+     últimos dígitos. Não existe caminho pelo qual ela vaze pelo front.
+
+   - **Restrições de API → marque só a `Places API (New)` e a
+     `PageSpeed Insights API`.**
+
+     **Esta é a que protege de verdade.** Se a chave vazar, ela não serve pra
+     mais nada — nem Gmail, nem Drive, nem Vertex AI.
+
+   - **Limite de cota** (não é nesta tela, mas é o freio duro): em
+     **APIs e serviços → Places API (New) → Cotas**, ponha um teto de
+     requisições por dia. Restrição de API impede *qual* API usar; a cota
+     impede *quanto* gastar. É o que transforma um vazamento em irritação em
+     vez de fatura.
 
 ## Passo 6 — Colar a chave no app (BYOK)
 

@@ -1,0 +1,49 @@
+// F035 — gate de recurso por plano.
+// Spec: /specs/02-features/F035-planos-e-limites.md ("Gate de feature")
+//
+// Esconder botão não é gate. Toda Server Action e todo route handler de
+// recurso pago chama `exigirRecurso` no servidor; a UI só decide se mostra
+// cadeado ou botão.
+
+import { redirect } from "next/navigation";
+import { temRecurso, type Recurso } from "./catalogo";
+import { PLANOS_NA_UI } from "./exibicao";
+import { RecursoDoPlanoError } from "./erros";
+import { planoDoUsuario } from "./resolver";
+
+export async function podeUsar(
+  userId: string,
+  recurso: Recurso,
+): Promise<boolean> {
+  return temRecurso(await planoDoUsuario(userId), recurso);
+}
+
+/** Lança `RecursoDoPlanoError` — vira mensagem de UI via `mensagemEscopo`. */
+export async function exigirRecurso(
+  userId: string,
+  recurso: Recurso,
+): Promise<void> {
+  const plano = await planoDoUsuario(userId);
+  if (!temRecurso(plano, recurso)) {
+    throw new RecursoDoPlanoError(recurso, plano);
+  }
+}
+
+/**
+ * Versão para páginas: manda pra `/planos` com o recurso na query, pra a
+ * página explicar **o que** o aluno tentou abrir. Mesmo padrão do
+ * `redirectSeCompraPendente` da F019.1.
+ *
+ * Não dispara hoje: nenhum recurso é fechado por plano desde 2026-08-13. Com a
+ * pausa de 2026-08-17 o destino cai pra `/` — se um recurso voltar a fechar
+ * antes de `/planos` voltar, mandar pra tela 404 trocaria "você não tem acesso"
+ * por "essa página não existe".
+ */
+export async function redirectSeRecursoBloqueado(
+  userId: string,
+  recurso: Recurso,
+): Promise<void> {
+  if (!(await podeUsar(userId, recurso))) {
+    redirect(PLANOS_NA_UI ? `/planos?recurso=${recurso}` : "/");
+  }
+}

@@ -21,6 +21,9 @@ function mensagemErroCallback(code: string | null): string | null {
     TOKEN_EXPIRED: "Link expirado. Solicite um novo pelo e-mail.",
     INVALID_CALLBACK_URL:
       "Link de retorno inválido. Abra /login e solicite um novo acesso.",
+    // F014 AC10 — não é falha de login: a sessão anterior deixou de valer e o
+    // cookie foi limpo. Entrar de novo resolve.
+    sessao_expirada: "Sua sessão expirou. Entre de novo para continuar.",
   };
   return (
     mapa[code] ??
@@ -98,7 +101,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
             usado uma vez.
           </p>
         </div>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
           Não chegou? Confira spam/lixo eletrônico ou aguarde um minuto e
           solicite de novo.
         </p>
@@ -135,7 +138,7 @@ export function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
             Entrar com Google
           </button>
 
-          <div className="flex items-center gap-3 text-xs text-zinc-500">
+          <div className="flex items-center gap-3 text-xs text-muted">
             <div className="h-px flex-1 bg-border" />
             ou continue com e-mail
             <div className="h-px flex-1 bg-border" />

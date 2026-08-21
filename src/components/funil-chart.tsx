@@ -2,6 +2,7 @@
 
 // F010 — funil visual estilo Bklit (anéis, hover, legenda). Sem deps extras.
 
+import Link from "next/link";
 import { useId, useState } from "react";
 
 export type FunilStage = {
@@ -10,13 +11,25 @@ export type FunilStage = {
   value: number;
   /** Cor sólida do segmento (hex). */
   color: string;
+  /** Destino ao clicar no estágio — a lista já filtrada por ele. */
+  href?: string;
 };
 
 type FunilChartProps = {
   stages: FunilStage[];
   /** Vazamento lateral (perdido), fora da silhueta. */
-  perdido?: { value: number; max: number };
+  perdido?: { value: number; max: number; href?: string };
 };
+
+/**
+ * Metade da largura que o segmento mais cheio ocupa, em fração do quadro.
+ *
+ * O desenho pode ser gordo porque **não divide espaço com texto**: rótulo e
+ * número têm pista própria na linha (ver o layout de três faixas abaixo).
+ * Encolher isto pra abrir corredor foi tentado e desfeito — deixava o funil
+ * magro, que é o oposto do que a tela precisa.
+ */
+const MEIA_LARGURA = 0.46;
 
 function vSegmentPath(
   normStart: number,
@@ -26,8 +39,8 @@ function vSegmentPath(
   layerScale: number,
 ): string {
   const mx = W / 2;
-  const w0 = Math.max(0.04, normStart) * W * 0.42 * layerScale;
-  const w1 = Math.max(0.04, normEnd) * W * 0.42 * layerScale;
+  const w0 = Math.max(0.04, normStart) * W * MEIA_LARGURA * layerScale;
+  const w1 = Math.max(0.04, normEnd) * W * MEIA_LARGURA * layerScale;
   const cy = segH * 0.55;
   const left = `M ${mx - w0} 0 C ${mx - w0} ${cy}, ${mx - w1} ${segH - cy}, ${mx - w1} ${segH}`;
   const right = `L ${mx + w1} ${segH} C ${mx + w1} ${segH - cy}, ${mx + w0} ${cy}, ${mx + w0} 0`;
@@ -51,8 +64,11 @@ export function FunilChart({ stages, perdido }: FunilChartProps) {
 
   return (
     <div className="mt-4">
+      {/* Sem teto de largura: havia um `max-w-md` (448px) que segurava o
+          desenho mesmo quando o card tinha espaço de sobra. Quem manda no
+          tamanho é o card. */}
       <div
-        className="relative mx-auto w-full max-w-md select-none"
+        className="relative w-full select-none"
         style={{ height: totalH }}
         onMouseLeave={() => setHovered(null)}
       >
@@ -76,9 +92,13 @@ export function FunilChart({ stages, perdido }: FunilChartProps) {
             const pct = Math.round((stage.value / max) * 100);
 
             return (
+              // Três faixas: rótulo | desenho | número. Antes o texto era
+              // `absolute inset-0` POR CIMA do SVG, e a silhueta cheia passava
+              // por baixo dele. Com pista própria, o desenho pode ocupar o
+              // meio inteiro sem nunca encostar no texto.
               <div
                 key={stage.id}
-                className="relative shrink-0 overflow-visible transition-opacity duration-200"
+                className="relative flex shrink-0 items-center gap-2 overflow-visible px-3 transition-opacity duration-200 sm:gap-3 sm:px-4"
                 style={{
                   height: SEG_H,
                   opacity: dimmed ? 0.35 : 1,
@@ -87,6 +107,16 @@ export function FunilChart({ stages, perdido }: FunilChartProps) {
                 }}
                 onMouseEnter={() => setHovered(i)}
               >
+                <div className="pointer-events-none w-24 shrink-0 sm:w-28">
+                  <p className="truncate text-xs font-medium text-zinc-100">
+                    {stage.label}
+                  </p>
+                  <p className="font-mono text-[10px] text-zinc-300/80">
+                    {pct}% do pico
+                  </p>
+                </div>
+
+                <div className="relative h-full min-w-0 flex-1">
                 <svg
                   aria-hidden
                   className="absolute inset-0 h-full w-full overflow-visible"
@@ -149,20 +179,27 @@ export function FunilChart({ stages, perdido }: FunilChartProps) {
                     );
                   })}
                 </svg>
-
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-3 sm:px-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-medium text-zinc-100 drop-shadow">
-                      {stage.label}
-                    </p>
-                    <p className="font-mono text-[10px] text-zinc-300/80">
-                      {pct}% do pico
-                    </p>
-                  </div>
-                  <p className="shrink-0 font-mono text-sm font-semibold text-white drop-shadow">
-                    {stage.value}
-                  </p>
                 </div>
+
+                {/* `text-white` era literal e não passava pelo tema: no tema
+                    claro dava branco sobre card branco, e o número — o dado
+                    mais importante da linha — sumia. `text-zinc-100` o tema
+                    remapeia, igual ao rótulo. */}
+                <p className="pointer-events-none w-7 shrink-0 text-right font-mono text-sm font-semibold text-zinc-100">
+                  {stage.value}
+                </p>
+
+                {/* Área de clique por cima do SVG. Sobreposição em vez de
+                    embrulhar o segmento: o `<div>` de rótulo já é
+                    `pointer-events-none`, então nada disputa o clique, e a
+                    silhueta e o hover continuam intactos. */}
+                {stage.href && (
+                  <Link
+                    href={stage.href}
+                    aria-label={`Ver os ${stage.value} Lead(s) em ${stage.label}`}
+                    className="absolute inset-0 cursor-pointer rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  />
+                )}
               </div>
             );
           })}
@@ -173,29 +210,47 @@ export function FunilChart({ stages, perdido }: FunilChartProps) {
       <ul className="mt-5 flex flex-wrap gap-2">
         {stages.map((stage, i) => {
           const active = hovered === null || hovered === i;
+          const classe =
+            "inline-flex items-center gap-2 rounded-full border border-border/80 bg-zinc-900/50 px-2.5 py-1 text-xs text-zinc-300 transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-800/80";
+          const estilo = {
+            opacity: active ? 1 : 0.4,
+            boxShadow:
+              hovered === i ? `0 0 0 1px ${stage.color}55` : undefined,
+          };
+          const eventos = {
+            onMouseEnter: () => setHovered(i),
+            onMouseLeave: () => setHovered(null),
+            onFocus: () => setHovered(i),
+            onBlur: () => setHovered(null),
+          };
+          const conteudo = (
+            <>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: stage.color }}
+                aria-hidden
+              />
+              <span>{stage.label}</span>
+              <span className="font-mono text-zinc-400">{stage.value}</span>
+            </>
+          );
+
           return (
             <li key={`leg-${stage.id}`}>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-zinc-900/50 px-2.5 py-1 text-xs text-zinc-300 transition-all duration-200 hover:border-zinc-500 hover:bg-zinc-800/80"
-                style={{
-                  opacity: active ? 1 : 0.4,
-                  boxShadow:
-                    hovered === i ? `0 0 0 1px ${stage.color}55` : undefined,
-                }}
-                onMouseEnter={() => setHovered(i)}
-                onMouseLeave={() => setHovered(null)}
-                onFocus={() => setHovered(i)}
-                onBlur={() => setHovered(null)}
-              >
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: stage.color }}
-                  aria-hidden
-                />
-                <span>{stage.label}</span>
-                <span className="font-mono text-zinc-400">{stage.value}</span>
-              </button>
+              {stage.href ? (
+                <Link
+                  href={stage.href}
+                  className={`${classe} cursor-pointer`}
+                  style={estilo}
+                  {...eventos}
+                >
+                  {conteudo}
+                </Link>
+              ) : (
+                <button type="button" className={classe} style={estilo} {...eventos}>
+                  {conteudo}
+                </button>
+              )}
             </li>
           );
         })}
@@ -224,7 +279,7 @@ export function FunilChart({ stages, perdido }: FunilChartProps) {
               {perdido.value}
             </span>
           </div>
-          <p className="mt-2 text-[11px] text-zinc-500">
+          <p className="mt-2 text-[11px] text-muted">
             Perdido = vazamento lateral (sai de qualquer estágio pós-contato)
           </p>
         </div>
