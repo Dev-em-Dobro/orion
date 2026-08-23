@@ -15,10 +15,10 @@ Referência: [documentação Hubla](https://hubla.gitbook.io/docs/webhooks/event
 
 | Status | Quando |
 |--------|--------|
-| `200` | Processado ou ignorado com sucesso |
+| `200` | Processado ou ignorado com sucesso (produto fora da allowlist incluso) |
 | `401` | Token ausente ou inválido |
 | `400` | JSON inválido |
-| `503` | `HUBLA_WEBHOOK_TOKEN` não configurado |
+| `503` | `HUBLA_WEBHOOK_TOKEN` não configurado, **ou** nenhum ID de acesso (`HUBLA_PRODUCT_ID` / `HUBLA_PRODUCT_ID_ELITE`) |
 
 ## Payload (membro — campos usados)
 
@@ -39,4 +39,6 @@ Referência: [documentação Hubla](https://hubla.gitbook.io/docs/webhooks/event
 | Variável | Obrigatório | Descrição |
 |----------|-------------|-----------|
 | `HUBLA_WEBHOOK_TOKEN` | prod | Token da aba Autenticação |
-| `HUBLA_PRODUCT_ID` | recomendado | ID do Builders Club (`VL3e0iDO3A32SyjJWr9S`) |
+| `HUBLA_PRODUCT_ID` | um dos dois | Legado Elite (`VL3e0iDO3A32SyjJWr9S`) — concede acesso Orion |
+| `HUBLA_PRODUCT_ID_ELITE` | um dos dois | Produto Elite novo (R$ 997), quando a Hubla tiver o id |
+| `HUBLA_CHECKOUT_URL` | recomendado | Checkout **Elite** (não o PRO R$ 297). Default do Club: `https://pay.hub.la/v1SsMcVXNip7Mn5A2pNH` |

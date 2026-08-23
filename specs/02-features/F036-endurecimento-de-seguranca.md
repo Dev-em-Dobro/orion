@@ -29,7 +29,7 @@ spec que ela emenda, e é lá que a regra passa a valer.
 | 2 | O Diagnóstico só busca URL de **host público** (anti-SSRF) | [F002](F002-diagnostico-de-presenca-digital.md) · [ADR-016](../04-decisions/ADR-016-leitura-do-site-do-lead.md) | `src/lib/diagnostico/verificarSite.ts` |
 | 3 | Rate limit nas rotas HTTP de auth (magic link incluso) | [F014](F014-autenticacao.md) | `src/lib/auth/index.ts` |
 | 4 | Um e-mail de compra vale pra **uma** conta | [F019.1](F019.1-ativacao-acesso.md) | `src/lib/compra/servico.ts` |
-| 5 | Webhook da Hubla recusa subir sem `HUBLA_PRODUCT_ID` | [F019](F019-webhook-hubla.md) | `src/app/api/webhooks/hubla/route.ts` |
+| 5 | Webhook da Hubla recusa subir sem ID de acesso (legado ou Elite) | [F019](F019-webhook-hubla.md) | `src/app/api/webhooks/hubla/route.ts` |
 | 6 | Entregável em iframe perde `allow-same-origin` e ganha CSP | [F020](F020-menu-entregaveis.md) | `.../entregaveis/[slug]/page.tsx`, `/api/entregaveis/[...path]` |
 | 7 | Helper de sessão e2e morre em produção e pede segredo | [F015](F015-multi-tenant.md) | `src/app/api/e2e/session/route.ts` |
 
@@ -127,13 +127,14 @@ Detalhe na [F019.1](F019.1-ativacao-acesso.md).
 
 ## 5. Webhook da Hubla sem produto configurado
 
-`HUBLA_PRODUCT_ID` ausente fazia o webhook **aceitar qualquer produto**
-(conveniência de dev que valia igual em produção). Agora: `503` antes de
-qualquer processamento, na mesma checagem de arranque que já existia pro
-`HUBLA_WEBHOOK_TOKEN`.
+Allowlist Hubla vazia (`HUBLA_PRODUCT_ID` e `HUBLA_PRODUCT_ID_ELITE` ambos
+ausentes) fazia o webhook **aceitar qualquer produto** (conveniência de dev que
+valia igual em produção). Agora: `503` antes de qualquer processamento, na
+mesma checagem de arranque que já existia pro `HUBLA_WEBHOOK_TOKEN`.
 
-Consequência prática: ambiente sem a env não recebe entitlement nenhum, em vez
-de receber entitlement de produto errado. Detalhe na [F019](F019-webhook-hubla.md).
+Consequência prática: ambiente sem ID de acesso não recebe entitlement nenhum,
+em vez de receber entitlement de produto errado (PRO Club incluso). Detalhe na
+[F019](F019-webhook-hubla.md).
 
 ## 6. Entregável em iframe: sandbox e CSP
 
@@ -201,7 +202,8 @@ a porta mesmo que as duas primeiras travas falhem.
 - [x] **AC6** — E-mail de compra já verificado em outra conta: no manual vira
       mensagem amigável; no automático é pulado sem erro. Em nenhum dos dois a
       segunda conta é liberada.
-- [x] **AC7** — `POST /api/webhooks/hubla` sem `HUBLA_PRODUCT_ID` responde
+- [x] **AC7** — `POST /api/webhooks/hubla` sem nenhum ID de acesso
+      (`HUBLA_PRODUCT_ID` e `HUBLA_PRODUCT_ID_ELITE` ambos vazios) responde
       `503` e não grava entitlement.
 - [x] **AC8** — O iframe do entregável não tem `allow-same-origin`; a resposta
       HTML de `/api/entregaveis/*` traz `Content-Security-Policy`.

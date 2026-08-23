@@ -3,7 +3,11 @@ export type {
   HublaWebhookEvent,
   HublaWebhookPayload,
 } from "./tipos";
-export { interpretarEventoHubla } from "./interpretar";
+export {
+  interpretarEventoHubla,
+  type ProductIdFiltroHubla,
+} from "./interpretar";
+export { idsProdutoAcessoHubla } from "./produtos";
 export { normalizarEmailHubla } from "./normalizar";
 export {
   processarWebhookHubla,

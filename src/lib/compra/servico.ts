@@ -45,7 +45,19 @@ async function gravarVerificacao(
   userId: string,
   emailCompra: string,
 ): Promise<void> {
-  const productId = productIdHubla();
+  const ids = productIdsAcessoCompra();
+  const row =
+    ids.length === 0
+      ? null
+      : await prisma.hublaEntitlement.findFirst({
+          where: {
+            email: emailCompra,
+            status: "ativo",
+            product_id: { in: ids },
+          },
+          select: { product_id: true },
+        });
+  const productId = row?.product_id ?? productIdHubla();
   await prisma.user.update({
     where: { id: userId },
     data: {

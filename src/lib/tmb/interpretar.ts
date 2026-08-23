@@ -3,10 +3,12 @@ import {
   STATUS_FINANCEIRO_REVOKE,
   STATUS_PEDIDO_GRANT,
   STATUS_PEDIDO_REVOKE,
-  TMB_MENTORIA_CODES_DEFAULT,
+  TMB_CODE_MENTORIA_PRO,
+  TMB_ELITE_CODES_DEFAULT,
   type AcaoTmb,
   type TmbVendaPayload,
 } from "./tipos";
+import { idsProdutoAcessoHubla } from "@/lib/hubla/produtos";
 
 function asRecord(payload: unknown): Record<string, unknown> | null {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -37,18 +39,21 @@ export function extrairVenda(payload: unknown): TmbVendaPayload | null {
 }
 
 export function codesPermitidos(): Set<string> {
-  const raw = process.env.TMB_PRODUCT_CODES?.trim();
+  const raw =
+    process.env.TMB_ELITE_CODES?.trim() ||
+    process.env.TMB_PRODUCT_CODES?.trim();
   const list = raw
     ? raw.split(",").map((c) => c.trim()).filter(Boolean)
-    : [...TMB_MENTORIA_CODES_DEFAULT];
-  return new Set(list.map((c) => c.toUpperCase()));
+    : [...TMB_ELITE_CODES_DEFAULT];
+  const mentoria = TMB_CODE_MENTORIA_PRO.toUpperCase();
+  return new Set(
+    list.map((c) => c.toUpperCase()).filter((c) => c !== mentoria),
+  );
 }
 
-/** IDs de produto que liberam compra Orion (Hubla Builders + TMB Mentoria). */
+/** IDs que liberam compra Orion: Elite Hubla (legado + novo) + boleto TMB Elite. */
 export function productIdsAcessoCompra(): string[] {
-  const ids = new Set<string>();
-  const hubla = process.env.HUBLA_PRODUCT_ID?.trim();
-  if (hubla) ids.add(hubla);
+  const ids = new Set<string>(idsProdutoAcessoHubla());
   for (const code of codesPermitidos()) {
     ids.add(code);
   }
@@ -84,7 +89,7 @@ export function interpretarVendaTmb(payload: unknown): AcaoTmb {
   }
 
   if (!codesPermitidos().has(productId.toUpperCase())) {
-    return { acao: "ignorar", motivo: "code fora das ofertas Mentoria" };
+    return { acao: "ignorar", motivo: "code fora das ofertas Elite" };
   }
 
   const lancamentoFiltro = lancamentoIdFiltro();

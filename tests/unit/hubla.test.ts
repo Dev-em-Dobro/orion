@@ -74,6 +74,37 @@ describe("hubla interpretar", () => {
     expect(acao.acao).toBe("ignorar");
   });
 
+  it("concede Elite quando a allowlist tem legado e Elite", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: "elite-novo" },
+          user: { email: "a@b.com" },
+          subscription: { status: "active" },
+        },
+      },
+      ["VL3e0iDO3A32SyjJWr9S", "elite-novo"],
+    );
+    expect(acao.acao).toBe("conceder");
+    expect(acao.acao === "conceder" && acao.productId).toBe("elite-novo");
+  });
+
+  it("ignora PRO Club fora da allowlist", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: "pro-club-297" },
+          user: { email: "a@b.com" },
+          subscription: { status: "active" },
+        },
+      },
+      ["VL3e0iDO3A32SyjJWr9S", "elite-novo"],
+    );
+    expect(acao.acao).toBe("ignorar");
+  });
+
   it("sandbox Builders Club (payload real Hubla)", () => {
     const acao = interpretarEventoHubla(
       {

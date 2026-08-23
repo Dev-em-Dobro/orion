@@ -8,9 +8,21 @@ import {
   type HublaWebhookPayload,
 } from "./tipos";
 
+export type ProductIdFiltroHubla = string | readonly string[] | null | undefined;
+
+function allowlistProduto(
+  filtro: ProductIdFiltroHubla,
+): Set<string> | null {
+  if (filtro == null || filtro === "") return null;
+  const ids = (typeof filtro === "string" ? [filtro] : [...filtro])
+    .map((id) => id.trim())
+    .filter(Boolean);
+  return new Set(ids);
+}
+
 export function interpretarEventoHubla(
   payload: HublaWebhookPayload,
-  productIdFiltro?: string | null,
+  productIdFiltro?: ProductIdFiltroHubla,
 ): AcaoEntitlement {
   const tipo = payload.type?.trim();
   if (!tipo) {
@@ -27,7 +39,8 @@ export function interpretarEventoHubla(
     return { acao: "ignorar", motivo: "product_id ausente" };
   }
 
-  if (productIdFiltro && productId !== productIdFiltro) {
+  const allow = allowlistProduto(productIdFiltro);
+  if (allow && !allow.has(productId)) {
     return { acao: "ignorar", motivo: "produto não filtrado" };
   }
 

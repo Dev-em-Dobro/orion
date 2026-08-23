@@ -1,7 +1,10 @@
 // Persistência de entitlements Hubla (F019).
 
 import { prisma } from "@/lib/db";
-import { interpretarEventoHubla } from "./interpretar";
+import {
+  interpretarEventoHubla,
+  type ProductIdFiltroHubla,
+} from "./interpretar";
 import type { AcaoEntitlement, HublaWebhookPayload } from "./tipos";
 
 export async function jaProcessouIdempotency(key: string): Promise<boolean> {
@@ -76,7 +79,7 @@ export async function aplicarAcaoEntitlement(acao: AcaoEntitlement): Promise<voi
 export async function processarWebhookHubla(
   payload: unknown,
   opts: {
-    productIdFiltro?: string | null;
+    productIdFiltro?: ProductIdFiltroHubla;
     idempotencyKey?: string | null;
     eventType: string;
   },

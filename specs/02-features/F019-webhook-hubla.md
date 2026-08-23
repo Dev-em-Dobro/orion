@@ -27,19 +27,35 @@ Demais tipos → `200` ignorado (sem efeito).
 Header `x-hubla-idempotency` registrado em `HublaWebhookDelivery`. Reenvio do
 mesmo evento → `200` sem reprocessar.
 
-## Filtro de produto
-`HUBLA_PRODUCT_ID` é **obrigatório**: só processa eventos desse produto
-(`event.product.id`).
+## Filtro de produto (acesso Orion = Elite do Club)
+
+O Orion **não** é o Club. Só quem comprou **Elite** ganha `HublaEntitlement`
+de acesso. PRO do Club (R$ 297) não entra. Planos pagos do Orion ([F035](F035-planos-e-limites.md))
+são outra coisa — ofertas ainda não definidas; esta spec não as usa.
+
+Mapa (`event.product.id`):
+
+| Env | Papel no Orion |
+|-----|----------------|
+| `HUBLA_PRODUCT_ID` | Legado Builders Club (`VL3e0iDO3A32SyjJWr9S`). Produto antigo de R$ 997 — **concede acesso** (trata como Elite). |
+| `HUBLA_PRODUCT_ID_ELITE` | Produto Elite novo (R$ 997), quando a Hubla tiver o id. **Concede acesso.** |
+| `HUBLA_PRODUCT_ID_PRO` | **Não usar aqui.** No Orion essa env já é o plano Pro da F035 (hoje vazia / trial). PRO do Club (R$ 297) **não** tem env no Orion: o webhook só concede o que está na allowlist, então o evento PRO é ignorado. |
+
+Pelo menos um ID de acesso (`HUBLA_PRODUCT_ID` ou `HUBLA_PRODUCT_ID_ELITE`) é
+**obrigatório**. Sem nenhum → `503` antes de ler o corpo, na mesma checagem de
+arranque do `HUBLA_WEBHOOK_TOKEN` ([F036](F036-endurecimento-de-seguranca.md)).
+
+Evento de produto fora da allowlist → `200` ignorado, sem gravar entitlement.
+Cancelamento/reembolso de um ID da allowlist → `status = revogado` (já era AC3).
 
 > **Mudança de 2026-08-13 — [F036](F036-endurecimento-de-seguranca.md).** Antes:
 > *"ausente → aceita qualquer produto (dev/local)"*. A conveniência de dev valia
-> igual em produção — uma env não configurada transformava o webhook em porta
-> de entrada pra entitlement de **qualquer** produto da conta Hubla, inclusive
-> um de R$ 1. Agora, env ausente → `503` antes de qualquer processamento, na
-> mesma checagem de arranque que já existia pro `HUBLA_WEBHOOK_TOKEN`.
+> igual em produção. Agora, allowlist vazia → `503`.
 >
-> Consequência: ambiente sem a env não recebe entitlement nenhum, em vez de
-> receber o errado. Local/dev define a env como qualquer outra.
+> **Emenda de 2026-08-23.** A allowlist passou de um id só para legado + Elite.
+> Sem isso, um produto PRO novo na mesma conta Hubla poderia vazar se o filtro
+> voltasse a “qualquer produto”, ou se o legado fosse o único id e a Hubla
+> reutilizasse a oferta. PRO Club não entra na lista; não grava entitlement.
 
 ## Modelo
 - `HublaEntitlement` — unique `(email, product_id)`, e-mail normalizado
@@ -51,9 +67,14 @@ mesmo evento → `200` sem reprocessar.
 - [ ] **AC3** — `customer.member_removed` → entitlement `revogado`.
 - [ ] **AC4** — Mesmo `x-hubla-idempotency` duas vezes → `200` na segunda, um registro.
 - [ ] **AC5** — Resposta `200` rápida (< processamento síncrono leve).
-- [x] **AC6** ([F036](F036-endurecimento-de-seguranca.md)) — Sem
-      `HUBLA_PRODUCT_ID` → `503`, sem ler o corpo e sem gravar entitlement.
-      A checagem vem **antes** da validação do token.
+- [x] **AC6** ([F036](F036-endurecimento-de-seguranca.md)) — Sem nenhum ID de
+      acesso (`HUBLA_PRODUCT_ID` e `HUBLA_PRODUCT_ID_ELITE` ambos vazios) →
+      `503`, sem ler o corpo e sem gravar entitlement. A checagem vem **antes**
+      da validação do token.
+- [ ] **AC7** — `customer.member_added` do produto legado ou
+      `HUBLA_PRODUCT_ID_ELITE` → entitlement `ativo`.
+- [ ] **AC8** — Evento de produto que não está na allowlist (PRO Club incluso)
+      → `200` ignorado, sem gravar entitlement.
 
 ## Fora do escopo (F019)
 - UI de ativação pós-login → [F019.1](F019.1-ativacao-acesso.md)
