@@ -6,6 +6,10 @@ import {
   type ProductIdFiltroHubla,
 } from "./interpretar";
 import type { AcaoEntitlement, HublaWebhookPayload } from "./tipos";
+import {
+  concederCortesiaPro,
+  revogarCortesiaProSeSemAcesso,
+} from "@/lib/planos/cortesia-pro";
 
 export async function jaProcessouIdempotency(key: string): Promise<boolean> {
   const row = await prisma.hublaWebhookDelivery.findUnique({
@@ -53,6 +57,7 @@ export async function aplicarAcaoEntitlement(acao: AcaoEntitlement): Promise<voi
         granted_at: new Date(),
       },
     });
+    await concederCortesiaPro(acao.email);
     return;
   }
 
@@ -74,6 +79,7 @@ export async function aplicarAcaoEntitlement(acao: AcaoEntitlement): Promise<voi
       revoked_at: new Date(),
     },
   });
+  await revogarCortesiaProSeSemAcesso(acao.email);
 }
 
 export async function processarWebhookHubla(

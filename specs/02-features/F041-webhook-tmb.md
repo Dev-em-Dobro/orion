@@ -11,9 +11,11 @@ igual à compra Hubla Elite — sem n8n escrevendo no banco.
 Espelha o contrato do Club (F047 webhook TMB), **filtrado**: no Club, Mentoria
 é PRO e o boleto R$ 1.297 é Elite. No Orion só Elite entra.
 
-**Fora de escopo:** DevQuest sazonal; planos Pro/Agência (F035) — TMB alimenta
-o **acesso de compra** (entregáveis / ativar-acesso), não o mapa
-`HUBLA_PRODUCT_ID_PRO`. Ofertas pagas do Orion ainda não existem.
+**Fora de escopo:** DevQuest sazonal; ofertas pagas reais do Orion. TMB grava
+o **acesso de compra** (entregáveis / ativar-acesso). Emenda F035 de
+2026-08-24: grant Elite TMB, no modo `trial-pro-*`, **também** upserta a
+cortesia Pro (mesmo `product_id` sintético, `expires_at` por aluno). Não usa
+o PRO Club nem Mentoria `1AS249898VN`.
 
 ## Endpoint
 `POST /api/webhooks/tmb` — público.
@@ -51,3 +53,5 @@ alguém o coloque no override. Opcional: `TMB_LANCAMENTO_ID=36238`.
 - [x] Code fora da lista → ignorado
 - [x] Cancelamento/inadimplência (code Elite) → revogado
 - [x] Aluno com só entitlement TMB Elite consegue verificar compra no Orion
+- [ ] Grant Elite TMB no modo `trial-pro-*` concede cortesia Pro (F035 AC28);
+      Mentoria continua ignorada

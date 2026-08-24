@@ -9,6 +9,7 @@ const { prismaMock } = vi.hoisted(() => ({
     hublaEntitlement: {
       upsert: vi.fn(),
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -155,6 +156,7 @@ describe("hubla processarWebhookHubla", () => {
   it("persiste entitlement em member_added", async () => {
     prismaMock.hublaWebhookDelivery.findUnique.mockResolvedValue(null);
     prismaMock.hublaEntitlement.upsert.mockResolvedValue({});
+    prismaMock.hublaEntitlement.findUnique.mockResolvedValue(null);
 
     const res = await processarWebhookHubla(
       {
@@ -190,6 +192,38 @@ describe("hubla processarWebhookHubla", () => {
 
     expect(res.ignorado).toBe(true);
     expect(prismaMock.hublaEntitlement.upsert).not.toHaveBeenCalled();
+  });
+
+  it("AC28 — Elite no modo trial-pro grava cortesia sem renovar se já vigente", async () => {
+    const prev = process.env.HUBLA_PRODUCT_ID_PRO;
+    process.env.HUBLA_PRODUCT_ID_PRO = "trial-pro-2026-11";
+    prismaMock.hublaWebhookDelivery.findUnique.mockResolvedValue(null);
+    prismaMock.hublaEntitlement.upsert.mockResolvedValue({});
+    prismaMock.hublaEntitlement.findUnique.mockResolvedValue({
+      product_id: "trial-pro-2026-11",
+      status: "ativo",
+      expires_at: new Date("2026-12-01T23:59:59.999-03:00"),
+    });
+
+    await processarWebhookHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: "p1" },
+          user: { email: "x@y.com" },
+          subscription: { status: "active" },
+        },
+      },
+      { eventType: "customer.member_added", idempotencyKey: "idem-cortesia" },
+    );
+
+    const productIds = prismaMock.hublaEntitlement.upsert.mock.calls.map(
+      (c) => c[0].where.email_product_id.product_id,
+    );
+    expect(productIds).toContain("p1");
+    expect(productIds).not.toContain("trial-pro-2026-11");
+    if (prev === undefined) delete process.env.HUBLA_PRODUCT_ID_PRO;
+    else process.env.HUBLA_PRODUCT_ID_PRO = prev;
   });
 });
 

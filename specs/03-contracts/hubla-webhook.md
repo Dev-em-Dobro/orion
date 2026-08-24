@@ -42,3 +42,5 @@ Referência: [documentação Hubla](https://hubla.gitbook.io/docs/webhooks/event
 | `HUBLA_PRODUCT_ID` | um dos dois | Legado Elite (`VL3e0iDO3A32SyjJWr9S`) — concede acesso Orion |
 | `HUBLA_PRODUCT_ID_ELITE` | um dos dois | Produto Elite novo (R$ 997), quando a Hubla tiver o id |
 | `HUBLA_CHECKOUT_URL` | recomendado | Checkout **Elite** (não o PRO R$ 297). Default do Club: `https://pay.hub.la/v1SsMcVXNip7Mn5A2pNH` |
+| `HUBLA_PRODUCT_ID_PRO` | F035 | Plano Pro do **Orion**. Prefixo `trial-pro-` = cortesia no grant Elite (90 dias). Não é o PRO Club. |
+| `CORTESIA_PRO_DIAS` | não | Duração da cortesia em grants **novos**. Default 90. |

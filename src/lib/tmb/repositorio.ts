@@ -6,6 +6,10 @@ import {
   interpretarVendaTmb,
 } from "./interpretar";
 import type { AcaoTmb } from "./tipos";
+import {
+  concederCortesiaPro,
+  revogarCortesiaProSeSemAcesso,
+} from "@/lib/planos/cortesia-pro";
 
 async function jaProcessouIdempotency(key: string): Promise<boolean> {
   const row = await prisma.hublaWebhookDelivery.findUnique({
@@ -57,6 +61,7 @@ async function aplicarAcao(acao: AcaoTmb): Promise<void> {
         granted_at: new Date(),
       },
     });
+    await concederCortesiaPro(acao.email);
     return;
   }
 
@@ -79,6 +84,7 @@ async function aplicarAcao(acao: AcaoTmb): Promise<void> {
       revoked_at: new Date(),
     },
   });
+  await revogarCortesiaProSeSemAcesso(acao.email);
 }
 
 export async function processarWebhookTmb(

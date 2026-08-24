@@ -57,6 +57,20 @@ Cancelamento/reembolso de um ID da allowlist → `status = revogado` (já era AC
 > voltasse a “qualquer produto”, ou se o legado fosse o único id e a Hubla
 > reutilizasse a oferta. PRO Club não entra na lista; não grava entitlement.
 
+## Cortesia Pro no grant Elite (emenda 2026-08-24)
+
+Acesso Elite **não** é o plano Pro do Orion: o webhook de Elite continua
+gravando só o `product_id` da allowlist (porta do app). Emenda da
+[F035](F035-planos-e-limites.md): enquanto `HUBLA_PRODUCT_ID_PRO` estiver no
+prefixo `trial-pro-`, o **mesmo** grant Elite (Hubla ou TMB) também upserta o
+entitlement sintético de cortesia Pro (`trial-pro-…`), com `expires_at` =
+`granted_at` + `CORTESIA_PRO_DIAS` (default **90**). Relivery / entitlement já
+ativo **não** renova o relógio. Revogar o último Elite ativo revoga a cortesia.
+
+Cortesia **não** dispara se `HUBLA_PRODUCT_ID_PRO` estiver vazio ou for um
+produto Hubla real (fora do prefixo `trial-pro-`). PRO Club (R$ 297) continua
+fora da allowlist.
+
 ## Modelo
 - `HublaEntitlement` — unique `(email, product_id)`, e-mail normalizado
 - `HublaWebhookDelivery` — idempotency keys processadas
@@ -75,6 +89,11 @@ Cancelamento/reembolso de um ID da allowlist → `status = revogado` (já era AC
       `HUBLA_PRODUCT_ID_ELITE` → entitlement `ativo`.
 - [ ] **AC8** — Evento de produto que não está na allowlist (PRO Club incluso)
       → `200` ignorado, sem gravar entitlement.
+- [ ] **AC9** (emenda 2026-08-24) — `customer.member_added` Elite, com
+      `HUBLA_PRODUCT_ID_PRO` no prefixo `trial-pro-`, grava também entitlement
+      de cortesia Pro (`expires_at` = agora + 90 dias). Segunda entrega do
+      mesmo e-mail com cortesia ainda vigente **não** empurra `granted_at` /
+      `expires_at`. `member_removed` do último Elite revoga a cortesia.
 
 ## Fora do escopo (F019)
 - UI de ativação pós-login → [F019.1](F019.1-ativacao-acesso.md)

@@ -127,7 +127,7 @@ User (auth) 1 ─── N Abordagem
 User (auth) 1 ─── 1 UserApiKeys (BYOK / modo Orion — [F016](02-features/F016-configuracao-de-chaves.md), [F018](02-features/F018-limites-diarios.md))
 User (auth) 1 ─── N DailyUsage (cotas diárias — [F018](02-features/F018-limites-diarios.md))
 User (auth) — `purchase_email`, `purchase_verified_at`, `purchase_product_id` ([F019.1](02-features/F019.1-ativacao-acesso.md))
-HublaEntitlement — e-mails autorizados via webhook ([F019](02-features/F019-webhook-hubla.md))
+HublaEntitlement — e-mails autorizados via webhook ([F019](02-features/F019-webhook-hubla.md)); `expires_at` opcional na cortesia Pro ([F035](02-features/F035-planos-e-limites.md))
 User (auth) 1 ─── N TarefaAdiamento (adiar/dispensar cobrança — [F031](02-features/F031-central-de-tarefas.md))
 Lead 1 ─── N Diagnóstico
 Lead 1 ─── N Dor

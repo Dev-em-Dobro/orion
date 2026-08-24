@@ -9,6 +9,8 @@ const { prismaMock } = vi.hoisted(() => ({
     },
     hublaEntitlement: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));

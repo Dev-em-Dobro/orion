@@ -1,18 +1,19 @@
 "use client";
 
-// F035 — aviso do free trial Pro (3 meses). Spec AC27.
-// Dismissível via localStorage: o aluno fecha uma vez e não vê de novo neste
-// browser. Sem cookie no servidor — o banner não é crítico pro HTML inicial.
+// F035 — aviso do free trial Pro (AC27). Data/duração vêm do servidor
+// (cortesia por aluno). Dismissível via localStorage.
 
 import { useEffect, useState } from "react";
-import {
-  TRIAL_PRO_MESES,
-  rotuloFimTrialPro,
-} from "@/lib/planos/trial";
 
 const STORAGE_KEY = "orion-aviso-trial-pro-2026-11";
 
-export function AvisoTrialProCliente() {
+export function AvisoTrialProCliente({
+  duracao,
+  fimRotulo,
+}: {
+  duracao: string;
+  fimRotulo: string;
+}) {
   const [visivel, setVisivel] = useState(false);
 
   useEffect(() => {
@@ -44,8 +45,8 @@ export function AvisoTrialProCliente() {
         <p>
           <span className="font-medium text-primary">Free trial · PRO</span>
           {" — "}
-          você tem {TRIAL_PRO_MESES} meses de acesso liberado ao Pro (até{" "}
-          {rotuloFimTrialPro()}). Inclui o teto de 300 Leads novos por mês.
+          você tem {duracao} de acesso liberado ao Pro (até {fimRotulo}).
+          Inclui o teto de 300 Leads novos por mês.
         </p>
         <button
           type="button"
