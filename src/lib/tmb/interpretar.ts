@@ -9,7 +9,7 @@ import {
   type TmbVendaPayload,
 } from "./tipos";
 import {
-  idsProdutoAcessoHubla,
+  idsChaveAcessoHubla,
   idsProdutoEliteAcessoHubla,
 } from "@/lib/hubla/produtos";
 
@@ -65,7 +65,7 @@ export function codesAcessoOrion(): Set<string> {
 /** IDs que liberam compra Orion: Hubla (Elite + PRO Club) + TMB (Elite + Mentoria). */
 export function productIdsAcessoCompra(): string[] {
   const ids = new Set<string>([
-    ...idsProdutoAcessoHubla(),
+    ...idsChaveAcessoHubla(),
   ]);
   for (const code of codesAcessoOrion()) {
     ids.add(code);

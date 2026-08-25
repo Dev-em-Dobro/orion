@@ -1,13 +1,10 @@
 // F041 — TMB vendas → HublaEntitlement (acesso Orion / F019.1).
 
 import { prisma } from "@/lib/db";
-import {
-  idempotencyKeyTmb,
-  interpretarVendaTmb,
-} from "./interpretar";
+import { codesPermitidos, idempotencyKeyTmb, interpretarVendaTmb } from "./interpretar";
 import type { AcaoTmb } from "./tipos";
 import {
-  concederCortesiaProSeElite,
+  concederCortesiaPro,
   revogarCortesiaProSeSemAcesso,
 } from "@/lib/planos/cortesia-pro";
 
@@ -61,7 +58,9 @@ async function aplicarAcao(acao: AcaoTmb): Promise<void> {
         granted_at: new Date(),
       },
     });
-    await concederCortesiaProSeElite(acao.email);
+    if (codesPermitidos().has(acao.productId.toUpperCase())) {
+      await concederCortesiaPro(acao.email);
+    }
     return;
   }
 

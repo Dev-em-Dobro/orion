@@ -45,8 +45,8 @@ sempre na porta, mesmo fora do override. Opcional: `TMB_LANCAMENTO_ID=36238`.
   `HublaWebhookDelivery`
 
 ## Verificação de compra (F019.1)
-`temEntitlementAtivo` / compra aceita IDs Hubla de acesso (legado + Elite +
-PRO Club) **ou** codes TMB Elite **e** Mentoria.
+`temEntitlementAtivo` / compra aceita IDs Hubla de acesso (produto Club +
+Elite + PRO separado + **offer ids**) **ou** codes TMB Elite **e** Mentoria.
 
 ## Critérios
 - [x] Token inválido → 401; env ausente → 503

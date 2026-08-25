@@ -14,8 +14,9 @@ Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 > **acesso** ao Orion ([F019.1](F019.1-ativacao-acesso.md)) e, no modo
 > `trial-pro-*`, cortesia Pro. Quem comprou o **PRO do Club** (R$ 297) também
 > ganha **acesso**, no plano **Free**. `HUBLA_PRODUCT_ID_PRO` continua sendo o
-> plano Pro do **Orion**; o id Hubla do PRO Club vai em
-> `HUBLA_PRODUCT_ID_CLUB_PRO`.
+> plano Pro do **Orion**; o PRO Club no mesmo produto Hubla vai em
+> `HUBLA_OFFER_ID_PRO` (`products[].offers[].id`). `HUBLA_PRODUCT_ID_CLUB_PRO`
+> só se a Hubla criar produto separado.
 >
 > **Emenda de 2026-08-24 — cortesia Pro no Elite novo.** Enquanto
 > `HUBLA_PRODUCT_ID_PRO` estiver no prefixo `trial-pro-`, o grant de acesso

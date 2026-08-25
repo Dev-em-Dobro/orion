@@ -1,7 +1,14 @@
 // F019 — POST /api/webhooks/hubla (Hubla → entitlements locais).
 
 import { NextRequest, NextResponse } from "next/server";
-import { idsProdutoAcessoHubla, processarWebhookHubla } from "@/lib/hubla";
+import { processarWebhookHubla } from "@/lib/hubla";
+import {
+  idsOfertaEliteHubla,
+  idsOfertaProHubla,
+  idsProdutoAcessoHubla,
+  idsProdutoClubProAcessoHubla,
+  idsProdutoEliteAcessoHubla,
+} from "@/lib/hubla/produtos";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -58,7 +65,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const resultado = await processarWebhookHubla(payload, {
-      productIdFiltro: productIds,
+      productIdFiltro: {
+        productIds,
+        offerIdsPro: idsOfertaProHubla(),
+        offerIdsElite: idsOfertaEliteHubla(),
+        eliteProductIds: idsProdutoEliteAcessoHubla(),
+        clubProProductIds: idsProdutoClubProAcessoHubla(),
+      },
       idempotencyKey,
       eventType,
     });

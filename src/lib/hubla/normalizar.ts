@@ -16,6 +16,28 @@ export function productIdDoEvento(event: {
   return primeiro || null;
 }
 
+type OfertaHubla = { id?: string };
+type ProdutoComOfertas = { offers?: OfertaHubla[] };
+
+export function offerIdsDoEvento(event: {
+  product?: ProdutoComOfertas;
+  products?: ProdutoComOfertas[];
+}): string[] {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  const add = (raw?: string) => {
+    const id = raw?.trim();
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    ids.push(id);
+  };
+  for (const offer of event.product?.offers ?? []) add(offer.id);
+  for (const product of event.products ?? []) {
+    for (const offer of product.offers ?? []) add(offer.id);
+  }
+  return ids;
+}
+
 export function emailDoEvento(event: HublaWebhookEventLike): string | null {
   return (
     normalizarEmailHubla(event.user?.email) ??

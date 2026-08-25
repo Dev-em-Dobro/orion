@@ -7,7 +7,7 @@ import {
 } from "./interpretar";
 import type { AcaoEntitlement, HublaWebhookPayload } from "./tipos";
 import {
-  concederCortesiaProSeElite,
+  concederCortesiaPro,
   revogarCortesiaProSeSemAcesso,
 } from "@/lib/planos/cortesia-pro";
 
@@ -30,55 +30,85 @@ export async function registrarEntrega(
   });
 }
 
-export async function aplicarAcaoEntitlement(acao: AcaoEntitlement): Promise<void> {
-  if (acao.acao === "ignorar") return;
-
-  if (acao.acao === "conceder") {
+async function upsertEntitlement(opts: {
+  email: string;
+  productId: string;
+  status: "ativo" | "revogado";
+  hublaUserId?: string | null;
+  subscriptionId?: string | null;
+}): Promise<void> {
+  const agora = new Date();
+  if (opts.status === "ativo") {
     await prisma.hublaEntitlement.upsert({
       where: {
         email_product_id: {
-          email: acao.email,
-          product_id: acao.productId,
+          email: opts.email,
+          product_id: opts.productId,
         },
       },
       create: {
-        email: acao.email,
-        product_id: acao.productId,
+        email: opts.email,
+        product_id: opts.productId,
         status: "ativo",
-        hubla_user_id: acao.hublaUserId ?? null,
-        subscription_id: acao.subscriptionId ?? null,
-        granted_at: new Date(),
+        hubla_user_id: opts.hublaUserId ?? null,
+        subscription_id: opts.subscriptionId ?? null,
+        granted_at: agora,
       },
       update: {
         status: "ativo",
-        hubla_user_id: acao.hublaUserId ?? null,
-        subscription_id: acao.subscriptionId ?? null,
+        hubla_user_id: opts.hublaUserId ?? null,
+        subscription_id: opts.subscriptionId ?? null,
         revoked_at: null,
-        granted_at: new Date(),
+        granted_at: agora,
       },
     });
-    await concederCortesiaProSeElite(acao.email);
     return;
   }
 
   await prisma.hublaEntitlement.upsert({
     where: {
       email_product_id: {
-        email: acao.email,
-        product_id: acao.productId,
+        email: opts.email,
+        product_id: opts.productId,
       },
     },
     create: {
-      email: acao.email,
-      product_id: acao.productId,
+      email: opts.email,
+      product_id: opts.productId,
       status: "revogado",
-      revoked_at: new Date(),
+      revoked_at: agora,
     },
     update: {
       status: "revogado",
-      revoked_at: new Date(),
+      revoked_at: agora,
     },
   });
+}
+
+export async function aplicarAcaoEntitlement(acao: AcaoEntitlement): Promise<void> {
+  if (acao.acao === "ignorar") return;
+
+  if (acao.acao === "conceder") {
+    await upsertEntitlement({
+      email: acao.email,
+      productId: acao.chaveEntitlement,
+      status: "ativo",
+      hublaUserId: acao.hublaUserId,
+      subscriptionId: acao.subscriptionId,
+    });
+    if (acao.cortesiaPro) {
+      await concederCortesiaPro(acao.email);
+    }
+    return;
+  }
+
+  for (const productId of acao.chavesEntitlement) {
+    await upsertEntitlement({
+      email: acao.email,
+      productId,
+      status: "revogado",
+    });
+  }
   await revogarCortesiaProSeSemAcesso(acao.email);
 }
 

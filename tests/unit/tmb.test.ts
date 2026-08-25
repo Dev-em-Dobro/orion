@@ -26,6 +26,8 @@ describe("tmb F041 — Elite e Mentoria abrem o Orion", () => {
     delete process.env.HUBLA_PRODUCT_ID;
     delete process.env.HUBLA_PRODUCT_ID_ELITE;
     delete process.env.HUBLA_PRODUCT_ID_CLUB_PRO;
+    delete process.env.HUBLA_OFFER_ID_PRO;
+    delete process.env.HUBLA_OFFER_ID_ELITE;
   });
 
   it("boleto 3XB concede", () => {
@@ -61,12 +63,14 @@ describe("tmb F041 — Elite e Mentoria abrem o Orion", () => {
     process.env.HUBLA_PRODUCT_ID = "legado";
     process.env.HUBLA_PRODUCT_ID_ELITE = "elite-hubla";
     process.env.HUBLA_PRODUCT_ID_CLUB_PRO = "pro-club";
+    process.env.HUBLA_OFFER_ID_PRO = "offer-pro";
     const ids = productIdsAcessoCompra();
     expect(ids).toEqual(
       expect.arrayContaining([
         "legado",
         "elite-hubla",
         "pro-club",
+        "offer-pro",
         TMB_CODE_MENTORIA_PRO,
         ...TMB_ELITE_CODES_DEFAULT,
       ]),

@@ -5,9 +5,16 @@ export type {
 } from "./tipos";
 export {
   interpretarEventoHubla,
+  type FiltroAcessoHubla,
   type ProductIdFiltroHubla,
 } from "./interpretar";
-export { idsProdutoAcessoHubla, idsProdutoEliteAcessoHubla } from "./produtos";
+export {
+  idsChaveAcessoHubla,
+  idsOfertaEliteHubla,
+  idsOfertaProHubla,
+  idsProdutoAcessoHubla,
+  idsProdutoEliteAcessoHubla,
+} from "./produtos";
 export { normalizarEmailHubla } from "./normalizar";
 export {
   processarWebhookHubla,
