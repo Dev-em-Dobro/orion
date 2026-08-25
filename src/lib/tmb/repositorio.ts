@@ -7,7 +7,7 @@ import {
 } from "./interpretar";
 import type { AcaoTmb } from "./tipos";
 import {
-  concederCortesiaPro,
+  concederCortesiaProSeElite,
   revogarCortesiaProSeSemAcesso,
 } from "@/lib/planos/cortesia-pro";
 
@@ -61,7 +61,7 @@ async function aplicarAcao(acao: AcaoTmb): Promise<void> {
         granted_at: new Date(),
       },
     });
-    await concederCortesiaPro(acao.email);
+    await concederCortesiaProSeElite(acao.email);
     return;
   }
 

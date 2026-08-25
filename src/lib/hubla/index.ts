@@ -7,7 +7,7 @@ export {
   interpretarEventoHubla,
   type ProductIdFiltroHubla,
 } from "./interpretar";
-export { idsProdutoAcessoHubla } from "./produtos";
+export { idsProdutoAcessoHubla, idsProdutoEliteAcessoHubla } from "./produtos";
 export { normalizarEmailHubla } from "./normalizar";
 export {
   processarWebhookHubla,

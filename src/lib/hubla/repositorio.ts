@@ -7,7 +7,7 @@ import {
 } from "./interpretar";
 import type { AcaoEntitlement, HublaWebhookPayload } from "./tipos";
 import {
-  concederCortesiaPro,
+  concederCortesiaProSeElite,
   revogarCortesiaProSeSemAcesso,
 } from "@/lib/planos/cortesia-pro";
 
@@ -57,7 +57,7 @@ export async function aplicarAcaoEntitlement(acao: AcaoEntitlement): Promise<voi
         granted_at: new Date(),
       },
     });
-    await concederCortesiaPro(acao.email);
+    await concederCortesiaProSeElite(acao.email);
     return;
   }
 

@@ -127,8 +127,8 @@ Detalhe na [F019.1](F019.1-ativacao-acesso.md).
 
 ## 5. Webhook da Hubla sem produto configurado
 
-Allowlist Hubla vazia (`HUBLA_PRODUCT_ID` e `HUBLA_PRODUCT_ID_ELITE` ambos
-ausentes) fazia o webhook **aceitar qualquer produto** (conveniência de dev que
+Allowlist Hubla vazia (`HUBLA_PRODUCT_ID`, `HUBLA_PRODUCT_ID_ELITE` e
+`HUBLA_PRODUCT_ID_CLUB_PRO` todos ausentes) fazia o webhook **aceitar qualquer produto** (conveniência de dev que
 valia igual em produção). Agora: `503` antes de qualquer processamento, na
 mesma checagem de arranque que já existia pro `HUBLA_WEBHOOK_TOKEN`.
 

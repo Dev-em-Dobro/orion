@@ -25,7 +25,7 @@ export type AcaoTmb =
   | { acao: "revogar"; email: string; productId: string; pedido: string }
   | { acao: "ignorar"; motivo: string };
 
-/** Mentoria / PRO Club — não libera Orion. */
+/** Mentoria / PRO Club — libera Orion no plano Free. */
 export const TMB_CODE_MENTORIA_PRO = "1AS249898VN";
 
 /** Boleto Elite (R$ 1.297) — libera acesso Orion. */

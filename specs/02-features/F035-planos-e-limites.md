@@ -10,10 +10,12 @@ Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 > configurado), não uma falha. Criar os produtos na Hubla e preencher as duas
 > vars liga a feature sem tocar em código.
 >
-> **Acesso Club Elite ≠ produto Pro do Club.** Quem comprou Builders Club Elite
-> ganha **acesso** ao Orion ([F019.1](F019.1-ativacao-acesso.md)). O PRO do Club
-> (R$ 297) **não** vira plano Pro. `HUBLA_PRODUCT_ID_PRO` continua sendo o
-> plano Pro do **Orion**.
+> **Acesso Club ≠ plano Pro do Orion.** Quem comprou Builders Club Elite ganha
+> **acesso** ao Orion ([F019.1](F019.1-ativacao-acesso.md)) e, no modo
+> `trial-pro-*`, cortesia Pro. Quem comprou o **PRO do Club** (R$ 297) também
+> ganha **acesso**, no plano **Free**. `HUBLA_PRODUCT_ID_PRO` continua sendo o
+> plano Pro do **Orion**; o id Hubla do PRO Club vai em
+> `HUBLA_PRODUCT_ID_CLUB_PRO`.
 >
 > **Emenda de 2026-08-24 — cortesia Pro no Elite novo.** Enquanto
 > `HUBLA_PRODUCT_ID_PRO` estiver no prefixo `trial-pro-`, o grant de acesso

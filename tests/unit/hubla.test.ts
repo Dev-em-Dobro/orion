@@ -91,7 +91,7 @@ describe("hubla interpretar", () => {
     expect(acao.acao === "conceder" && acao.productId).toBe("elite-novo");
   });
 
-  it("ignora PRO Club fora da allowlist", () => {
+  it("ignora produto fora da allowlist", () => {
     const acao = interpretarEventoHubla(
       {
         type: "customer.member_added",
@@ -104,6 +104,22 @@ describe("hubla interpretar", () => {
       ["VL3e0iDO3A32SyjJWr9S", "elite-novo"],
     );
     expect(acao.acao).toBe("ignorar");
+  });
+
+  it("concede PRO Club quando HUBLA_PRODUCT_ID_CLUB_PRO está na allowlist", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: "pro-club-297" },
+          user: { email: "a@b.com" },
+          subscription: { status: "active" },
+        },
+      },
+      ["VL3e0iDO3A32SyjJWr9S", "elite-novo", "pro-club-297"],
+    );
+    expect(acao.acao).toBe("conceder");
+    expect(acao.acao === "conceder" && acao.productId).toBe("pro-club-297");
   });
 
   it("sandbox Builders Club (payload real Hubla)", () => {
@@ -156,6 +172,7 @@ describe("hubla processarWebhookHubla", () => {
   it("persiste entitlement em member_added", async () => {
     prismaMock.hublaWebhookDelivery.findUnique.mockResolvedValue(null);
     prismaMock.hublaEntitlement.upsert.mockResolvedValue({});
+    prismaMock.hublaEntitlement.findFirst.mockResolvedValue({ id: "elite-1" });
     prismaMock.hublaEntitlement.findUnique.mockResolvedValue(null);
 
     const res = await processarWebhookHubla(
@@ -199,6 +216,7 @@ describe("hubla processarWebhookHubla", () => {
     process.env.HUBLA_PRODUCT_ID_PRO = "trial-pro-2026-11";
     prismaMock.hublaWebhookDelivery.findUnique.mockResolvedValue(null);
     prismaMock.hublaEntitlement.upsert.mockResolvedValue({});
+    prismaMock.hublaEntitlement.findFirst.mockResolvedValue({ id: "elite-1" });
     prismaMock.hublaEntitlement.findUnique.mockResolvedValue({
       product_id: "trial-pro-2026-11",
       status: "ativo",

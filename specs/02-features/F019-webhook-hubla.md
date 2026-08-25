@@ -27,23 +27,27 @@ Demais tipos → `200` ignorado (sem efeito).
 Header `x-hubla-idempotency` registrado em `HublaWebhookDelivery`. Reenvio do
 mesmo evento → `200` sem reprocessar.
 
-## Filtro de produto (acesso Orion = Elite do Club)
+## Filtro de produto (acesso Orion = Elite **ou** PRO do Club)
 
-O Orion **não** é o Club. Só quem comprou **Elite** ganha `HublaEntitlement`
-de acesso. PRO do Club (R$ 297) não entra. Planos pagos do Orion ([F035](F035-planos-e-limites.md))
-são outra coisa — ofertas ainda não definidas; esta spec não as usa.
+O Orion **não** é o Club. Quem comprou **Elite** ou **PRO** (R$ 297) ganha
+`HublaEntitlement` de **acesso**. O plano dentro do Orion continua sendo o da
+[F035](F035-planos-e-limites.md): PRO Club entra como **Free** (40 Leads/mês).
+Elite, no modo `trial-pro-*`, ganha cortesia Pro (abaixo). `HUBLA_PRODUCT_ID_PRO`
+no Orion **não** é o produto Hubla do Club — é o plano Pro do Orion / id sintético.
 
 Mapa (`event.product.id`):
 
 | Env | Papel no Orion |
 |-----|----------------|
 | `HUBLA_PRODUCT_ID` | Legado Builders Club (`VL3e0iDO3A32SyjJWr9S`). Produto antigo de R$ 997 — **concede acesso** (trata como Elite). |
-| `HUBLA_PRODUCT_ID_ELITE` | Produto Elite novo (R$ 997), quando a Hubla tiver o id. **Concede acesso.** |
-| `HUBLA_PRODUCT_ID_PRO` | **Não usar aqui.** No Orion essa env já é o plano Pro da F035 (hoje vazia / trial). PRO do Club (R$ 297) **não** tem env no Orion: o webhook só concede o que está na allowlist, então o evento PRO é ignorado. |
+| `HUBLA_PRODUCT_ID_ELITE` | Produto Elite novo (R$ 997). **Concede acesso** + cortesia Pro se `trial-pro-*`. |
+| `HUBLA_PRODUCT_ID_CLUB_PRO` | Produto PRO do Club (R$ 297). **Concede acesso** no plano Free. **Não** dispara cortesia Pro. |
+| `HUBLA_PRODUCT_ID_PRO` | Plano Pro do **Orion** (F035). Prefixo `trial-pro-` = cortesia no grant **Elite**. Não coloque o id Hubla do PRO Club aqui. |
 
-Pelo menos um ID de acesso (`HUBLA_PRODUCT_ID` ou `HUBLA_PRODUCT_ID_ELITE`) é
-**obrigatório**. Sem nenhum → `503` antes de ler o corpo, na mesma checagem de
-arranque do `HUBLA_WEBHOOK_TOKEN` ([F036](F036-endurecimento-de-seguranca.md)).
+Pelo menos um ID de acesso (`HUBLA_PRODUCT_ID`, `HUBLA_PRODUCT_ID_ELITE` ou
+`HUBLA_PRODUCT_ID_CLUB_PRO`) é **obrigatório**. Sem nenhum → `503` antes de
+ler o corpo, na mesma checagem de arranque do `HUBLA_WEBHOOK_TOKEN`
+([F036](F036-endurecimento-de-seguranca.md)).
 
 Evento de produto fora da allowlist → `200` ignorado, sem gravar entitlement.
 Cancelamento/reembolso de um ID da allowlist → `status = revogado` (já era AC3).
@@ -54,8 +58,11 @@ Cancelamento/reembolso de um ID da allowlist → `status = revogado` (já era AC
 >
 > **Emenda de 2026-08-23.** A allowlist passou de um id só para legado + Elite.
 > Sem isso, um produto PRO novo na mesma conta Hubla poderia vazar se o filtro
-> voltasse a “qualquer produto”, ou se o legado fosse o único id e a Hubla
-> reutilizasse a oferta. PRO Club não entra na lista; não grava entitlement.
+> voltasse a “qualquer produto”.
+>
+> **Emenda de 2026-08-25.** PRO Club entra na allowlist via
+> `HUBLA_PRODUCT_ID_CLUB_PRO` (acesso Free). Continua **fora** de
+> `HUBLA_PRODUCT_ID_PRO`.
 
 ## Cortesia Pro no grant Elite (emenda 2026-08-24)
 
@@ -68,8 +75,8 @@ entitlement sintético de cortesia Pro (`trial-pro-…`), com `expires_at` =
 ativo **não** renova o relógio. Revogar o último Elite ativo revoga a cortesia.
 
 Cortesia **não** dispara se `HUBLA_PRODUCT_ID_PRO` estiver vazio ou for um
-produto Hubla real (fora do prefixo `trial-pro-`). PRO Club (R$ 297) continua
-fora da allowlist.
+produto Hubla real (fora do prefixo `trial-pro-`). Grant de
+`HUBLA_PRODUCT_ID_CLUB_PRO` **não** cria cortesia — o aluno fica no Free.
 
 ## Modelo
 - `HublaEntitlement` — unique `(email, product_id)`, e-mail normalizado
@@ -82,18 +89,22 @@ fora da allowlist.
 - [ ] **AC4** — Mesmo `x-hubla-idempotency` duas vezes → `200` na segunda, um registro.
 - [ ] **AC5** — Resposta `200` rápida (< processamento síncrono leve).
 - [x] **AC6** ([F036](F036-endurecimento-de-seguranca.md)) — Sem nenhum ID de
-      acesso (`HUBLA_PRODUCT_ID` e `HUBLA_PRODUCT_ID_ELITE` ambos vazios) →
-      `503`, sem ler o corpo e sem gravar entitlement. A checagem vem **antes**
-      da validação do token.
-- [ ] **AC7** — `customer.member_added` do produto legado ou
-      `HUBLA_PRODUCT_ID_ELITE` → entitlement `ativo`.
-- [ ] **AC8** — Evento de produto que não está na allowlist (PRO Club incluso)
-      → `200` ignorado, sem gravar entitlement.
+      acesso (`HUBLA_PRODUCT_ID`, `HUBLA_PRODUCT_ID_ELITE` e
+      `HUBLA_PRODUCT_ID_CLUB_PRO` todos vazios) → `503`, sem ler o corpo e sem
+      gravar entitlement. A checagem vem **antes** da validação do token.
+- [ ] **AC7** — `customer.member_added` do produto legado,
+      `HUBLA_PRODUCT_ID_ELITE` ou `HUBLA_PRODUCT_ID_CLUB_PRO` → entitlement
+      `ativo`.
+- [ ] **AC8** — Evento de produto que não está na allowlist → `200` ignorado,
+      sem gravar entitlement.
 - [ ] **AC9** (emenda 2026-08-24) — `customer.member_added` Elite, com
       `HUBLA_PRODUCT_ID_PRO` no prefixo `trial-pro-`, grava também entitlement
       de cortesia Pro (`expires_at` = agora + 90 dias). Segunda entrega do
       mesmo e-mail com cortesia ainda vigente **não** empurra `granted_at` /
       `expires_at`. `member_removed` do último Elite revoga a cortesia.
+- [ ] **AC10** (emenda 2026-08-25) — `customer.member_added` do PRO Club
+      (`HUBLA_PRODUCT_ID_CLUB_PRO`) grava acesso e **não** grava cortesia
+      `trial-pro-*`. Plano derivado = Free.
 
 ## Fora do escopo (F019)
 - UI de ativação pós-login → [F019.1](F019.1-ativacao-acesso.md)

@@ -18,7 +18,7 @@ Referência: [documentação Hubla](https://hubla.gitbook.io/docs/webhooks/event
 | `200` | Processado ou ignorado com sucesso (produto fora da allowlist incluso) |
 | `401` | Token ausente ou inválido |
 | `400` | JSON inválido |
-| `503` | `HUBLA_WEBHOOK_TOKEN` não configurado, **ou** nenhum ID de acesso (`HUBLA_PRODUCT_ID` / `HUBLA_PRODUCT_ID_ELITE`) |
+| `503` | `HUBLA_WEBHOOK_TOKEN` não configurado, **ou** nenhum ID de acesso (`HUBLA_PRODUCT_ID` / `HUBLA_PRODUCT_ID_ELITE` / `HUBLA_PRODUCT_ID_CLUB_PRO`) |
 
 ## Payload (membro — campos usados)
 
@@ -39,8 +39,9 @@ Referência: [documentação Hubla](https://hubla.gitbook.io/docs/webhooks/event
 | Variável | Obrigatório | Descrição |
 |----------|-------------|-----------|
 | `HUBLA_WEBHOOK_TOKEN` | prod | Token da aba Autenticação |
-| `HUBLA_PRODUCT_ID` | um dos dois | Legado Elite (`VL3e0iDO3A32SyjJWr9S`) — concede acesso Orion |
-| `HUBLA_PRODUCT_ID_ELITE` | um dos dois | Produto Elite novo (R$ 997), quando a Hubla tiver o id |
-| `HUBLA_CHECKOUT_URL` | recomendado | Checkout **Elite** (não o PRO R$ 297). Default do Club: `https://pay.hub.la/v1SsMcVXNip7Mn5A2pNH` |
+| `HUBLA_PRODUCT_ID` | um dos três | Legado Elite (`VL3e0iDO3A32SyjJWr9S`) — concede acesso Orion |
+| `HUBLA_PRODUCT_ID_ELITE` | um dos três | Produto Elite novo (R$ 997) |
+| `HUBLA_PRODUCT_ID_CLUB_PRO` | um dos três | PRO Club R$ 297 — acesso **Free** (não é `HUBLA_PRODUCT_ID_PRO`) |
+| `HUBLA_CHECKOUT_URL` | recomendado | Checkout **Elite** (upsell). Default: `https://pay.hub.la/v1SsMcVXNip7Mn5A2pNH` |
 | `HUBLA_PRODUCT_ID_PRO` | F035 | Plano Pro do **Orion**. Prefixo `trial-pro-` = cortesia no grant Elite (90 dias). Não é o PRO Club. |
 | `CORTESIA_PRO_DIAS` | não | Duração da cortesia em grants **novos**. Default 90. |

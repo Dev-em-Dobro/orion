@@ -2,7 +2,7 @@
 // Spec: /specs/02-features/F035-planos-e-limites.md (AC28)
 
 import { prisma } from "@/lib/db";
-import { productIdsAcessoCompra } from "@/lib/tmb/interpretar";
+import { productIdsCortesiaPro } from "@/lib/tmb/interpretar";
 import {
   TRIAL_PRO_FIM_ISO,
   dataExpiracaoCortesia,
@@ -54,6 +54,25 @@ export async function concederCortesiaPro(
   return "criado";
 }
 
+/** Cortesia só se o e-mail ainda tem Elite ativo (não no PRO Club / Mentoria). */
+export async function concederCortesiaProSeElite(
+  email: string,
+  agora: Date = new Date(),
+): Promise<"criado" | "ja_ativo" | "ignorado"> {
+  const ids = productIdsCortesiaPro();
+  if (ids.length === 0) return "ignorado";
+  const elite = await prisma.hublaEntitlement.findFirst({
+    where: {
+      email,
+      status: "ativo",
+      product_id: { in: ids },
+    },
+    select: { id: true },
+  });
+  if (!elite) return "ignorado";
+  return concederCortesiaPro(email, agora);
+}
+
 export async function revogarCortesiaPro(email: string): Promise<void> {
   const productId = idProdutoCortesiaPro();
   if (!productId) return;
@@ -77,7 +96,7 @@ export async function revogarCortesiaPro(email: string): Promise<void> {
 export async function revogarCortesiaProSeSemAcesso(
   email: string,
 ): Promise<void> {
-  const ids = productIdsAcessoCompra();
+  const ids = productIdsCortesiaPro();
   if (ids.length > 0) {
     const outro = await prisma.hublaEntitlement.findFirst({
       where: {

@@ -8,7 +8,10 @@ import {
   type AcaoTmb,
   type TmbVendaPayload,
 } from "./tipos";
-import { idsProdutoAcessoHubla } from "@/lib/hubla/produtos";
+import {
+  idsProdutoAcessoHubla,
+  idsProdutoEliteAcessoHubla,
+} from "@/lib/hubla/produtos";
 
 function asRecord(payload: unknown): Record<string, unknown> | null {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -38,6 +41,7 @@ export function extrairVenda(payload: unknown): TmbVendaPayload | null {
   return root as TmbVendaPayload;
 }
 
+/** Codes TMB Elite (boleto). Mentoria fica de fora mesmo se vier no override. */
 export function codesPermitidos(): Set<string> {
   const raw =
     process.env.TMB_ELITE_CODES?.trim() ||
@@ -51,9 +55,27 @@ export function codesPermitidos(): Set<string> {
   );
 }
 
-/** IDs que liberam compra Orion: Elite Hubla (legado + novo) + boleto TMB Elite. */
+/** Porta Orion: Elite TMB + Mentoria PRO (acesso Free). */
+export function codesAcessoOrion(): Set<string> {
+  const set = codesPermitidos();
+  set.add(TMB_CODE_MENTORIA_PRO.toUpperCase());
+  return set;
+}
+
+/** IDs que liberam compra Orion: Hubla (Elite + PRO Club) + TMB (Elite + Mentoria). */
 export function productIdsAcessoCompra(): string[] {
-  const ids = new Set<string>(idsProdutoAcessoHubla());
+  const ids = new Set<string>([
+    ...idsProdutoAcessoHubla(),
+  ]);
+  for (const code of codesAcessoOrion()) {
+    ids.add(code);
+  }
+  return [...ids];
+}
+
+/** Só Elite (Hubla + boleto TMB) — cortesia Pro. */
+export function productIdsCortesiaPro(): string[] {
+  const ids = new Set<string>(idsProdutoEliteAcessoHubla());
   for (const code of codesPermitidos()) {
     ids.add(code);
   }
@@ -88,8 +110,8 @@ export function interpretarVendaTmb(payload: unknown): AcaoTmb {
     return { acao: "ignorar", motivo: "code ausente" };
   }
 
-  if (!codesPermitidos().has(productId.toUpperCase())) {
-    return { acao: "ignorar", motivo: "code fora das ofertas Elite" };
+  if (!codesAcessoOrion().has(productId.toUpperCase())) {
+    return { acao: "ignorar", motivo: "code fora das ofertas de acesso" };
   }
 
   const lancamentoFiltro = lancamentoIdFiltro();

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        erro: "HUBLA_PRODUCT_ID / HUBLA_PRODUCT_ID_ELITE não configurado",
+        erro: "HUBLA_PRODUCT_ID / HUBLA_PRODUCT_ID_ELITE / HUBLA_PRODUCT_ID_CLUB_PRO não configurado",
       },
       { status: 503 },
     );

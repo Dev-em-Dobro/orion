@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { normalizarEmailHubla, temEntitlementAtivo } from "@/lib/hubla";
 import { productIdHubla } from "./env";
 import { productIdsAcessoCompra } from "@/lib/tmb";
-import { concederCortesiaPro } from "@/lib/planos/cortesia-pro";
+import { concederCortesiaProSeElite } from "@/lib/planos/cortesia-pro";
 import { CompraJaVinculadaError, CompraNaoEncontradaError, CompraRequiredError } from "./erros";
 
 export type StatusCompra = {
@@ -67,7 +67,7 @@ async function gravarVerificacao(
       purchaseProductId: productId,
     },
   });
-  await concederCortesiaPro(emailCompra);
+  await concederCortesiaProSeElite(emailCompra);
 }
 
 async function limparVerificacao(userId: string): Promise<void> {
@@ -119,7 +119,7 @@ async function revalidarCache(user: UserCompra): Promise<boolean> {
 
   const ativo = await entitlementAtivoParaEmail(user.purchaseEmail);
   if (ativo) {
-    await concederCortesiaPro(user.purchaseEmail);
+    await concederCortesiaProSeElite(user.purchaseEmail);
     return true;
   }
 
