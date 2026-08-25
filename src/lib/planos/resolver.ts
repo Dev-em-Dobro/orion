@@ -9,6 +9,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { normalizarEmailHubla } from "@/lib/hubla";
 import { asPlano, melhorPlano, type Plano } from "./catalogo";
+import { entitlementPlanoVigente } from "./trial";
 
 /**
  * `product_id` da Hubla → plano. Vazio enquanto os IDs não forem criados na
@@ -80,12 +81,14 @@ export const planoDoUsuario = cache(async (userId: string): Promise<Plano> => {
       status: "ativo",
       product_id: { in: [...mapa.keys()] },
     },
-    select: { product_id: true },
+    select: { product_id: true, expires_at: true },
   });
 
   return planoDosEntitlements(
     mapa,
-    ativos.map((e) => e.product_id),
+    ativos
+      .filter((e) => entitlementPlanoVigente(e))
+      .map((e) => e.product_id),
   );
 });
 

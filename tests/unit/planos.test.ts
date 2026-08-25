@@ -21,6 +21,13 @@ import { LimiteDoPlanoError, RecursoDoPlanoError } from "@/lib/planos/erros";
 import { PLANOS_NA_UI } from "@/lib/planos/exibicao";
 import { planoDosEntitlements } from "@/lib/planos/resolver";
 import type { Plano } from "@/lib/planos/catalogo";
+import {
+  dataExpiracaoCortesia,
+  diasCortesiaPro,
+  entitlementPlanoVigente,
+  idProdutoCortesiaPro,
+  rotuloDuracaoCortesia,
+} from "@/lib/planos/trial";
 
 describe("F035 — catálogo", () => {
   it("AC1 — free é o padrão e vale 40 Leads novos/mês", () => {
@@ -177,5 +184,52 @@ describe("F035 — mensagens de erro", () => {
     const e = new RecursoDoPlanoError("tarefas", "free");
     expect(e.message).toContain("Central de Tarefas");
     expect(e.name).toBe("RecursoDoPlanoError");
+  });
+});
+
+describe("F035 — cortesia Pro (Elite)", () => {
+  it("idProdutoCortesiaPro só no prefixo trial-pro-", () => {
+    expect(idProdutoCortesiaPro("")).toBeNull();
+    expect(idProdutoCortesiaPro("prod_hubla_real")).toBeNull();
+    expect(idProdutoCortesiaPro("trial-pro-2026-11")).toBe("trial-pro-2026-11");
+  });
+
+  it("diasCortesiaPro default 90; env só inteiro positivo", () => {
+    expect(diasCortesiaPro(undefined)).toBe(90);
+    expect(diasCortesiaPro("30")).toBe(30);
+    expect(diasCortesiaPro("nao")).toBe(90);
+  });
+
+  it("entitlement expirado não vale; lote sem expires_at vale até 16/11/2026", () => {
+    const agora = new Date("2026-10-01T12:00:00-03:00");
+    expect(
+      entitlementPlanoVigente(
+        { product_id: "trial-pro-2026-11", expires_at: new Date("2026-09-01") },
+        agora,
+      ),
+    ).toBe(false);
+    expect(
+      entitlementPlanoVigente(
+        { product_id: "trial-pro-2026-11", expires_at: null },
+        agora,
+      ),
+    ).toBe(true);
+    expect(
+      entitlementPlanoVigente(
+        { product_id: "trial-pro-2026-11", expires_at: null },
+        new Date("2026-11-17T12:00:00-03:00"),
+      ),
+    ).toBe(false);
+  });
+
+  it("dataExpiracaoCortesia é 90 dias depois, fim do dia em SP", () => {
+    const fim = dataExpiracaoCortesia(new Date("2026-08-24T15:00:00-03:00"), 90);
+    expect(fim.toISOString()).toBe(new Date("2026-11-22T23:59:59.999-03:00").toISOString());
+  });
+
+  it("rotuloDuracaoCortesia: 90 → 3 meses, 30 → 1 mês", () => {
+    expect(rotuloDuracaoCortesia(90)).toBe("3 meses");
+    expect(rotuloDuracaoCortesia(30)).toBe("1 mês");
+    expect(rotuloDuracaoCortesia(45)).toBe("45 dias");
   });
 });

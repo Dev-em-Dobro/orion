@@ -9,6 +9,7 @@ const { prismaMock } = vi.hoisted(() => ({
     hublaEntitlement: {
       upsert: vi.fn(),
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -36,6 +37,8 @@ describe("hubla interpretar", () => {
       acao: "conceder",
       email: "aluno@email.com",
       productId: "prod-1",
+      chaveEntitlement: "prod-1",
+      cortesiaPro: false,
       hublaUserId: "u1",
       subscriptionId: "sub-1",
     });
@@ -56,6 +59,7 @@ describe("hubla interpretar", () => {
       acao: "revogar",
       email: "a@b.com",
       productId: "prod-1",
+      chavesEntitlement: ["prod-1"],
     });
   });
 
@@ -72,6 +76,53 @@ describe("hubla interpretar", () => {
       "prod-esperado",
     );
     expect(acao.acao).toBe("ignorar");
+  });
+
+  it("concede Elite quando a allowlist tem legado e Elite", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: "elite-novo" },
+          user: { email: "a@b.com" },
+          subscription: { status: "active" },
+        },
+      },
+      ["VL3e0iDO3A32SyjJWr9S", "elite-novo"],
+    );
+    expect(acao.acao).toBe("conceder");
+    expect(acao.acao === "conceder" && acao.productId).toBe("elite-novo");
+  });
+
+  it("ignora produto fora da allowlist", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: "pro-club-297" },
+          user: { email: "a@b.com" },
+          subscription: { status: "active" },
+        },
+      },
+      ["VL3e0iDO3A32SyjJWr9S", "elite-novo"],
+    );
+    expect(acao.acao).toBe("ignorar");
+  });
+
+  it("concede PRO Club quando HUBLA_PRODUCT_ID_CLUB_PRO está na allowlist", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: "pro-club-297" },
+          user: { email: "a@b.com" },
+          subscription: { status: "active" },
+        },
+      },
+      ["VL3e0iDO3A32SyjJWr9S", "elite-novo", "pro-club-297"],
+    );
+    expect(acao.acao).toBe("conceder");
+    expect(acao.acao === "conceder" && acao.productId).toBe("pro-club-297");
   });
 
   it("sandbox Builders Club (payload real Hubla)", () => {
@@ -110,9 +161,106 @@ describe("hubla interpretar", () => {
       acao: "conceder",
       email: "test-payer-email@example.com",
       productId: "VL3e0iDO3A32SyjJWr9S",
+      chaveEntitlement: "VL3e0iDO3A32SyjJWr9S",
+      cortesiaPro: false,
       hublaUserId: "RE4gy1p6uehKiXh4Ul4Jk-tester",
       subscriptionId: "01cc18cb-5297-41a4-8410-9058c7113aab-tester",
     });
+  });
+
+  const produtoClub = "VL3e0iDO3A32SyjJWr9S";
+  const ofertaPro = "6p9QTyJDVj2oAIzHx74E";
+  const filtroClub = {
+    productIds: [produtoClub],
+    offerIdsPro: [ofertaPro],
+    eliteProductIds: [produtoClub],
+  };
+
+  it("mesmo produto Club: oferta PRO concede Free sem cortesia", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        version: "2.0.0",
+        event: {
+          product: { id: produtoClub, name: "Builders Club" },
+          products: [
+            {
+              id: produtoClub,
+              name: "Builders Club",
+              offers: [
+                {
+                  id: ofertaPro,
+                  name: "Comunidade Builders Club - Pro (Cópia)",
+                },
+              ],
+            },
+          ],
+          subscription: {
+            id: "09159973-5636-41c3-9b0a-8e2942652006",
+            status: "active",
+            payer: { email: "ferramentasdevemdobro@gmail.com" },
+          },
+          user: {
+            id: "fJJmO8Anf2YtAjyawehB2xzNsDv2",
+            email: "ferramentasdevemdobro@gmail.com",
+          },
+        },
+      },
+      filtroClub,
+    );
+    expect(acao.acao).toBe("conceder");
+    if (acao.acao !== "conceder") return;
+    expect(acao.chaveEntitlement).toBe(ofertaPro);
+    expect(acao.cortesiaPro).toBe(false);
+    expect(acao.email).toBe("ferramentasdevemdobro@gmail.com");
+  });
+
+  it("mesmo produto Club: oferta que não é PRO segue Elite + cortesia", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: produtoClub },
+          products: [
+            {
+              id: produtoClub,
+              offers: [{ id: "oferta-elite-xyz" }],
+            },
+          ],
+          user: { email: "a@b.com" },
+          subscription: { status: "active" },
+        },
+      },
+      filtroClub,
+    );
+    expect(acao.acao).toBe("conceder");
+    if (acao.acao !== "conceder") return;
+    expect(acao.chaveEntitlement).toBe(produtoClub);
+    expect(acao.cortesiaPro).toBe(true);
+  });
+
+  it("slug de checkout não casa como oferta PRO", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: produtoClub },
+          products: [
+            {
+              id: produtoClub,
+              offers: [{ id: "XaY8QNfZlOO1XBgjzMfY" }],
+            },
+          ],
+          user: { email: "a@b.com" },
+          subscription: { status: "active" },
+        },
+      },
+      filtroClub,
+    );
+    expect(acao.acao).toBe("conceder");
+    if (acao.acao !== "conceder") return;
+    expect(acao.chaveEntitlement).toBe(produtoClub);
+    expect(acao.cortesiaPro).toBe(true);
   });
 });
 
@@ -124,6 +272,8 @@ describe("hubla processarWebhookHubla", () => {
   it("persiste entitlement em member_added", async () => {
     prismaMock.hublaWebhookDelivery.findUnique.mockResolvedValue(null);
     prismaMock.hublaEntitlement.upsert.mockResolvedValue({});
+    prismaMock.hublaEntitlement.findFirst.mockResolvedValue({ id: "elite-1" });
+    prismaMock.hublaEntitlement.findUnique.mockResolvedValue(null);
 
     const res = await processarWebhookHubla(
       {
@@ -159,6 +309,39 @@ describe("hubla processarWebhookHubla", () => {
 
     expect(res.ignorado).toBe(true);
     expect(prismaMock.hublaEntitlement.upsert).not.toHaveBeenCalled();
+  });
+
+  it("AC28 — Elite no modo trial-pro grava cortesia sem renovar se já vigente", async () => {
+    const prev = process.env.HUBLA_PRODUCT_ID_PRO;
+    process.env.HUBLA_PRODUCT_ID_PRO = "trial-pro-2026-11";
+    prismaMock.hublaWebhookDelivery.findUnique.mockResolvedValue(null);
+    prismaMock.hublaEntitlement.upsert.mockResolvedValue({});
+    prismaMock.hublaEntitlement.findFirst.mockResolvedValue({ id: "elite-1" });
+    prismaMock.hublaEntitlement.findUnique.mockResolvedValue({
+      product_id: "trial-pro-2026-11",
+      status: "ativo",
+      expires_at: new Date("2026-12-01T23:59:59.999-03:00"),
+    });
+
+    await processarWebhookHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: "p1" },
+          user: { email: "x@y.com" },
+          subscription: { status: "active" },
+        },
+      },
+      { eventType: "customer.member_added", idempotencyKey: "idem-cortesia" },
+    );
+
+    const productIds = prismaMock.hublaEntitlement.upsert.mock.calls.map(
+      (c) => c[0].where.email_product_id.product_id,
+    );
+    expect(productIds).toContain("p1");
+    expect(productIds).not.toContain("trial-pro-2026-11");
+    if (prev === undefined) delete process.env.HUBLA_PRODUCT_ID_PRO;
+    else process.env.HUBLA_PRODUCT_ID_PRO = prev;
   });
 });
 

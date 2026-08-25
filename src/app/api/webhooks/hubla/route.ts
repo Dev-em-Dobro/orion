@@ -2,6 +2,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { processarWebhookHubla } from "@/lib/hubla";
+import {
+  idsOfertaEliteHubla,
+  idsOfertaProHubla,
+  idsProdutoAcessoHubla,
+  idsProdutoClubProAcessoHubla,
+  idsProdutoEliteAcessoHubla,
+} from "@/lib/hubla/produtos";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -10,8 +17,8 @@ function tokenEsperado(): string | null {
   return process.env.HUBLA_WEBHOOK_TOKEN?.trim() || null;
 }
 
-function productIdFiltro(): string | null {
-  return process.env.HUBLA_PRODUCT_ID?.trim() || null;
+function idsAcesso(): string[] {
+  return idsProdutoAcessoHubla();
 }
 
 export async function POST(request: NextRequest) {
@@ -23,10 +30,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const productId = productIdFiltro();
-  if (!productId) {
+  const productIds = idsAcesso();
+  if (productIds.length === 0) {
     return NextResponse.json(
-      { ok: false, erro: "HUBLA_PRODUCT_ID não configurado" },
+      {
+        ok: false,
+        erro: "HUBLA_PRODUCT_ID / HUBLA_PRODUCT_ID_ELITE / HUBLA_PRODUCT_ID_CLUB_PRO não configurado",
+      },
       { status: 503 },
     );
   }
@@ -55,7 +65,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const resultado = await processarWebhookHubla(payload, {
-      productIdFiltro: productId,
+      productIdFiltro: {
+        productIds,
+        offerIdsPro: idsOfertaProHubla(),
+        offerIdsElite: idsOfertaEliteHubla(),
+        eliteProductIds: idsProdutoEliteAcessoHubla(),
+        clubProProductIds: idsProdutoClubProAcessoHubla(),
+      },
       idempotencyKey,
       eventType,
     });

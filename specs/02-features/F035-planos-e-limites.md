@@ -10,6 +10,24 @@ Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 > configurado), não uma falha. Criar os produtos na Hubla e preencher as duas
 > vars liga a feature sem tocar em código.
 >
+> **Acesso Club ≠ plano Pro do Orion.** Quem comprou Builders Club Elite ganha
+> **acesso** ao Orion ([F019.1](F019.1-ativacao-acesso.md)) e, no modo
+> `trial-pro-*`, cortesia Pro. Quem comprou o **PRO do Club** (R$ 297) também
+> ganha **acesso**, no plano **Free**. `HUBLA_PRODUCT_ID_PRO` continua sendo o
+> plano Pro do **Orion**; o PRO Club no mesmo produto Hubla vai em
+> `HUBLA_OFFER_ID_PRO` (`products[].offers[].id`). `HUBLA_PRODUCT_ID_CLUB_PRO`
+> só se a Hubla criar produto separado.
+>
+> **Emenda de 2026-08-24 — cortesia Pro no Elite novo.** Enquanto
+> `HUBLA_PRODUCT_ID_PRO` estiver no prefixo `trial-pro-`, o grant de acesso
+> Elite (Hubla ou boleto TMB) **também** concede Pro de cortesia por
+> `CORTESIA_PRO_DIAS` (default **90**, relógio **por aluno**, `expires_at` no
+> `HublaEntitlement`). Não é o lote global até 2026-11-16: aluno que entra
+> depois do lote ganha 90 dias a partir do grant. Reduzir a cortesia para 30
+> dias no futuro é trocar a env — vale só para **grants novos**. Sem o prefixo
+> `trial-pro-` (kill switch ou produto Hubla real) o webhook Elite **não**
+> grava plano Pro.
+>
 > Os **preços** continuam proposta: dependem da medição pendente em
 > [11 §7](../11-custos-e-precificacao.md#7-o-que-precisa-ser-medido-antes-de-publicar-preço).
 
@@ -98,11 +116,31 @@ Implementada — 2026-08-11 · parte do [revamp do fluxo](../10-revamp-do-fluxo.
 > 2. **Aviso de free trial** (banner dismissível no shell autenticado) enquanto
 >    `HUBLA_PRODUCT_ID_PRO` for o id do teste (`trial-pro-*`) **e** o aluno
 >    estiver em `pro`: informa que tem **3 meses** de acesso Pro liberado, com
->    data de fim **2026-11-16**. Fechar grava no `localStorage` e não volta a
->    aparecer naquele browser.
+>    data de fim **do aluno** (`expires_at`; lote legado sem `expires_at` =
+>    **2026-11-16**). Fechar grava no `localStorage` e não volta a aparecer
+>    naquele browser.
 >
 > Fora esses dois pontos, a pausa segue: nada de "Ver planos", nada de menu
 > Planos, nada de CTA de checkout.
+>
+> ### Cortesia Pro no Elite (emenda 2026-08-24)
+>
+> O lote `scripts/conceder-trial-pro.mjs` cobriu quem **já tinha** `User` na
+> hora em que rodou. Elite **novo** (webhook Hubla/TMB, ou verificação F019.1
+> sem cortesia ainda) passa a ganhar o mesmo Pro sintético, com janela
+> **própria** de 90 dias — senão entra no Free (40 Leads/mês) e não usa o
+> produto o bastante pra ter resultado.
+>
+> Regras:
+> - Só com `HUBLA_PRODUCT_ID_PRO` começando em `trial-pro-`.
+> - `expires_at` = fim do dia (America/Sao_Paulo) de `granted_at` + N dias.
+> - Entitlement de cortesia já `ativo` e vigente: redelivery **não** renova.
+> - Cortesia expirada + Elite de novo: novo relógio de N dias.
+> - Revogou o último Elite: revoga a cortesia.
+> - Lote antigo **sem** `expires_at`: vale até `TRIAL_PRO_FIM_ISO` (2026-11-16).
+> - `planoDoUsuario` ignora entitlement com `expires_at` no passado.
+> - `CORTESIA_PRO_DIAS` (default 90) muda só grants futuros — ir para 1 mês
+>   de cortesia é trocar a env, sem reescrever quem já ganhou 90 dias.
 >
 > ### O interruptor de emergência
 >
@@ -404,8 +442,9 @@ No Free, não — senão o limite de 40 vira 80 só trocando de chave, e a decis
 ### Fonte do plano: Hubla
 O plano vem dos **entitlements ativos** que a [F019](F019-webhook-hubla.md) já
 grava (`HublaEntitlement`, por `email` + `product_id`): cada plano tem um
-`product_id` na Hubla; sem entitlement de plano → `free`. Nenhuma infra de
-cobrança nova — o webhook que já existe passa a mapear mais produtos.
+`product_id` na Hubla; sem entitlement de plano → `free`. Entitlement com
+`expires_at` no passado não conta. Nenhuma infra de cobrança nova — o webhook
+que já existe passa a mapear mais produtos.
 
 Precedência quando há mais de um: `agencia` > `pro` > `free`.
 
@@ -677,9 +716,15 @@ por plano. Quem já tem plano vê o que ganharia subindo.
 - [ ] **AC26** — Aluno com plano `pro` (ou `agencia`) vê a flag correspondente
       no medidor da topbar, com `PLANOS_NA_UI = false` e sem link pra `/planos`.
 - [ ] **AC27** — Com `HUBLA_PRODUCT_ID_PRO` no prefixo `trial-pro-` e aluno em
-      `pro`, o shell autenticado mostra o aviso de 3 meses de acesso Pro
-      (fim em 2026-11-16). Dismissível; após fechar, não reaparece no mesmo
-      browser. Sem o prefixo de trial (ou no Free), o aviso não renderiza.
+      `pro`, o shell autenticado mostra o aviso de trial Pro com a **data de
+      fim daquele aluno** (`expires_at`; lote sem data = 2026-11-16).
+      Dismissível; após fechar, não reaparece no mesmo browser. Sem o prefixo
+      de trial (ou no Free), o aviso não renderiza.
+- [ ] **AC28** — Grant Elite (Hubla allowlist ou TMB Elite) com
+      `HUBLA_PRODUCT_ID_PRO=trial-pro-…` cria cortesia Pro vigente por
+      `CORTESIA_PRO_DIAS` (90). Idempotente enquanto vigente. Sem o prefixo
+      `trial-pro-`, Elite continua só acesso (Free). Revogar o último Elite
+      revoga a cortesia.
 
 > **Nota do AC9 (exportar CSV):** o CSV era montado no navegador, a partir dos
 > cards já entregues na página — ali "gate no servidor" seria mentira. A
@@ -692,8 +737,11 @@ por plano. Quem já tem plano vê o que ganharia subindo.
   mais**: arquivo sem import pra poder ser lido por Client Component (o barrel
   `@/lib/planos` puxaria Prisma). Um único interruptor em vez de um `if` por
   arquivo é o que faz a volta ser uma linha.
-- `src/lib/planos/trial.ts` — janela e copy do free trial Pro; `trialProAtivoNoAmbiente()`
-  liga o banner só com `HUBLA_PRODUCT_ID_PRO` no prefixo `trial-pro-`.
+- `src/lib/planos/trial.ts` — janela, copy, `expires_at` e `CORTESIA_PRO_DIAS`;
+  `trialProAtivoNoAmbiente()` liga o banner só com `HUBLA_PRODUCT_ID_PRO` no
+  prefixo `trial-pro-`.
+- `src/lib/planos/cortesia-pro.ts` — grant/revoke da cortesia no webhook Elite
+  e na verificação F019.1 (AC28).
 - `src/components/aviso-trial-pro-server.tsx` + `aviso-trial-pro.tsx` — AC27.
 - `src/lib/planos/catalogo.ts` (limites e features por plano — dado puro),
   `competencia.ts` (mês em `America/Sao_Paulo`, puro), `resolver.ts`

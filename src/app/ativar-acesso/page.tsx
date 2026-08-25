@@ -33,10 +33,11 @@ export default async function AtivarAcessoPage() {
             <span className="text-primary">{NOME_PRODUTO_PARTES.secundaria}</span>
           </p>
           <h1 className="text-lg font-medium text-zinc-200">
-            Ative seu acesso ao Builders Club
+            Ative seu acesso Elite
           </h1>
           <p className="text-sm text-muted">
-            Confirme o e-mail usado na compra para liberar o Orion.
+            Confirme o e-mail da compra Elite do Builders Club para liberar o
+            Orion.
           </p>
         </div>
 

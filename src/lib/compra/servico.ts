@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { normalizarEmailHubla, temEntitlementAtivo } from "@/lib/hubla";
 import { productIdHubla } from "./env";
 import { productIdsAcessoCompra } from "@/lib/tmb";
+import { concederCortesiaProSeElite } from "@/lib/planos/cortesia-pro";
 import { CompraJaVinculadaError, CompraNaoEncontradaError, CompraRequiredError } from "./erros";
 
 export type StatusCompra = {
@@ -45,7 +46,19 @@ async function gravarVerificacao(
   userId: string,
   emailCompra: string,
 ): Promise<void> {
-  const productId = productIdHubla();
+  const ids = productIdsAcessoCompra();
+  const row =
+    ids.length === 0
+      ? null
+      : await prisma.hublaEntitlement.findFirst({
+          where: {
+            email: emailCompra,
+            status: "ativo",
+            product_id: { in: ids },
+          },
+          select: { product_id: true },
+        });
+  const productId = row?.product_id ?? productIdHubla();
   await prisma.user.update({
     where: { id: userId },
     data: {
@@ -54,6 +67,7 @@ async function gravarVerificacao(
       purchaseProductId: productId,
     },
   });
+  await concederCortesiaProSeElite(emailCompra);
 }
 
 async function limparVerificacao(userId: string): Promise<void> {
@@ -104,7 +118,10 @@ async function revalidarCache(user: UserCompra): Promise<boolean> {
   if (!user.purchaseVerifiedAt || !user.purchaseEmail) return false;
 
   const ativo = await entitlementAtivoParaEmail(user.purchaseEmail);
-  if (ativo) return true;
+  if (ativo) {
+    await concederCortesiaProSeElite(user.purchaseEmail);
+    return true;
+  }
 
   await limparVerificacao(user.id);
   return false;

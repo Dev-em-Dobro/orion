@@ -40,7 +40,7 @@ export function AtivarAcessoForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="email" className="text-sm font-medium text-zinc-300">
-          E-mail da compra na Hubla
+          E-mail da compra Elite
         </label>
         <input
           id="email"
@@ -53,8 +53,8 @@ export function AtivarAcessoForm({
           className="input"
         />
         <p className="text-xs text-muted">
-          Use o e-mail cadastrado na Hubla ao comprar o Builders Club. Pode ser
-          diferente do e-mail de login.
+          Use o e-mail da compra Elite (Hubla ou boleto TMB). Pode ser diferente
+          do e-mail de login.
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export function AtivarAcessoForm({
             rel="noopener noreferrer"
             className="btn-primary inline-flex w-full justify-center"
           >
-            Comprar Builders Club
+            Comprar Elite do Builders Club
           </a>
         </div>
       )}
@@ -85,7 +85,7 @@ export function AtivarAcessoForm({
             rel="noopener noreferrer"
             className="mt-2 inline-flex text-sm font-medium text-primary hover:underline"
           >
-            Ver oferta do Builders Club →
+            Ver oferta Elite do Builders Club →
           </a>
         </div>
       ) : null}

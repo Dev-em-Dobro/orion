@@ -78,3 +78,8 @@ __pycache__/
 
 # gstack — estado local da ferramenta (logs de browse, cache de disponibilidade).
 .gstack/
+
+# Projetos vizinhos clonados na mesma pasta — não fazem parte do Orion.
+# Sem isto o `tsc`/`next build` engole o TypeScript deles via include `**/*.ts`.
+/arena-dobro/
+/comunidade-builders-club/

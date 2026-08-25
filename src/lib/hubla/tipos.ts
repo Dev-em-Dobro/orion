@@ -6,9 +6,17 @@ export type HublaWebhookPayload = {
   event?: HublaWebhookEvent;
 };
 
+export type HublaWebhookOffer = { id?: string; name?: string };
+
+export type HublaWebhookProduct = {
+  id?: string;
+  name?: string;
+  offers?: HublaWebhookOffer[];
+};
+
 export type HublaWebhookEvent = {
-  product?: { id?: string; name?: string };
-  products?: { id?: string; name?: string }[];
+  product?: HublaWebhookProduct;
+  products?: HublaWebhookProduct[];
   user?: {
     id?: string;
     email?: string;
@@ -18,6 +26,7 @@ export type HublaWebhookEvent = {
   subscription?: {
     id?: string;
     status?: string;
+    type?: string;
     payer?: { email?: string; id?: string };
   };
   invoice?: {
@@ -32,10 +41,17 @@ export type AcaoEntitlement =
       acao: "conceder";
       email: string;
       productId: string;
+      chaveEntitlement: string;
+      cortesiaPro: boolean;
       hublaUserId?: string;
       subscriptionId?: string;
     }
-  | { acao: "revogar"; email: string; productId: string }
+  | {
+      acao: "revogar";
+      email: string;
+      productId: string;
+      chavesEntitlement: string[];
+    }
   | { acao: "ignorar"; motivo: string };
 
 export const EVENTOS_CONCEDER = new Set(["customer.member_added"]);

@@ -76,19 +76,48 @@ async function main() {
   }
 
   const status = revogar ? "revogado" : "ativo";
+  const agora = new Date();
+  const expiresLote = new Date("2026-11-16T23:59:59.999-03:00");
   let ok = 0;
   for (const email of emails) {
+    const existente = await prisma.hublaEntitlement.findUnique({
+      where: { email_product_id: { email, product_id: productId } },
+    });
+    const jaAtivo =
+      !revogar &&
+      existente?.status === "ativo" &&
+      (!existente.expires_at || existente.expires_at >= agora);
+
+    if (jaAtivo) {
+      if (!existente.expires_at) {
+        await prisma.hublaEntitlement.update({
+          where: { email_product_id: { email, product_id: productId } },
+          data: { expires_at: expiresLote },
+        });
+      }
+      ok += 1;
+      continue;
+    }
+
+    const expiresAt = new Date(agora.getTime() + 90 * 24 * 60 * 60 * 1000);
     await prisma.hublaEntitlement.upsert({
       where: { email_product_id: { email, product_id: productId } },
       create: {
         email,
         product_id: productId,
         status,
-        ...(revogar ? { revoked_at: new Date() } : { granted_at: new Date() }),
+        ...(revogar
+          ? { revoked_at: agora }
+          : { granted_at: agora, expires_at: expiresAt }),
       },
       update: revogar
-        ? { status: "revogado", revoked_at: new Date() }
-        : { status: "ativo", revoked_at: null, granted_at: new Date() },
+        ? { status: "revogado", revoked_at: agora }
+        : {
+            status: "ativo",
+            revoked_at: null,
+            granted_at: agora,
+            expires_at: expiresAt,
+          },
     });
     ok += 1;
   }

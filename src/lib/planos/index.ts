@@ -27,6 +27,8 @@ export {
   TRIAL_PRO_MESES,
   rotuloFimTrialPro,
   trialProAtivoNoAmbiente,
+  rotuloDuracaoCortesia,
+  diasCortesiaPro,
 } from "./trial";
 export { LimiteDoPlanoError, RecursoDoPlanoError } from "./erros";
 export { exigirRecurso, podeUsar, redirectSeRecursoBloqueado } from "./gate";
