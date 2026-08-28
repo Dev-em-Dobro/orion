@@ -104,6 +104,13 @@ function classificarGrant(opts: {
   if (ofertaElite) {
     return { chaveEntitlement: opts.productId, cortesiaPro: true };
   }
+  // Com offers[] no payload: nunca cortesia só pelo product.id compartilhado.
+  if (opts.offerIds.length > 0) {
+    return {
+      chaveEntitlement: opts.offerIds[0]!,
+      cortesiaPro: false,
+    };
+  }
   if (clubProProducts.has(opts.productId)) {
     return { chaveEntitlement: opts.productId, cortesiaPro: false };
   }

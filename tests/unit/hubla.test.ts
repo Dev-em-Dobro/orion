@@ -169,10 +169,13 @@ describe("hubla interpretar", () => {
   });
 
   const produtoClub = "VL3e0iDO3A32SyjJWr9S";
-  const ofertaPro = "6p9QTyJDVj2oAIzHx74E";
+  const ofertaProCopia = "6p9QTyJDVj2oAIzHx74E";
+  const ofertaProOficial = "XaY8QNfZlOO1XBgjzMfY";
+  const ofertaElite = "v1SsMcVXNip7Mn5A2pNH";
   const filtroClub = {
     productIds: [produtoClub],
-    offerIdsPro: [ofertaPro],
+    offerIdsPro: [ofertaProCopia, ofertaProOficial],
+    offerIdsElite: [ofertaElite],
     eliteProductIds: [produtoClub],
   };
 
@@ -189,7 +192,7 @@ describe("hubla interpretar", () => {
               name: "Builders Club",
               offers: [
                 {
-                  id: ofertaPro,
+                  id: ofertaProCopia,
                   name: "Comunidade Builders Club - Pro (Cópia)",
                 },
               ],
@@ -210,12 +213,12 @@ describe("hubla interpretar", () => {
     );
     expect(acao.acao).toBe("conceder");
     if (acao.acao !== "conceder") return;
-    expect(acao.chaveEntitlement).toBe(ofertaPro);
+    expect(acao.chaveEntitlement).toBe(ofertaProCopia);
     expect(acao.cortesiaPro).toBe(false);
     expect(acao.email).toBe("ferramentasdevemdobro@gmail.com");
   });
 
-  it("mesmo produto Club: oferta que não é PRO segue Elite + cortesia", () => {
+  it("mesmo produto Club: oferta Elite concede cortesia", () => {
     const acao = interpretarEventoHubla(
       {
         type: "customer.member_added",
@@ -224,7 +227,7 @@ describe("hubla interpretar", () => {
           products: [
             {
               id: produtoClub,
-              offers: [{ id: "oferta-elite-xyz" }],
+              offers: [{ id: ofertaElite }],
             },
           ],
           user: { email: "a@b.com" },
@@ -239,7 +242,7 @@ describe("hubla interpretar", () => {
     expect(acao.cortesiaPro).toBe(true);
   });
 
-  it("slug de checkout não casa como oferta PRO", () => {
+  it("oferta PRO oficial (id = checkout slug) concede Free sem cortesia", () => {
     const acao = interpretarEventoHubla(
       {
         type: "customer.member_added",
@@ -248,10 +251,10 @@ describe("hubla interpretar", () => {
           products: [
             {
               id: produtoClub,
-              offers: [{ id: "XaY8QNfZlOO1XBgjzMfY" }],
+              offers: [{ id: ofertaProOficial, name: "Comunidade Builders Club - Pro" }],
             },
           ],
-          user: { email: "a@b.com" },
+          user: { email: "jaquevaz@outlook.com.br" },
           subscription: { status: "active" },
         },
       },
@@ -259,8 +262,37 @@ describe("hubla interpretar", () => {
     );
     expect(acao.acao).toBe("conceder");
     if (acao.acao !== "conceder") return;
-    expect(acao.chaveEntitlement).toBe(produtoClub);
-    expect(acao.cortesiaPro).toBe(true);
+    expect(acao.chaveEntitlement).toBe(ofertaProOficial);
+    expect(acao.cortesiaPro).toBe(false);
+  });
+
+  it("oferta PRO ausente na env mas presente no payload não vira Elite", () => {
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: produtoClub },
+          products: [
+            {
+              id: produtoClub,
+              offers: [{ id: ofertaProOficial }],
+            },
+          ],
+          user: { email: "a@b.com" },
+          subscription: { status: "active" },
+        },
+      },
+      {
+        productIds: [produtoClub],
+        offerIdsPro: [ofertaProCopia],
+        offerIdsElite: [ofertaElite],
+        eliteProductIds: [produtoClub],
+      },
+    );
+    expect(acao.acao).toBe("conceder");
+    if (acao.acao !== "conceder") return;
+    expect(acao.chaveEntitlement).toBe(ofertaProOficial);
+    expect(acao.cortesiaPro).toBe(false);
   });
 });
 

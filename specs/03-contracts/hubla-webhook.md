@@ -42,7 +42,8 @@ Referência: [documentação Hubla](https://hubla.gitbook.io/docs/webhooks/event
 ```
 
 PRO e Elite compartilham `product.id`. O discriminador é `offers[].id`.
-O slug de checkout (`pay.hub.la/…`) **não** vem no payload.
+Com `offers[]` no payload, oferta que não casou Elite **não** ganha cortesia
+só pelo product.id — cai em PRO Free (sem `trial-pro-*`).
 
 ## Env do servidor
 
