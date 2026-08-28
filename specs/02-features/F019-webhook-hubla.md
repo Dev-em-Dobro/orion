@@ -44,11 +44,11 @@ Mapa:
 
 | Env | Papel no Orion |
 |-----|----------------|
-| `HUBLA_PRODUCT_ID` | Produto Club (`VL3e0iDO3A32SyjJWr9S`). Allowlist de `product.id`. Sem oferta PRO casada, trata como **Elite** (legado). |
+| `HUBLA_PRODUCT_ID` | Produto Club (`VL3e0iDO3A32SyjJWr9S`). Allowlist de `product.id`. **Sem** `offers[]` no payload (legado) → Elite + cortesia. **Com** `offers[]` → não usar só o product.id para cortesia. |
 | `HUBLA_PRODUCT_ID_ELITE` | Produto Elite separado, se a Hubla criar um. **Concede acesso** + cortesia. |
 | `HUBLA_PRODUCT_ID_CLUB_PRO` | Produto PRO **separado**, se a Hubla criar um. Acesso Free, sem cortesia. **Não** é o slug de checkout. |
-| `HUBLA_OFFER_ID_PRO` | Offer id(s) do PRO R$ 297 (vírgula se houver cópia + oficial). Acesso **Free**, sem cortesia. Grava entitlement com `product_id` = offer id. |
-| `HUBLA_OFFER_ID_ELITE` | Offer id(s) do Elite R$ 997. Acesso + cortesia. Opcional: sem ela, oferta não-PRO no produto Club segue Elite. |
+| `HUBLA_OFFER_ID_PRO` | Offer id(s) do PRO R$ 297 — vírgula se houver cópia + oficial (`XaY8QNfZlOO1XBgjzMfY`, `6p9QTyJDVj2oAIzHx74E`). Acesso **Free**, sem cortesia. Grava entitlement com `product_id` = offer id. |
+| `HUBLA_OFFER_ID_ELITE` | Offer id(s) do Elite R$ 997 (`v1SsMcVXNip7Mn5A2pNH`). Acesso + cortesia. |
 | `HUBLA_PRODUCT_ID_PRO` | Plano Pro do **Orion** (F035). Prefixo `trial-pro-` = cortesia no grant **Elite**. Não coloque offer/product do Club aqui. |
 
 Pelo menos um ID de **produto** (`HUBLA_PRODUCT_ID`, `HUBLA_PRODUCT_ID_ELITE` ou
@@ -57,10 +57,11 @@ ler o corpo, na mesma checagem de arranque do `HUBLA_WEBHOOK_TOKEN`
 ([F036](F036-endurecimento-de-seguranca.md)). Offer ids não substituem o 503.
 
 Evento de produto fora da allowlist → `200` ignorado, sem gravar entitlement.
-Com `HUBLA_OFFER_ID_PRO` setado e o evento trazendo ofertas: casa PRO → Free;
-casa Elite → cortesia; oferta desconhecida no produto Club → Elite (não quebra
-Elite antigo). Cancelamento do produto Club revoga as chaves de acesso daquele
-e-mail (produto + offers conhecidas).
+Com `HUBLA_OFFER_ID_PRO` / `HUBLA_OFFER_ID_ELITE` setados e o evento trazendo
+`offers[]`: casa PRO → Free; casa Elite → cortesia; **oferta presente que não
+casou Elite → PRO Free (sem cortesia)**, nunca cortesia só pelo `product.id`
+compartilhado. Payload **sem** `offers[]` (legado): `product.id` Club continua
+Elite + cortesia.
 
 > **Mudança de 2026-08-13 — [F036](F036-endurecimento-de-seguranca.md).** Antes:
 > *"ausente → aceita qualquer produto (dev/local)"*. A conveniência de dev valia
@@ -114,10 +115,14 @@ mesma linha).
       de cortesia Pro (`expires_at` = agora + 90 dias). Segunda entrega do
       mesmo e-mail com cortesia ainda vigente **não** empurra `granted_at` /
       `expires_at`. `member_removed` do último Elite revoga a cortesia.
-- [ ] **AC10** (emenda 2026-08-25) — `customer.member_added` com oferta
-      `HUBLA_OFFER_ID_PRO` no produto Club grava acesso (`product_id` = offer
-      id) e **não** grava cortesia `trial-pro-*`. Plano derivado = Free.
-      O slug de checkout **não** casa.
+- [ ] **AC10** (emenda 2026-08-25) — `customer.member_added` com oferta PRO
+      (`HUBLA_OFFER_ID_PRO`, ids `XaY8QNfZlOO1XBgjzMfY` / `6p9QTyJDVj2oAIzHx74E`)
+      grava acesso (`product_id` = offer id) e **não** grava cortesia
+      `trial-pro-*`. Plano derivado = Free. Oferta PRO **não** casada na env mas
+      presente no payload → PRO Free, **sem** cortesia (AC11).
+- [ ] **AC11** (emenda 2026-08-28) — Com `offers[]` no evento, compra PRO com
+      offer id igual ao checkout (`XaY8QNfZlOO1XBgjzMfY`) **não** dispara
+      cortesia `trial-pro-*` mesmo que `HUBLA_OFFER_ID_PRO` esteja desatualizado.
 
 ## Fora do escopo (F019)
 - UI de ativação pós-login → [F019.1](F019.1-ativacao-acesso.md)
