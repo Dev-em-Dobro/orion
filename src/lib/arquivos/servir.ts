@@ -30,8 +30,11 @@ export function mimeDoArquivo(arquivo: string): string {
 
 /**
  * Resolve os segmentos dentro da raiz, ou `null` se escaparem dela.
- * Rejeita `..` e NUL antes de resolver, e confere o resultado contra a raiz —
- * as duas checagens, porque só a primeira não cobre symlink.
+ * Rejeita `..` e NUL antes de resolver, e confere o resultado contra a raiz.
+ *
+ * Conta **léxica**: `path.resolve` não olha o disco. Um symlink dentro da raiz
+ * apontando pra fora passa por aqui — quem barra esse caso é
+ * `caminhoRealDentroDaRaiz`, no caminho assíncrono.
  */
 export function caminhoSeguro(root: string, segments: string[]): string | null {
   if (segments.length === 0) return null;
@@ -45,6 +48,30 @@ export function caminhoSeguro(root: string, segments: string[]): string | null {
   return abs;
 }
 
+/**
+ * O caminho de verdade de `abs`, se ele continuar dentro da raiz **depois** de
+ * resolver symlinks. `null` se escapar, se não existir, ou se a própria raiz não
+ * existir — nos três casos não há o que servir.
+ *
+ * Só `fs.realpath` resolve link, e só pode ser chamado de função async — é por
+ * isso que a checagem mora aqui e não em `caminhoSeguro`. A raiz também é
+ * resolvida: no Windows ela volta com a caixa canônica, e comparar prefixo só
+ * vale entre dois caminhos reais.
+ */
+async function caminhoRealDentroDaRaiz(
+  root: string,
+  abs: string,
+): Promise<string | null> {
+  try {
+    const raizReal = await fs.realpath(root);
+    const real = await fs.realpath(abs);
+    if (real !== raizReal && !real.startsWith(raizReal + path.sep)) return null;
+    return real;
+  } catch {
+    return null;
+  }
+}
+
 export async function lerArquivo(
   root: string,
   segments: string[],
@@ -52,22 +79,36 @@ export async function lerArquivo(
   const abs = caminhoSeguro(root, segments);
   if (!abs) return null;
 
+  const real = await caminhoRealDentroDaRaiz(root, abs);
+  if (!real) return null;
+
   try {
-    const stat = await fs.stat(abs);
+    const stat = await fs.stat(real);
     if (!stat.isFile()) return null;
-    return { body: await fs.readFile(abs), contentType: mimeDoArquivo(abs) };
+    // MIME do arquivo real: se um link mudasse a extensão, o Content-Type tem
+    // que descrever os bytes que saem, não o nome pedido.
+    return { body: await fs.readFile(real), contentType: mimeDoArquivo(real) };
   } catch {
     return null;
   }
 }
 
-/** Caminhos relativos de todos os arquivos sob `segments`, recursivo. */
+/**
+ * Caminhos relativos de todos os arquivos sob `segments`, recursivo.
+ *
+ * A caminhada não precisa de checagem extra: `withFileTypes` classifica por
+ * `lstat`, então um symlink não é `isDirectory()` nem `isFile()` e cai fora dos
+ * dois ramos sozinho. O que se confere aqui é o ponto de partida.
+ */
 export async function listarArquivos(
   root: string,
   segments: string[],
 ): Promise<string[]> {
   const abs = caminhoSeguro(root, segments);
   if (!abs) return [];
+
+  const real = await caminhoRealDentroDaRaiz(root, abs);
+  if (!real) return [];
 
   const encontrados: string[] = [];
 
@@ -85,6 +126,6 @@ export async function listarArquivos(
     }
   }
 
-  await andar(abs, "");
+  await andar(real, "");
   return encontrados.sort();
 }
