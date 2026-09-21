@@ -236,10 +236,10 @@ minutos": contagem revelada é contagem que informa.
 
 ## Fora do escopo (F042)
 
-- **Allowlist Elite do TMB embutida no código** (`TMB_ELITE_CODES` ausente cai
-  em constante) — mesmo formato do que a F036 §5 fechou na Hubla. Spec própria.
-- **Filtros que passam quando o campo falta** no payload (`lancamento_id` no
-  TMB, `subscription.status` na Hubla). Spec própria.
+- **Allowlist Elite do TMB** e **filtros que passam quando o campo falta** no
+  payload (`lancamento_id` no TMB, `subscription.status` na Hubla) →
+  [F043](F043-ausencia-nao-afrouxa.md). A F043 também corrige a leitura do
+  primeiro: o default da allowlist TMB é especificado na F041, não acidental.
 - **Rate limit geral nas Server Actions** — segue fora, como na F036. Esta spec
   limita um fluxo, não instala limitador global.
 - **Auditoria de segurança** (quem tentou vincular e-mail de terceiro) — a F036

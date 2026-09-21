@@ -37,6 +37,17 @@ Default da allowlist de **acesso** = Elite + Mentoria. Override Elite:
 `TMB_ELITE_CODES` (preferido) ou `TMB_PRODUCT_CODES` (legado). Mentoria entra
 sempre na porta, mesmo fora do override. Opcional: `TMB_LANCAMENTO_ID=36238`.
 
+**O default fica** ([F043](F043-ausencia-nao-afrouxa.md)). A revisão de defaults
+de 2026-09-20 propôs exigir `TMB_ELITE_CODES` com `503`, no molde da
+[F036](F036-endurecimento-de-seguranca.md) §5. Não vale aqui: lá a ausência
+virava "aceita qualquer produto", aqui ela cai numa lista fechada e
+especificada — e a env não está setada em produção, então exigi-la responderia
+`503` a todo webhook TMB. A env segue **override**, não requisito.
+
+**O filtro de lançamento aperta** (F043, pendente): com `TMB_LANCAMENTO_ID`
+configurada, venda **sem** `lancamento_id` no payload passa hoje e passará a ser
+ignorada. Sem a env, nada muda — filtro que não existe não filtra.
+
 ## Persistência
 - Grant → `HublaEntitlement` com `product_id = code` TMB, `status=ativo`,
   `subscription_id = tmb:{pedido}`
@@ -57,3 +68,9 @@ Elite + PRO separado + **offer ids**) **ou** codes TMB Elite **e** Mentoria.
 - [x] Aluno com só entitlement TMB Elite consegue verificar compra no Orion
 - [ ] Grant Elite TMB no modo `trial-pro-*` concede cortesia Pro (F035 AC28);
       Mentoria **não** recebe cortesia
+- [ ] ([F043](F043-ausencia-nao-afrouxa.md)) Com `TMB_LANCAMENTO_ID` configurada,
+      venda sem `lancamento_id` → ignorada. Sem a env → concede
+- [ ] ([F043](F043-ausencia-nao-afrouxa.md)) `code` fora da allowlist → `200`
+      ignorado **e** aviso em log com o code, nunca com o e-mail
+- [ ] ([F043](F043-ausencia-nao-afrouxa.md)) `TMB_ELITE_CODES` ausente continua
+      caindo no default, **sem** `503`

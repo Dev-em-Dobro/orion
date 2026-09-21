@@ -45,6 +45,15 @@ PRO e Elite compartilham `product.id`. O discriminador é `offers[].id`.
 Com `offers[]` no payload, oferta que não casou Elite **não** ganha cortesia
 só pelo product.id — cai em PRO Free (sem `trial-pro-*`).
 
+### `subscription` em `customer.member_added`
+
+| Payload | Concede? |
+|---------|----------|
+| objeto ausente (compra avulsa / boleto) | sim |
+| `status: "active"` | sim |
+| `status` com outro valor | não |
+| objeto presente, `status` ausente ou vazio | **não** — [F043](../02-features/F043-ausencia-nao-afrouxa.md), pendente; hoje ainda concede |
+
 ## Env do servidor
 
 | Variável | Obrigatório | Descrição |
