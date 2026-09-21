@@ -1,8 +1,8 @@
 // F041 — POST /api/webhooks/tmb (TMB vendas → HublaEntitlement).
 
-import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { processarWebhookTmb } from "@/lib/tmb";
+import { tokenValido } from "@/lib/seguranca/token";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -13,13 +13,6 @@ function tokenEsperado(): string | null {
 
 function headerName(): string {
   return process.env.TMB_WEBHOOK_HEADER?.trim() || "x-tmb-token";
-}
-
-function tokenValido(recebido: string, esperado: string): boolean {
-  const a = Buffer.from(recebido);
-  const b = Buffer.from(esperado);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
 }
 
 export async function POST(request: NextRequest) {
