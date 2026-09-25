@@ -17,6 +17,7 @@ const { prismaMock } = vi.hoisted(() => ({
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
 
 import { interpretarEventoHubla } from "@/lib/hubla/interpretar";
+import { idsOfertaEliteHubla } from "@/lib/hubla/produtos";
 import { normalizarEmailHubla } from "@/lib/hubla/normalizar";
 import { processarWebhookHubla } from "@/lib/hubla/repositorio";
 
@@ -374,6 +375,21 @@ describe("hubla processarWebhookHubla", () => {
     expect(productIds).not.toContain("trial-pro-2026-11");
     if (prev === undefined) delete process.env.HUBLA_PRODUCT_ID_PRO;
     else process.env.HUBLA_PRODUCT_ID_PRO = prev;
+  });
+});
+
+describe("idsOfertaEliteHubla", () => {
+  it("inclui checkout público e Elite-alunos sem env", () => {
+    const prev = process.env.HUBLA_OFFER_ID_ELITE;
+    delete process.env.HUBLA_OFFER_ID_ELITE;
+    expect(idsOfertaEliteHubla()).toEqual(
+      expect.arrayContaining([
+        "v1SsMcVXNip7Mn5A2pNH",
+        "SFykfBk80jkM1sAVJKxV",
+      ]),
+    );
+    if (prev === undefined) delete process.env.HUBLA_OFFER_ID_ELITE;
+    else process.env.HUBLA_OFFER_ID_ELITE = prev;
   });
 });
 
