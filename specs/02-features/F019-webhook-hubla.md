@@ -47,8 +47,8 @@ Mapa:
 | `HUBLA_PRODUCT_ID` | Produto Club (`VL3e0iDO3A32SyjJWr9S`). Allowlist de `product.id`. **Sem** `offers[]` no payload (legado) → Elite + cortesia. **Com** `offers[]` → não usar só o product.id para cortesia. |
 | `HUBLA_PRODUCT_ID_ELITE` | Produto Elite separado, se a Hubla criar um. **Concede acesso** + cortesia. |
 | `HUBLA_PRODUCT_ID_CLUB_PRO` | Produto PRO **separado**, se a Hubla criar um. Acesso Free, sem cortesia. **Não** é o slug de checkout. |
-| `HUBLA_OFFER_ID_PRO` | Offer id(s) do PRO R$ 297 — vírgula se houver cópia + oficial (`XaY8QNfZlOO1XBgjzMfY`, `6p9QTyJDVj2oAIzHx74E`). Acesso **Free**, sem cortesia. Grava entitlement com `product_id` = offer id. |
-| `HUBLA_OFFER_ID_ELITE` | Offer id(s) do Elite. Oficiais no código: checkout público (`v1SsMcVXNip7Mn5A2pNH`) e **Elite — Alunos** (`SFykfBk80jkM1sAVJKxV`). Acesso + cortesia. |
+| `HUBLA_OFFER_ID_PRO` | Offer id(s) do PRO — vírgula se houver cópia + oficiais no código: checkout público (`XaY8QNfZlOO1XBgjzMfY`) e **PRO Europa** (`1mGgy9MVD11CJdnsLEov`, €50). Acesso **Free**, sem cortesia. Grava entitlement com `product_id` = offer id. |
+| `HUBLA_OFFER_ID_ELITE` | Offer id(s) do Elite. Oficiais no código: checkout público (`v1SsMcVXNip7Mn5A2pNH`), **Elite — Alunos** (`SFykfBk80jkM1sAVJKxV`) e **Elite Europa** (`cXqc4mz6YZFE4GKjGFUz`, €60). Acesso + cortesia. |
 | `HUBLA_PRODUCT_ID_PRO` | Plano Pro do **Orion** (F035). Prefixo `trial-pro-` = cortesia no grant **Elite**. Não coloque offer/product do Club aqui. |
 
 Pelo menos um ID de **produto** (`HUBLA_PRODUCT_ID`, `HUBLA_PRODUCT_ID_ELITE` ou

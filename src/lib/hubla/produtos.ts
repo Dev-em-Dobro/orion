@@ -5,10 +5,14 @@
 // `HUBLA_PRODUCT_ID_PRO` no Orion é o plano Pro da F035 — não entra aqui.
 
 /** Slugs oficiais = `offers[].id` no webhook (pay.hub.la/…). */
-export const HUBLA_OFFER_ID_PRO_OFICIAL = "XaY8QNfZlOO1XBgjzMfY";
+export const HUBLA_OFFER_IDS_PRO_OFICIAIS = [
+  "XaY8QNfZlOO1XBgjzMfY",
+  "1mGgy9MVD11CJdnsLEov",
+] as const;
 export const HUBLA_OFFER_IDS_ELITE_OFICIAIS = [
   "v1SsMcVXNip7Mn5A2pNH",
   "SFykfBk80jkM1sAVJKxV",
+  "cXqc4mz6YZFE4GKjGFUz",
 ] as const;
 
 function collectIds(raws: Array<string | undefined | readonly string[]>): string[] {
@@ -38,10 +42,10 @@ export function idsProdutoAcessoHubla(): string[] {
 
 /** Ofertas PRO no produto Club — acesso Free, sem cortesia. */
 export function idsOfertaProHubla(): string[] {
-  return collectIds([HUBLA_OFFER_ID_PRO_OFICIAL, process.env.HUBLA_OFFER_ID_PRO]);
+  return collectIds([...HUBLA_OFFER_IDS_PRO_OFICIAIS, process.env.HUBLA_OFFER_ID_PRO]);
 }
 
-/** Ofertas Elite no produto Club (público + alunos). */
+/** Ofertas Elite no produto Club (público + alunos + Europa). */
 export function idsOfertaEliteHubla(): string[] {
   return collectIds([
     ...HUBLA_OFFER_IDS_ELITE_OFICIAIS,

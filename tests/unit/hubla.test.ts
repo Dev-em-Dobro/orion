@@ -17,7 +17,7 @@ const { prismaMock } = vi.hoisted(() => ({
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
 
 import { interpretarEventoHubla } from "@/lib/hubla/interpretar";
-import { idsOfertaEliteHubla } from "@/lib/hubla/produtos";
+import { idsOfertaEliteHubla, idsOfertaProHubla } from "@/lib/hubla/produtos";
 import { normalizarEmailHubla } from "@/lib/hubla/normalizar";
 import { processarWebhookHubla } from "@/lib/hubla/repositorio";
 
@@ -378,14 +378,30 @@ describe("hubla processarWebhookHubla", () => {
   });
 });
 
+describe("idsOfertaProHubla", () => {
+  it("inclui checkout público e PRO Europa sem env", () => {
+    const prev = process.env.HUBLA_OFFER_ID_PRO;
+    delete process.env.HUBLA_OFFER_ID_PRO;
+    expect(idsOfertaProHubla()).toEqual(
+      expect.arrayContaining([
+        "XaY8QNfZlOO1XBgjzMfY",
+        "1mGgy9MVD11CJdnsLEov",
+      ]),
+    );
+    if (prev === undefined) delete process.env.HUBLA_OFFER_ID_PRO;
+    else process.env.HUBLA_OFFER_ID_PRO = prev;
+  });
+});
+
 describe("idsOfertaEliteHubla", () => {
-  it("inclui checkout público e Elite-alunos sem env", () => {
+  it("inclui checkout público, Elite-alunos e Elite Europa sem env", () => {
     const prev = process.env.HUBLA_OFFER_ID_ELITE;
     delete process.env.HUBLA_OFFER_ID_ELITE;
     expect(idsOfertaEliteHubla()).toEqual(
       expect.arrayContaining([
         "v1SsMcVXNip7Mn5A2pNH",
         "SFykfBk80jkM1sAVJKxV",
+        "cXqc4mz6YZFE4GKjGFUz",
       ]),
     );
     if (prev === undefined) delete process.env.HUBLA_OFFER_ID_ELITE;
