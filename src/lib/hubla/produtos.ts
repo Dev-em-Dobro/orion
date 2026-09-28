@@ -7,11 +7,11 @@
 /** Slugs oficiais = `offers[].id` no webhook (pay.hub.la/…). */
 export const HUBLA_OFFER_IDS_PRO_OFICIAIS = [
   "XaY8QNfZlOO1XBgjzMfY",
-  "1mGgy9MVD11CJdnsLEov",
 ] as const;
 export const HUBLA_OFFER_IDS_ELITE_OFICIAIS = [
   "v1SsMcVXNip7Mn5A2pNH",
   "SFykfBk80jkM1sAVJKxV",
+  "1mGgy9MVD11CJdnsLEov",
   "cXqc4mz6YZFE4GKjGFUz",
 ] as const;
 

@@ -379,28 +379,27 @@ describe("hubla processarWebhookHubla", () => {
 });
 
 describe("idsOfertaProHubla", () => {
-  it("inclui checkout público e PRO Europa sem env", () => {
+  it("inclui checkout público PRO sem env", () => {
     const prev = process.env.HUBLA_OFFER_ID_PRO;
     delete process.env.HUBLA_OFFER_ID_PRO;
     expect(idsOfertaProHubla()).toEqual(
-      expect.arrayContaining([
-        "XaY8QNfZlOO1XBgjzMfY",
-        "1mGgy9MVD11CJdnsLEov",
-      ]),
+      expect.arrayContaining(["XaY8QNfZlOO1XBgjzMfY"]),
     );
+    expect(idsOfertaProHubla()).not.toContain("1mGgy9MVD11CJdnsLEov");
     if (prev === undefined) delete process.env.HUBLA_OFFER_ID_PRO;
     else process.env.HUBLA_OFFER_ID_PRO = prev;
   });
 });
 
 describe("idsOfertaEliteHubla", () => {
-  it("inclui checkout público, Elite-alunos e Elite Europa sem env", () => {
+  it("inclui checkout público, Elite-alunos e ambas Elite Europa sem env", () => {
     const prev = process.env.HUBLA_OFFER_ID_ELITE;
     delete process.env.HUBLA_OFFER_ID_ELITE;
     expect(idsOfertaEliteHubla()).toEqual(
       expect.arrayContaining([
         "v1SsMcVXNip7Mn5A2pNH",
         "SFykfBk80jkM1sAVJKxV",
+        "1mGgy9MVD11CJdnsLEov",
         "cXqc4mz6YZFE4GKjGFUz",
       ]),
     );
