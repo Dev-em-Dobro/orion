@@ -379,11 +379,14 @@ describe("hubla processarWebhookHubla", () => {
 });
 
 describe("idsOfertaProHubla", () => {
-  it("inclui checkout público PRO sem env", () => {
+  it("inclui PRO à vista e PRO Mensal sem env", () => {
     const prev = process.env.HUBLA_OFFER_ID_PRO;
     delete process.env.HUBLA_OFFER_ID_PRO;
     expect(idsOfertaProHubla()).toEqual(
-      expect.arrayContaining(["XaY8QNfZlOO1XBgjzMfY"]),
+      expect.arrayContaining([
+        "XaY8QNfZlOO1XBgjzMfY",
+        "drj7n2oUUYP5CBvzu7b7",
+      ]),
     );
     expect(idsOfertaProHubla()).not.toContain("1mGgy9MVD11CJdnsLEov");
     if (prev === undefined) delete process.env.HUBLA_OFFER_ID_PRO;
