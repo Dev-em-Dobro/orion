@@ -9,6 +9,7 @@ import {
   idsProdutoClubProAcessoHubla,
   idsProdutoEliteAcessoHubla,
 } from "@/lib/hubla/produtos";
+import { tokenValido } from "@/lib/seguranca/token";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
   }
 
   const recebido = request.headers.get("x-hubla-token");
-  if (!recebido || recebido !== esperado) {
+  if (!recebido || !tokenValido(recebido, esperado)) {
     return NextResponse.json({ ok: false, erro: "Não autorizado" }, { status: 401 });
   }
 

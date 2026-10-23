@@ -128,6 +128,7 @@ User (auth) 1 ─── 1 UserApiKeys (BYOK / modo Orion — [F016](02-features/
 User (auth) 1 ─── N DailyUsage (cotas diárias — [F018](02-features/F018-limites-diarios.md))
 User (auth) — `purchase_email`, `purchase_verified_at`, `purchase_product_id` ([F019.1](02-features/F019.1-ativacao-acesso.md))
 HublaEntitlement — e-mails autorizados via webhook ([F019](02-features/F019-webhook-hubla.md)); `expires_at` opcional na cortesia Pro ([F035](02-features/F035-planos-e-limites.md))
+User (auth) 1 ─── N PurchaseEmailChallenge (prova de posse do e-mail de compra — [F042](02-features/F042-posse-do-email-de-compra.md), pendente)
 User (auth) 1 ─── N TarefaAdiamento (adiar/dispensar cobrança — [F031](02-features/F031-central-de-tarefas.md))
 Lead 1 ─── N Diagnóstico
 Lead 1 ─── N Dor
@@ -139,7 +140,10 @@ Toda entidade de domínio acima é escopada por `user_id` ([F015](02-features/F0
 `User` é infra de auth ([F014](02-features/F014-autenticacao.md)), não linguagem de negócio.
 `UserApiKeys` guarda as chaves do aluno **cifradas** ([ADR-009](04-decisions/ADR-009-cifra-chaves-byok.md))
 e o `key_mode` (`orion` | `byok`). `DailyUsage` contabiliza uso diário por
-operação no modo Orion; não é linguagem de negócio. `TarefaAdiamento` guarda só
+operação no modo Orion; não é linguagem de negócio. `PurchaseEmailChallenge`
+guarda o código de 6 dígitos (em hash) que prova posse do e-mail de compra e
+serve de contador de tentativas; também é infra da porta de entrada, não
+domínio. `TarefaAdiamento` guarda só
 o que o aluno **adiou ou dispensou** — a Tarefa em si é derivada, não
 persistida ([F031](02-features/F031-central-de-tarefas.md)).
 

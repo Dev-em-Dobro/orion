@@ -17,11 +17,19 @@ Contrato: [hubla-webhook.md](../03-contracts/hubla-webhook.md).
 ## Eventos tratados (v2)
 | Tipo | Ação |
 |------|------|
-| `customer.member_added` | `status = ativo` (se subscription `active`) |
+| `customer.member_added` | `status = ativo` (se subscription `active` — ver abaixo) |
 | `customer.member_removed` | `status = revogado` |
 | `invoice.refunded` | `status = revogado` (backup) |
 
 Demais tipos → `200` ignorado (sem efeito).
+
+**"Se subscription `active`" — o caso do objeto pela metade
+([F043](F043-ausencia-nao-afrouxa.md), pendente).** Payload **sem** objeto
+`subscription` concede: é assim que a compra avulsa (Elite boleto) entra, e não
+muda. Objeto `subscription` **presente** com `status` ausente ou vazio concede
+hoje e passará a ser **ignorado** — presente pela metade não é prova de
+assinatura ativa. `status` com qualquer valor diferente de `active` já é
+ignorado.
 
 ## Idempotência
 Header `x-hubla-idempotency` registrado em `HublaWebhookDelivery`. Reenvio do
@@ -123,6 +131,13 @@ mesma linha).
 - [ ] **AC11** (emenda 2026-08-28) — Com `offers[]` no evento, compra PRO com
       offer id igual ao checkout (`XaY8QNfZlOO1XBgjzMfY`) **não** dispara
       cortesia `trial-pro-*` mesmo que `HUBLA_OFFER_ID_PRO` esteja desatualizado.
+- [ ] **AC12** ([F043](F043-ausencia-nao-afrouxa.md)) — `customer.member_added`
+      com objeto `subscription` presente e `status` ausente/vazio → ignorado.
+      **Sem** objeto `subscription` → concede, como hoje.
+- [ ] **AC13** ([F043](F043-ausencia-nao-afrouxa.md)) — Evento ignorado por
+      produto fora da allowlist, e grant cuja chave de entitlement não é
+      reconhecida pela porta (F019.1), deixam **aviso em log** com o id — nunca
+      com o e-mail. O status HTTP segue `200`.
 
 ## Fora do escopo (F019)
 - UI de ativação pós-login → [F019.1](F019.1-ativacao-acesso.md)
