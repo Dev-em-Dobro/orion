@@ -295,6 +295,36 @@ describe("hubla interpretar", () => {
     expect(acao.chaveEntitlement).toBe(ofertaProOficial);
     expect(acao.cortesiaPro).toBe(false);
   });
+
+  it("F042 — Black Infinita concede cortesia Pro (como Elite)", () => {
+    const ofertaBlack = "YKPMuMwSBhPBb7UUuDlX";
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: produtoClub },
+          products: [
+            {
+              id: produtoClub,
+              offers: [{ id: ofertaBlack }],
+            },
+          ],
+          user: { email: "black@example.com" },
+          subscription: { status: "active" },
+        },
+      },
+      {
+        productIds: [produtoClub],
+        offerIdsPro: [ofertaProCopia, ofertaProOficial],
+        offerIdsElite: [ofertaElite, ofertaBlack],
+        eliteProductIds: [produtoClub],
+      },
+    );
+    expect(acao.acao).toBe("conceder");
+    if (acao.acao !== "conceder") return;
+    expect(acao.chaveEntitlement).toBe(produtoClub);
+    expect(acao.cortesiaPro).toBe(true);
+  });
 });
 
 describe("hubla processarWebhookHubla", () => {
@@ -408,6 +438,24 @@ describe("idsOfertaEliteHubla", () => {
     );
     if (prev === undefined) delete process.env.HUBLA_OFFER_ID_ELITE;
     else process.env.HUBLA_OFFER_ID_ELITE = prev;
+  });
+
+  it("F042 — inclui ofertas Black Infinita (cortesia Pro 90d)", () => {
+    const prevElite = process.env.HUBLA_OFFER_ID_ELITE;
+    const prevBlack = process.env.HUBLA_OFFER_ID_BLACK_INFINITA;
+    delete process.env.HUBLA_OFFER_ID_ELITE;
+    delete process.env.HUBLA_OFFER_ID_BLACK_INFINITA;
+    expect(idsOfertaEliteHubla()).toEqual(
+      expect.arrayContaining([
+        "YKPMuMwSBhPBb7UUuDlX",
+        "NZKc6aZXwbD4ihw9vvPN",
+        "6njIGlJgossHQysj6WA7",
+      ]),
+    );
+    if (prevElite === undefined) delete process.env.HUBLA_OFFER_ID_ELITE;
+    else process.env.HUBLA_OFFER_ID_ELITE = prevElite;
+    if (prevBlack === undefined) delete process.env.HUBLA_OFFER_ID_BLACK_INFINITA;
+    else process.env.HUBLA_OFFER_ID_BLACK_INFINITA = prevBlack;
   });
 });
 

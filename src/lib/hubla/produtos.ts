@@ -15,6 +15,12 @@ export const HUBLA_OFFER_IDS_ELITE_OFICIAIS = [
   "1mGgy9MVD11CJdnsLEov",
   "cXqc4mz6YZFE4GKjGFUz",
 ] as const;
+/** F042 — Black Infinita 2026: mesma cortesia Pro 90d do Elite (Club = vitalício). */
+export const HUBLA_OFFER_IDS_BLACK_INFINITA_OFICIAIS = [
+  "YKPMuMwSBhPBb7UUuDlX",
+  "NZKc6aZXwbD4ihw9vvPN",
+  "6njIGlJgossHQysj6WA7",
+] as const;
 
 function collectIds(raws: Array<string | undefined | readonly string[]>): string[] {
   const ids: string[] = [];
@@ -46,11 +52,13 @@ export function idsOfertaProHubla(): string[] {
   return collectIds([...HUBLA_OFFER_IDS_PRO_OFICIAIS, process.env.HUBLA_OFFER_ID_PRO]);
 }
 
-/** Ofertas Elite no produto Club (público + alunos + Europa). */
+/** Ofertas Elite no produto Club (público + alunos + Europa + Black Infinita). */
 export function idsOfertaEliteHubla(): string[] {
   return collectIds([
     ...HUBLA_OFFER_IDS_ELITE_OFICIAIS,
+    ...HUBLA_OFFER_IDS_BLACK_INFINITA_OFICIAIS,
     process.env.HUBLA_OFFER_ID_ELITE,
+    process.env.HUBLA_OFFER_ID_BLACK_INFINITA,
   ]);
 }
 
@@ -68,7 +76,9 @@ export function idsProdutoEliteAcessoHubla(): string[] {
     process.env.HUBLA_PRODUCT_ID,
     process.env.HUBLA_PRODUCT_ID_ELITE,
     ...HUBLA_OFFER_IDS_ELITE_OFICIAIS,
+    ...HUBLA_OFFER_IDS_BLACK_INFINITA_OFICIAIS,
     process.env.HUBLA_OFFER_ID_ELITE,
+    process.env.HUBLA_OFFER_ID_BLACK_INFINITA,
   ]);
 }
 
