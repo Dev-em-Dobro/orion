@@ -1,6 +1,7 @@
 // Grupo de rotas autenticadas do Orion (sem gate de compra global).
 
 import { redirect } from "next/navigation";
+import Script from "next/script";
 import { AuthError } from "@/lib/auth/errors";
 import { requireUser } from "@/lib/auth/require-user";
 
@@ -31,5 +32,11 @@ export default async function OrionLayout({
     throw e;
   }
 
-  return children;
+  return (
+    <>
+      {children}
+      {/* [Black] Popup da live 29/10 — só pra aluno logado; sai do ar sozinho em 30/10 */}
+      <Script src="/live-popup.js" strategy="afterInteractive" />
+    </>
+  );
 }
