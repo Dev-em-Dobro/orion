@@ -7,6 +7,7 @@
 // `tentarAutoVerificar` é o gate das próprias rotas gateadas.
 
 import { requireUser } from "@/lib/auth/require-user";
+import { usuarioEhAdmin } from "@/lib/admin";
 import { planoDoUsuario } from "@/lib/planos";
 import { contarTarefas } from "@/lib/tarefas/consultar";
 import { Sidebar } from "@/components/sidebar";
@@ -20,6 +21,7 @@ export async function SidebarWithStatus({
 } = {}) {
   let tarefasVencidas = 0;
   let plano: Plano = "free";
+  let isAdmin = false;
 
   try {
     const user = await requireUser();
@@ -30,9 +32,10 @@ export async function SidebarWithStatus({
     // outra, e a sidebar roda em TODA página. Em sequência isso custava dois
     // ida-e-volta de banco antes do primeiro byte — sem efeito perceptível
     // contra o Postgres local (~1 ms), mas ~70 ms contra o Neon.
-    [tarefasVencidas, plano] = await Promise.all([
+    [tarefasVencidas, plano, isAdmin] = await Promise.all([
       contarTarefas(user.id).catch(() => 0),
       planoDoUsuario(user.id).catch((): Plano => "free"),
+      usuarioEhAdmin(user.id).catch(() => false),
     ]);
   } catch {
     // Sem sessão: sidebar padrão. O middleware já cuida do redirect.
@@ -43,6 +46,7 @@ export async function SidebarWithStatus({
       tarefasVencidas={tarefasVencidas}
       plano={plano}
       medidor={medidor}
+      isAdmin={isAdmin}
     />
   );
 }

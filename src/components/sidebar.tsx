@@ -38,13 +38,40 @@ type NavItem = {
   tour?: string;
 };
 
-function grupos(tarefasVencidas: number): { titulo: string; itens: NavItem[] }[] {
-  return GRUPOS_BASE.map((g) => ({
+function grupos(
+  tarefasVencidas: number,
+  isAdmin: boolean,
+): { titulo: string; itens: NavItem[] }[] {
+  const base = GRUPOS_BASE.map((g) => ({
     ...g,
     itens: g.itens.map((i) =>
       i.href === "/tarefas" ? { ...i, badge: tarefasVencidas } : i,
     ),
   }));
+  if (!isAdmin) return base;
+  return base.map((g) => {
+    if (g.titulo !== "Conta") return g;
+    return {
+      ...g,
+      itens: [
+        {
+          href: "/admin",
+          label: "Admin",
+          icone: (
+            <Icone
+              d={
+                <>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                  <path d="M9 12l2 2 4-4" />
+                </>
+              }
+            />
+          ),
+        },
+        ...g.itens,
+      ],
+    };
+  });
 }
 
 const GRUPOS_BASE: { titulo: string; itens: NavItem[] }[] = [
@@ -608,6 +635,7 @@ function IconeFechar() {
 function NavGrupos({
   tarefasVencidas,
   plano,
+  isAdmin = false,
   ativo,
   onBloqueado,
   onNavigate,
@@ -615,13 +643,15 @@ function NavGrupos({
   tarefasVencidas: number;
   /** F035 — decide o cadeado dos itens de plano pago. */
   plano: Plano;
+  /** F043 — item Admin no grupo Conta. */
+  isAdmin?: boolean;
   ativo: (href: string) => boolean;
   onBloqueado: (recurso: Recurso) => void;
   onNavigate?: () => void;
 }) {
   return (
     <>
-      {grupos(tarefasVencidas).map((grupo) => {
+      {grupos(tarefasVencidas, isAdmin).map((grupo) => {
         return (
           <div key={grupo.titulo}>
             <p className="px-2 text-xs font-medium tracking-wider text-muted uppercase">
@@ -665,6 +695,7 @@ export function Sidebar({
   tarefasVencidas = 0,
   plano = "free",
   medidor,
+  isAdmin = false,
 }: {
   /** F031 — cobranças vencidas, no badge do item Tarefas. */
   tarefasVencidas?: number;
@@ -673,6 +704,8 @@ export function Sidebar({
   /** F035 — medidor de uso no cabeçalho do mobile (no desktop ele vive na
    *  topbar do `AppShellClient`). */
   medidor?: React.ReactNode;
+  /** F043 — link Admin só para role admin / bootstrap. */
+  isAdmin?: boolean;
 }) {
   const pathname = usePathname();
   const [menuAberto, setMenuAberto] = useState(false);
@@ -757,6 +790,7 @@ export function Sidebar({
           <NavGrupos
             tarefasVencidas={tarefasVencidas}
             plano={plano}
+            isAdmin={isAdmin}
             ativo={ativo}
             onBloqueado={setBloqueio}
           />
@@ -819,6 +853,7 @@ export function Sidebar({
               <NavGrupos
                 tarefasVencidas={tarefasVencidas}
                 plano={plano}
+                isAdmin={isAdmin}
                 ativo={ativo}
                 onBloqueado={setBloqueio}
                 onNavigate={fecharMenu}

@@ -8,6 +8,8 @@ import { nextCookies } from "better-auth/next-js";
 import { prisma } from "@/lib/db";
 import { sendMagicLinkEmail } from "@/lib/email";
 import { NOME_PRODUTO } from "@/lib/produto";
+import { tentarAutoVerificar } from "@/lib/compra/servico";
+import { emailEhAdminPermitido } from "@/lib/admin/env";
 import { loadAuthEnv } from "./env";
 
 const env = loadAuthEnv();
@@ -41,6 +43,26 @@ export const auth = betterAuth({
     accountLinking: {
       enabled: true,
       trustedProviders: ["google"],
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        // F043 — grant admin prévio / webhook: auto-verifica compra no 1º login.
+        after: async (user) => {
+          if (emailEhAdminPermitido(user.email)) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { role: "admin" },
+            });
+          }
+          try {
+            await tentarAutoVerificar(user.id);
+          } catch {
+            // Não bloqueia o signup se o entitlement falhar.
+          }
+        },
+      },
     },
   },
   // F028 (H5) / ADR-015 — sessão assinada no cookie por 5 minutos: corta uma
