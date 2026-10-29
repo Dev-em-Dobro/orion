@@ -162,17 +162,41 @@ export function interpretarEventoHubla(
     return { acao: "ignorar", motivo: "product_id ausente" };
   }
 
-  const allow = allowlistProduto(productIdFiltro);
-  if (allow && !allow.has(productId)) {
-    return { acao: "ignorar", motivo: "produto não filtrado" };
-  }
-
   const email = emailDoEvento(event);
   if (!email) {
     return { acao: "ignorar", motivo: "email ausente" };
   }
 
   const offerIds = offerIdsDoEvento(event);
+  // product.id às vezes é o offer slug (Black Infinita) — entra na lista.
+  const topProductRaw = event.product?.id?.trim();
+  if (
+    topProductRaw &&
+    topProductRaw !== productId &&
+    !offerIds.includes(topProductRaw)
+  ) {
+    offerIds.unshift(topProductRaw);
+  }
+
+  const allow = allowlistProduto(productIdFiltro);
+  if (allow && !allow.has(productId)) {
+    const offerIdsPro = isFiltroAcesso(productIdFiltro)
+      ? setIds(productIdFiltro.offerIdsPro)
+      : new Set<string>();
+    const offerIdsElite = isFiltroAcesso(productIdFiltro)
+      ? setIds(productIdFiltro.offerIdsElite)
+      : new Set<string>();
+    const ofertaConhecida =
+      offerIds.some((id) => offerIdsPro.has(id) || offerIdsElite.has(id)) ||
+      offerIdsPro.has(productId) ||
+      offerIdsElite.has(productId) ||
+      (topProductRaw
+        ? offerIdsPro.has(topProductRaw) || offerIdsElite.has(topProductRaw)
+        : false);
+    if (!ofertaConhecida) {
+      return { acao: "ignorar", motivo: "produto não filtrado" };
+    }
+  }
 
   if (EVENTOS_CONCEDER.has(tipo)) {
     const subStatus = event.subscription?.status?.toLowerCase();

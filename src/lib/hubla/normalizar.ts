@@ -10,10 +10,11 @@ export function productIdDoEvento(event: {
   product?: { id?: string };
   products?: { id?: string }[];
 }): string | null {
-  const id = event.product?.id?.trim();
-  if (id) return id;
-  const primeiro = event.products?.[0]?.id?.trim();
-  return primeiro || null;
+  const top = event.product?.id?.trim() || null;
+  const nested = event.products?.[0]?.id?.trim() || null;
+  // Black Infinita: product.id = offer slug; catalog fica em products[0].id.
+  if (top && nested && top !== nested) return nested;
+  return top || nested;
 }
 
 type OfertaHubla = { id?: string; isOrderBump?: boolean };
@@ -41,7 +42,15 @@ export function offerIdsDoEvento(event: {
   }
 
   const principais = ofertas.filter((o) => !o.isOrderBump);
-  return (principais.length > 0 ? principais : ofertas).map((o) => o.id);
+  const ids = (principais.length > 0 ? principais : ofertas).map((o) => o.id);
+
+  // Se product.id ≠ products[0].id, o top costuma ser o offer comprado.
+  const top = (event as { product?: { id?: string } }).product?.id?.trim();
+  const nested = (event as { products?: { id?: string }[] }).products?.[0]?.id?.trim();
+  if (top && nested && top !== nested && !ids.includes(top)) {
+    ids.unshift(top);
+  }
+  return ids;
 }
 
 export function emailDoEvento(event: HublaWebhookEventLike): string | null {

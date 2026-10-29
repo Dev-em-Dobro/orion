@@ -18,12 +18,17 @@ Club (F120).
 | `NZKc6aZXwbD4ihw9vvPN` | Black alunos — R$ 797 |
 | `6njIGlJgossHQysj6WA7` | Black não alunos — R$ 997 |
 
+Produto catalog Hubla: `hXQcK8O5fZGvRK4RVMxJ` (DevQuest 2.0 - Black Friday).
+Às vezes `event.product.id` **é o offer id** (não o catalog); o filtro de
+acesso aceita catalog + offer ids Black (e qualquer offer Elite/PRO conhecida).
+
 ## Comportamento
 
 No `classificarGrant` (webhook Hubla):
 
-- Se `offers[].id` ∈ Black Infinita → tratar como **Elite para cortesia**:
-  - `chaveEntitlement` = `product.id` do Club (porta de acesso)
+- Se `offers[].id` ∈ Black Infinita (ou `product.id` é um desses offers) →
+  tratar como **Elite para cortesia**:
+  - `chaveEntitlement` = product/offer id do evento (porta de acesso)
   - `cortesiaPro: true` → upsert `HUBLA_PRODUCT_ID_PRO` (`trial-pro-…`) com
     `expires_at` = +90 dias (F035)
 
@@ -34,8 +39,9 @@ temporário).
 
 ## Env
 
-Oficiais hardcoded em `src/lib/hubla/produtos.ts`. Opcional:
-`HUBLA_OFFER_ID_BLACK_INFINITA` (CSV) para ids extras.
+Oficiais hardcoded em `src/lib/hubla/produtos.ts`:
+- `HUBLA_PRODUCT_ID_BLACK_FRIDAY` = `hXQcK8O5fZGvRK4RVMxJ` (hardcoded + opcional env)
+- `HUBLA_OFFER_ID_BLACK_INFINITA` (CSV) para ids extras
 
 ## Critérios
 

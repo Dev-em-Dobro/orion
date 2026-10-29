@@ -21,6 +21,8 @@ export const HUBLA_OFFER_IDS_BLACK_INFINITA_OFICIAIS = [
   "NZKc6aZXwbD4ihw9vvPN",
   "6njIGlJgossHQysj6WA7",
 ] as const;
+/** Produto Hubla "DevQuest 2.0 - Black Friday" que hospeda as 3 ofertas. */
+export const HUBLA_PRODUCT_ID_BLACK_FRIDAY = "hXQcK8O5fZGvRK4RVMxJ";
 
 function collectIds(raws: Array<string | undefined | readonly string[]>): string[] {
   const ids: string[] = [];
@@ -44,6 +46,11 @@ export function idsProdutoAcessoHubla(): string[] {
     process.env.HUBLA_PRODUCT_ID,
     process.env.HUBLA_PRODUCT_ID_ELITE,
     process.env.HUBLA_PRODUCT_ID_CLUB_PRO,
+    HUBLA_PRODUCT_ID_BLACK_FRIDAY,
+    process.env.HUBLA_PRODUCT_ID_BLACK_FRIDAY,
+    // Hubla BF: event.product.id às vezes é o offer slug.
+    ...HUBLA_OFFER_IDS_BLACK_INFINITA_OFICIAIS,
+    process.env.HUBLA_OFFER_ID_BLACK_INFINITA,
   ]);
 }
 
@@ -75,6 +82,8 @@ export function idsProdutoEliteAcessoHubla(): string[] {
   return collectIds([
     process.env.HUBLA_PRODUCT_ID,
     process.env.HUBLA_PRODUCT_ID_ELITE,
+    HUBLA_PRODUCT_ID_BLACK_FRIDAY,
+    process.env.HUBLA_PRODUCT_ID_BLACK_FRIDAY,
     ...HUBLA_OFFER_IDS_ELITE_OFICIAIS,
     ...HUBLA_OFFER_IDS_BLACK_INFINITA_OFICIAIS,
     process.env.HUBLA_OFFER_ID_ELITE,

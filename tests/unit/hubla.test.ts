@@ -325,6 +325,69 @@ describe("hubla interpretar", () => {
     expect(acao.chaveEntitlement).toBe(produtoClub);
     expect(acao.cortesiaPro).toBe(true);
   });
+
+  const catalogBf = "hXQcK8O5fZGvRK4RVMxJ";
+  const filtroBlack = {
+    productIds: [produtoClub, catalogBf],
+    offerIdsPro: [ofertaProCopia, ofertaProOficial],
+    offerIdsElite: [
+      ofertaElite,
+      "YKPMuMwSBhPBb7UUuDlX",
+      "NZKc6aZXwbD4ihw9vvPN",
+      "6njIGlJgossHQysj6WA7",
+    ],
+    eliteProductIds: [produtoClub, catalogBf],
+  };
+
+  it("F042 — payload BF: product.id = offer não alunos → cortesia", () => {
+    const oferta = "6njIGlJgossHQysj6WA7";
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: oferta, name: "DevQuest 2.0 - Black Friday" },
+          products: [
+            {
+              id: catalogBf,
+              offers: [{ id: oferta }],
+            },
+          ],
+          user: { email: "naoaluno@example.com" },
+          subscription: { status: "active" },
+        },
+      },
+      filtroBlack,
+    );
+    expect(acao.acao).toBe("conceder");
+    if (acao.acao !== "conceder") return;
+    expect(acao.productId).toBe(catalogBf);
+    expect(acao.cortesiaPro).toBe(true);
+  });
+
+  it("F042 — payload BF: product.id = offer Black alunos → cortesia", () => {
+    const oferta = "NZKc6aZXwbD4ihw9vvPN";
+    const acao = interpretarEventoHubla(
+      {
+        type: "customer.member_added",
+        event: {
+          product: { id: oferta, name: "DevQuest 2.0 - Black Friday" },
+          products: [
+            {
+              id: catalogBf,
+              offers: [{ id: oferta }],
+            },
+          ],
+          user: { email: "aluno@example.com" },
+          subscription: { status: "active" },
+        },
+      },
+      filtroBlack,
+    );
+    expect(acao.acao).toBe("conceder");
+    if (acao.acao !== "conceder") return;
+    expect(acao.productId).toBe(catalogBf);
+    expect(acao.cortesiaPro).toBe(true);
+  });
 });
 
 describe("hubla processarWebhookHubla", () => {
