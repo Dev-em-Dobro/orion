@@ -35,8 +35,8 @@ export default async function OrionLayout({
   return (
     <>
       {children}
-      {/* [Black] Popup da live 29/10 — só pra aluno logado; sai do ar sozinho em 30/10 */}
-      <Script src="/live-popup.js" strategy="afterInteractive" />
+      {/* [Black] Popup da oferta de alunos da Black Infinita — só pra aluno logado */}
+      <Script src="/black-popup.js" strategy="afterInteractive" />
     </>
   );
 }
