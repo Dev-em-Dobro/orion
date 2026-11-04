@@ -43,6 +43,7 @@ export type AcaoEntitlement =
       productId: string;
       chaveEntitlement: string;
       cortesiaPro: boolean;
+      cortesiaProAnual?: boolean;
       hublaUserId?: string;
       subscriptionId?: string;
     }

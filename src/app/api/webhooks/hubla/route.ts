@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { processarWebhookHubla } from "@/lib/hubla";
 import {
   idsOfertaEliteHubla,
+  idsOfertaBlackInfinitaHubla,
   idsOfertaProHubla,
   idsProdutoAcessoHubla,
   idsProdutoClubProAcessoHubla,
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
         productIds,
         offerIdsPro: idsOfertaProHubla(),
         offerIdsElite: idsOfertaEliteHubla(),
+        offerIdsBlack: idsOfertaBlackInfinitaHubla(),
         eliteProductIds: idsProdutoEliteAcessoHubla(),
         clubProProductIds: idsProdutoClubProAcessoHubla(),
       },

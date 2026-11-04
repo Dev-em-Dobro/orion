@@ -3,9 +3,11 @@
 
 import { prisma } from "@/lib/db";
 import { productIdsCortesiaPro } from "@/lib/tmb/interpretar";
+import { HUBLA_PRODUCT_ID_BLACK_FRIDAY } from "@/lib/hubla/produtos";
 import {
   TRIAL_PRO_FIM_ISO,
   dataExpiracaoCortesia,
+  dataExpiracaoCortesiaAnual,
   diasCortesiaPro,
   entitlementPlanoVigente,
   idProdutoCortesiaPro,
@@ -15,6 +17,7 @@ import {
 export async function concederCortesiaPro(
   email: string,
   agora: Date = new Date(),
+  anual = false,
 ): Promise<"criado" | "ja_ativo" | "ignorado"> {
   const productId = idProdutoCortesiaPro();
   if (!productId) return "ignorado";
@@ -23,6 +26,9 @@ export async function concederCortesiaPro(
     where: { email_product_id: { email, product_id: productId } },
   });
 
+  const expiresAt = anual
+    ? dataExpiracaoCortesiaAnual(agora)
+    : dataExpiracaoCortesia(agora, diasCortesiaPro());
   if (
     existente?.status === "ativo" &&
     entitlementPlanoVigente(
@@ -30,10 +36,16 @@ export async function concederCortesiaPro(
       agora,
     )
   ) {
+    if (anual && (!existente.expires_at || existente.expires_at < expiresAt)) {
+      await prisma.hublaEntitlement.update({
+        where: { email_product_id: { email, product_id: productId } },
+        data: { expires_at: expiresAt },
+      });
+      return "criado";
+    }
     return "ja_ativo";
   }
 
-  const expiresAt = dataExpiracaoCortesia(agora, diasCortesiaPro());
   await prisma.hublaEntitlement.upsert({
     where: { email_product_id: { email, product_id: productId } },
     create: {
@@ -111,9 +123,9 @@ export async function revogarCortesiaProSeSemAcesso(
   await revogarCortesiaPro(email);
 }
 
-export async function fimCortesiaProDoUsuario(
+export async function detalhesCortesiaProDoUsuario(
   userId: string,
-): Promise<string | null> {
+): Promise<{ fimIso: string; anual: boolean } | null> {
   const productId = idProdutoCortesiaPro();
   if (!productId) return null;
 
@@ -141,6 +153,16 @@ export async function fimCortesiaProDoUsuario(
     select: { product_id: true, expires_at: true },
   });
   if (!row || !entitlementPlanoVigente(row)) return null;
-  if (row.expires_at) return isoDateEmSaoPaulo(row.expires_at);
-  return TRIAL_PRO_FIM_ISO;
+  const black = await prisma.hublaEntitlement.findFirst({
+    where: {
+      email: { in: emails },
+      product_id: HUBLA_PRODUCT_ID_BLACK_FRIDAY,
+      status: "ativo",
+    },
+    select: { id: true },
+  });
+  return {
+    fimIso: row.expires_at ? isoDateEmSaoPaulo(row.expires_at) : TRIAL_PRO_FIM_ISO,
+    anual: black !== null,
+  };
 }

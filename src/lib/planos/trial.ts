@@ -78,6 +78,14 @@ export function dataExpiracaoCortesia(
   return fimDoDiaSaoPaulo(somarDiasIso(isoDateEmSaoPaulo(from), dias));
 }
 
+/** Aniversário de 1 ano no calendário de São Paulo; 29/02 vira 28/02. */
+export function dataExpiracaoCortesiaAnual(from: Date): Date {
+  const [ano = 0, mes = 0, dia = 0] = isoDateEmSaoPaulo(from).split("-").map(Number);
+  const ultimoDia = new Date(Date.UTC(ano + 1, mes, 0)).getUTCDate();
+  const iso = `${ano + 1}-${String(mes).padStart(2, "0")}-${String(Math.min(dia, ultimoDia)).padStart(2, "0")}`;
+  return fimDoDiaSaoPaulo(iso);
+}
+
 export function entitlementPlanoVigente(
   row: { product_id: string; expires_at: Date | null },
   agora: Date = new Date(),

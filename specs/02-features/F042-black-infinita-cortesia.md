@@ -1,12 +1,12 @@
-# F042 — Black Infinita 2026: cortesia Pro 90 dias no Orion
+# F042 — Black Infinita 2026: cortesia Pro de 1 ano no Orion
 
 ## Status
-Em implementação — 2026-10-26
+Em implementação — 2026-10-26. Emenda de 2026-11-04: duração de 1 ano.
 
 ## Contexto
 
 Quem compra as ofertas **Black Infinita 2026** no Hubla (mesmo produto Club)
-recebe no Orion a **mesma cortesia Pro de 90 dias** que o Elite (`trial-pro-*`),
+recebe no Orion **1 ano de cortesia Pro** (`trial-pro-*`),
 não um plano Pro permanente. Acesso vitalício permanente fica só no Builders
 Club (F120).
 
@@ -30,7 +30,15 @@ No `classificarGrant` (webhook Hubla):
   tratar como **Elite para cortesia**:
   - `chaveEntitlement` = product/offer id do evento (porta de acesso)
   - `cortesiaPro: true` → upsert `HUBLA_PRODUCT_ID_PRO` (`trial-pro-…`) com
-    `expires_at` = +90 dias (F035)
+    `expires_at` = fim do dia (America/Sao_Paulo) do aniversário de 1 ano do grant
+    (F035). A duração geral do Elite continua em `CORTESIA_PRO_DIAS` (90 por padrão).
+  - Redelivery não renova uma cortesia já vigente. Se o aluno tinha uma
+    cortesia vigente mais curta, a compra Black estende o fim até pelo menos
+    1 ano após essa compra, sem encurtar um prazo maior.
+  - Payload legado sem `offers[]` do produto Black Friday também usa 1 ano,
+    pois esse produto hospeda somente as três ofertas acima.
+  - O aviso do Orion mostra **1 ano** e a data individual de fim para essa
+    compra; para as outras ofertas, mantém a duração padrão.
 
 Revoke: mesmo fluxo Elite (revoga entitlement de acesso + cortesia se não
 restar Elite). O Club **não** deve revogar membership vitalício (F120); se a
@@ -45,7 +53,7 @@ Oficiais hardcoded em `src/lib/hubla/produtos.ts`:
 
 ## Critérios
 
-- [x] Compra Black → entitlement ativo no product Club + cortesia `trial-pro-*` 90d
+- [x] Compra Black → entitlement ativo no product Club + cortesia `trial-pro-*` 1 ano
 - [x] Plano Orion = Pro enquanto a cortesia vigorar
 - [x] Oferta PRO Club normal continua **sem** cortesia
 - [x] Teste unitário com payload `offers[].id` Black
@@ -53,4 +61,14 @@ Oficiais hardcoded em `src/lib/hubla/produtos.ts`:
 ## Fora de escopo
 
 - Badge “vitalício” no Orion
-- Extensão da cortesia além de 90 dias
+- Alteração de cortesia para as demais ofertas Elite
+
+## Correção retroativa (2026-11-04)
+
+Compras das três ofertas entre **2026-10-28 00:00** e o fim de
+**2026-11-04** (America/Sao_Paulo) têm `expires_at` corrigido para o fim do
+dia do aniversário de 1 ano de `granted_at`. Selecionar somente entitlement
+de acesso ativo do produto Black Friday e trial sintético ativo; preservar
+prazo maior e não reativar acesso revogado. O produto Black Friday hospeda
+exclusivamente essas três ofertas. A correção deve ser idempotente e ter
+prévia antes de gravar.

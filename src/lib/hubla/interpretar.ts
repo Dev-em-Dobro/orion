@@ -1,6 +1,7 @@
 // Interpreta payload Hubla → ação de entitlement (puro, testável).
 
 import { emailDoEvento, offerIdsDoEvento, productIdDoEvento } from "./normalizar";
+import { HUBLA_PRODUCT_ID_BLACK_FRIDAY } from "./produtos";
 import {
   EVENTOS_CONCEDER,
   EVENTOS_REVOGAR,
@@ -12,6 +13,7 @@ export type FiltroAcessoHubla = {
   productIds: readonly string[];
   offerIdsPro?: readonly string[];
   offerIdsElite?: readonly string[];
+  offerIdsBlack?: readonly string[];
   eliteProductIds?: readonly string[];
   clubProProductIds?: readonly string[];
 };
@@ -81,12 +83,15 @@ function classificarGrant(opts: {
   productId: string;
   offerIds: string[];
   filtro: ProductIdFiltroHubla;
-}): { chaveEntitlement: string; cortesiaPro: boolean } {
+}): { chaveEntitlement: string; cortesiaPro: boolean; cortesiaProAnual?: boolean } {
   const offerIdsPro = isFiltroAcesso(opts.filtro)
     ? setIds(opts.filtro.offerIdsPro)
     : new Set<string>();
   const offerIdsElite = isFiltroAcesso(opts.filtro)
     ? setIds(opts.filtro.offerIdsElite)
+    : new Set<string>();
+  const offerIdsBlack = isFiltroAcesso(opts.filtro)
+    ? setIds(opts.filtro.offerIdsBlack)
     : new Set<string>();
   const eliteProducts = isFiltroAcesso(opts.filtro)
     ? setIds(opts.filtro.eliteProductIds)
@@ -97,6 +102,14 @@ function classificarGrant(opts: {
 
   const ofertaPro = ofertaProDoEvento(opts.offerIds, offerIdsPro);
   const ofertaElite = ofertaEliteDoEvento(opts.offerIds, offerIdsElite);
+
+  if (
+    opts.offerIds.some((id) => offerIdsBlack.has(id)) ||
+    offerIdsBlack.has(opts.productId) ||
+    (opts.productId === HUBLA_PRODUCT_ID_BLACK_FRIDAY && opts.offerIds.length === 0)
+  ) {
+    return { chaveEntitlement: opts.productId, cortesiaPro: true, cortesiaProAnual: true };
+  }
 
   if (ofertaPro) {
     return { chaveEntitlement: ofertaPro, cortesiaPro: false };
@@ -210,6 +223,7 @@ export function interpretarEventoHubla(
       productId,
       chaveEntitlement: grant.chaveEntitlement,
       cortesiaPro: grant.cortesiaPro,
+      ...(grant.cortesiaProAnual ? { cortesiaProAnual: true } : {}),
       hublaUserId: event.user?.id,
       subscriptionId: event.subscription?.id,
     };

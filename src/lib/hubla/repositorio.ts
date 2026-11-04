@@ -36,9 +36,16 @@ async function upsertEntitlement(opts: {
   status: "ativo" | "revogado";
   hublaUserId?: string | null;
   subscriptionId?: string | null;
-}): Promise<void> {
+}): Promise<Date> {
   const agora = new Date();
   if (opts.status === "ativo") {
+    const anterior = await prisma.hublaEntitlement.findUnique({
+      where: { email_product_id: { email: opts.email, product_id: opts.productId } },
+      select: { status: true, granted_at: true },
+    });
+    const grantedAt = anterior?.status === "ativo" && anterior.granted_at instanceof Date
+      ? anterior.granted_at
+      : agora;
     await prisma.hublaEntitlement.upsert({
       where: {
         email_product_id: {
@@ -52,17 +59,17 @@ async function upsertEntitlement(opts: {
         status: "ativo",
         hubla_user_id: opts.hublaUserId ?? null,
         subscription_id: opts.subscriptionId ?? null,
-        granted_at: agora,
+        granted_at: grantedAt,
       },
       update: {
         status: "ativo",
         hubla_user_id: opts.hublaUserId ?? null,
         subscription_id: opts.subscriptionId ?? null,
         revoked_at: null,
-        granted_at: agora,
+        granted_at: grantedAt,
       },
     });
-    return;
+    return grantedAt;
   }
 
   await prisma.hublaEntitlement.upsert({
@@ -83,13 +90,14 @@ async function upsertEntitlement(opts: {
       revoked_at: agora,
     },
   });
+  return agora;
 }
 
 export async function aplicarAcaoEntitlement(acao: AcaoEntitlement): Promise<void> {
   if (acao.acao === "ignorar") return;
 
   if (acao.acao === "conceder") {
-    await upsertEntitlement({
+    const grantedAt = await upsertEntitlement({
       email: acao.email,
       productId: acao.chaveEntitlement,
       status: "ativo",
@@ -97,7 +105,7 @@ export async function aplicarAcaoEntitlement(acao: AcaoEntitlement): Promise<voi
       subscriptionId: acao.subscriptionId,
     });
     if (acao.cortesiaPro) {
-      await concederCortesiaPro(acao.email);
+      await concederCortesiaPro(acao.email, grantedAt, acao.cortesiaProAnual);
     }
     return;
   }

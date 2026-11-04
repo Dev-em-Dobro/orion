@@ -23,11 +23,21 @@ import { planoDosEntitlements } from "@/lib/planos/resolver";
 import type { Plano } from "@/lib/planos/catalogo";
 import {
   dataExpiracaoCortesia,
+  dataExpiracaoCortesiaAnual,
   diasCortesiaPro,
   entitlementPlanoVigente,
   idProdutoCortesiaPro,
   rotuloDuracaoCortesia,
 } from "@/lib/planos/trial";
+
+describe("F042 — ano de cortesia Black", () => {
+  it("vence no aniversário local e ajusta 29/02 para 28/02", () => {
+    expect(dataExpiracaoCortesiaAnual(new Date("2026-10-28T10:00:00-03:00")))
+      .toEqual(new Date("2027-10-28T23:59:59.999-03:00"));
+    expect(dataExpiracaoCortesiaAnual(new Date("2028-02-29T10:00:00-03:00")))
+      .toEqual(new Date("2029-02-28T23:59:59.999-03:00"));
+  });
+});
 
 describe("F035 — catálogo", () => {
   it("AC1 — free é o padrão e vale 40 Leads novos/mês", () => {

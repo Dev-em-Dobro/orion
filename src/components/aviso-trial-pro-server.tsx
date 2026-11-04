@@ -3,7 +3,7 @@
 
 import { requireUser } from "@/lib/auth/require-user";
 import { planoDoUsuario } from "@/lib/planos";
-import { fimCortesiaProDoUsuario } from "@/lib/planos/cortesia-pro";
+import { detalhesCortesiaProDoUsuario } from "@/lib/planos/cortesia-pro";
 import {
   TRIAL_PRO_FIM_ISO,
   rotuloDuracaoCortesia,
@@ -19,11 +19,11 @@ export async function AvisoTrialPro() {
     const user = await requireUser();
     const plano = await planoDoUsuario(user.id);
     if (plano !== "pro") return null;
-    const fimIso =
-      (await fimCortesiaProDoUsuario(user.id)) ?? TRIAL_PRO_FIM_ISO;
+    const detalhes = await detalhesCortesiaProDoUsuario(user.id);
+    const fimIso = detalhes?.fimIso ?? TRIAL_PRO_FIM_ISO;
     return (
       <AvisoTrialProCliente
-        duracao={rotuloDuracaoCortesia()}
+        duracao={detalhes?.anual ? "1 ano" : rotuloDuracaoCortesia()}
         fimRotulo={rotuloFimTrialPro(fimIso)}
       />
     );

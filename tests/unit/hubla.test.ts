@@ -8,6 +8,7 @@ const { prismaMock } = vi.hoisted(() => ({
     },
     hublaEntitlement: {
       upsert: vi.fn(),
+      update: vi.fn(),
       findFirst: vi.fn(),
       findUnique: vi.fn(),
     },
@@ -17,9 +18,10 @@ const { prismaMock } = vi.hoisted(() => ({
 vi.mock("@/lib/db", () => ({ prisma: prismaMock }));
 
 import { interpretarEventoHubla } from "@/lib/hubla/interpretar";
-import { idsOfertaEliteHubla, idsOfertaProHubla } from "@/lib/hubla/produtos";
+import { idsOfertaBlackInfinitaHubla, idsOfertaEliteHubla, idsOfertaProHubla } from "@/lib/hubla/produtos";
 import { normalizarEmailHubla } from "@/lib/hubla/normalizar";
 import { processarWebhookHubla } from "@/lib/hubla/repositorio";
+import { concederCortesiaPro } from "@/lib/planos/cortesia-pro";
 
 describe("hubla interpretar", () => {
   it("member_added concede acesso", () => {
@@ -336,8 +338,21 @@ describe("hubla interpretar", () => {
       "NZKc6aZXwbD4ihw9vvPN",
       "6njIGlJgossHQysj6WA7",
     ],
+    offerIdsBlack: idsOfertaBlackInfinitaHubla(),
     eliteProductIds: [produtoClub, catalogBf],
   };
+
+  it("F042 — produto Black sem offers também recebe 1 ano", () => {
+    const acao = interpretarEventoHubla({
+      type: "customer.member_added",
+      event: {
+        product: { id: catalogBf },
+        user: { email: "black@example.com" },
+        subscription: { status: "active" },
+      },
+    }, filtroBlack);
+    expect(acao.acao === "conceder" && acao.cortesiaProAnual).toBe(true);
+  });
 
   it("F042 — payload BF: product.id = offer não alunos → cortesia", () => {
     const oferta = "6njIGlJgossHQysj6WA7";
@@ -362,6 +377,7 @@ describe("hubla interpretar", () => {
     if (acao.acao !== "conceder") return;
     expect(acao.productId).toBe(catalogBf);
     expect(acao.cortesiaPro).toBe(true);
+    expect(acao.cortesiaProAnual).toBe(true);
   });
 
   it("F042 — payload BF: product.id = offer Black alunos → cortesia", () => {
@@ -387,6 +403,7 @@ describe("hubla interpretar", () => {
     if (acao.acao !== "conceder") return;
     expect(acao.productId).toBe(catalogBf);
     expect(acao.cortesiaPro).toBe(true);
+    expect(acao.cortesiaProAnual).toBe(true);
   });
 });
 
@@ -468,6 +485,33 @@ describe("hubla processarWebhookHubla", () => {
     expect(productIds).not.toContain("trial-pro-2026-11");
     if (prev === undefined) delete process.env.HUBLA_PRODUCT_ID_PRO;
     else process.env.HUBLA_PRODUCT_ID_PRO = prev;
+  });
+});
+
+describe("F042 — prazo Black no Orion", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    delete process.env.HUBLA_PRODUCT_ID_PRO;
+  });
+
+  it("estende trial vigente de 90 dias até 1 ano, sem renovar em redelivery", async () => {
+    process.env.HUBLA_PRODUCT_ID_PRO = "trial-pro-2026-11";
+    const entrada = new Date("2026-10-29T12:00:00-03:00");
+    const fimAnual = new Date("2027-10-29T23:59:59.999-03:00");
+    prismaMock.hublaEntitlement.findUnique.mockResolvedValueOnce({
+      status: "ativo", product_id: "trial-pro-2026-11",
+      expires_at: new Date("2027-01-27T23:59:59.999-03:00"),
+    });
+    expect(await concederCortesiaPro("aluno@example.com", entrada, true)).toBe("criado");
+    expect(prismaMock.hublaEntitlement.update).toHaveBeenCalledWith({
+      where: { email_product_id: { email: "aluno@example.com", product_id: "trial-pro-2026-11" } },
+      data: { expires_at: fimAnual },
+    });
+    prismaMock.hublaEntitlement.findUnique.mockResolvedValueOnce({
+      status: "ativo", product_id: "trial-pro-2026-11", expires_at: fimAnual,
+    });
+    expect(await concederCortesiaPro("aluno@example.com", entrada, true)).toBe("ja_ativo");
+    expect(prismaMock.hublaEntitlement.update).toHaveBeenCalledTimes(1);
   });
 });
 
