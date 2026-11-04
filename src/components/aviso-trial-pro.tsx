@@ -15,21 +15,24 @@ export function AvisoTrialProCliente({
   fimRotulo: string;
 }) {
   const [visivel, setVisivel] = useState(false);
+  const storageKey = duracao === "1 ano"
+    ? "orion-aviso-trial-pro-black-2026"
+    : STORAGE_KEY;
 
   useEffect(() => {
     try {
-      if (window.localStorage.getItem(STORAGE_KEY) === "1") return;
+      if (window.localStorage.getItem(storageKey) === "1") return;
     } catch {
       // localStorage bloqueado: mostra o aviso mesmo assim.
     }
     setVisivel(true);
-  }, []);
+  }, [storageKey]);
 
   if (!visivel) return null;
 
   function fechar() {
     try {
-      window.localStorage.setItem(STORAGE_KEY, "1");
+      window.localStorage.setItem(storageKey, "1");
     } catch {
       // Sem persistir: some só nesta sessão de página.
     }
