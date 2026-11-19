@@ -17,8 +17,13 @@ Club (F120).
 | `YKPMuMwSBhPBb7UUuDlX` | Black alunos 2025 — R$ 597 |
 | `NZKc6aZXwbD4ihw9vvPN` | Black alunos — R$ 797 |
 | `6njIGlJgossHQysj6WA7` | Black não alunos — R$ 997 |
+| `WzHaleRp5TWfaCiCyR2u` | Black não alunos — parcelamento interno |
+| `aOdZtdHjFnnoeWaVPNHy` | Black alunos — parcelamento interno |
 
 Produto catalog Hubla: `hXQcK8O5fZGvRK4RVMxJ` (DevQuest 2.0 - Black Friday).
+Os dois payloads enviados para as ofertas novas 1 e 2 repetem
+`WzHaleRp5TWfaCiCyR2u`; só há dois IDs novos distintos confirmados em
+2026-11-19. Ambos seguem a mesma regra anual.
 Às vezes `event.product.id` **é o offer id** (não o catalog); o filtro de
 acesso aceita catalog + offer ids Black (e qualquer offer Elite/PRO conhecida).
 
@@ -36,7 +41,7 @@ No `classificarGrant` (webhook Hubla):
     cortesia vigente mais curta, a compra Black estende o fim até pelo menos
     1 ano após essa compra, sem encurtar um prazo maior.
   - Payload legado sem `offers[]` do produto Black Friday também usa 1 ano,
-    pois esse produto hospeda somente as três ofertas acima.
+    pois esse produto hospeda somente as ofertas Black acima.
   - O aviso do Orion mostra **1 ano** e a data individual de fim para essa
     compra; para as outras ofertas, mantém a duração padrão.
 
