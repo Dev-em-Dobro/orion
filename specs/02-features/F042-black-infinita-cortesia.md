@@ -19,11 +19,11 @@ Club (F120).
 | `6njIGlJgossHQysj6WA7` | Black não alunos — R$ 997 |
 | `WzHaleRp5TWfaCiCyR2u` | Black não alunos — parcelamento interno |
 | `aOdZtdHjFnnoeWaVPNHy` | Black alunos — parcelamento interno |
+| `aKMxLQaZtYwZO8NCHf74` | Black alunos 2025 — parcelamento interno |
 
 Produto catalog Hubla: `hXQcK8O5fZGvRK4RVMxJ` (DevQuest 2.0 - Black Friday).
-Os dois payloads enviados para as ofertas novas 1 e 2 repetem
-`WzHaleRp5TWfaCiCyR2u`; só há dois IDs novos distintos confirmados em
-2026-11-19. Ambos seguem a mesma regra anual.
+O payload adicional de 2026-11-19 confirmou o terceiro ID distinto de
+parcelamento interno. Os três seguem a mesma regra anual.
 Às vezes `event.product.id` **é o offer id** (não o catalog); o filtro de
 acesso aceita catalog + offer ids Black (e qualquer offer Elite/PRO conhecida).
 

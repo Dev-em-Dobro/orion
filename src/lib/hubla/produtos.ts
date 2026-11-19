@@ -22,6 +22,7 @@ export const HUBLA_OFFER_IDS_BLACK_INFINITA_OFICIAIS = [
   "6njIGlJgossHQysj6WA7",
   "WzHaleRp5TWfaCiCyR2u",
   "aOdZtdHjFnnoeWaVPNHy",
+  "aKMxLQaZtYwZO8NCHf74",
 ] as const;
 /** Produto Hubla "DevQuest 2.0 - Black Friday" que hospeda as ofertas Black. */
 export const HUBLA_PRODUCT_ID_BLACK_FRIDAY = "hXQcK8O5fZGvRK4RVMxJ";

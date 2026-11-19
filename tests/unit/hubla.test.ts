@@ -352,6 +352,7 @@ describe("hubla interpretar", () => {
   it.each([
     ["WzHaleRp5TWfaCiCyR2u", "não alunos parcelamento interno"],
     ["aOdZtdHjFnnoeWaVPNHy", "alunos parcelamento interno"],
+    ["aKMxLQaZtYwZO8NCHf74", "alunos 2025 parcelamento interno"],
   ])("F042 — oferta nova %s (%s) concede acesso e trial anual", (oferta) => {
     const acao = interpretarEventoHubla({
       type: "customer.member_added",
