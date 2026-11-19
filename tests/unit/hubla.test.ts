@@ -332,12 +332,7 @@ describe("hubla interpretar", () => {
   const filtroBlack = {
     productIds: [produtoClub, catalogBf],
     offerIdsPro: [ofertaProCopia, ofertaProOficial],
-    offerIdsElite: [
-      ofertaElite,
-      "YKPMuMwSBhPBb7UUuDlX",
-      "NZKc6aZXwbD4ihw9vvPN",
-      "6njIGlJgossHQysj6WA7",
-    ],
+    offerIdsElite: idsOfertaEliteHubla(),
     offerIdsBlack: idsOfertaBlackInfinitaHubla(),
     eliteProductIds: [produtoClub, catalogBf],
   };
@@ -352,6 +347,30 @@ describe("hubla interpretar", () => {
       },
     }, filtroBlack);
     expect(acao.acao === "conceder" && acao.cortesiaProAnual).toBe(true);
+  });
+
+  it.each([
+    ["WzHaleRp5TWfaCiCyR2u", "não alunos parcelamento interno"],
+    ["aOdZtdHjFnnoeWaVPNHy", "alunos parcelamento interno"],
+    ["aKMxLQaZtYwZO8NCHf74", "alunos 2025 parcelamento interno"],
+  ])("F042 — oferta nova %s (%s) concede acesso e trial anual", (oferta) => {
+    const acao = interpretarEventoHubla({
+      type: "customer.member_added",
+      event: {
+        product: { id: oferta, name: "DevQuest 2.0 - Black Friday" },
+        products: [{
+          id: catalogBf,
+          offers: [{ id: oferta }],
+        }],
+        user: { email: "comprador@example.com" },
+        subscription: { status: "active" },
+      },
+    }, filtroBlack);
+    expect(acao.acao).toBe("conceder");
+    if (acao.acao !== "conceder") return;
+    expect(acao.productId).toBe(catalogBf);
+    expect(acao.chaveEntitlement).toBe(catalogBf);
+    expect(acao.cortesiaProAnual).toBe(true);
   });
 
   it("F042 — payload BF: product.id = offer não alunos → cortesia", () => {
