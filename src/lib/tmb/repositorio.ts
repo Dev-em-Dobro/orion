@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { codesPermitidos, idempotencyKeyTmb, interpretarVendaTmb } from "./interpretar";
-import type { AcaoTmb } from "./tipos";
+import { TMB_CODE_BLACK_INFINITA, type AcaoTmb } from "./tipos";
 import {
   concederCortesiaPro,
   revogarCortesiaProSeSemAcesso,
@@ -31,6 +31,13 @@ async function aplicarAcao(acao: AcaoTmb): Promise<void> {
   if (acao.acao === "ignorar") return;
 
   if (acao.acao === "conceder") {
+    const anterior = await prisma.hublaEntitlement.findUnique({
+      where: { email_product_id: { email: acao.email, product_id: acao.productId } },
+      select: { status: true, granted_at: true },
+    });
+    const grantedAt = anterior?.status === "ativo" && anterior.granted_at
+      ? anterior.granted_at
+      : new Date();
     await prisma.hublaEntitlement.upsert({
       where: {
         email_product_id: {
@@ -46,7 +53,7 @@ async function aplicarAcao(acao: AcaoTmb): Promise<void> {
           ? `tmb:lancamento:${acao.lancamentoId}`
           : null,
         subscription_id: `tmb:${acao.pedido}`,
-        granted_at: new Date(),
+        granted_at: grantedAt,
       },
       update: {
         status: "ativo",
@@ -55,11 +62,15 @@ async function aplicarAcao(acao: AcaoTmb): Promise<void> {
           : null,
         subscription_id: `tmb:${acao.pedido}`,
         revoked_at: null,
-        granted_at: new Date(),
+        granted_at: grantedAt,
       },
     });
     if (codesPermitidos().has(acao.productId.toUpperCase())) {
-      await concederCortesiaPro(acao.email);
+      await concederCortesiaPro(
+        acao.email,
+        grantedAt,
+        acao.productId.toUpperCase() === TMB_CODE_BLACK_INFINITA,
+      );
     }
     return;
   }

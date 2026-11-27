@@ -12,7 +12,7 @@ Espelha o contrato do Club (F047 webhook TMB). Elite concede acesso **e**
 cortesia Pro (F035). Mentoria `1AS249898VN` (PRO no Club) concede **acesso
 Free**, sem cortesia.
 
-**Fora de escopo:** DevQuest sazonal; ofertas pagas reais do Orion. TMB grava
+A oferta base TMB Black Infinita 2026 `ZBS345545R7` concede acesso e trial Pro de um ano. As demais ofertas do mesmo produto não entram nessa regra. TMB grava
 o **acesso de compra** (entregáveis / ativar-acesso). Emenda F035 de
 2026-08-24: grant Elite TMB, no modo `trial-pro-*`, **também** upserta a
 cortesia Pro (mesmo `product_id` sintético, `expires_at` por aluno). Não usa
@@ -32,10 +32,11 @@ Na UI TMB: **Chave** = nome do header, **Valor** = token.
 | `3XB272209KV` | Elite (boleto) | **Concede acesso** + cortesia Pro se `trial-pro-*` |
 | `9DW254247E5` | Elite (boleto) | **Concede acesso** + cortesia Pro se `trial-pro-*` |
 | `1AS249898VN` | PRO (Mentoria) | **Concede acesso Free** — sem cortesia Pro |
+| `ZBS345545R7` | Black Infinita 2026 | **Concede acesso** + trial Pro de um ano |
 
 Default da allowlist de **acesso** = Elite + Mentoria. Override Elite:
 `TMB_ELITE_CODES` (preferido) ou `TMB_PRODUCT_CODES` (legado). Mentoria entra
-sempre na porta, mesmo fora do override. Opcional: `TMB_LANCAMENTO_ID=36238`.
+sempre na porta, mesmo fora do override. A oferta Black também entra sempre e ignora o filtro opcional `TMB_LANCAMENTO_ID`, que pertence ao lançamento da Mentoria.
 
 ## Persistência
 - Grant → `HublaEntitlement` com `product_id = code` TMB, `status=ativo`,
@@ -53,6 +54,7 @@ Elite + PRO separado + **offer ids**) **ou** codes TMB Elite **e** Mentoria.
 - [x] Efetivado + Adimplente + code Elite (`3XB` / `9DW`) → entitlement ativo
 - [ ] Code Mentoria `1AS249898VN` → entitlement ativo, plano Free, sem cortesia
 - [x] Code fora da lista → ignorado
+- [x] Oferta base Black concede trial anual; renovação do mesmo produto não concede
 - [x] Cancelamento/inadimplência (code Elite) → revogado
 - [x] Aluno com só entitlement TMB Elite consegue verificar compra no Orion
 - [ ] Grant Elite TMB no modo `trial-pro-*` concede cortesia Pro (F035 AC28);
