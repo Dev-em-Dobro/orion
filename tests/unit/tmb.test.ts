@@ -6,6 +6,7 @@ import {
 } from "@/lib/tmb/interpretar";
 import {
   TMB_CODE_MENTORIA_PRO,
+  TMB_CODE_BLACK_INFINITA,
   TMB_ELITE_CODES_DEFAULT,
 } from "@/lib/tmb/tipos";
 
@@ -23,6 +24,7 @@ describe("tmb F041 — Elite e Mentoria abrem o Orion", () => {
   afterEach(() => {
     delete process.env.TMB_ELITE_CODES;
     delete process.env.TMB_PRODUCT_CODES;
+    delete process.env.TMB_LANCAMENTO_ID;
     delete process.env.HUBLA_PRODUCT_ID;
     delete process.env.HUBLA_PRODUCT_ID_ELITE;
     delete process.env.HUBLA_PRODUCT_ID_CLUB_PRO;
@@ -38,6 +40,14 @@ describe("tmb F041 — Elite e Mentoria abrem o Orion", () => {
   it("boleto 9DW concede", () => {
     const acao = interpretarVendaTmb(venda(TMB_ELITE_CODES_DEFAULT[1]));
     expect(acao.acao).toBe("conceder");
+  });
+
+  it("oferta base Black Infinita concede, inclusive com override de Elite", () => {
+    process.env.TMB_ELITE_CODES = TMB_ELITE_CODES_DEFAULT[0];
+    process.env.TMB_LANCAMENTO_ID = "36238";
+    expect(codesPermitidos().has(TMB_CODE_BLACK_INFINITA)).toBe(true);
+    expect(interpretarVendaTmb({ ...venda(TMB_CODE_BLACK_INFINITA), lancamento_id: 41472 }).acao).toBe("conceder");
+    expect(interpretarVendaTmb(venda("CSN345414S8")).acao).toBe("ignorar");
   });
 
   it("Mentoria 1AS concede acesso Free", () => {

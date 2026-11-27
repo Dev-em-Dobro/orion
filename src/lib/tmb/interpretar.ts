@@ -4,6 +4,7 @@ import {
   STATUS_PEDIDO_GRANT,
   STATUS_PEDIDO_REVOKE,
   TMB_CODE_MENTORIA_PRO,
+  TMB_CODE_BLACK_INFINITA,
   TMB_ELITE_CODES_DEFAULT,
   type AcaoTmb,
   type TmbVendaPayload,
@@ -51,7 +52,9 @@ export function codesPermitidos(): Set<string> {
     : [...TMB_ELITE_CODES_DEFAULT];
   const mentoria = TMB_CODE_MENTORIA_PRO.toUpperCase();
   return new Set(
-    list.map((c) => c.toUpperCase()).filter((c) => c !== mentoria),
+    [...list, TMB_CODE_BLACK_INFINITA]
+      .map((c) => c.toUpperCase())
+      .filter((c) => c !== mentoria),
   );
 }
 
@@ -115,7 +118,7 @@ export function interpretarVendaTmb(payload: unknown): AcaoTmb {
   }
 
   const lancamentoFiltro = lancamentoIdFiltro();
-  if (lancamentoFiltro) {
+  if (lancamentoFiltro && productId.toUpperCase() !== TMB_CODE_BLACK_INFINITA) {
     const lid = String(venda.lancamento_id ?? "").trim();
     if (lid && lid !== lancamentoFiltro) {
       return { acao: "ignorar", motivo: "lancamento_id não filtrado" };

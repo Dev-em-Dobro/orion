@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/db";
 import { productIdsCortesiaPro } from "@/lib/tmb/interpretar";
+import { TMB_CODE_BLACK_INFINITA } from "@/lib/tmb/tipos";
 import { HUBLA_PRODUCT_ID_BLACK_FRIDAY } from "@/lib/hubla/produtos";
 import {
   TRIAL_PRO_FIM_ISO,
@@ -156,7 +157,7 @@ export async function detalhesCortesiaProDoUsuario(
   const black = await prisma.hublaEntitlement.findFirst({
     where: {
       email: { in: emails },
-      product_id: HUBLA_PRODUCT_ID_BLACK_FRIDAY,
+      product_id: { in: [HUBLA_PRODUCT_ID_BLACK_FRIDAY, TMB_CODE_BLACK_INFINITA] },
       status: "ativo",
     },
     select: { id: true },
